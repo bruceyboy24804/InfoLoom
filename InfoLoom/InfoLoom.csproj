@@ -1,0 +1,157 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net472</TargetFramework>
+		<Configurations>Debug;Release</Configurations>
+		<LangVersion>latest</LangVersion>
+		
+		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
+		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
+	</PropertyGroup>
+	
+	<!--Imports must be after PropertyGroup block-->
+	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
+	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
+
+	<ItemGroup>
+		<Reference Include="Colossal.Mathematics">
+			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.Mathematics.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.UI.Binding">
+			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.UI.Binding.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.Collections">
+			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.Collections.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Game">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.Core">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.Logging">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.IO.AssetDatabase">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Burst">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Collections">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Entities">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Mathematics">
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Colossal.Localization">
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Update="System">
+			<Private>false</Private>
+		</Reference>
+		<Reference Update="System.Core">
+			<Private>false</Private>
+		</Reference>
+		<Reference Update="System.Data">
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+	<Target Name="InstallUI" AfterTargets="AfterBuild">
+		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
+	</Target>
+	<ItemGroup>
+		<None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
+		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
+		<None Include="UI\node_modules\.bin\acorn" />
+		<None Include="UI\node_modules\.bin\acorn.cmd" />
+		<None Include="UI\node_modules\.bin\acorn.ps1" />
+		<None Include="UI\node_modules\.bin\browserslist" />
+		<None Include="UI\node_modules\.bin\browserslist.cmd" />
+		<None Include="UI\node_modules\.bin\browserslist.ps1" />
+		<None Include="UI\node_modules\.bin\cssesc" />
+		<None Include="UI\node_modules\.bin\cssesc.cmd" />
+		<None Include="UI\node_modules\.bin\cssesc.ps1" />
+		<None Include="UI\node_modules\.bin\envinfo" />
+		<None Include="UI\node_modules\.bin\envinfo.cmd" />
+		<None Include="UI\node_modules\.bin\envinfo.ps1" />
+		<None Include="UI\node_modules\.bin\flat" />
+		<None Include="UI\node_modules\.bin\flat.cmd" />
+		<None Include="UI\node_modules\.bin\flat.ps1" />
+		<None Include="UI\node_modules\.bin\import-local-fixture" />
+		<None Include="UI\node_modules\.bin\import-local-fixture.cmd" />
+		<None Include="UI\node_modules\.bin\import-local-fixture.ps1" />
+		<None Include="UI\node_modules\.bin\json5" />
+		<None Include="UI\node_modules\.bin\json5.cmd" />
+		<None Include="UI\node_modules\.bin\json5.ps1" />
+		<None Include="UI\node_modules\.bin\loose-envify" />
+		<None Include="UI\node_modules\.bin\loose-envify.cmd" />
+		<None Include="UI\node_modules\.bin\loose-envify.ps1" />
+		<None Include="UI\node_modules\.bin\nanoid" />
+		<None Include="UI\node_modules\.bin\nanoid.cmd" />
+		<None Include="UI\node_modules\.bin\nanoid.ps1" />
+		<None Include="UI\node_modules\.bin\node-which" />
+		<None Include="UI\node_modules\.bin\node-which.cmd" />
+		<None Include="UI\node_modules\.bin\node-which.ps1" />
+		<None Include="UI\node_modules\.bin\resolve" />
+		<None Include="UI\node_modules\.bin\resolve.cmd" />
+		<None Include="UI\node_modules\.bin\resolve.ps1" />
+		<None Include="UI\node_modules\.bin\sass" />
+		<None Include="UI\node_modules\.bin\sass.cmd" />
+		<None Include="UI\node_modules\.bin\sass.ps1" />
+		<None Include="UI\node_modules\.bin\semver" />
+		<None Include="UI\node_modules\.bin\semver.cmd" />
+		<None Include="UI\node_modules\.bin\semver.ps1" />
+		<None Include="UI\node_modules\.bin\terser" />
+		<None Include="UI\node_modules\.bin\terser.cmd" />
+		<None Include="UI\node_modules\.bin\terser.ps1" />
+		<None Include="UI\node_modules\.bin\tsc" />
+		<None Include="UI\node_modules\.bin\tsc.cmd" />
+		<None Include="UI\node_modules\.bin\tsc.ps1" />
+		<None Include="UI\node_modules\.bin\tsserver" />
+		<None Include="UI\node_modules\.bin\tsserver.cmd" />
+		<None Include="UI\node_modules\.bin\tsserver.ps1" />
+		<None Include="UI\node_modules\.bin\update-browserslist-db" />
+		<None Include="UI\node_modules\.bin\update-browserslist-db.cmd" />
+		<None Include="UI\node_modules\.bin\update-browserslist-db.ps1" />
+		<None Include="UI\node_modules\.bin\webpack" />
+		<None Include="UI\node_modules\.bin\webpack-cli" />
+		<None Include="UI\node_modules\.bin\webpack-cli.cmd" />
+		<None Include="UI\node_modules\.bin\webpack-cli.ps1" />
+		<None Include="UI\node_modules\.bin\webpack.cmd" />
+		<None Include="UI\node_modules\.bin\webpack.ps1" />
+		<None Include="UI\node_modules\events\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\fast-json-stable-stringify\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\fast-uri\.github\.stale.yml" />
+		<None Include="UI\node_modules\fast-uri\.github\dependabot.yml" />
+		<None Include="UI\node_modules\fast-uri\.github\tests_checker.yml" />
+		<None Include="UI\node_modules\fast-uri\.github\workflows\ci.yml" />
+		<None Include="UI\node_modules\fast-uri\.github\workflows\package-manager-ci.yml" />
+		<None Include="UI\node_modules\function-bind\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\function-bind\.github\SECURITY.md" />
+		<None Include="UI\node_modules\hasown\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\json-schema-traverse\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\json-schema-traverse\.github\workflows\build.yml" />
+		<None Include="UI\node_modules\json-schema-traverse\.github\workflows\publish.yml" />
+		<None Include="UI\node_modules\minimist\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\resolve\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\supports-preserve-symlinks-flag\.github\FUNDING.yml" />
+		<None Include="UI\node_modules\tsconfig-paths-webpack-plugin\.github\workflows\ci.yml" />
+		<None Include="UI\node_modules\tsconfig-paths-webpack-plugin\.husky\pre-commit" />
+		<None Include="UI\node_modules\wildcard\.github\workflows\build.yml" />
+	</ItemGroup>
+
+</Project>
