@@ -1,54 +1,21 @@
-// $Panel.tsx
-
 import React, { useState, useEffect, useRef } from 'react';
-
 interface PanelProps {
-    react: any;
-    children: React.ReactNode;
+    react: any;  // Adjust the type if you know the specific type
+    children: React.ReactNode;  // This is for JSX children
     title: string;
     style?: React.CSSProperties;
-    initialPosition?: { top: number; left: number; };
-    initialSize?: { width: number; height: number; };
-    onPositionChange?: (newPosition: { top: number; left: number; }) => void;
-    onSizeChange?: (newSize: { width: number; height: number; }) => void;
+    initialPosition?: { top: number; left: number };
+    initialSize?: { width: number; height: number };
+    onPositionChange?: (newPosition: { top: number; left: number }) => void;
+    onSizeChange?: (newSize: { width: number; height: number }) => void;
     className?: string;
 }
-
-const defaultStyle: React.CSSProperties = {
-    position: 'absolute',
-    // Removed fixed width and height to allow dynamic sizing
-};
-
-const Resizer = ({ onMouseDown }: { onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void }) => {
-    const style: React.CSSProperties = {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        width: '20px',
-        height: '20px',
-        cursor: 'nwse-resize',
-        zIndex: 10,
-    };
-    const triangle: React.CSSProperties = {
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(45deg, transparent 50%, white 50%)',
-    };
-    return (
-        <div style={style} onMouseDown={onMouseDown}>
-            <div style={triangle}></div>
-        </div>
-    );
-};
-
-
 
 const $Panel = ({
     react,
     children,
     title,
     style,
-    
     initialPosition,
     initialSize,
     onPositionChange = () => {},
@@ -65,6 +32,7 @@ const $Panel = ({
         width: 0,
         height: 0,
     });
+    const contentRef = useRef<HTMLDivElement>(null);  // Reference to the content div
     const [dragging, setDragging] = useState(false);
     const [resizing, setResizing] = useState(false);
     const [rel, setRel] = useState<{ x: number; y: number; }>({ x: 0, y: 0 }); // Position relative to the cursor
@@ -93,12 +61,21 @@ const $Panel = ({
     const onMouseMove = (e: MouseEvent) => {
         if (!dragging || resizing) return;
 
-        const newTop = e.clientY - rel.y;
-        const newLeft = e.clientX - rel.x;
+        // Calculate maximum allowed positions
+        const maxLeft = window.innerWidth - size.width;
+        const maxTop = window.innerHeight - size.height;
+
+        // Calculate new positions
+        let newLeft = e.clientX - rel.x;
+        let newTop = e.clientY - rel.y;
+
+        // Constrain within the viewport
+        newLeft = Math.min(Math.max(newLeft, 0), maxLeft);
+        newTop = Math.min(Math.max(newTop, 0), maxTop);
 
         const newPosition = {
-            top: newTop > 0 ? newTop : 0,
-            left: newLeft > 0 ? newLeft : 0,
+            top: newTop,
+            left: newLeft,
         };
 
         setPosition(newPosition);
@@ -108,6 +85,7 @@ const $Panel = ({
     };
 
     const onResizeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
         setResizing(true);
         initialSizeRef.current = { width: size.width, height: size.height }; // Store initial size
         setRel({ x: e.clientX, y: e.clientY });
@@ -118,11 +96,23 @@ const $Panel = ({
     const onResizeMouseMove = (e: MouseEvent) => {
         if (!resizing) return;
 
+        // Calculate new size
         const widthChange = e.clientX - rel.x;
         const heightChange = e.clientY - rel.y;
+        let newWidth = initialSizeRef.current.width + widthChange;
+        let newHeight = initialSizeRef.current.height + heightChange;
+
+        // Set minimum size constraints
+        newWidth = Math.max(newWidth, 200); // Minimum width
+        newHeight = Math.max(newHeight, 300); // Minimum height
+
+        // Optionally, set maximum size based on viewport
+        newWidth = Math.min(newWidth, window.innerWidth - position.left);
+        newHeight = Math.min(newHeight, window.innerHeight - position.top);
+
         const newSize = {
-            width: Math.max(initialSizeRef.current.width + widthChange, 200), // Minimum width
-            height: Math.max(initialSizeRef.current.height + heightChange, 300), // Minimum height
+            width: newWidth,
+            height: newHeight,
         };
         setSize(newSize);
         onSizeChange(newSize);
@@ -131,21 +121,47 @@ const $Panel = ({
         e.preventDefault();
     };
 
+    // Function to dynamically adjust font size based on panel size
+    
+
     useEffect(() => {
+        // Adjust the font size whenever the size changes
+        adjustFontSize();
+    }, [size]);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (dragging) {
+                onMouseMove(e);
+            } else if (resizing) {
+                onResizeMouseMove(e);
+            }
+        };
+
+        const handleMouseUp = () => {
+            onMouseUp();
+        };
+
         if (dragging || resizing) {
-            window.addEventListener('mousemove', dragging ? onMouseMove : onResizeMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
         }
 
         return () => {
-            window.removeEventListener('mousemove', dragging ? onMouseMove : onResizeMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
         };
     }, [dragging, resizing]);
 
+    const adjustFontSize = () => {
+        if (contentRef.current) {
+            const fontSize = Math.max(Math.min(size.width * 0.02, size.height * 0.02), 12);  // Calculate based on both width and height
+            contentRef.current.style.fontSize = `${fontSize}px`;
+        }
+    };
+
     const draggableStyle: React.CSSProperties = {
-        ...defaultStyle,
-        ...style,
+        position: 'absolute',
         top: `${position.top}px`,
         left: `${position.left}px`,
         width: `${size.width}px`,
@@ -173,16 +189,17 @@ const $Panel = ({
                     alignItems: 'center',
                     borderTopLeftRadius: '8px',
                     borderTopRightRadius: '8px',
+                    fontSize: '1.5vw',
                 }}
             >
-                <div className="title_SVH title_zQN" style={{ color: 'white', fontSize: '16px', fontWeight: 'bold' }}>
+                <div className="title_SVH title_zQN" style={{ color: 'white', fontSize: '1.5vw', fontWeight: 'bold' }}>
                     {title}
                 </div>
-                
             </div>
 
             {/* Content */}
             <div
+                ref={contentRef}  // Reference for adjusting font size
                 className="content_XD5 content_AD7 child-opacity-transition_nkS"
                 style={{
                     flex: '1 1 auto',
@@ -196,7 +213,20 @@ const $Panel = ({
             </div>
 
             {/* Resizer */}
-            <Resizer onMouseDown={onResizeMouseDown} />
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'nwse-resize',
+                    zIndex: 10,
+                }}
+                onMouseDown={onResizeMouseDown}
+            >
+                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, transparent 50%, white 50%)' }}></div>
+            </div>
         </div>
     );
 };

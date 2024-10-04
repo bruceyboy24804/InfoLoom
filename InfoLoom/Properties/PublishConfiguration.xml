@@ -4,30 +4,58 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="This is a short description" />
+	<ShortDescription Value="Adds 2 new UI windows to the game" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
-	<LongDescription>
-This is a long description
+	<LongDescription>## Info Loom
+- **Most of the credit goes to Infixo for making the original version of this mod, i just i just updated and made sure it worked properly and updated the UI.**
+- **Adds 2 new UI windows to the game, which are Demographics and Workforce structure.**
+
+###Currently:
+- Demographics
+- Workforce structure
+- Workplaces distribution (Coming soon)
+- Residential data (Coming soon)
+- Commercial data (Coming soon)
+- Industrial and Office data (Coming soon)
+- Demand factors (Coming soon)
+- Resources consumption (optional) (Coming soon)
+
+### Demographics
+- Key information about current city demographics in one place.
+- Age distribution histogram that also shows cims' activity structure.
+NEW - show grouped age view.
+NEW - summary statistics for each age group.
+
+### Workforce structure
+- Shows workforce structure by education level.
+- Total: all potential workers, i.e. teens and adults, that are moved in and not moving away, excluding students.
+- Unemployment by education level and structure also shown as percentage.
+- Under: cims working on positions below their education level.
+- Outside: cims working outside of the city.
+- Homeless: unemployed cims with no home.
+
+
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/InfoLoom.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/Screenshots/Demographics.png" />
+	<Screenshot Value="Properties/Screenshots/Workforce.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
+	<ChangeLog Value="Initial release" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="" />
 </Publish>
