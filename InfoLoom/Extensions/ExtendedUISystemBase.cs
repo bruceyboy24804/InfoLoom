@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
 namespace InfoLoom.Extensions
 {
     using System;
     using Colossal.UI.Binding;
     using Game.UI;
+    using InfoLoomBrucey;
 
     public abstract partial class ExtendedUISystemBase : UISystemBase
     {

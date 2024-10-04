@@ -70,7 +70,8 @@ declare module "cohtml/cohtml" {
     reject(value: T): void;
   }
   
-  export interface Engine { // modified by Colossal
+  export interface Engine {
+    property: any; // modified by Colossal
     /**
     * A promise that is resolved after the page has loaded and the bindings are ready
     **/

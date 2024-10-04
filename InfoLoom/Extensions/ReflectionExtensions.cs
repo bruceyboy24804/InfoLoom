@@ -4,6 +4,7 @@ namespace InfoLoom.Extensions
 {
     using System.Reflection;
     using InfoLoom;
+    using InfoLoomBrucey;
 
     /// <summary>
     /// Extention methods to make reflection easier.

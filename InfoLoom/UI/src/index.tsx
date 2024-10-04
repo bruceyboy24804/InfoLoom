@@ -1,9 +1,10 @@
 import { ModRegistrar } from "cs2/modding";
-import { InfoLoomButton } from "./mods/InfoLoomButton/InfoLoomButton";
-
+import  InfoLoomConent from "./mods/InfoLoomContent/InfoLoomMenu";
+import 'intl';
+import 'intl/locale-data/jsonp/en-US'; 
 const register: ModRegistrar = (moduleRegistry) => {
 
-    moduleRegistry.append('GameTopLeft', InfoLoomButton);
+    moduleRegistry.append('GameTopLeft', InfoLoomConent);
 }
 
 export default register;
