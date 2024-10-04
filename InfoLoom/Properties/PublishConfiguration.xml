@@ -11,7 +11,7 @@
 This is a long description
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/InfoLoom.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="" />
 	<!--Tag, can be set multiple times-->
