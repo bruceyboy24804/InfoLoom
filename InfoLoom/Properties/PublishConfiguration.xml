@@ -57,5 +57,6 @@ NEW - summary statistics for each age group.
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="github" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
+	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />
 </Publish>

@@ -166,6 +166,7 @@
 		<None Include="UI\node_modules\wildcard\.github\workflows\build.yml" />
 	</ItemGroup>
 	<ItemGroup>
+	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 	<ItemGroup>
