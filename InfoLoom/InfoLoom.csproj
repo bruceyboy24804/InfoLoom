@@ -14,16 +14,19 @@
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
 	<ItemGroup>
+	  <Compile Remove="UI\src\mods\InfoLoomSections\CommercialSecction\**" />
 	  <Compile Remove="UI\src\mods\InfoLoomSections\ResidentialSection\**" />
-	  <Compile Remove="UI\src\mods\InfoLoomSections\WorkplacesSection\**" />
+	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\CommercialSecction\**" />
 	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\ResidentialSection\**" />
-	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\WorkplacesSection\**" />
+	  <None Remove="UI\src\mods\InfoLoomSections\CommercialSecction\**" />
 	  <None Remove="UI\src\mods\InfoLoomSections\ResidentialSection\**" />
-	  <None Remove="UI\src\mods\InfoLoomSections\WorkplacesSection\**" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Compile Remove="Systems\CommercialDemandUISystem.cs" />
 	  <Compile Remove="Systems\ResidentialDemandUISystem.cs" />
-	  <Compile Remove="Systems\WorkplacesInfoLoomUISystem.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="UI\src\mods\Bindings.ts" />
 	</ItemGroup>
 
 	<ItemGroup>

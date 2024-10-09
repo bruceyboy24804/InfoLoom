@@ -1,39 +1,36 @@
 // InfoLoomButton.tsx
 
-import React, { useCallback, useState } from 'react';
-import { Button, FloatingButton, Tooltip, FormattedText, } from "cs2/ui";
-import icon from "images/infoloom.svg"; // Assuming you are using the same icon for open/closed state
+import React, { useCallback, useState, FC } from 'react';
+import { Button, FloatingButton, Tooltip } from "cs2/ui";
+import icon from "images/infoloom.svg";
 import styles from "./InfoLoomMenu.module.scss";
 import Demographics from "mods/InfoLoomSections/DemographicsSection/Demographics";
 import Workforce from "mods/InfoLoomSections/WorkforceSection/Workforce";
-//import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
-//import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
+import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
+// Import other sections as needed
+// import Residential from "mods/InfoLoomSections/ResidentialSection/Residential";
+// import Demand from "mods/InfoLoomSections/DemandSection/Demand";
+// import Commercial from "mods/InfoLoomSections/CommercialSection/Commercial";
+// import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
 
-// Define the sections as a TypeScript type
+// Define the sections with their respective components
+const sections: { name: Section; component: FC }[] = [
+  { name: 'Demographics', component: Demographics },
+  { name: 'Workforce', component: Workforce },
+  { name: 'Workplaces', component: Workplaces },
+  // Add other sections here
+  // { name: 'Residential', component: Residential },
+  // { name: 'Demand', component: Demand },
+  // { name: 'Commercial', component: Commercial },
+  // { name: 'Industrial', component: Industrial },
+];
+
+// Define the Section type
 type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial';
 
-const InfoLoomButton: React.FC = () => {
+const InfoLoomButton: FC = () => {
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
-  const Icon = icon; // Since both states use the same icon
-
-  // Toggle function to show or hide the main menu
-  const toggleMainMenu = useCallback(() => {
-    setMainMenuOpen(prev => !prev);
-  }, []);
-
-  // State to track the currently selected section for styling
-  const [selected, setSelected] = useState<Section | "">("");
-
-  // Consolidated state for open sections
-  const [openSections, setOpenSections] = useState<{
-    Demographics: boolean;
-    Workforce: boolean;
-    Workplaces: boolean;
-    Demand: boolean;
-    Residential: boolean;
-    Commercial: boolean;
-    Industrial: boolean;
-  }>({
+  const [openSections, setOpenSections] = useState<Record<Section, boolean>>({
     Demographics: false,
     Workforce: false,
     Workplaces: false,
@@ -43,70 +40,56 @@ const InfoLoomButton: React.FC = () => {
     Industrial: false,
   });
 
-  // Generic toggle function for sections
-  const toggleSection = (section: Section) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-    setSelected(prev => (prev === section ? "" : section));
-  };
+  const toggleMainMenu = useCallback(() => {
+    setMainMenuOpen(prev => !prev);
+  }, []);
+
+  const toggleSection = useCallback((section: Section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  }, []);
 
   return (
     <div>
       <Tooltip tooltip="Info Loom">
-        <FloatingButton onClick={toggleMainMenu} src={Icon} />
+        <FloatingButton onClick={toggleMainMenu} src={icon} aria-label="Toggle Info Loom Menu" />
       </Tooltip>
 
-      {/* Panel that appears based on the mainMenuOpen state */}
-      <div
-        draggable={true}
-        className={styles.panel}
-        style={{ display: mainMenuOpen ? "flex" : "none" }}
-      >
-        <header className={styles.header}>
-          <h2>Info Loom</h2>
-        </header>
-        {/* Panel Content */}
-        <div className={styles.buttonRow}>
-          {/* Demographics Button */}
-          <Button
-            variant='flat'
-            aria-label="Demographics"
-            className={
-              selected === "Demographics" ? styles.buttonSelected : styles.InfoLoomButton
-            }
-            onClick={() => toggleSection("Demographics")}
-            
-          >
-            Demographics
-          </Button>
-
-          {/* Workforce Button */}
-          <Button
-            variant='flat'
-            aria-label="Workforce"
-            className={
-              selected === "Workforce" ? styles.buttonSelected : styles.InfoLoomButton
-            }
-            onClick={() => toggleSection("Workforce")}
-          >
-            Workforce
-          </Button>
-
-          
+      {mainMenuOpen && (
+        <div
+          draggable={true}
+          className={styles.panel}
+        >
+          <header className={styles.header}>
+            <h2>Info Loom</h2>
+          </header>
+          <div className={styles.buttonRow}>
+            {sections.map(({ name }) => (
+              <Button
+                key={name}
+                variant='flat'
+                aria-label={name}
+                aria-expanded={openSections[name]}
+                className={
+                  openSections[name] ? styles.buttonSelected : styles.InfoLoomButton
+                }
+                onClick={() => toggleSection(name)}
+              >
+                {name}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Render Components Conditionally */}
-      {openSections.Demographics && <Demographics />}
-      {openSections.Workforce && <Workforce />}
-      {/* Add conditional rendering for other sections as needed */}
-      {/* Example:
-          {openSections.Demand && <Demand />}
-          {openSections.Residential && <Residential />}
-          etc.
-      */}
+      {sections.map(({ name, component: Component }) => (
+        openSections[name] && <Component key={name} />
+      ))}
     </div>
   );
 };
 
-// Export the component properly
 export default InfoLoomButton;

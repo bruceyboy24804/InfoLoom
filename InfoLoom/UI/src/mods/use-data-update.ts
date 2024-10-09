@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react"
 const useDataUpdate = (
     event: string,
     onUpdate: (data: any) => void,
-    deps: any[] = []
+    deps: any[] = [] 
 ) => {
     const updateEvent = useMemo(() => event + ".update", [event])
     const subscribeEvent = useMemo(() => event + ".subscribe", [event])

@@ -1,0 +1,22 @@
+/* Panel.module.scss */
+
+.exitbut {
+    /* Style the exit button */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exitbut:hover {
+    opacity: 0.8; /* Optional hover effect */
+}
+
+.symbol_aAH {
+    display: inline-block;
+    height: 1.2em;
+    width: 1.2em;
+}

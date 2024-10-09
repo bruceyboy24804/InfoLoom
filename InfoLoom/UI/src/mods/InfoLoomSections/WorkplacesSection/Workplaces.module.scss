@@ -67,4 +67,8 @@
     font-size: 0.9rem;
     color: white;
   }
+
+  .panelContent {
+    position: relative; /* To position ExitButton absolutely within this container */
+  }
   
