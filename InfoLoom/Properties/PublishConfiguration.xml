@@ -1,20 +1,20 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="91433" />
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds 2 new UI windows to the game" />
+	<ShortDescription Value="Adds 3 new UI windows to the game" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
 - **Most of the credit goes to Infixo for making the original version of this mod, i just i just updated and made sure it worked properly and updated the UI.**
-- **Adds 2 new UI windows to the game, which are Demographics and Workforce structure.**
+- **Adds 3 new UI windows to the game, which are Demographics,Workforce structure and Workplace distribution.**
 
 ###Currently:
 - Demographics
 - Workforce structure
-- Workplaces distribution (Coming soon)
+- Workplace distribution 
 - Residential data (Coming soon)
 - Commercial data (Coming soon)
 - Industrial and Office data (Coming soon)
@@ -35,27 +35,36 @@ NEW - summary statistics for each age group.
 - Outside: cims working outside of the city.
 - Homeless: unemployed cims with no home.
 
+### Workplace distribution
+- Shows available workplaces split into: city services, commercial sales, commercial leisure, industry extractors, industry manufacturing, and office.
+- Commute are cims employed from outside of the city, they commute to work.
+- Shows number of companies in each category.
 
+### Credit
+- Dava787: screenshot of the Workplace distribution UI
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/InfoLoom.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="Properties/Screenshots/Demographics.png" />
 	<Screenshot Value="Properties/Screenshots/Workforce.png" />
+	<Screenshot Value="Properties/Screenshots/WorkplaceDistribution.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
+	<ModVersion Value="1.0.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Initial release" />
-	<!--ChangeLog>
-	</ChangeLog-->
+	<ChangeLog>## Version 1.0.1
+- added workplace distribution
+- added redisgned the button menu
+- made the panels look similair to vanilla panels to make it more consistent
+- made the chart for demographics slighly better</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

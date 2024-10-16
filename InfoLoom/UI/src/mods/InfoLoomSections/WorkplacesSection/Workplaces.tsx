@@ -2,9 +2,7 @@
 import React, { useState } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
-import engine from 'cohtml/cohtml';
-import styles from './Workplaces.module.scss';
-import classNames from 'classnames';
+
 
 // Define interfaces for component props
 interface LevelValues {
@@ -162,7 +160,7 @@ const $Workplaces: React.FC = () => {
 
             {/* Panel */}
             <$Panel
-                react={React}
+                
                 title="Workplace Distribution" // Pass title as string
                 initialSize={{
                     width: window.innerWidth * 0.38,
@@ -192,31 +190,31 @@ const $Workplaces: React.FC = () => {
                             levelColor="#808080"
                             levelName="Uneducated"
                             levelValues={workplaces[0]}
-                            total={Number(workplaces[5]?.total) || 0}
+                            total={Number(workplaces[5]?.total)}
                         />
                         <WorkforceLevel
                             levelColor="#B09868"
                             levelName="Poorly Educated"
                             levelValues={workplaces[1]}
-                            total={Number(workplaces[5]?.total) || 0}
+                            total={Number(workplaces[5]?.total)}
                         />
                         <WorkforceLevel
                             levelColor="#368A2E"
                             levelName="Educated"
                             levelValues={workplaces[2]}
-                            total={Number(workplaces[5]?.total) || 0}
+                            total={Number(workplaces[5]?.total)}
                         />
                         <WorkforceLevel
                             levelColor="#B981C0"
                             levelName="Well Educated"
                             levelValues={workplaces[3]}
-                            total={Number(workplaces[5]?.total) || 0}
+                            total={Number(workplaces[5]?.total)}
                         />
                         <WorkforceLevel
                             levelColor="#5796D1"
                             levelName="Highly Educated"
                             levelValues={workplaces[4]}
-                            total={Number(workplaces[5]?.total) || 0}
+                            total={Number(workplaces[5]?.total)}
                         />
                         <div style={{ height: '5rem' }}></div>
                         <WorkforceLevel

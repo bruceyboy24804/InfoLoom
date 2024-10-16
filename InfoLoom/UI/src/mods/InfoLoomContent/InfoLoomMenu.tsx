@@ -1,5 +1,3 @@
-// InfoLoomButton.tsx
-
 import React, { useCallback, useState, FC } from 'react';
 import { Button, FloatingButton, Tooltip } from "cs2/ui";
 import icon from "images/infoloom.svg";
@@ -76,6 +74,7 @@ const InfoLoomButton: FC = () => {
                   openSections[name] ? styles.buttonSelected : styles.InfoLoomButton
                 }
                 onClick={() => toggleSection(name)}
+                onMouseDown={(e) => e.preventDefault()} // Prevent button shrinking on click
               >
                 {name}
               </Button>

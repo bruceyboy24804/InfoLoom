@@ -20,7 +20,7 @@ using System.Reflection;
 
 namespace InfoLoomBrucey.Systems
 {
-    
+
     public partial class PopulationStructureUISystem : UISystemBase
     {
         /// <summary>
@@ -213,7 +213,7 @@ namespace InfoLoomBrucey.Systems
                     // get age
                     int ageInDays = day - citizen.m_BirthDay;
                     if (ageInDays > m_Totals[6]) m_Totals[6] = ageInDays; // oldest cim
-                                                                          //ageInDays = ageInDays/2; // INFIXO: TODO
+                    ageInDays = ageInDays/2;
                     if (ageInDays > 109) ageInDays = 109;
                     PopulationAtAgeInfo info = m_Results[ageInDays];
                     // process at-age info
@@ -232,7 +232,7 @@ namespace InfoLoomBrucey.Systems
                             case 4: info.School4++; break;
                             default:
 #if DEBUG
-                                
+
 #endif
                                 break;
                         }
@@ -409,7 +409,7 @@ namespace InfoLoomBrucey.Systems
             // allocate memory for results
             m_Totals = new NativeArray<int>(10, Allocator.Persistent);
             m_Results = new NativeArray<PopulationAtAgeInfo>(110, Allocator.Persistent); // INFIXO: TODO
-          
+
         }
 
         //[Preserve]
@@ -594,15 +594,14 @@ namespace InfoLoomBrucey.Systems
         public static void LogChunk(in ArchetypeChunk chunk)
         {
             var componentTypes = chunk.Archetype.GetComponentTypes();
-           
+
         }
 
         public string[] ListEntityComponents(Entity entity)
         {
             var componentTypes = new List<ComponentType>();
 
-            if (!EntityManager.Exists(entity))
-                throw new ArgumentException("Entity does not exist.");
+            
 
             //using (NativeArray<ComponentType> types = EntityManager.GetComponentTypes(entity, Allocator.Temp))
             //{
@@ -636,10 +635,10 @@ namespace InfoLoomBrucey.Systems
             }
             entities.Dispose();
             // show the dictionary
-          
+
             foreach (var pair in CompDict)
             {
-                
+
             }
         }
     }

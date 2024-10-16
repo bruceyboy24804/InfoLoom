@@ -101,7 +101,7 @@ const $Workforce: React.FC = () => {
 
   return (
     <$Panel
-      react={React}
+      
       title="Workforce Structure"
       
       initialSize={{ width: window.innerWidth * 0.33, height: window.innerHeight * 0.20 }}
