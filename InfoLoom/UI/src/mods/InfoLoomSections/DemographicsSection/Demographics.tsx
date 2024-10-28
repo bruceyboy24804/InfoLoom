@@ -1,4 +1,4 @@
-import React, { useState, useMemo, KeyboardEvent } from 'react';
+import React, { useState, useMemo, KeyboardEvent, useCallback, FC } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
@@ -65,6 +65,18 @@ const AGE_RANGES = [
   { label: '70-80', min: 70, max: 80 },
   { label: '80-90', min: 80, max: 90 },
   { label: '90-100', min: 90, max: 100 },
+  { label: '100-110', min: 100, max: 110 },
+  { label: '110-120', min: 110, max: 120 },
+  { label: '120-130', min: 120, max: 130 },
+  { label: '130-140', min: 130, max: 140 },
+  { label: '140-150', min: 140, max: 150 },
+  { label: '150-160', min: 150, max: 160 },
+  { label: '160-170', min: 160, max: 170 },
+  { label: '170-180', min: 170, max: 180 },
+  { label: '180-190', min: 180, max: 190 },
+  { label: '190-200', min: 190, max: 200 },
+
+  
 ];
 
 // Optimized aggregation function
@@ -208,7 +220,11 @@ const DemographicsLevel: React.FC<{
   </div>
 );
 
-const Demographics: React.FC = () => {
+interface DemographicsProps {
+  onClose: () => void;
+}
+
+const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   // State hooks for totals and details
   const [totals, setTotals] = useState<number[]>([]);
   const [details, setDetails] = useState<Info[]>([]);
@@ -405,9 +421,22 @@ const Demographics: React.FC = () => {
     setDetails([]);
   };
 
+  // New state to control panel visibility
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+
+  // Handler for closing the panel
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  if (!isPanelVisible) {
+    return null;
+  }
+
   return (
     <$Panel
       title="Demographics"
+      onClose={handleClose}
       initialSize={{ width: panWidth, height: panHeight }}
       initialPosition={{ top: window.innerHeight * 0.009, left: window.innerWidth * 0.053 }}
       style={{

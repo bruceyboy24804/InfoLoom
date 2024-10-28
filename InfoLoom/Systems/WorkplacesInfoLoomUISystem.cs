@@ -15,6 +15,7 @@ using Game.Simulation;
 using Game.Economy;
 using Game.Citizens;
 using Game.UI.InGame;
+using InfoLoom;
 
 namespace InfoLoomBrucey.Systems
 {

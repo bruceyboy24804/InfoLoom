@@ -2,6 +2,7 @@
 
 namespace InfoLoomBrucey.Extensions
 {
+    using InfoLoom;
     using System.Reflection;
   
 

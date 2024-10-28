@@ -6,18 +6,19 @@ using Game.Modding;
 using Game.SceneFlow;
 using Game.Settings;
 using HarmonyLib;
+using InfoLoomBrucey;
+using InfoLoomBrucey.Extensions;
 using InfoLoomBrucey.Systems;
 using System.Linq;
-using System.Reflection;
-using UnityEngine;
 
 
-namespace InfoLoomBrucey
+
+namespace InfoLoom
 {
     // Mod class implementing IMod interface
     public class Mod : IMod
     {
-       
+        public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoom);
         // Static fields and properties
         public static Setting setting;
         public static readonly string Id = "InfoLoom";
@@ -37,21 +38,40 @@ namespace InfoLoomBrucey
         {
             // Log entry for debugging purposes
             log.Info(nameof(OnLoad));
-
+            Instance = this;
             // Try to fetch the mod asset from the mod manager
-            if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
+            /*setting = new Setting(this);
+            if (setting == null)
             {
-                log.Info($"Current mod asset at {asset.path}");
-                modAsset = asset;
+                Log.Error("Failed to initialize settings.");
+                return;
             }
-           
-          
-            
+            setting.RegisterInOptionsUI();
+            AssetDatabase.global.LoadSettings(nameof(InfoLoom), setting, new Setting(this));
+
+            // Load localization
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));*/
+
+            var harmony = new Harmony(harmonyId);
+            harmony.PatchAll(typeof(Mod).Assembly);
+            var patchedMethods = harmony.GetPatchedMethods().ToArray();
+            log.Info($"Plugin {harmonyId} made patches! Patched methods: " + patchedMethods.Length);
+            foreach (var patchedMethod in patchedMethods)
+            {
+                log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
+            }
+
+
 
             // Register custom update systems for UI updates
             updateSystem.UpdateAt<PopulationStructureUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<WorkforceInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<WorkplacesInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<ResidentialDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CommercialDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            //updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            //updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
            
         }
 
@@ -60,7 +80,14 @@ namespace InfoLoomBrucey
         {
             // Log entry for debugging purposes
             log.Info(nameof(OnDispose));
-          
+            /*if (setting != null)
+            {
+                setting.UnregisterInOptionsUI();
+                setting = null;
+            }*/
+
+            var harmony = new Harmony(harmonyId);
+            harmony.UnpatchAll(harmonyId);
 
         }
     }

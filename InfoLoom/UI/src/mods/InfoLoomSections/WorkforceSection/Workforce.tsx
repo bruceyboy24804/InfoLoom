@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 import engine from 'cohtml/cohtml';
@@ -73,20 +73,31 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
 };
 
 // Props for $Workforce component
-
+interface WorkforceProps {
+  onClose: () => void;
+}
 
 // $Workforce component
-const $Workforce: React.FC = () => {
+const Workforce: React.FC<WorkforceProps> = ({ onClose }) => {
   const [workforce, setWorkforce] = useState<LevelValues[]>([]);
+
+  // New state to control panel visibility
+  
 
   // Fetch workforce data
   useDataUpdate('populationInfo.ilWorkforce', setWorkforce);
 
-  // Handle panel close
-  const onClose = () => {
-    engine.trigger('infoloom.infoloom.OnToggleVisibleWorkforce', 'Workforce');
-    engine.trigger('audio.playSound', 'close-panel', 1);
-  };
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+
+  // Handler for closing the panel
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  if (!isPanelVisible) {
+    return null;
+  }
+ 
 
   // Headers for the workforce table
   const headers: { [key: string]: string } = {
@@ -99,12 +110,13 @@ const $Workforce: React.FC = () => {
     outside: 'Outside',
   };
 
+  
+
   return (
     <$Panel
-      
       title="Workforce Structure"
-      
-      initialSize={{ width: window.innerWidth * 0.33, height: window.innerHeight * 0.20 }}
+      onClose={handleClose}
+      initialSize={{ width: window.innerWidth * 0.37, height: window.innerHeight * 0.222 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
       {workforce.length === 0 ? (
@@ -154,7 +166,7 @@ const $Workforce: React.FC = () => {
   );
 };
 
-export default $Workforce;
+export default Workforce;
 
 // Registering the panel with HookUI so it shows up in the menu
 /*

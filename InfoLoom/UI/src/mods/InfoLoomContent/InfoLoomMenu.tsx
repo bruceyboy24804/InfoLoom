@@ -5,26 +5,33 @@ import styles from "./InfoLoomMenu.module.scss";
 import Demographics from "mods/InfoLoomSections/DemographicsSection/Demographics";
 import Workforce from "mods/InfoLoomSections/WorkforceSection/Workforce";
 import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
-// Import other sections as needed
-// import Residential from "mods/InfoLoomSections/ResidentialSection/Residential";
-// import Demand from "mods/InfoLoomSections/DemandSection/Demand";
-// import Commercial from "mods/InfoLoomSections/CommercialSection/Commercial";
-// import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
+import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
+import Demand from "mods/InfoLoomSections/DemandSection/Demand";
+import Commercial from "mods/InfoLoomSections/CommercialSecction/Commercial";
+//import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
+//import CommercialD from 'mods/InfoLoomSections/CommercialSecction/CommercialD';
 
-// Define the sections with their respective components
-const sections: { name: Section; component: FC }[] = [
+
+// Define the Section type
+type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial' | 'CommercialDetails';
+
+// Define a new type for components that accept an onClose prop
+type SectionComponentProps = {
+  onClose: () => void;
+};
+
+// Update the sections array type
+const sections: { name: Section; component: FC<SectionComponentProps> }[] = [
   { name: 'Demographics', component: Demographics },
   { name: 'Workforce', component: Workforce },
   { name: 'Workplaces', component: Workplaces },
   // Add other sections here
-  // { name: 'Residential', component: Residential },
-  // { name: 'Demand', component: Demand },
-  // { name: 'Commercial', component: Commercial },
-  // { name: 'Industrial', component: Industrial },
+  { name: 'Residential', component: Residential },
+  { name: 'Demand', component: Demand },
+  { name: 'Commercial', component: Commercial },
+  //{ name: 'Industrial', component: Industrial },
+  //{ name: 'CommercialDetails', component: CommercialD },
 ];
-
-// Define the Section type
-type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial';
 
 const InfoLoomButton: FC = () => {
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
@@ -36,16 +43,17 @@ const InfoLoomButton: FC = () => {
     Residential: false,
     Commercial: false,
     Industrial: false,
+    CommercialDetails: false,
   });
 
   const toggleMainMenu = useCallback(() => {
     setMainMenuOpen(prev => !prev);
   }, []);
 
-  const toggleSection = useCallback((section: Section) => {
+  const toggleSection = useCallback((section: Section, isOpen?: boolean) => {
     setOpenSections(prev => ({
       ...prev,
-      [section]: !prev[section],
+      [section]: isOpen !== undefined ? isOpen : !prev[section],
     }));
   }, []);
 
@@ -74,7 +82,7 @@ const InfoLoomButton: FC = () => {
                   openSections[name] ? styles.buttonSelected : styles.InfoLoomButton
                 }
                 onClick={() => toggleSection(name)}
-                onMouseDown={(e) => e.preventDefault()} // Prevent button shrinking on click
+                onMouseDown={(e) => e.preventDefault()}
               >
                 {name}
               </Button>
@@ -83,9 +91,10 @@ const InfoLoomButton: FC = () => {
         </div>
       )}
 
-      {/* Render Components Conditionally */}
       {sections.map(({ name, component: Component }) => (
-        openSections[name] && <Component key={name} />
+        openSections[name] && (
+          <Component key={name} onClose={() => toggleSection(name, false)} />
+        )
       ))}
     </div>
   );

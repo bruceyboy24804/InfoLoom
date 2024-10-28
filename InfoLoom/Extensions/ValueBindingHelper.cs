@@ -1,6 +1,6 @@
 ﻿
 
-namespace InfoLoom.Extensions
+namespace InfoLoomBrucey.Extensions
 {
     using System;
     using Colossal.UI.Binding;

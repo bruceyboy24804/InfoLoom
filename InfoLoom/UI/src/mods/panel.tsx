@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, FC } from 'react';
-import styles from './Panel.module.scss'; // Assuming you have a CSS module for styling
+import classNames from 'classnames';
+import styles from './Panel.module.scss';
 
 interface PanelProps {
     children: React.ReactNode;
@@ -10,6 +11,7 @@ interface PanelProps {
     onPositionChange?: (newPosition: { top: number; left: number }) => void;
     onSizeChange?: (newSize: { width: number; height: number }) => void;
     className?: string;
+    onClose?: () => void;  // Make onClose optional
 }
 
 type InteractionState = 'none' | 'dragging' | 'resizing';
@@ -23,6 +25,7 @@ const Panel: FC<PanelProps> = ({
     onPositionChange = () => {},
     onSizeChange = () => {},
     className = '',
+    onClose,  // Add onClose to the props
 }) => {
     // State for position and size
     const [position, setPosition] = useState(initialPosition);
@@ -124,7 +127,8 @@ const Panel: FC<PanelProps> = ({
     // Function to dynamically adjust font size based on panel size
     const adjustFontSize = useCallback(() => {
         if (contentRef.current) {
-            const fontSize = Math.max(Math.min(size.width * 0.02, size.height * 0.02), 12); // Clamp between 12px and 2% of width/height
+            // Calculate font size based on the panel's width and height
+            const fontSize = Math.max(Math.min(size.width * 0.02, size.height * 0.02), 8); // Clamp between 8px and 2% of width/height
             contentRef.current.style.fontSize = `${fontSize}px`;
         }
     }, [size]);
@@ -137,34 +141,72 @@ const Panel: FC<PanelProps> = ({
     return (
         <div
             ref={panelRef}
-            className={`${styles.panel} ${className}`}
             style={{
+                position: 'absolute',
                 top: position.top,
                 left: position.left,
                 width: size.width,
                 height: size.height,
+                backgroundColor: 'var(--panelColorNormal)',
+                border: '1px solid #444',
+                borderRadius: '8px',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
                 ...style,
             }}
+            className={className}
         >
-            {/* Header */}
-            <div
-                className={styles.header}
-                onMouseDown={handleDragMouseDown}
-            >
-                <span className={styles.title}>{title}</span>
+            <div className={styles.header} onMouseDown={handleDragMouseDown}>
+                <span>{title}</span>
+                {onClose && (
+                    <button
+                        className={classNames(
+                            styles.exitbutton,
+                            "button_bvQ button_bvQ close-button_wKK",
+                        )}
+                        onClick={onClose}
+                    >
+                        <div
+                            className="tinted-icon_iKo"
+                            style={{
+                                maskImage: "url(Media/Glyphs/Close.svg)",
+                                width: "var(--iconWidth)",
+                                height: "var(--iconHeight)",
+                            }}
+                        ></div>
+                    </button>
+                )}
             </div>
 
             {/* Content */}
             <div
                 ref={contentRef}
-                className={styles.content}
+                style={{
+                    flex: '1 1 auto',
+                    padding: '10px',
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95))',
+                    ...style,
+                }}
             >
                 {children}
             </div>
 
             {/* Resizer */}
             <div
-                className={styles.resizer}
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'nwse-resize',
+                    background: 'linear-gradient(45deg, transparent 50%, white 50%)',
+                }}
                 onMouseDown={handleResizeMouseDown}
             />
         </div>

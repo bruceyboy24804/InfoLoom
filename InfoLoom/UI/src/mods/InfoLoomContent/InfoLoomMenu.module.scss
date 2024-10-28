@@ -10,8 +10,8 @@
 
   background: rgba(20, 20, 20, 0.95);
   backdrop-filter: blur(10px);
-  border-radius: 16rem;
-  box-shadow: 0 6rem 18rem rgba(0, 0, 0, 0.4);
+  border-radius: 4rem;
+  //box-shadow: 0 6rem 18rem rgba(0, 0, 0, 0.4);
 
   pointer-events: auto;
   overflow: hidden;
@@ -25,8 +25,10 @@
   align-items: center;
   padding: 2rem 4rem;
   background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95));
-  border-bottom: 1px solid var(--panelBorderColor);
-  font-size: 10rem;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--accentColorNormal);
+  font-size: 14rem;
   font-weight: 600;
   color: var(--accentColorNormal);
   text-transform: uppercase;
@@ -41,35 +43,37 @@
   flex-direction: column;
   padding: 3rem 6rem;
   background: rgba(255, 255, 255, 0.05);
+  
 }
 
 .InfoLoomButton {
   width: 100%;
   padding: 10rem 12rem;
-  margin-bottom: 1.5rem;
+  border-radius: 4rem;
   border: none;
-  border-radius: 10rem;
   background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
   color: var(--menuText1Normal);
-  font-size: 10rem;
-  font-weight: bold;
+  margin: 2rem 0;
+  font-size: 14rem;
+  //font-weight: bold;
   text-transform: uppercase;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   transition: background 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4rem 10rem rgba(0, 0, 0, 0.3);
+  //box-shadow: 0 4rem 10rem rgba(0, 0, 0, 0.3);
 
   &:hover {
-    background: linear-gradient(145deg, rgba(80, 80, 80, 0.9), rgba(60, 60, 60, 0.9));
+    background-color: white;
     transform: translateY(-4rem) scale(1.02);
-    box-shadow: 0 6rem 12rem rgba(0, 0, 0, 0.5);
+    //color: white;
+    //box-shadow: 0 6rem 12rem rgba(0, 0, 0, 0.5);
   }
 
-  &:active {
-    transform: translateY(-2rem) scale(1.02); /* Keep the scale the same as hover to prevent shrinking */
-    box-shadow: 0 5rem 14rem rgba(0, 0, 0, 0.4);
-  }
+  //&:active {
+    //transform: translateY(-2rem) scale(1.02); /* Keep the scale the same as hover to prevent shrinking */
+    //box-shadow: 0 5rem 14rem rgba(0, 0, 0, 0.4);
+  //}
 
   &::before {
     content: '';
@@ -90,12 +94,22 @@
 }
 
 .buttonSelected {
-  background: linear-gradient(135deg, var(--accentColorBright), var(--accentColorDark));
-  color: white;
-  font-weight: bold;
+  width: 100%;
+  padding: 10rem 12rem;
+  margin-bottom: 1.5rem;
   border: none;
-  position: relative;
-  animation: glowPulse 1.5s infinite alternate;
+  border-radius: 4rem;
+  background: linear-gradient(145deg, rgba(0, 55, 255, 0.85), rgba(0, 55, 255, 0.85));
+  color: var(--menuText1Normal);
+  font-size: 14rem;
+  //font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  //position: relative;
+  //overflow: hidden;
+  //transition: background 0.3s ease, transform 0.2s ease;
+  //box-shadow: 0 4rem 10rem rgba(0, 0, 0, 0.3);
+  
 }
 
 @keyframes slideIn {
@@ -109,11 +123,11 @@
   }
 }
 
-@keyframes glowPulse {
+/*@keyframes glowPulse {
   0% {
     box-shadow: 0 0 12rem rgba(255, 255, 255, 0.6);
   }
   100% {
     box-shadow: 0 0 24rem rgba(255, 255, 255, 0.8);
   }
-}
+}*/

@@ -1,5 +1,5 @@
 // Workplaces.tsx
-import React, { useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
@@ -128,9 +128,13 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
 };
 
 // Main Workplaces Component
-const $Workplaces: React.FC = () => {
+interface WorkplacesProps {
+    onClose: () => void;
+}
+
+const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
     // State for controlling the visibility of the panel
-    
+    const [isPanelVisible, setIsPanelVisible] = useState(true);
 
     // Data fetching and other logic
     const [workplaces, setWorkplaces] = useState<LevelValues[]>([]);
@@ -149,93 +153,86 @@ const $Workplaces: React.FC = () => {
         open: 'Open',
     };
 
-    // Function to open the panel
-    
+    // Handler for closing the panel
+    const handleClose = useCallback(() => {
+        setIsPanelVisible(false);
+        onClose();
+    }, [onClose]);
 
-    // Conditionally render the panel based on 'modeinit' state
+    if (!isPanelVisible) {
+        return null;
+    }
+
     return (
-        <>
-            {/* Button to open the panel */}
-            
-
-            {/* Panel */}
-            <$Panel
-                
-                title="Workplace Distribution" // Pass title as string
-                initialSize={{
-                    width: window.innerWidth * 0.38,
-                    height: window.innerHeight * 0.22,
-                }}
-                initialPosition={{
-                    top: window.innerHeight * 0.05,
-                    left: window.innerWidth * 0.005,
-                }}
-                //onClose={togglePanel} // Pass the togglePanel handler
-            >
-                {workplaces.length === 0 ? (
-                    <p>Waiting...</p>
-                ) : (
-                    <div>
-                        {/* Your existing content rendering */}
-                        {/* Adjusted heights as needed */}
-                        <div style={{ height: '10rem' }}></div>
-                        <WorkforceLevel
-                            levelName="Education"
-                            levelValues={headers}
-                            total={0}
-                        />
-                        <div style={{ height: '5rem' }}></div>
-                        {/* Render WorkforceLevel components for each level */}
-                        <WorkforceLevel
-                            levelColor="#808080"
-                            levelName="Uneducated"
-                            levelValues={workplaces[0]}
-                            total={Number(workplaces[5]?.total)}
-                        />
-                        <WorkforceLevel
-                            levelColor="#B09868"
-                            levelName="Poorly Educated"
-                            levelValues={workplaces[1]}
-                            total={Number(workplaces[5]?.total)}
-                        />
-                        <WorkforceLevel
-                            levelColor="#368A2E"
-                            levelName="Educated"
-                            levelValues={workplaces[2]}
-                            total={Number(workplaces[5]?.total)}
-                        />
-                        <WorkforceLevel
-                            levelColor="#B981C0"
-                            levelName="Well Educated"
-                            levelValues={workplaces[3]}
-                            total={Number(workplaces[5]?.total)}
-                        />
-                        <WorkforceLevel
-                            levelColor="#5796D1"
-                            levelName="Highly Educated"
-                            levelValues={workplaces[4]}
-                            total={Number(workplaces[5]?.total)}
-                        />
-                        <div style={{ height: '5rem' }}></div>
-                        <WorkforceLevel
-                            levelName="TOTAL"
-                            levelValues={workplaces[5]}
-                            total={0}
-                        />
-                        <WorkforceLevel
-                            levelName="Companies"
-                            levelValues={workplaces[6]}
-                            total={0}
-                            showAll={false}
-                        />
-                    </div>
-                )}
-            </$Panel>
-        </>
+        <$Panel
+            title="Workplaces Distribution"
+            onClose={handleClose}
+            initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.255 }}
+            initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+        >
+            {workplaces.length === 0 ? (
+                <p>Waiting...</p>
+            ) : (
+                <div>
+                    {/* Your existing content rendering */}
+                    {/* Adjusted heights as needed */}
+                    <div style={{ height: '10rem' }}></div>
+                    <WorkforceLevel
+                        levelName="Education"
+                        levelValues={headers}
+                        total={0}
+                    />
+                    <div style={{ height: '5rem' }}></div>
+                    {/* Render WorkforceLevel components for each level */}
+                    <WorkforceLevel
+                        levelColor="#808080"
+                        levelName="Uneducated"
+                        levelValues={workplaces[0]}
+                        total={Number(workplaces[5]?.total)}
+                    />
+                    <WorkforceLevel
+                        levelColor="#B09868"
+                        levelName="Poorly Educated"
+                        levelValues={workplaces[1]}
+                        total={Number(workplaces[5]?.total)}
+                    />
+                    <WorkforceLevel
+                        levelColor="#368A2E"
+                        levelName="Educated"
+                        levelValues={workplaces[2]}
+                        total={Number(workplaces[5]?.total)}
+                    />
+                    <WorkforceLevel
+                        levelColor="#B981C0"
+                        levelName="Well Educated"
+                        levelValues={workplaces[3]}
+                        total={Number(workplaces[5]?.total)}
+                    />
+                    <WorkforceLevel
+                        levelColor="#5796D1"
+                        levelName="Highly Educated"
+                        levelValues={workplaces[4]}
+                        total={Number(workplaces[5]?.total)}
+                    />
+                    <div style={{ height: '5rem' }}></div>
+                    <WorkforceLevel
+                        levelName="TOTAL"
+                        levelValues={workplaces[5]}
+                        total={0}
+                    />
+                    <WorkforceLevel
+                        levelName="Companies"
+                        levelValues={workplaces[6]}
+                        total={0}
+                        showAll={false}
+                    />
+                </div>
+            )}
+        </$Panel>
     );
 };
 
-export default $Workplaces;
+export default Workplaces;
 
 // Registering the panel with HookUI (if needed)
 // window._$hookui.registerPanel({

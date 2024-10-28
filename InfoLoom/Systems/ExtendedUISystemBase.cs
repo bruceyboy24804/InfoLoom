@@ -1,5 +1,6 @@
 ﻿using Colossal.UI.Binding;
 using Game.UI;
+using InfoLoom;
 using System;
 using System.Collections.Generic;
 using System.Linq;

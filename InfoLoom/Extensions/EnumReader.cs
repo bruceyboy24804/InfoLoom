@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace InfoLoom.Extensions
+namespace InfoLoomBrucey.Extensions
 {
     using Colossal.UI.Binding;
 

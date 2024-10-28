@@ -4,22 +4,23 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds 3 new UI windows to the game" />
+	<ShortDescription Value="Adds 6 new UI windows to the game" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
 - **Most of the credit goes to Infixo for making the original version of this mod, i just i just updated and made sure it worked properly and updated the UI.**
-- **Adds 3 new UI windows to the game, which are Demographics,Workforce structure and Workplace distribution.**
+- **Adds 6 new UI windows to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors.**
 
 ###Currently:
 - Demographics
 - Workforce structure
 - Workplace distribution 
-- Residential data (Coming soon)
-- Commercial data (Coming soon)
+- Residential data 
+- Commercial data
 - Industrial and Office data (Coming soon)
-- Demand factors (Coming soon)
-- Resources consumption (optional) (Coming soon)
+- Demand factors 
+- Resources consumption (Coming soon)
+- Pruction types ui (Coming soon)
 
 ### Demographics
 - Key information about current city demographics in one place.
@@ -40,6 +41,27 @@ NEW - summary statistics for each age group.
 - Commute are cims employed from outside of the city, they commute to work.
 - Shows number of companies in each category.
 
+### Residential data
+- Shows residential data used to calculate Residential Demand Factors.
+- Residential properties by density: total count, occupied, free.
+- Total households and homeless households.
+- Average happiness, weighted tax rate, open study positions.
+- Household demand which is hidden in the game, it controls if new households spawn.
+- For new households, a chance that a Student Household will spawn.
+
+### Demand factors
+- Shows individual demand factor VALUES for each demand type. Helpful to learn actual importance of each factor.
+- Enables showing all demand factors, not only 5. (Useful for industrial demand which is the only one that utilizes up to 7 factors. This may have changed in recent updates).
+- Additional section shows directly building demand for each zone type and STORAGE demand. Please note that the "main" demand factor is actually a building demand, however UI shows it as moving. In fact it doesn't move, it is just a visualization.
+- Also, industrial demand is a higher value from the two: industrial building demand and storage demand.
+
+### Commercial data
+- Shows commercial data used to calculate Commercial Demand Factors.
+- Empty buildings and companies that have no property, and average tax rate.
+- Service capacity utilization and sales capacity to consumption ratio - these are crucial in calculating LocalDemand, TouristDemand and PetrolLocalDemand.
+- Actual numbers of available workforce, and employee capacity ratio.
+- Lists resources that currently are not demanded, thus the engine ignores them when calculating Commercial Demand Factors.
+
 ### Credit
 - Dava787: screenshot of the Workplace distribution UI
 	</LongDescription>
@@ -49,22 +71,22 @@ NEW - summary statistics for each age group.
 	<Screenshot Value="Properties/Screenshots/Demographics.png" />
 	<Screenshot Value="Properties/Screenshots/Workforce.png" />
 	<Screenshot Value="Properties/Screenshots/WorkplaceDistribution.png" />
+	<Screenshot Value="Properties/Screenshots/Demand.png" />
+	<Screenshot Value="Properties/Screenshots/ResidentialData.png" />
+	<Screenshot Value="Properties/Screenshots/CommercialData.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.1" />
+	<ModVersion Value="1.0.4a" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.0.1
-- added workplace distribution
-- added redisgned the button menu
-- made the panels look similair to vanilla panels to make it more consistent
-- made the chart for demographics slighly better</ChangeLog>
+	<ChangeLog>## Version 1.0.4a
+- Compatibility with Realistic Trips.</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />
