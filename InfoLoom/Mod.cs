@@ -40,7 +40,7 @@ namespace InfoLoom
             log.Info(nameof(OnLoad));
             Instance = this;
             // Try to fetch the mod asset from the mod manager
-            /*setting = new Setting(this);
+            setting = new Setting(this);
             if (setting == null)
             {
                 Log.Error("Failed to initialize settings.");
@@ -50,7 +50,7 @@ namespace InfoLoom
             AssetDatabase.global.LoadSettings(nameof(InfoLoom), setting, new Setting(this));
 
             // Load localization
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));*/
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
 
             var harmony = new Harmony(harmonyId);
             harmony.PatchAll(typeof(Mod).Assembly);
@@ -71,7 +71,7 @@ namespace InfoLoom
             updateSystem.UpdateAt<CommercialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
             //updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            //updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
            
         }
 
@@ -80,11 +80,11 @@ namespace InfoLoom
         {
             // Log entry for debugging purposes
             log.Info(nameof(OnDispose));
-            /*if (setting != null)
+            if (setting != null)
             {
                 setting.UnregisterInOptionsUI();
                 setting = null;
-            }*/
+            }
 
             var harmony = new Harmony(harmonyId);
             harmony.UnpatchAll(harmonyId);

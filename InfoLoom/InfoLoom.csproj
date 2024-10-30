@@ -20,13 +20,10 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
-	  <Compile Remove="Setting.cs" />
-	  <Compile Remove="Systems\CommercialUISystem.cs" />
 	  <Compile Remove="Systems\IndustrialDemandUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="UI\src\mods\Bindings.ts" />
-	  <None Remove="UI\src\mods\InfoLoomSections\CommercialSecction\CommercialD.tsx" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -9,11 +9,11 @@ import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
 import Demand from "mods/InfoLoomSections/DemandSection/Demand";
 import Commercial from "mods/InfoLoomSections/CommercialSecction/Commercial";
 //import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
-//import CommercialD from 'mods/InfoLoomSections/CommercialSecction/CommercialD';
+import CommercialProducts from 'mods/InfoLoomSections/CommercialSecction/CommercialD';
 
 
 // Define the Section type
-type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial' | 'CommercialDetails';
+type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial' | 'Commercial Products';
 
 // Define a new type for components that accept an onClose prop
 type SectionComponentProps = {
@@ -21,16 +21,15 @@ type SectionComponentProps = {
 };
 
 // Update the sections array type
-const sections: { name: Section; component: FC<SectionComponentProps> }[] = [
-  { name: 'Demographics', component: Demographics },
-  { name: 'Workforce', component: Workforce },
-  { name: 'Workplaces', component: Workplaces },
-  // Add other sections here
-  { name: 'Residential', component: Residential },
-  { name: 'Demand', component: Demand },
-  { name: 'Commercial', component: Commercial },
-  //{ name: 'Industrial', component: Industrial },
-  //{ name: 'CommercialDetails', component: CommercialD },
+const sections: { name: Section; displayName: string; component: FC<SectionComponentProps> }[] = [
+  { name: 'Demographics', displayName: 'Demographics', component: Demographics },
+  { name: 'Workforce', displayName: 'Workforce', component: Workforce },
+  { name: 'Workplaces', displayName: 'Workplaces', component: Workplaces },
+  { name: 'Residential', displayName: 'Residential', component: Residential },
+  { name: 'Demand', displayName: 'Demand', component: Demand },
+  { name: 'Commercial', displayName: 'Commercial', component: Commercial },
+  //{ name: 'Industrial', displayName: 'Industrial', component: Industrial },
+  { name: 'Commercial Products', displayName: 'Commercial Products', component: CommercialProducts },
 ];
 
 const InfoLoomButton: FC = () => {
@@ -43,8 +42,8 @@ const InfoLoomButton: FC = () => {
     Residential: false,
     Commercial: false,
     Industrial: false,
-    CommercialDetails: false,
-  });
+    'Commercial Products': false,
+});
 
   const toggleMainMenu = useCallback(() => {
     setMainMenuOpen(prev => !prev);

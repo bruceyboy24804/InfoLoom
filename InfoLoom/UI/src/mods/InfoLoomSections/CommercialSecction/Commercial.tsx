@@ -112,7 +112,7 @@ const ColumnCommercialData: FC<ColumnCommercialDataProps> = ({ data }) => {
       </div>
       
       <RowWithThreeColumns left="SERVICE UTILIZATION" leftSmall="30% is the neutral ratio" right1={data[3]} flag1={data[3]<30} right2={data[4]} flag2={data[4]<30} />
-      <RowWithThreeColumns left="SALES CAPACITY" leftSmall="100% when capacity = consumption" right1={data[5]} flag1={data[5]>100} right2={data[6]} flag2={data[6]>100} />
+      <RowWithThreeColumns left="PRODUCTION CAPACITY" leftSmall="100% when production capacity = resources needs" right1={data[5]} flag1={data[5]>100} right2={data[6]} flag2={data[6]>100} />
       
       <DataDivider />
       

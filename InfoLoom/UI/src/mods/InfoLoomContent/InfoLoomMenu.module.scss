@@ -1,7 +1,7 @@
 @use "../base.scss" as _base;
 
 .panel {
-  width: 200rem;
+  width: 150rem;
   top: 100rem;
   right: 10rem;
   z-index: 10;
@@ -21,6 +21,7 @@
 
 .header {
   display: flex;
+  border-radius: 4rem;
   justify-content: center;
   align-items: center;
   padding: 2rem 4rem;
@@ -28,7 +29,7 @@
   border-bottom-width: 3px;
   border-bottom-style: solid;
   border-bottom-color: var(--accentColorNormal);
-  font-size: 14rem;
+  font-size: 8rem;
   font-weight: 600;
   color: var(--accentColorNormal);
   text-transform: uppercase;
@@ -44,17 +45,20 @@
   padding: 3rem 6rem;
   background: rgba(255, 255, 255, 0.05);
   
+  
 }
 
 .InfoLoomButton {
   width: 100%;
-  padding: 10rem 12rem;
+  padding: 4rem 8rem;
   border-radius: 4rem;
+  margin: 3rem 0;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
   border: none;
   background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
   color: var(--menuText1Normal);
-  margin: 2rem 0;
-  font-size: 14rem;
+  font-size: 10rem;
   //font-weight: bold;
   text-transform: uppercase;
   cursor: pointer;
@@ -65,7 +69,7 @@
 
   &:hover {
     background-color: white;
-    transform: translateY(-4rem) scale(1.02);
+    transform: translateY(-2rem) scale(1.02);
     //color: white;
     //box-shadow: 0 6rem 12rem rgba(0, 0, 0, 0.5);
   }
@@ -95,13 +99,15 @@
 
 .buttonSelected {
   width: 100%;
-  padding: 10rem 12rem;
-  margin-bottom: 1.5rem;
+  padding: 4rem 8rem;
+  border-radius: 3rem;
+  margin: 3rem 0;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
   border: none;
-  border-radius: 4rem;
   background: linear-gradient(145deg, rgba(0, 55, 255, 0.85), rgba(0, 55, 255, 0.85));
   color: var(--menuText1Normal);
-  font-size: 14rem;
+  font-size: 10rem;
   //font-weight: bold;
   text-transform: uppercase;
   cursor: pointer;

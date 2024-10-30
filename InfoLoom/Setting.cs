@@ -61,8 +61,8 @@ namespace InfoLoom
             { m_Setting.GetOptionGroupLocaleID(Setting.kOptionsGroup), "Options" },
             { m_Setting.GetOptionGroupLocaleID(Setting.kButtonGroup), "Actions" },
 
-            { m_Setting.GetOptionLabelLocaleID(nameof(Setting.FeatureCommercialDemand)), "Enable Commercial Demand" },
-            { m_Setting.GetOptionDescLocaleID(nameof(Setting.FeatureCommercialDemand)), "Enables modded commercial demand and dedicated UI." },
+            { m_Setting.GetOptionLabelLocaleID(nameof(Setting.FeatureCommercialDemand)), "Responsive Commercial Demand" },
+            { m_Setting.GetOptionDescLocaleID(nameof(Setting.FeatureCommercialDemand)), "Enables responsive commercial demand with better tax effect on products." },
 
             };
         }

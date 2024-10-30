@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
-import { DropdownToggle } from 'cs2/ui';
+
 
 // Declare the global 'engine' object to avoid TypeScript errors.
 // You should replace 'any' with the appropriate type if available.
@@ -175,23 +175,26 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
 };
 
 // Interface for $Commercial props
-
+interface CommercialProps {
+  
+  onClose: () => void;
+}
 
 // Component: $Commercial
-const $Commercial: React.FC = () => {
+const $Commercial: FC<CommercialProps> = ({ onClose }) => {
   // Demand data for each resource
   const [demandData, setDemandData] = useState<ResourceData[]>([]);
 
   // Custom hook to update data
-  useDataUpdate('infoLoom.commercialDemand', setDemandData);
+  useDataUpdate('realEco.commercialDemand', setDemandData);
 
   // State to control panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   // Handler for closing the panel
   const handleClose = useCallback(() => {
-    setIsPanelVisible(false);
-  }, []);
+    onClose();
+  }, [onClose]);
 
   if (!isPanelVisible) {
     return null;
@@ -199,7 +202,7 @@ const $Commercial: React.FC = () => {
 
   return (
     <$Panel
-      title="Commercial"
+      title="Commercial Products"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.37, height: window.innerHeight * 0.333 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
@@ -217,7 +220,7 @@ const $Commercial: React.FC = () => {
             <SingleValue value="Free" width="4%" />
             <SingleValue value="Num" width="5%" />
             <SingleValue value="Service" width="12%" small={true} />
-            <SingleValue value="Sales Capacity" width="20%" small={true} />
+            <SingleValue value="Production Capacity" width="20%" small={true} />
             <SingleValue value="Workers" width="18%" small={true} />
             <SingleValue value="Edu" width="6%" small={true} />
             <SingleValue value="Tax" width="6%" small={true} />
