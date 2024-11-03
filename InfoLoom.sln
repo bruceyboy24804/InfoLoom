@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfoLoom", "InfoLoom\InfoLoom.csproj", "{BA9FE97F-B42B-4993-9A18-4C01922FA142}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfoLoomTwo", "InfoLoom\InfoLoomTwo.csproj", "{BA9FE97F-B42B-4993-9A18-4C01922FA142}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

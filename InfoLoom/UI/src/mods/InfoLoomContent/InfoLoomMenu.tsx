@@ -8,12 +8,13 @@ import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
 import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
 import Demand from "mods/InfoLoomSections/DemandSection/Demand";
 import Commercial from "mods/InfoLoomSections/CommercialSecction/Commercial";
-//import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
+import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
 import CommercialProducts from 'mods/InfoLoomSections/CommercialSecction/CommercialD';
+//import IndustrialProducts from 'mods/InfoLoomSections/IndustrialSection/IndustrialD';
 
 
 // Define the Section type
-type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial' | 'Commercial Products';
+type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Industrial' | 'Commercial Products' | 'Industrial Products';
 
 // Define a new type for components that accept an onClose prop
 type SectionComponentProps = {
@@ -28,8 +29,9 @@ const sections: { name: Section; displayName: string; component: FC<SectionCompo
   { name: 'Residential', displayName: 'Residential', component: Residential },
   { name: 'Demand', displayName: 'Demand', component: Demand },
   { name: 'Commercial', displayName: 'Commercial', component: Commercial },
-  //{ name: 'Industrial', displayName: 'Industrial', component: Industrial },
+  { name: 'Industrial', displayName: 'Industrial', component: Industrial },
   { name: 'Commercial Products', displayName: 'Commercial Products', component: CommercialProducts },
+  //{ name: 'Industrial Products', displayName: 'Industrial Products', component: IndustrialProducts },
 ];
 
 const InfoLoomButton: FC = () => {
@@ -43,6 +45,7 @@ const InfoLoomButton: FC = () => {
     Commercial: false,
     Industrial: false,
     'Commercial Products': false,
+    'Industrial Products': false,
 });
 
   const toggleMainMenu = useCallback(() => {

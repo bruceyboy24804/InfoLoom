@@ -1,6 +1,6 @@
 ﻿
 
-namespace InfoLoomBrucey.Extensions
+namespace InfoLoomTwo.Extensions
 {
     using System;
     using System.Collections;

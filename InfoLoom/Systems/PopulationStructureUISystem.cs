@@ -17,9 +17,8 @@ using System.Collections.Generic;
 using System;
 using Game.Buildings;
 using Game;
-using InfoLoom;
 
-namespace InfoLoomBrucey.Systems;
+namespace InfoLoomTwo.Systems;
 
 // This System is based on PopulationInfoviewUISystem by CO
 [CompilerGenerated]

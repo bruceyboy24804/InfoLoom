@@ -24,9 +24,8 @@ using Game.UI;
 using Colossal.UI.Binding;
 using System.Collections.Generic;
 using System.Reflection;
-using InfoLoom;
 
-namespace InfoLoomBrucey.Systems;
+namespace InfoLoomTwo.Systems;
 
 [CompilerGenerated]
 public partial class CommercialDemandUISystem : UISystemBase

@@ -21,7 +21,7 @@ using Game;
 using Game.UI;
 using Game.Simulation; // TODO: use UIUpdateState and Advance() eventully...
 
-namespace InfoLoomBrucey.Systems
+namespace InfoLoomTwo.Systems
 {
     public partial class WorkforceInfoLoomUISystem : UISystemBase
     {

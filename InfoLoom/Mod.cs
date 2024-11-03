@@ -3,32 +3,32 @@ using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
 using Game.Modding;
+using Game.Net;
 using Game.SceneFlow;
 using Game.Settings;
+using Game.Simulation;
 using HarmonyLib;
-using InfoLoomBrucey;
-using InfoLoomBrucey.Extensions;
-using InfoLoomBrucey.Systems;
+using InfoLoomTwo.Systems;
 using System.Linq;
 
 
 
-namespace InfoLoom
+namespace InfoLoomTwo
 {
     // Mod class implementing IMod interface
     public class Mod : IMod
     {
-        public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoom);
+        public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
         public static Setting setting;
         public static readonly string Id = "InfoLoom";
-
         public static Mod Instance { get; private set; }
-        public static ExecutableAsset modAsset { get; private set; }
+        
+        public static ExecutableAsset modAsset { get; private set; }    
         internal ILog Log { get; private set; }
 
         // Static logger instance with custom logger name and settings
-        public static ILog log = LogManager.GetLogger($"{nameof(InfoLoom)}.{nameof(Mod)}")
+        public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
             .SetShowsErrorsInUI(false);
 
         
@@ -47,7 +47,7 @@ namespace InfoLoom
                 return;
             }
             setting.RegisterInOptionsUI();
-            AssetDatabase.global.LoadSettings(nameof(InfoLoom), setting, new Setting(this));
+           AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
             // Load localization
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
@@ -60,7 +60,7 @@ namespace InfoLoom
             {
                 log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
             }
-
+            updateSystem.World.GetOrCreateSystemManaged<CommercialDemandSystem>().Enabled = false;
 
 
             // Register custom update systems for UI updates
@@ -70,8 +70,10 @@ namespace InfoLoom
             updateSystem.UpdateAt<ResidentialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<CommercialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            //updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CustomCommercialDemandSystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAt<IndustrialUISystem>(SystemUpdatePhase.UIUpdate);
            
         }
 

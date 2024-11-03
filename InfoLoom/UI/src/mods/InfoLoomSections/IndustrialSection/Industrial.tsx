@@ -205,6 +205,8 @@ const ColumnIndustrialData: React.FC<ColumnIndustrialDataProps> = ({ data }) => 
             height: '2.2em',
             display: 'flex',
             alignItems: 'center',
+            fontSize: '15rem',
+            color: 'white',
           }}
         >
           AVAILABLE WORKFORCE
@@ -226,8 +228,9 @@ const ColumnIndustrialData: React.FC<ColumnIndustrialDataProps> = ({ data }) => 
             flexDirection: 'column',
           }}
         >
-          <p>STORAGE</p>
-          <p style={{ fontSize: '80%' }}>
+          <p style={{ fontSize: '15rem', color: 'white' }}>
+            STORAGE</p>
+          <p style={{ fontSize: '12rem', color: 'white' }}>
             The game will spawn warehouses when DEMANDED TYPES exist.
           </p>
         </div>
@@ -242,19 +245,26 @@ const ColumnIndustrialData: React.FC<ColumnIndustrialDataProps> = ({ data }) => 
 };
 
 const ColumnExcludedResources: React.FC<ColumnExcludedResourcesProps> = ({ resources }) => {
-  return (
-    <div style={{ width: '25%', boxSizing: 'border-box', border: '1px solid gray' }}>
-      <div className="row_S2v">No demand for:</div>
-      <ul>
-        {resources.map((item, index) => (
-          <li key={index}>
-            <div className="row_S2v small_ExK">{item}</div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+	return (
+	  <div style={{ width: '25%', boxSizing: 'border-box', border: '1px solid gray' }}>
+		<div className="row_S2v" style={{ 
+		  fontSize: '2em',  // Make text larger
+		  color: 'white',     // Make text white
+		  padding: '0.5em 0'  // Add some padding for better spacing
+		}}>
+		  No demand for:
+		</div>
+		<ul>
+		  {resources.map((item, index) => (
+			<li key={index}>
+			  <div className="row_S2v small_ExK">{item}</div>
+			</li>
+		  ))}
+		</ul>
+	  </div>
+	);
+  }
+
 
 // Declare the engine object if it's globally available
 
@@ -288,7 +298,7 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
       
       title="Industrial and Office Data"
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.32 }}
+      initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.36 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
       {industrialData.length === 0 ? (

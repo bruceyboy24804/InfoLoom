@@ -1,13 +1,12 @@
 ﻿using Colossal.UI.Binding;
 using Game.UI;
-using InfoLoom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace InfoLoomBrucey.Systems
+namespace InfoLoomTwo.Systems
 {
     public abstract partial class ExtendedUISystemBase : UISystemBase
     {

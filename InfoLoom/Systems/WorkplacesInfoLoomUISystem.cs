@@ -15,9 +15,8 @@ using Game.Simulation;
 using Game.Economy;
 using Game.Citizens;
 using Game.UI.InGame;
-using InfoLoom;
 
-namespace InfoLoomBrucey.Systems
+namespace InfoLoomTwo.Systems
 {
     // Extend from ExtendedUISystemBase to use the binding helpers
     public partial class WorkplacesInfoLoomUISystem : UISystemBase

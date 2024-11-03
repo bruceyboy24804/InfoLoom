@@ -2,7 +2,6 @@
 using Game;
 using Game.Simulation;
 using Game.UI;
-using InfoLoom;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -11,7 +10,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.Scripting;
 
-namespace InfoLoomBrucey.Systems;
+namespace InfoLoomTwo.Systems;
 
 
 public partial class BuildingDemandUISystem : UISystemBase

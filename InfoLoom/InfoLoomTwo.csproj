@@ -14,29 +14,23 @@
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
 	<ItemGroup>
-	  <Compile Remove="UI\src\mods\InfoLoomSections\IndustrialSection\**" />
-	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\IndustrialSection\**" />
-	  <None Remove="UI\src\mods\InfoLoomSections\IndustrialSection\**" />
-	</ItemGroup>
-	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
-	  <Compile Remove="Systems\IndustrialDemandUISystem.cs" />
+	  <Compile Remove="Systems\IndustrialUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="Setting.cs~RF27a28093.TMP" />
 	  <None Remove="UI\src\mods\Bindings.ts" />
+	  <None Remove="UI\src\mods\InfoLoomSections\IndustrialSection\IndustrialD.tsx" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Colossal.Mathematics">
-			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.Mathematics.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Colossal.UI.Binding">
-			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.UI.Binding.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Colossal.Collections">
-			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.Collections.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Game">

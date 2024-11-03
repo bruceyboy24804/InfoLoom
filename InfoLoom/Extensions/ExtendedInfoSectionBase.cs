@@ -1,14 +1,13 @@
 ﻿
 
-namespace InfoLoomBrucey.Extensions
+namespace InfoLoomTwo.Extensions
 {
     using System;
     using Colossal.UI.Binding;
     using Game.UI.InGame;
-    using InfoLoomBrucey.Extensions;
-    using InfoLoomBrucey;
-    using InfoLoomBrucey.Systems;
-    using InfoLoom;
+    using InfoLoomTwo.Extensions;
+    using InfoLoomTwo.Systems;
+    using InfoLoomTwo;
 
     public abstract partial class ExtendedInfoSectionBase : InfoSectionBase
     {

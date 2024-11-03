@@ -24,10 +24,9 @@ using Game.Simulation;
 using Game.UI;
 using Colossal.UI.Binding;
 using Game.Companies;
-using InfoLoom;
 using System;
 
-namespace InfoLoomBrucey.Systems;
+namespace InfoLoomTwo.Systems;
 
 [CompilerGenerated]
 public partial class ResidentialDemandUISystem : UISystemBase

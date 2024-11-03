@@ -3,6 +3,7 @@ import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
 
+
 // Declare the global 'engine' object to avoid TypeScript errors.
 // You should replace 'any' with the appropriate type if available.
 
@@ -88,7 +89,7 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
 const DataDivider: React.FC = () => {
   return (
     <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
-      <div style={{ borderBottom: '1px solid white' }}></div>
+      <div style={{ borderBottom: '1px solid gray' }}></div>
     </div>
   );
 };
@@ -136,9 +137,10 @@ interface ResourceData {
   capfactor: number;
   cappercent: number;
   cappercompany: number;
-  workers: number;
   wrkfactor: number;
   wrkpercent: number;
+  workers: number;
+  edufactor: number;
   taxfactor: number;
 }
 
@@ -158,35 +160,34 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <SingleValue value={data.building} width="4%" flag={data.building <= 0} />
       <SingleValue value={data.free} width="4%" flag={data.free <= 0} />
       <SingleValue value={data.companies} width="5%" />
-
-    
-      <SingleValue value={`${data.svcpercent}%`} width="12%" flag={data.svcpercent > 50} small={true} />
-
-      <SingleValue value={data.cappercompany} width="10%" small={true} />
-      <SingleValue value={`${data.cappercent}%`} width="10%" flag={data.cappercent > 200} small={true} />
-      
-      <SingleValue value={data.workers} width="9%" small={true} />
-      <SingleValue value={`${data.wrkpercent}%`} width="9%" flag={data.wrkpercent < 90} small={true} />
-
-      <SingleValue value={data.taxfactor} width="12%" flag={data.taxfactor < 0} small={true} />
+      <SingleValue value={data.svcfactor} width="6%" flag={data.svcfactor < 0} small={true} />
+      <SingleValue value={`${data.svcpercent}%`} width="6%" flag={data.svcpercent > 50} small={true} />
+      <SingleValue value={data.capfactor} width="6%" flag={data.capfactor < 0} small={true} />
+      <SingleValue value={`${data.cappercent}%`} width="7%" flag={data.cappercent > 200} small={true} />
+      <SingleValue value={data.cappercompany} width="7%" small={true} />
+      <SingleValue value={data.wrkfactor} width="6%" flag={data.wrkfactor < 0} small={true} />
+      <SingleValue value={`${data.wrkpercent}%`} width="6%" flag={data.wrkpercent < 90} small={true} />
+      <SingleValue value={data.workers} width="6%" small={true} />
+      <SingleValue value={data.edufactor} width="6%" flag={data.edufactor < 0} small={true} />
+      <SingleValue value={data.taxfactor} width="6%" flag={data.taxfactor < 0} small={true} />
     </div>
     // <div className="row_S2v" style={{ width: '45%', fontSize: '80%' }}>{data.details}</div>
   );
 };
 
-// Interface for $Commercial props
-interface CommercialProps {
+// Interface for $Industrial props
+interface IndustrialProps {
   
   onClose: () => void;
 }
 
 // Component: $Commercial
-const $Commercial: FC<CommercialProps> = ({ onClose }) => {
+const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   // Demand data for each resource
   const [demandData, setDemandData] = useState<ResourceData[]>([]);
 
   // Custom hook to update data
-  useDataUpdate('realEco.commercialDemand', setDemandData);
+  useDataUpdate('realEco.industrialDemand', setDemandData);
 
   // State to control panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -202,7 +203,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
 
   return (
     <$Panel
-      title="Commercial Products"
+      title="Industrial and Office Products"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
@@ -222,7 +223,8 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
             <SingleValue value="Service" width="12%" small={true} />
             <SingleValue value="Production Capacity" width="20%" small={true} />
             <SingleValue value="Workers" width="18%" small={true} />
-            <SingleValue value="Tax" width="12%" small={true} />
+            <SingleValue value="Edu" width="6%" small={true} />
+            <SingleValue value="Tax" width="6%" small={true} />
           </div>
 
           {demandData
@@ -236,7 +238,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
   );
 };
 
-export default $Commercial;
+export default $IndustrialProducts;
 
 // Registering the panel with HookUI so it shows up in the menu
 /*

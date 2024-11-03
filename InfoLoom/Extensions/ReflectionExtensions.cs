@@ -1,8 +1,8 @@
 ﻿
 
-namespace InfoLoomBrucey.Extensions
+namespace InfoLoomTwo.Extensions
 {
-    using InfoLoom;
+    
     using System.Reflection;
   
 

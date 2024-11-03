@@ -12,7 +12,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
-namespace InfoLoomBrucey.Patches
+namespace InfoLoomTwo.Patches
 {
     [HarmonyPatch]
     static class GamePatches

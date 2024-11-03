@@ -11,7 +11,7 @@ using Game.Economy;
 using Game.Prefabs;
 using Game.Reflection;
 using Game.Tools;
-using Game.Zones;
+using Game.Zones; // Added for ZoneData
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -22,20 +22,20 @@ using UnityEngine.Scripting;
 using Game;
 using Game.Simulation;
 using HarmonyLib;
-using static InfoLoomBrucey.Systems.CommercialUISystem;
-using InfoLoom;
+using InfoLoomTwo;
+using static InfoLoomTwo.Systems.CommercialUISystem;
 
-namespace InfoLoomBrucey.Patches;
+namespace InfoLoomTwo.Patches;
 
 [HarmonyPatch]
 public class CommercialDemandSystem_Patches
 {
-    [BurstCompile]
+    //[BurstCompile]
     private struct UpdateCommercialDemandJob : IJob
     {
         [DeallocateOnJobCompletion]
         [ReadOnly]
-        public NativeArray<ZoneData> m_UnlockedZoneDatas;
+        public NativeArray<ZoneData> m_UnlockedZoneDatas; // Added for unlocked zones
 
         [ReadOnly]
         public NativeList<ArchetypeChunk> m_FreePropertyChunks;
@@ -82,6 +82,15 @@ public class CommercialDemandSystem_Patches
 
         public NativeArray<int> m_BuildingDemands;
 
+        public NativeArray<int> m_CurrentServiceWorkers;
+
+        public NativeArray<int> m_MaxServiceWorkers;
+
+        public NativeArray<int> m_ServiceCompanies;
+
+        public NativeArray<int> m_TotalAvailables;
+
+       
         [ReadOnly]
         public NativeArray<int> m_ResourceNeeds;
 
@@ -94,34 +103,17 @@ public class CommercialDemandSystem_Patches
         [ReadOnly]
         public NativeArray<int> m_Propertyless;
 
-        [ReadOnly]
-        public NativeArray<int> m_Companies;
-
-        [ReadOnly]
-        public NativeArray<int> m_Productions;
-
-        [ReadOnly]
-        public NativeArray<int> m_TotalCurrentWorkers;
-
-        [ReadOnly]
-        public NativeArray<int> m_TotalMaxWorkers;
-
-        [ReadOnly]
-        public NativeArray<int> m_TotalAvailables;
-
-        [ReadOnly]
-        public NativeArray<int> m_TotalMaximums;
-
-        public NativeArray<DemandData> m_DemandData;
+        public NativeArray<DemandData> m_DemandData; // Added for UI data
 
         public void Execute()
         {
-            bool hasCommercialZones = false;
+            // Check for unlocked commercial zones
+            bool flag = false;
             for (int i = 0; i < m_UnlockedZoneDatas.Length; i++)
             {
                 if (m_UnlockedZoneDatas[i].m_AreaType == AreaType.Commercial)
                 {
-                    hasCommercialZones = true;
+                    flag = true;
                     break;
                 }
             }
@@ -134,144 +126,132 @@ public class CommercialDemandSystem_Patches
                 m_BuildingDemands[resourceIndex] = 0;
                 m_ResourceDemands[resourceIndex] = 0;
             }
-
             for (int j = 0; j < m_DemandFactors.Length; j++)
             {
                 m_DemandFactors[j] = 0;
             }
-
-            // Count free properties
             for (int k = 0; k < m_FreePropertyChunks.Length; k++)
             {
-                ArchetypeChunk chunk = m_FreePropertyChunks[k];
-                NativeArray<PrefabRef> prefabRefs = chunk.GetNativeArray(ref m_PrefabType);
-                BufferAccessor<Renter> renters = chunk.GetBufferAccessor(ref m_RenterType);
-
-                for (int l = 0; l < prefabRefs.Length; l++)
+                ArchetypeChunk archetypeChunk = m_FreePropertyChunks[k];
+                NativeArray<PrefabRef> nativeArray = archetypeChunk.GetNativeArray(ref m_PrefabType);
+                BufferAccessor<Renter> bufferAccessor = archetypeChunk.GetBufferAccessor(ref m_RenterType);
+                for (int l = 0; l < nativeArray.Length; l++)
                 {
-                    Entity prefab = prefabRefs[l].m_Prefab;
+                    Entity prefab = nativeArray[l].m_Prefab;
                     if (!m_BuildingPropertyDatas.HasComponent(prefab))
-                        continue;
-
-                    bool hasCommercialRenter = false;
-                    DynamicBuffer<Renter> buildingRenters = renters[l];
-                    for (int m = 0; m < buildingRenters.Length; m++)
                     {
-                        if (m_CommercialCompanies.HasComponent(buildingRenters[m].m_Renter))
+                        continue;
+                    }
+                    bool flag2 = false;
+                    DynamicBuffer<Renter> dynamicBuffer = bufferAccessor[l];
+                    for (int m = 0; m < dynamicBuffer.Length; m++)
+                    {
+                        if (m_CommercialCompanies.HasComponent(dynamicBuffer[m].m_Renter))
                         {
-                            hasCommercialRenter = true;
+                            flag2 = true;
                             break;
                         }
                     }
-
-                    if (hasCommercialRenter)
+                    if (flag2)
+                    {
                         continue;
-
-                    BuildingPropertyData propertyData = m_BuildingPropertyDatas[prefab];
+                    }
+                    BuildingPropertyData buildingPropertyData = m_BuildingPropertyDatas[prefab];
                     ResourceIterator iterator2 = ResourceIterator.GetIterator();
                     while (iterator2.Next())
                     {
-                        if ((propertyData.m_AllowedSold & iterator2.resource) != Resource.NoResource)
+                        if ((buildingPropertyData.m_AllowedSold & iterator2.resource) != Resource.NoResource)
                         {
                             m_FreeProperties[EconomyUtils.GetResourceIndex(iterator2.resource)]++;
                         }
                     }
                 }
             }
-
             m_CompanyDemand.value = 0;
             m_BuildingDemand.value = 0;
-
             iterator = ResourceIterator.GetIterator();
-            int resourceCount = 0;
-
+            int num = 0;
             while (iterator.Next())
             {
-                int resourceIndex = EconomyUtils.GetResourceIndex(iterator.resource);
+                int resourceIndex2 = EconomyUtils.GetResourceIndex(iterator.resource);
                 if (!EconomyUtils.IsCommercialResource(iterator.resource) || !m_ResourceDatas.HasComponent(m_ResourcePrefabs[iterator.resource]))
-                    continue;
-
-                float taxEffect = -0.05f * ((float)TaxSystem.GetCommercialTaxRate(iterator.resource, m_TaxRates) - 10f);
-                int resourceNeed = ((m_ResourceNeeds[resourceIndex] == 0 && iterator.resource != Resource.Lodging) ? 100 : m_ResourceNeeds[resourceIndex]);
-                int currentAvailable = ((m_CurrentAvailables[resourceIndex] == 0) ? m_ProduceCapacity[resourceIndex] : m_CurrentAvailables[resourceIndex]);
-
-                // Calculate demand
-                m_ResourceDemands[resourceIndex] = Mathf.RoundToInt((1f + taxEffect) *
-                    math.clamp(math.max(m_DemandParameters.m_CommercialBaseDemand * (float)resourceNeed - (float)currentAvailable, 0f), 0f, 100f));
-
-                // Update UI data
-                DemandData uiData = m_DemandData[resourceIndex];
-                uiData.Resource = iterator.resource;
-                uiData.Demand = m_ResourceDemands[resourceIndex];
-                uiData.Building = m_BuildingDemands[resourceIndex];
-                uiData.Free = m_FreeProperties[resourceIndex];
-                uiData.Companies = m_Companies[resourceIndex];
-                uiData.Workers = m_TotalCurrentWorkers[resourceIndex];
-
-                // Service factors
-                float serviceFactor = ((m_TotalMaximums[resourceIndex] == 0) ? 0f :
-                    (-2.5f + 5f * (1f - (float)m_TotalAvailables[resourceIndex] / (float)m_TotalMaximums[resourceIndex])));
-                uiData.SvcFactor = Mathf.RoundToInt(100f * serviceFactor);
-                uiData.SvcPercent = (m_TotalMaximums[resourceIndex] == 0 ? 0 :
-                    100 * m_TotalAvailables[resourceIndex] / m_TotalMaximums[resourceIndex]);
-
-                // Capacity factors
-                float capacityFactor = (m_DemandParameters.m_CommercialBaseDemand * (float)resourceNeed - (float)currentAvailable) /
-                    math.max(100f, (float)resourceNeed + 1f);
-                uiData.CapFactor = Mathf.RoundToInt(100f * capacityFactor);
-                uiData.CapPercent = 100 * m_Productions[resourceIndex] / math.max(100, resourceNeed);
-                uiData.CapPerCompany = (m_Companies[resourceIndex] == 0 ? 0 :
-                    m_Productions[resourceIndex] / m_Companies[resourceIndex]);
-
-                // Worker factors
-                float workerFactor = -9f + 10f * (((float)m_TotalCurrentWorkers[resourceIndex] + 1f) /
-                    ((float)m_TotalMaxWorkers[resourceIndex] + 1f));
-                if (workerFactor > 0f)
-                    workerFactor *= 0.5f;
-                uiData.WrkFactor = Mathf.RoundToInt(100f * workerFactor);
-                uiData.WrkPercent = 100 * (m_TotalCurrentWorkers[resourceIndex] + 1) /
-                    (m_TotalMaxWorkers[resourceIndex] + 1);
-
-                // Tax factor
-                uiData.TaxFactor = Mathf.RoundToInt(100f * taxEffect);
-
-                m_DemandData[resourceIndex] = uiData;
-
-                if (m_ResourceDemands[resourceIndex] > 0)
                 {
-                    m_CompanyDemand.value += m_ResourceDemands[resourceIndex];
-                    m_BuildingDemands[resourceIndex] = ((m_FreeProperties[resourceIndex] - m_Propertyless[resourceIndex] <= 0) ?
-                        m_ResourceDemands[resourceIndex] : 0);
-
-                    if (m_BuildingDemands[resourceIndex] > 0)
-                    {
-                        m_BuildingDemand.value += m_BuildingDemands[resourceIndex];
-                    }
-
-                    // Update demand factors
-                    int buildingDemand = ((m_BuildingDemands[resourceIndex] > 0) ? m_ResourceDemands[resourceIndex] : 0);
-                    int resourceDemand = m_ResourceDemands[resourceIndex];
-                    int taxFactor = Mathf.RoundToInt(100f * taxEffect);
-                    int totalFactor = resourceDemand + taxFactor;
-
-                    if (iterator.resource == Resource.Lodging)
-                        m_DemandFactors[9] += resourceDemand;
-                    else if (iterator.resource == Resource.Petrochemicals)
-                        m_DemandFactors[16] += resourceDemand;
-                    else
-                        m_DemandFactors[4] += resourceDemand;
-
-                    m_DemandFactors[11] += taxFactor;
-                    m_DemandFactors[13] += math.min(0, buildingDemand - totalFactor);
-                    resourceCount++;
+                    continue;
                 }
+
+                float taxRateMultiplier = Mod.setting.TaxRateMultiplier; // Get the multiplier from settings
+                float multiplierValue = Mod.setting.TaxRateMultiplierValue; // Get the multiplier value from settings
+                float num2 = taxRateMultiplier * multiplierValue * ((float)TaxSystem.GetCommercialTaxRate(iterator.resource, m_TaxRates) - 10f);
+                int num3 = ((m_ResourceNeeds[resourceIndex2] == 0 && iterator.resource != Resource.Lodging) ? 100 : m_ResourceNeeds[resourceIndex2]);
+                int num4 = ((m_CurrentAvailables[resourceIndex2] == 0) ? m_ProduceCapacity[resourceIndex2] : m_CurrentAvailables[resourceIndex2]);
+                m_ResourceDemands[resourceIndex2] = Mathf.RoundToInt(
+                    (1f + num2) * math.clamp(
+                     math.max(m_DemandParameters.m_CommercialBaseDemand * (float)num3 - (float)num4, 0f),
+                        0f,
+                        100f
+                    )
+                );
+                if (iterator.resource == Resource.Lodging && math.max((int)((float)m_Tourisms[m_City].m_CurrentTourists * m_DemandParameters.m_HotelRoomPercentRequirement) - m_Tourisms[m_City].m_Lodging.y, 0) > 0)
+                {
+                    m_ResourceDemands[resourceIndex2] = 100;
+                }
+                if (m_ResourceDemands[resourceIndex2] > 0)
+                {
+                    m_CompanyDemand.value += m_ResourceDemands[resourceIndex2];
+                    m_BuildingDemands[resourceIndex2] = ((m_FreeProperties[resourceIndex2] - m_Propertyless[resourceIndex2] <= 0) ? m_ResourceDemands[resourceIndex2] : 0);
+                    if (m_BuildingDemands[resourceIndex2] > 0)
+                    {
+                        m_BuildingDemand.value += m_BuildingDemands[resourceIndex2];
+                    }
+                    int num5 = ((m_BuildingDemands[resourceIndex2] > 0) ? m_ResourceDemands[resourceIndex2] : 0);
+                    int num6 = m_ResourceDemands[resourceIndex2];
+                    int num7 = Mathf.RoundToInt(100f * num2);
+                    int num8 = num6 + num7;
+                    if (iterator.resource == Resource.Lodging)
+                    {
+                        m_DemandFactors[9] += num6;
+                    }
+                    else if (iterator.resource == Resource.Petrochemicals)
+                    {
+                        m_DemandFactors[16] += num6;
+                    }
+                    else
+                    {
+                        m_DemandFactors[4] += num6;
+                    }
+                    m_DemandFactors[11] += num7;
+                    m_DemandFactors[13] += math.min(0, num5 - num8);
+                    num++;
+                    
+                    // UI Data Update
+                    DemandData uiData = m_DemandData[resourceIndex2];
+                    uiData.Resource = iterator.resource;
+                    uiData.Demand = m_ResourceDemands[resourceIndex2];
+                    uiData.Building = m_BuildingDemands[resourceIndex2];
+                    uiData.Free = m_FreeProperties[resourceIndex2];
+                    uiData.Companies = m_ServiceCompanies[resourceIndex2];
+                    uiData.Workers = m_MaxServiceWorkers[resourceIndex2];
+                    uiData.SvcFactor = Mathf.RoundToInt(100f * num7);
+                    uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
+                    uiData.CapFactor = Mathf.RoundToInt(100f * num6);
+                    uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
+                    uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
+                    uiData.WrkFactor = Mathf.RoundToInt(100f * num4);
+                    uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
+                    uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
+                    m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
+
+
+                }
+
+
             }
 
-            // Final demand calculations
-            m_CompanyDemand.value = ((resourceCount != 0) ? math.clamp(m_CompanyDemand.value / resourceCount, 0, 100) : 0);
-            m_BuildingDemand.value = ((resourceCount != 0 && hasCommercialZones) ?
-                math.clamp(m_BuildingDemand.value / resourceCount, 0, 100) : 0);
+
+            m_CompanyDemand.value = ((num != 0) ? math.clamp(m_CompanyDemand.value / num, 0, 100) : 0);
+            m_BuildingDemand.value = ((num != 0 && flag) ? math.clamp(m_BuildingDemand.value / num, 0, 100) : 0);
         }
+        
     }
 
     private struct TypeHandle
@@ -307,12 +287,15 @@ public class CommercialDemandSystem_Patches
     }
 
     private static JobHandle baseDependency = new JobHandle();
+
     private static TypeHandle __TypeHandle = new TypeHandle();
+
     private static bool isInitialized = false;
+
     public static NativeArray<DemandData> m_DemandData;
 
-    [HarmonyPatch(typeof(Game.Simulation.CommercialDemandSystem), "OnCreate")]
-    [HarmonyPostfix]
+    //[HarmonyPatch(typeof(Game.Simulation.CommercialDemandSystem), "OnCreate")]
+    //[HarmonyPostfix]
     static void CommercialDemandSystem_OnCreate()
     {
         m_DemandData = new NativeArray<DemandData>(EconomyUtils.ResourceCount, Allocator.Persistent);
@@ -322,63 +305,66 @@ public class CommercialDemandSystem_Patches
     [HarmonyPrefix]
     static bool CommercialDemandSystem_OnDestroy()
     {
-        if (m_DemandData.IsCreated)
-            m_DemandData.Dispose();
+        m_DemandData.Dispose();
         return true;
     }
+
+    // public void SetDefaults(Context context)
+    // public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
+    // public void Deserialize<TReader>(TReader reader) where TReader : IReader													 
 
     [HarmonyPatch(typeof(Game.Simulation.CommercialDemandSystem), "OnUpdate")]
     [HarmonyPrefix]
     static bool CommercialDemandSystem_OnUpdate(
-        CommercialDemandSystem __instance,
-        ResourceSystem ___m_ResourceSystem,
-        TaxSystem ___m_TaxSystem,
-        CountHouseholdDataSystem ___m_CountHouseholdDataSystem,
-        CountCompanyDataSystem ___m_CountCompanyDataSystem,
-        CitySystem ___m_CitySystem,
-        EntityQuery ___m_EconomyParameterQuery,
-        EntityQuery ___m_DemandParameterQuery,
-        EntityQuery ___m_FreeCommercialQuery,
-        EntityQuery ___m_UnlockedZoneDataQuery,
-        NativeValue<int> ___m_CompanyDemand,
-        NativeValue<int> ___m_BuildingDemand,
-        NativeArray<int> ___m_DemandFactors,
-        NativeArray<int> ___m_ResourceDemands,
-        NativeArray<int> ___m_BuildingDemands,
-        NativeArray<int> ___m_FreeProperties,
-        ref JobHandle ___m_WriteDependencies,
-        JobHandle ___m_ReadDependencies,
-        ref int ___m_LastCompanyDemand,
-        ref int ___m_LastBuildingDemand)
+            CommercialDemandSystem __instance,
+            //Game.Simulation.CommercialDemandSystem.TypeHandle __TypeHandle,
+            ResourceSystem ___m_ResourceSystem,
+            TaxSystem ___m_TaxSystem,
+            CountHouseholdDataSystem ___m_CountHouseholdDataSystem,
+            CitySystem ___m_CitySystem,
+            CountCompanyDataSystem ___m_CountCompanyDataSystem,
+            EntityQuery ___m_EconomyParameterQuery,
+            EntityQuery ___m_DemandParameterQuery,
+            EntityQuery ___m_FreeCommercialQuery,
+            EntityQuery ___m_CommercialProcessDataQuery,
+            EntityQuery ___m_UnlockedZoneDataQuery, // Added for unlocked zones
+            NativeValue<int> ___m_CompanyDemand,
+            NativeValue<int> ___m_BuildingDemand,
+            NativeArray<int> ___m_DemandFactors,
+            NativeArray<int> ___m_ResourceDemands,
+            NativeArray<int> ___m_BuildingDemands,
+            NativeArray<int> ___m_Consumption,
+            NativeArray<int> ___m_FreeProperties,
+            ref JobHandle ___m_WriteDependencies,
+            JobHandle ___m_ReadDependencies,
+            ref int ___m_LastCompanyDemand,
+            ref int ___m_LastBuildingDemand
+        )
     {
+        // Skip the patch and execute the original if the feature is disabled
         if (!Mod.setting.FeatureCommercialDemand)
             return true;
 
+        // 240331 TypeHandle must be late-initialized because CreateForCompiler is long gone
         if (!isInitialized)
             LateInitialize(__instance);
 
+        // Patched code
         if (!___m_DemandParameterQuery.IsEmptyIgnoreFilter && !___m_EconomyParameterQuery.IsEmptyIgnoreFilter)
         {
             ___m_LastCompanyDemand = ___m_CompanyDemand.value;
             ___m_LastBuildingDemand = ___m_BuildingDemand.value;
-
             JobHandle deps;
-            CountCompanyDataSystem.CommercialCompanyDatas commercialCompanyDatas =
-                ___m_CountCompanyDataSystem.GetCommercialCompanyDatas(out deps);
-
-            // Update type handles
+            CountCompanyDataSystem.CommercialCompanyDatas commercialCompanyDatas = ___m_CountCompanyDataSystem.GetCommercialCompanyDatas(out deps);
             __TypeHandle.__Game_City_Tourism_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
             __TypeHandle.__Game_Companies_CommercialCompany_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
             __TypeHandle.__Game_Prefabs_ResourceData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
             __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
             __TypeHandle.__Game_Buildings_Renter_RO_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
             __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle.Update(ref __instance.CheckedStateRef);
-
-            // Setup job
             UpdateCommercialDemandJob updateCommercialDemandJob = default(UpdateCommercialDemandJob);
-            updateCommercialDemandJob.m_FreePropertyChunks = ___m_FreeCommercialQuery.ToArchetypeChunkListAsync(
-                __instance.World.UpdateAllocator.ToAllocator, out var outJobHandle);
-            updateCommercialDemandJob.m_UnlockedZoneDatas = ___m_UnlockedZoneDataQuery.ToComponentDataArray<ZoneData>(Allocator.TempJob);
+            updateCommercialDemandJob.m_FreePropertyChunks = ___m_FreeCommercialQuery.ToArchetypeChunkListAsync(__instance.World.UpdateAllocator.ToAllocator, out var outJobHandle);
+            updateCommercialDemandJob.m_UnlockedZoneDatas = ___m_UnlockedZoneDataQuery.ToComponentDataArray<ZoneData>(Allocator.TempJob); // Updated to include unlocked zones
             updateCommercialDemandJob.m_PrefabType = __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
             updateCommercialDemandJob.m_RenterType = __TypeHandle.__Game_Buildings_Renter_RO_BufferTypeHandle;
             updateCommercialDemandJob.m_BuildingPropertyDatas = __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup;
@@ -393,38 +379,37 @@ public class CommercialDemandSystem_Patches
             updateCommercialDemandJob.m_City = ___m_CitySystem.City;
             updateCommercialDemandJob.m_ResourceDemands = ___m_ResourceDemands;
             updateCommercialDemandJob.m_BuildingDemands = ___m_BuildingDemands;
+            updateCommercialDemandJob.m_MaxServiceWorkers = commercialCompanyDatas.m_MaxServiceWorkers;
+            updateCommercialDemandJob.m_CurrentServiceWorkers = commercialCompanyDatas.m_CurrentServiceWorkers;
             updateCommercialDemandJob.m_ProduceCapacity = commercialCompanyDatas.m_ProduceCapacity;
             updateCommercialDemandJob.m_CurrentAvailables = commercialCompanyDatas.m_CurrentAvailables;
+            updateCommercialDemandJob.m_TotalAvailables = commercialCompanyDatas.m_TotalAvailables;
+            updateCommercialDemandJob.m_ServiceCompanies = commercialCompanyDatas.m_ServiceCompanies;
             updateCommercialDemandJob.m_ResourceNeeds = ___m_CountHouseholdDataSystem.GetResourceNeeds();
             updateCommercialDemandJob.m_FreeProperties = ___m_FreeProperties;
             updateCommercialDemandJob.m_Propertyless = commercialCompanyDatas.m_ServicePropertyless;
             updateCommercialDemandJob.m_Tourisms = __TypeHandle.__Game_City_Tourism_RO_ComponentLookup;
-            updateCommercialDemandJob.m_Companies = commercialCompanyDatas.m_ServiceCompanies;
-            updateCommercialDemandJob.m_Productions = commercialCompanyDatas.m_ProduceCapacity;
-            updateCommercialDemandJob.m_TotalMaximums = commercialCompanyDatas.m_TotalAvailables;
-            updateCommercialDemandJob.m_TotalAvailables = commercialCompanyDatas.m_CurrentAvailables;
-            updateCommercialDemandJob.m_TotalMaxWorkers = commercialCompanyDatas.m_MaxServiceWorkers;
-            updateCommercialDemandJob.m_TotalCurrentWorkers = commercialCompanyDatas.m_CurrentServiceWorkers;
-
-            updateCommercialDemandJob.m_DemandData = m_DemandData;
-
-            // Schedule job
-            baseDependency = IJobExtensions.Schedule(updateCommercialDemandJob,
-                JobUtils.CombineDependencies(baseDependency, ___m_ReadDependencies, outJobHandle, deps));
-
+            updateCommercialDemandJob.m_DemandData = m_DemandData; // MODDED
+            UpdateCommercialDemandJob jobData = updateCommercialDemandJob;
+            baseDependency = IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(baseDependency, ___m_ReadDependencies, outJobHandle, deps));
             ___m_WriteDependencies = baseDependency;
             ___m_CountHouseholdDataSystem.AddHouseholdResourceNeedReader(baseDependency);
             ___m_ResourceSystem.AddPrefabsReader(baseDependency);
             ___m_TaxSystem.AddReader(baseDependency);
         }
 
-        return false;
+        return false; // don't execute the original system
     }
-
+    public static void CommercialDemandSystem_OnCreateForCompiler(CommercialDemandSystem __instance)
+    {
+        __TypeHandle.__AssignHandles(ref __instance.CheckedStateRef);
+    }
     public static void LateInitialize(CommercialDemandSystem __instance)
     {
         CommercialDemandSystem_OnCreate();
-        __TypeHandle.__AssignHandles(ref __instance.CheckedStateRef);
+        CommercialDemandSystem_OnCreateForCompiler(__instance);
         isInitialized = true;
     }
+
+    // ... existing code ...
 }
