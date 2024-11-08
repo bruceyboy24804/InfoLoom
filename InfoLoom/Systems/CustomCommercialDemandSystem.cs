@@ -33,9 +33,9 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
 {
     Setting setting = Mod.setting;
     [BurstCompile]
-    private struct UpdateCommercialDemandJob() : IJob
+    private struct UpdateCommercialDemandJob : IJob
     {
-        
+
         [DeallocateOnJobCompletion]
         [ReadOnly]
         public NativeArray<ZoneData> m_UnlockedZoneDatas;
@@ -45,6 +45,8 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
         [ReadOnly]
         public float TaxRateMultiplier;
 
+        [ReadOnly]
+        public bool VanillaLodging;
         [ReadOnly]
         public NativeList<ArchetypeChunk> m_FreePropertyChunks;
 
@@ -95,8 +97,11 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
         public NativeArray<int> m_ResourceDemands;
 
         public NativeArray<int> m_BuildingDemands;
-       
+
+        [ReadOnly]
+        public ComponentLookup<Population> m_Populations; // Added for population data
         
+
 
         [ReadOnly]
         public EntityTypeHandle m_EntityType;
@@ -124,12 +129,18 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
         public NativeArray<int> m_TotalAvailables;
 
         [ReadOnly]
+        public NativeArray<int> m_EmployableByEducation;
+
+        [ReadOnly]
         public ComponentLookup<WorkplaceData> m_WorkplaceDatas;
-        
+
+        [ReadOnly]
+        public Workplaces m_FreeWorkplaces;
+
 
         public void Execute()
         {
-            /*bool flag = false;
+            bool flag = false;
             for (int i = 0; i < m_UnlockedZoneDatas.Length; i++)
             {
                 if (m_UnlockedZoneDatas[i].m_AreaType == AreaType.Commercial)
@@ -137,7 +148,7 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
                     flag = true;
                     break;
                 }
-            }*/
+            }
             ResourceIterator iterator = ResourceIterator.GetIterator();
             while (iterator.Next())
             {
@@ -194,96 +205,95 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
             int num = 0;
             while (iterator.Next())
             {
-
-
                 int resourceIndex2 = EconomyUtils.GetResourceIndex(iterator.resource);
-                if (!m_ResourceDatas.HasComponent(m_ResourcePrefabs[iterator.resource]))
-                {
+
+                // Early validation for resource
+                if (!EconomyUtils.IsCommercialResource(iterator.resource) || !m_ResourceDatas.HasComponent(m_ResourcePrefabs[iterator.resource]))
                     continue;
-                }
-                ResourceData resourceData = m_ResourceDatas[m_ResourcePrefabs[iterator.resource]];
-                /*if (EconomyUtils.GetProcessComplexity(m_CommercialProcessDataChunks, m_WorkplaceDatas, iterator.resource, m_EntityType, m_ProcessType, out var complexityTest))
-                    Plugin.Log($"{iterator.resource}: {complexityTest}");
-                else
-                    Plugin.Log($"{iterator.resource}: ---");*/
-                // 240308 PATCH HERE - DO NOT SKIP IMMATERIAL RESOURCES
-                if (/*(resourceData.m_Weight == 0f && !resourceData.m_IsLeisure) || */!EconomyUtils.GetProcessComplexity(m_CommercialProcessDataChunks, m_WorkplaceDatas, iterator.resource, m_EntityType, m_ProcessType, out var complexity))
-                {
-                    continue;
-                }
-                Workplaces workplaces = WorkProviderSystem.CalculateNumberOfWorkplaces(20, complexity, 1);
+
+                // Calculate tax effect
                 float num2 = TaxRateEffect * ((float)TaxSystem.GetCommercialTaxRate(iterator.resource, m_TaxRates) - 10f);
+
+
+
+                // Determine resource needs and availability
                 int num3 = ((m_ResourceNeeds[resourceIndex2] == 0 && iterator.resource != Resource.Lodging) ? 100 : m_ResourceNeeds[resourceIndex2]);
                 int num4 = ((m_CurrentAvailables[resourceIndex2] == 0) ? m_ProduceCapacity[resourceIndex2] : m_CurrentAvailables[resourceIndex2]);
-                
+                m_BuildingDemand.value = ((num != 0 && flag) ? math.clamp(m_BuildingDemand.value / num, 0, 100) : 0);
+                // Calculate resource demands
                 m_ResourceDemands[resourceIndex2] = Mathf.RoundToInt((1f + num2) * math.clamp(math.max(m_DemandParameters.m_CommercialBaseDemand * (float)num3 - (float)num4, 0f), 0f, 100f));
-                
                
-                /*if (workerFactor > 0f)
-                {
-                    workerFactor *= 0.5f;
-                }*/
+                // Update UI data for the current resource
+                DemandData uiData = m_DemandData[resourceIndex2];
+                uiData.Resource = iterator.resource;
+                uiData.Demand = m_ResourceDemands[resourceIndex2];
+                uiData.Building = m_BuildingDemand.value;
+                uiData.Free = m_FreeProperties[resourceIndex2];
+                uiData.Companies = m_ServiceCompanies[resourceIndex2];
+                uiData.Workers = m_CurrentServiceWorkers[resourceIndex2];
+                uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
+                uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
+                uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
+                uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
+                uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
+                m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
+
+                // Special case for Lodging
                 if (iterator.resource == Resource.Lodging && math.max((int)((float)m_Tourisms[m_City].m_CurrentTourists * m_DemandParameters.m_HotelRoomPercentRequirement) - m_Tourisms[m_City].m_Lodging.y, 0) > 0)
                 {
                     m_ResourceDemands[resourceIndex2] = 100;
                 }
+
+                // Update company and building demands
                 if (m_ResourceDemands[resourceIndex2] > 0)
                 {
                     m_CompanyDemand.value += m_ResourceDemands[resourceIndex2];
                     m_BuildingDemands[resourceIndex2] = ((m_FreeProperties[resourceIndex2] - m_Propertyless[resourceIndex2] <= 0) ? m_ResourceDemands[resourceIndex2] : 0);
+
                     if (m_BuildingDemands[resourceIndex2] > 0)
                     {
                         m_BuildingDemand.value += m_BuildingDemands[resourceIndex2];
                     }
+
+                    // Demand factor calculations
                     int num5 = ((m_BuildingDemands[resourceIndex2] > 0) ? m_ResourceDemands[resourceIndex2] : 0);
                     int num6 = m_ResourceDemands[resourceIndex2];
                     int num7 = Mathf.RoundToInt(100f * num2);
                     int num8 = num6 + num7;
+
+                    // Update demand factors based on resource type
                     if (iterator.resource == Resource.Lodging)
                     {
-                        m_DemandFactors[9] += num6;
+                        m_DemandFactors[9] += num6; // Tourist Demand
                     }
                     else if (iterator.resource == Resource.Petrochemicals)
                     {
-                        m_DemandFactors[16] += num6;
+                        m_DemandFactors[16] += num6; // Petrol Local Demand 
                     }
                     else
                     {
-                        m_DemandFactors[4] += num6;
+                        m_DemandFactors[4] += num6; // Local Demand 
                     }
-                    m_DemandFactors[11] += num7;
-                    m_DemandFactors[13] += math.min(0, num5 - num8);
-                    num++;
-                    m_ResourceDemands[resourceIndex2] = math.min(100, math.max(0, m_ResourceDemands[resourceIndex2]));
+                    m_DemandFactors[11] += num7; // Taxes 
+                    m_DemandFactors[13] += math.min(0, num5 - num8); // Empty Buildings
 
-                    DemandData uiData = m_DemandData[resourceIndex2];
-                    uiData.Resource = iterator.resource;
-                    uiData.Demand = m_ResourceDemands[resourceIndex2];
-                    uiData.Building = m_BuildingDemands[resourceIndex2];
-                    uiData.Free = m_FreeProperties[resourceIndex2];
-                    uiData.Companies = m_ServiceCompanies[resourceIndex2];
-                    uiData.Workers = m_MaxServiceWorkers[resourceIndex2];
+                    num++; // Increment the counter for valid resources
                    
-                    uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
-                    
-                    uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
-                    uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
-                    
-                    uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
-                    uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
-                    m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
+                   
                 }
             }
+
+            // Final adjustments for company and building demand
             m_CompanyDemand.value = ((num != 0) ? math.clamp(m_CompanyDemand.value / num, 0, 100) : 0);
-            m_BuildingDemand.value = ((num != 0 ) ? math.clamp(m_BuildingDemand.value / num, 0, 100) : 0);
-            
+            m_BuildingDemand.value = ((num != 0 && flag) ? math.clamp(m_BuildingDemand.value / num, 0, 100) : 0);
+
         }
-        
     }
+
 
     private struct TypeHandle
     {
-        
+
 
         [ReadOnly]
         public ComponentTypeHandle<PrefabRef> __Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
@@ -315,7 +325,7 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
         [ReadOnly]
         public ComponentLookup<Population> __Game_City_Population_RO_ComponentLookup;
 
-        
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void __AssignHandles(ref SystemState state)
@@ -559,7 +569,7 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
     [Preserve]
     protected override void OnUpdate()
     {
-            
+
         if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
         {
             m_LastCompanyDemand = m_CompanyDemand.value;
@@ -573,7 +583,7 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
             __TypeHandle.__Game_Buildings_Renter_RO_BufferTypeHandle.Update(ref base.CheckedStateRef);
             __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
             __TypeHandle.__Game_Prefabs_WorkplaceData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-            __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);      
+            __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
             __TypeHandle.__Unity_Entities_Entity_TypeHandle.Update(ref base.CheckedStateRef);
             UpdateCommercialDemandJob updateCommercialDemandJob = default(UpdateCommercialDemandJob);
             updateCommercialDemandJob.m_FreePropertyChunks = m_FreeCommercialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
@@ -616,14 +626,14 @@ public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSeri
             m_CountHouseholdDataSystem.AddHouseholdResourceNeedReader(base.Dependency);
             m_ResourceSystem.AddPrefabsReader(base.Dependency);
             m_TaxSystem.AddReader(base.Dependency);
-            
+
 
         }
 
-       
+
     }
-       
-    
+
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void __AssignQueries(ref SystemState state)

@@ -160,16 +160,17 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <SingleValue value={data.building} width="4%" flag={data.building <= 0} />
       <SingleValue value={data.free} width="4%" flag={data.free <= 0} />
       <SingleValue value={data.companies} width="5%" />
-      <SingleValue value={data.svcfactor} width="6%" flag={data.svcfactor < 0} small={true} />
-      <SingleValue value={`${data.svcpercent}%`} width="6%" flag={data.svcpercent > 50} small={true} />
+
+      
+
+      <SingleValue value={data.cappercompany} width="10%" small={true} />
       <SingleValue value={data.capfactor} width="6%" flag={data.capfactor < 0} small={true} />
-      <SingleValue value={`${data.cappercent}%`} width="7%" flag={data.cappercent > 200} small={true} />
-      <SingleValue value={data.cappercompany} width="7%" small={true} />
-      <SingleValue value={data.wrkfactor} width="6%" flag={data.wrkfactor < 0} small={true} />
-      <SingleValue value={`${data.wrkpercent}%`} width="6%" flag={data.wrkpercent < 90} small={true} />
-      <SingleValue value={data.workers} width="6%" small={true} />
-      <SingleValue value={data.edufactor} width="6%" flag={data.edufactor < 0} small={true} />
-      <SingleValue value={data.taxfactor} width="6%" flag={data.taxfactor < 0} small={true} />
+      <SingleValue value={`${data.cappercent}%`} width="10%" flag={data.cappercent > 200} small={true} />
+
+      <SingleValue value={data.workers} width="9%" small={true} />
+      <SingleValue value={`${data.wrkpercent}%`} width="9%" flag={data.wrkpercent < 90} small={true} />
+      
+      <SingleValue value={data.taxfactor} width="12%" flag={data.taxfactor < 0} small={true} />
     </div>
     // <div className="row_S2v" style={{ width: '45%', fontSize: '80%' }}>{data.details}</div>
   );
@@ -220,11 +221,12 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <SingleValue value="Demand" width="10%" />
             <SingleValue value="Free" width="4%" />
             <SingleValue value="Num" width="5%" />
-            <SingleValue value="Service" width="12%" small={true} />
-            <SingleValue value="Production Capacity" width="20%" small={true} />
+            
+            <SingleValue value="Production Capacity" width="26%" small={true} />
+
             <SingleValue value="Workers" width="18%" small={true} />
-            <SingleValue value="Edu" width="6%" small={true} />
-            <SingleValue value="Tax" width="6%" small={true} />
+            
+            <SingleValue value="Tax" width="12%" small={true} />
           </div>
 
           {demandData

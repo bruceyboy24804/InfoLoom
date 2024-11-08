@@ -220,7 +220,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
             <SingleValue value="Free" width="4%" />
             <SingleValue value="Num" width="5%" />
             <SingleValue value="Service" width="12%" small={true} />
-            <SingleValue value="Production Capacity" width="20%" small={true} />
+            <SingleValue value="Household Need" width="20%" small={true} />
             <SingleValue value="Workers" width="18%" small={true} />
             <SingleValue value="Tax" width="12%" small={true} />
           </div>

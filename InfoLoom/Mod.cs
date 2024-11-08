@@ -60,8 +60,8 @@ namespace InfoLoomTwo
             {
                 log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
             }
-            updateSystem.World.GetOrCreateSystemManaged<CommercialDemandSystem>().Enabled = false;
-
+           updateSystem.World.GetOrCreateSystemManaged<CommercialDemandSystem>().Enabled = false;
+           updateSystem.World.GetOrCreateSystemManaged<IndustrialDemandSystem>().Enabled = false;
 
             // Register custom update systems for UI updates
             updateSystem.UpdateAt<PopulationStructureUISystem>(SystemUpdatePhase.UIUpdate);
@@ -73,7 +73,9 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<CustomCommercialDemandSystem>(SystemUpdatePhase.GameSimulation);
-            //updateSystem.UpdateAt<IndustrialUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CustomIndustrialDemandSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<IndustrialUISystem>(SystemUpdatePhase.UIUpdate);
+            
            
         }
 

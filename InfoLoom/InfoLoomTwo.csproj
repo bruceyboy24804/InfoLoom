@@ -15,12 +15,10 @@
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
-	  <Compile Remove="Systems\IndustrialUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="Setting.cs~RF27a28093.TMP" />
 	  <None Remove="UI\src\mods\Bindings.ts" />
-	  <None Remove="UI\src\mods\InfoLoomSections\IndustrialSection\IndustrialD.tsx" />
 	</ItemGroup>
 
 	<ItemGroup>

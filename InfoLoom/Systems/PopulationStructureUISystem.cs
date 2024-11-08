@@ -119,7 +119,7 @@ public partial class PopulationStructureUISystem : UISystemBase
 
         public uint m_SimulationFrame;
 
-        public NativeArray<int> m_Totals;
+        public NativeArray<int> m_Totals; 
 
         public NativeArray<PopulationAtAgeInfo> m_Results;
 
@@ -213,51 +213,64 @@ public partial class PopulationStructureUISystem : UISystemBase
 
                 // Get age using the game's built-in methods
                 CitizenAge age = value.GetAge();
-                int ageInDays = day - value.m_BirthDay;
+                int ageInDays = Math.Min(day - value.m_BirthDay, 109);
 
-                if (ageInDays > 109)
-                    ageInDays = 109;
-
+                // Ensure ageInDays is non-negative and within the bounds of m_Results
                 if (ageInDays >= 0 && ageInDays < m_Results.Length)
                 {
+                    // Retrieve the PopulationAtAgeInfo struct
                     PopulationAtAgeInfo info = m_Results[ageInDays];
                     info.Age = ageInDays;
                     info.Total++;
-                    // process a student
+
+                    // Process a student
                     if (isStudent)
                     {
                         m_Totals[4]++; // students
+
+                        // Retrieve the student once
                         Game.Citizens.Student student = studentArray[i];
-                        // check what school level
-                        switch (studentArray[i].m_Level)
+
+                        // Check what school level using the retrieved student variable
+                        switch (student.m_Level)
                         {
-                            case 1: info.School1++; break;
-                            case 2: info.School2++; break;
-                            case 3: info.School3++; break;
-                            case 4: info.School4++; break;
+                            case 1:
+                                info.School1++;
+                                break;
+                            case 2:
+                                info.School2++;
+                                break;
+                            case 3:
+                                info.School3++;
+                                break;
+                            case 4:
+                                info.School4++;
+                                break;
                             default:
 #if DEBUG
-                                Mod.log.Info($"WARNING: incorrect school level, {studentArray[i].m_Level}");
+                                Mod.log.Info($"WARNING: incorrect school level, {student.m_Level}");
 #endif
                                 break;
                         }
                     }
-                    // process a worker
+
+                    // Process a worker
                     if (isWorker)
                     {
-                        // we can check the level here? what is it actually?
                         m_Totals[5]++; // workers
                         info.Work++;
                     }
-                    // not a student, not a worker
+
+                    // Not a student and not a worker
                     if (!isStudent && !isWorker)
                     {
                         info.Other++;
                     }
-                    m_Results[ageInDays] = info;
-                    //Plugin.Log($"{ageInDays} yo, school {isStudent}, work {isWorker}");
 
-                    // Track oldest citizen
+                    // Assign the modified info back to the array
+                    m_Results[ageInDays] = info;
+
+                    // Track the oldest citizen
                     if (ageInDays > m_Totals[6])
                         m_Totals[6] = ageInDays;
                 }
