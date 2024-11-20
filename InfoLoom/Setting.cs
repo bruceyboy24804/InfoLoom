@@ -17,8 +17,8 @@ namespace InfoLoomTwo
 {
     
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(CommercialTax, IndustrialTax)]
-    [SettingsUIShowGroupName(CommercialTax, IndustrialTax)]
+    [SettingsUIGroupOrder(CommercialTax, Other)]
+    [SettingsUIShowGroupName(CommercialTax, Other)]
     public class Setting : ModSetting
     {
         [ReadOnly]
@@ -27,7 +27,7 @@ namespace InfoLoomTwo
         public const string kSection = "Main";
 
         public const string CommercialTax = "Commercial Tax";
-        public const string IndustrialTax = "Industrial Tax";
+        public const string Other = "Other";
 
         private string TextMaker(string value, string type, string pop = null)
         {
@@ -45,7 +45,7 @@ namespace InfoLoomTwo
                     unit = $" per {pop} citizens";
                     break;
             };
-            return $"{value}{unit} Tax per Increment of tax slider + 100"; 
+            return $"{value}{unit} per Increment of tax slider"; 
         }
 
 
@@ -55,6 +55,11 @@ namespace InfoLoomTwo
 
         [SettingsUISection(kSection, CommercialTax)]
         public string CommercialTaxLEffect => TextMaker((Math.Abs(TaxRateEffect) * 100).ToString("F2"), "commercial");
+
+        [SettingsUISection(kSection, Other)]
+        [SettingsUISlider(min = 100f, max = 200f, step = 1f)]
+        
+        public float AgeCapSetting { get; set; } = 100f;
 
         /*[SettingsUISection(kSection, IndustrialTax)]
         [SettingsUISlider(min = -5f, max = -10f, step = 0.1f, unit = Unit.kFloatThreeFractions)] // Slider range from -1.0 to 1.0 with a step of 0.1 [SettingsUISlider(min = -0.05, max = 1.0, step = 0.1)]
@@ -72,15 +77,13 @@ namespace InfoLoomTwo
         public override void SetDefaults()
         {
             TaxRateEffect = -0.05f;
-            //TaxRateEffect2 = -5f;
+            AgeCapSetting = 100f;
            
         }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether: Used to force saving of Modsettings if settings would result in empty Json.
-        /// </summary>
+        
     }
-
+    
     public class LocaleEN : IDictionarySource
     {
         private readonly Setting m_Setting;
@@ -99,14 +102,12 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionGroupLocaleID(Setting.CommercialTax), "Commercial Tax" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TaxRateEffect)), "Tax Rate Effect" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.TaxRateEffect)), "The base value that control the strength of the tax rate effect" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.CommercialTaxLEffect)), " Current total tax rate" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.CommercialTaxLEffect)), " Tax rate" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.CommercialTaxLEffect)), "The current total tax rate to determine the strength of commercial tax when taxing commercial product companies" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.IndustrialTax), "Industrial Tax" },
-                /*{ m_Setting.GetOptionLabelLocaleID(nameof(Setting.TaxRateEffect2)), "Tax Rate Effect" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.TaxRateEffect2)), "The base value that control the strength of the tax rate effect" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.IndustrialTaxLEffect)), " Current total tax rate" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.IndustrialTaxLEffect)), "The current total tax rate to determine the strength of industrial tax when taxing industrial products" },*/
-                
+                { m_Setting.GetOptionGroupLocaleID(Setting.Other), "Other" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AgeCapSetting)), "Maximum chart age" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.AgeCapSetting)), "The maximum age that sets the demographic cap" },
+               
                 
             };
         }

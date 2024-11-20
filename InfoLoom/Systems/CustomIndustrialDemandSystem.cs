@@ -14,6 +14,7 @@ using Game.Prefabs;
 using Game.Reflection;
 using Game.Simulation;
 using Game.Tools;
+using Game.UI;
 using Game.Zones;
 using Unity.Burst;
 using Unity.Collections;
@@ -27,7 +28,7 @@ using static InfoLoomTwo.Systems.IndustrialUISystem;
 namespace InfoLoomTwo.Systems;
 
 [CompilerGenerated]
-public partial class CustomIndustrialDemandSystem : GameSystemBase, IDefaultSerializable, ISerializable
+public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerializable, ISerializable
 {
     [BurstCompile]
     private struct UpdateIndustrialDemandJob : IJob
@@ -440,13 +441,17 @@ public partial class CustomIndustrialDemandSystem : GameSystemBase, IDefaultSeri
                 
                 uiData.Free = m_FreeProperties[resourceIndex4];
                 uiData.Companies = m_ProductionCompanies[resourceIndex4];
-                uiData.Workers = m_CurrentProductionWorkers[resourceIndex4];
+
+                uiData.SvcPercent = m_Storages[resourceIndex4];
                
-                uiData.CapFactor = Mathf.RoundToInt(100f * num14);
-                uiData.CapPercent = 100 * m_Productions[resourceIndex4] / math.max(100, m_CompanyResourceDemands[resourceIndex4]);
-                uiData.CapPerCompany = (m_ProductionCompanies[resourceIndex4] == 0 ? 0 : m_Productions[resourceIndex4] / m_ProductionCompanies[resourceIndex4]);
-                uiData.WrkFactor = Mathf.RoundToInt(100f * num4);
+                
+                uiData.CapPercent = m_CompanyResourceDemands[resourceIndex4];
+                uiData.CapPerCompany = m_Productions[resourceIndex4];
+
+                uiData.Workers = m_CurrentProductionWorkers[resourceIndex4];
                 uiData.WrkPercent = 100 * (m_CurrentProductionWorkers[resourceIndex4] + 1) / (m_MaxProductionWorkers[resourceIndex4] + 1);
+
+
                 uiData.TaxFactor = Mathf.RoundToInt(100f * num16);
                
                

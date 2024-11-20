@@ -64,24 +64,22 @@ public partial class IndustrialUISystem : UISystemBase
         writer.Write(data.Free);
         writer.PropertyName("companies");
         writer.Write(data.Companies);
-        writer.PropertyName("workers");
-        writer.Write(data.Workers);
-        writer.PropertyName("svcfactor");
-        writer.Write(data.SvcFactor);
+
+
         writer.PropertyName("svcpercent");
         writer.Write(data.SvcPercent);
-        writer.PropertyName("capfactor");
-        writer.Write(data.CapFactor);
+       
+        
         writer.PropertyName("cappercent");
         writer.Write(data.CapPercent);
         writer.PropertyName("cappercompany");
         writer.Write(data.CapPerCompany);
-        writer.PropertyName("wrkfactor");
-        writer.Write(data.WrkFactor);
+        
+        writer.PropertyName("workers");
+        writer.Write(data.Workers);
         writer.PropertyName("wrkpercent");
         writer.Write(data.WrkPercent);
-        writer.PropertyName("edufactor");
-        writer.Write(data.EduFactor);
+       
         writer.PropertyName("taxfactor");
         writer.Write(data.TaxFactor);
         //writer.PropertyName("details");

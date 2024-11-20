@@ -1,6 +1,7 @@
 import React, { useState, useMemo, KeyboardEvent, useCallback, FC } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
+import mod from "mod.json";
 
 // Import Chart.js components
 import { Bar } from 'react-chartjs-2';
@@ -13,10 +14,11 @@ import {
   Legend,
   Title,
 } from 'chart.js';
+import { bindValue, useValue } from 'cs2/api';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
-
+const AgeCap$ = bindValue<number>(mod.id, 'AgeCap');
 // Define interfaces for component props
 interface AlignedParagraphProps {
   left: string;
@@ -52,29 +54,54 @@ const commonFont = {
   size: 14,
   weight: 'normal' as const,
 };
-
+const yaxisfont = {
+  family: 'Arial, sans-serif',
+  size: 11,
+  weight: 'normal' as const,
+};
 // Define age ranges as a constant
 const AGE_RANGES = [
-  { label: '0-10', min: 0, max: 10 },
-  { label: '10-20', min: 10, max: 20 },
-  { label: '20-30', min: 20, max: 30 },
-  { label: '30-40', min: 30, max: 40 },
-  { label: '40-50', min: 40, max: 50 },
-  { label: '50-60', min: 50, max: 60 },
-  { label: '60-70', min: 60, max: 70 },
-  { label: '70-80', min: 70, max: 80 },
-  { label: '80-90', min: 80, max: 90 },
-  { label: '90-100', min: 90, max: 100 },
-  { label: '100-110', min: 100, max: 110 },
-  { label: '110-120', min: 110, max: 120 },
-  { label: '120-130', min: 120, max: 130 },
-  { label: '130-140', min: 130, max: 140 },
-  { label: '140-150', min: 140, max: 150 },
-  { label: '150-160', min: 150, max: 160 },
-  { label: '160-170', min: 160, max: 170 },
-  { label: '170-180', min: 170, max: 180 },
-  { label: '180-190', min: 180, max: 190 },
-  { label: '190-200', min: 190, max: 200 },
+  { label: '0-5', min: 0, max: 5 },
+  { label: '6-10', min: 6, max: 10 },
+  { label: '11-15', min: 11, max: 15 },
+  { label: '16-20', min: 16, max: 20 },
+  { label: '21-25', min: 21, max: 25 },
+  { label: '26-30', min: 26, max: 30 },
+  { label: '31-35', min: 31, max: 35 },
+  { label: '36-40', min: 36, max: 40 },
+  { label: '41-45', min: 41, max: 45 },
+  { label: '46-50', min: 46, max: 50 },
+  { label: '51-55', min: 51, max: 55 },
+  { label: '56-60', min: 56, max: 60 },
+  { label: '61-65', min: 61, max: 65 },
+  { label: '66-70', min: 66, max: 70 },
+  { label: '71-75', min: 71, max: 75 },
+  { label: '76-80', min: 76, max: 80 },
+  { label: '81-85', min: 81, max: 85 },
+  { label: '86-90', min: 86, max: 90 },
+  { label: '91-95', min: 91, max: 95 },
+  { label: '96-100', min: 96, max: 100 },
+  { label: '101-105', min: 101, max: 105 },
+  { label: '106-110', min: 106, max: 110 },
+  { label: '111-115', min: 111, max: 115 },
+  { label: '116-120', min: 116, max: 120 },
+  { label: '121-125', min: 121, max: 125 },
+  { label: '126-130', min: 126, max: 130 },
+  { label: '131-135', min: 131, max: 135 },
+  { label: '136-140', min: 136, max: 140 },
+  { label: '141-145', min: 141, max: 145 },
+  { label: '146-150', min: 146, max: 150 },
+  { label: '151-155', min: 151, max: 155 },
+  { label: '156-160', min: 156, max: 160 },
+  { label: '161-165', min: 161, max: 165 },
+  { label: '166-170', min: 166, max: 170 },
+  { label: '171-175', min: 171, max: 175 },
+  { label: '176-180', min: 176, max: 180 },
+  { label: '181-185', min: 181, max: 185 },
+  { label: '186-190', min: 186, max: 190 },
+  { label: '191-195', min: 191, max: 195 },
+  { label: '196-200', min: 196, max: 200 },
+  
 
   
 ];
@@ -96,7 +123,7 @@ const aggregateDataByAgeRanges = (details: Info[]): AggregatedInfo[] => {
     const index = AGE_RANGES.findIndex(
       range =>
         info.age >= range.min &&
-        (info.age < range.max || (info.age === range.max && range.max === 100))
+        (info.age < range.max || (info.age === range.max && range.max === AgeCap$.value))
     );
 
     if (index !== -1) {
@@ -228,7 +255,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   // State hooks for totals and details
   const [totals, setTotals] = useState<number[]>([]);
   const [details, setDetails] = useState<Info[]>([]);
-
+  const AgeCap = useValue(AgeCap$);
   // State hooks for grouping and summary statistics visibility
   const [isGrouped, setIsGrouped] = useState<boolean>(false);
   const [showSummaryStats, setShowSummaryStats] = useState<boolean>(false);
@@ -249,9 +276,10 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
 
   // Prepare detailed data for Chart.js with grouping
   const detailedChartData = useMemo(() => {
-    const groupedData = groupDetailsByAge(details);
+    const groupedData = groupDetailsByAge(details)
+      .filter(data => parseInt(data.label) <= AgeCap); // Filter by AgeCap
     const sortedAges = groupedData.sort((a, b) => parseInt(a.label) - parseInt(b.label));
-
+  
     return {
       labels: sortedAges.map(data => data.label),
       datasets: [
@@ -287,7 +315,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         },
       ],
     };
-  }, [details]);
+  }, [details, AgeCap]);
 
   // Prepare grouped data for Chart.js
   const groupedChartData = useMemo(() => {
@@ -328,11 +356,14 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         },
       ],
     };
-  }, [details]);
-
+  }, [details, AgeCap]);
+  const baseFontSize = 8; // Base font size
+  const fontSizeMultiplier = Math.max(0.5, 50 / AgeCap); // Inverse relationship: larger AgeCap = smaller font
+  const dynamicFontSize = Math.max(8, Math.floor(baseFontSize * fontSizeMultiplier)); // Never go below 8px
   // Chart options with aligned font settings
   const chartOptions = useMemo(
     () => ({
+      
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
@@ -362,6 +393,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           ticks: {
             color: 'white',
             font: { ...commonFont, size: commonFont.size - 4 },
+
           },
           grid: {
             color: 'rgba(255, 255, 255, 0.1)',
@@ -370,16 +402,28 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         y: {
           stacked: true,
           beginAtZero: true,
+          max: AgeCap,
+          afterFit: (scaleInstance: { height: number }) => {
+            // Dynamically calculate spacing multiplier based on AgeCap
+            const baseMultiplier = 1;
+            const spacingMultiplier = Math.max(baseMultiplier, AgeCap / 50); // Adjust divisor (50) to tune sensitivity
+            scaleInstance.height = scaleInstance.height * spacingMultiplier;
+          },
           title: {
             display: true,
-            text: isGrouped ? 'Age Groups' : 'Age',
+            text: isGrouped ? 'Age Groups in Days' : 'Age in Days',
             color: 'white',
             font: commonFont,
           },
           ticks: {
             color: 'white',
-            font: { ...commonFont, size: commonFont.size - 4 },
+            font: { ...yaxisfont, size: yaxisfont.size},
+            baseFontSize: yaxisfont.size,
+            fontSizeMultiplier: Math.max(0.5, 50 / AgeCap), // Inverse relationship: larger AgeCap = smaller font
+            dynamicFontSize: Math.max(8, Math.floor(baseFontSize * fontSizeMultiplier)), // Never go below 8px
             autoSkip: false,
+            stepSize: isGrouped ? 1 : 5,
+            padding: 10, 
           },
           grid: {
             color: 'rgba(255, 255, 255, 0.1)',
@@ -387,7 +431,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         },
       },
     }),
-    [isGrouped]
+    [isGrouped, AgeCap]
   );
 
   // Choose chart data based on isGrouped
@@ -395,9 +439,11 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
 
   // Calculate dynamic chart height with a new maximum limit
   const chartHeight = useMemo(() => {
+    const baseHeight = 50; // Base height per data point
+    const heightMultiplier = Math.max(1, AgeCap / 50); // Same multiplier logic as above
     const dataLength = isGrouped ? AGE_RANGES.length : details.length;
-    return Math.min(dataLength * BAR_HEIGHT, MAX_CHART_HEIGHT);
-  }, [isGrouped, details.length]);
+    return Math.min(dataLength * baseHeight * heightMultiplier, MAX_CHART_HEIGHT);
+  }, [isGrouped, details.length, AgeCap]);
 
   // Calculate detailed summary statistics per age or age group
   const detailedSummaryStats = useMemo(() => {

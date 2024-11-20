@@ -4,12 +4,12 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds 6 new UI windows to the game" />
+	<ShortDescription Value="Adds 9 new UI windows and a new settings option to the game" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
 - **Most of the credit goes to Infixo for making the original version of this mod, i just i just updated and made sure it worked properly and updated the UI.**
-- **Adds 6 new UI windows to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors.**
+- **Adds 9 new UI windows and a new settings option to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors, Commercial Data, Industrial and Office Data, Commercial Products, Industrial and office Data.**
 
 ###Currently:
 - Demographics
@@ -17,10 +17,10 @@
 - Workplace distribution 
 - Residential data 
 - Commercial data
-- Industrial and Office data (Coming soon)
+- Industrial and Office data
 - Demand factors 
 - Resources consumption (Coming soon)
-- Pruction types ui (Coming soon)
+- Pruction types ui
 
 ### Demographics
 - Key information about current city demographics in one place.
@@ -62,6 +62,37 @@ NEW - summary statistics for each age group.
 - Actual numbers of available workforce, and employee capacity ratio.
 - Lists resources that currently are not demanded, thus the engine ignores them when calculating Commercial Demand Factors.
 
+### Industrial and Office data
+- Shows industrial and office data used to calculate Industrial and Office Demand Factors.
+- Empty buildings and companies that have no property, and average tax rate.
+- Local Demand (which is production capacity in fact) and Input Utilization (which tells if resources are available as input).
+- Actual numbers of available workforce, and employee capacity ratio.
+- Lists resources that currently are not demanded, thus the engine ignores them when calculating Industrial and Office Factors.
+- Storage section that shows Demanded Types info which controls if new warehouses are spawned.
+
+### Commercial Products
+- Demand (1): resource demand - key number that decides what companies will spawn; negative value will block spawning; the higher the number, the higher probability of a company being spawned.
+- Demand (2): zone demand - key number that decides what buildings will spawn; 0 means there is no demand.
+- Free: number of free properties (buildings) for companies selling the specific resource.
+- Num: number of companies.
+- service:  factor and percentage vs. maximum service.
+- Household needs: percentage vs. Resource Need, and average capacity per company.
+- Workers: percentage vs. maximum workers, and total workers.
+- Tax: tax factor.
+
+### Industrial and Office Data
+- Demand (1): resource demand - key number that decides what companies will spawn; negative value will block spawning; the higher the number, the higher probability of a company being spawned.
+- Demand (2): Industrial Company demand - key number that decides what buildings/company will spawn; 0 means there is no demand.
+- Free: number of free properties (buildings) for companies selling the specific resource.
+- Num: number of companies.
+- storage buildings:  number of storage buildings
+- Production and demand : How much is being produced and how much resource is needed (this may differ or work completly different for office demand)
+- Workers: percentage vs. maximum workers, and total workers.
+- Tax: tax factor.
+
+### Option in settings 
+- control the tax stength for commercial prodcuts when taxing indivial products.
+
 ### Credit
 - Dava787: screenshot of the Workplace distribution UI
 	</LongDescription>
@@ -74,19 +105,21 @@ NEW - summary statistics for each age group.
 	<Screenshot Value="Properties/Screenshots/Demand.png" />
 	<Screenshot Value="Properties/Screenshots/ResidentialData.png" />
 	<Screenshot Value="Properties/Screenshots/CommercialData.png" />
+	<Screenshot Value="Properties/Screenshots/IndustrialOfficeData.png" />
+	<Screenshot Value="Properties/Screenshots/Products.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.4a" />
+	<ModVersion Value="1.2.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.0.4a
-- Compatibility with Realistic Trips.</ChangeLog>
+	<ChangeLog>## Version 1.2.1
+- fixed some nugs and changed how the products panels works (functionaly)</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

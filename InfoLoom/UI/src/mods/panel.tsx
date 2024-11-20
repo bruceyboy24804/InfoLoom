@@ -12,6 +12,10 @@ interface PanelProps {
     onSizeChange?: (newSize: { width: number; height: number }) => void;
     className?: string;
     onClose?: () => void;  // Make onClose optional
+    savedPosition?: { top: number; left: number };
+    savedSize?: { width: number; height: number };
+    onSavePosition?: (position: { top: number; left: number }) => void;
+    onSaveSize?: (size: { width: number; height: number }) => void;
 }
 
 type InteractionState = 'none' | 'dragging' | 'resizing';
@@ -26,10 +30,14 @@ const Panel: FC<PanelProps> = ({
     onSizeChange = () => {},
     className = '',
     onClose,  // Add onClose to the props
+    savedPosition,
+    savedSize,
+    onSavePosition = () => {},
+    onSaveSize = () => {},
 }) => {
     // State for position and size
-    const [position, setPosition] = useState(initialPosition);
-    const [size, setSize] = useState(initialSize);
+    const [position, setPosition] = useState(savedPosition || initialPosition);
+    const [size, setSize] = useState(savedSize || initialSize);
 
     // State for interaction (dragging/resizing) and relative cursor position
     const [interaction, setInteraction] = useState<{
@@ -83,6 +91,7 @@ const Panel: FC<PanelProps> = ({
             const newPosition = { top: clampedTop, left: clampedLeft };
             setPosition(newPosition);
             onPositionChange(newPosition);
+            onSavePosition(newPosition);
         } else if (interaction.state === 'resizing') {
             const deltaX = e.clientX - (interaction.rel?.x || 0);
             const deltaY = e.clientY - (interaction.rel?.y || 0);
@@ -101,8 +110,9 @@ const Panel: FC<PanelProps> = ({
             const newSize = { width: newWidth, height: newHeight };
             setSize(newSize);
             onSizeChange(newSize);
+            onSaveSize(newSize);
         }
-    }, [interaction, size.width, size.height, position.left, position.top, onPositionChange, onSizeChange]);
+    }, [interaction, size.width, size.height, position.left, position.top, onPositionChange, onSizeChange, onSavePosition, onSaveSize]);
 
     // Mouse up handler to end interaction
     const handleMouseUp = useCallback(() => {

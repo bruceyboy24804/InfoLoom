@@ -1,5 +1,5 @@
 // Workplaces.tsx
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
@@ -18,7 +18,6 @@ interface LevelValues {
     open?: number | string;
     [key: string]: any;
 }
-
 interface WorkforceLevelProps {
     levelColor?: string;
     levelName: string;
@@ -140,6 +139,12 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
     const [workplaces, setWorkplaces] = useState<LevelValues[]>([]);
     useDataUpdate('workplaces.ilWorkplaces', setWorkplaces);
 
+    const defaultPosition = { top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 } ;
+    const [panelPosition, setPanelPosition] = useState(defaultPosition);
+    const handleSavePosition = useCallback((position: { top: number; left: number }) => {
+        setPanelPosition(position);
+    }, []);
+    const [lastClosedPosition, setLastClosedPosition] = useState(defaultPosition);
     const headers: LevelValues = {
         total: 'Total',
         service: 'City',
@@ -155,9 +160,16 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
 
     // Handler for closing the panel
     const handleClose = useCallback(() => {
+        setLastClosedPosition(panelPosition); // Save the current position before closing
         setIsPanelVisible(false);
         onClose();
-    }, [onClose]);
+    }, [onClose, panelPosition]);
+
+    useEffect(() => {
+        if (!isPanelVisible) {
+            setPanelPosition(lastClosedPosition);
+        }
+    }, [isPanelVisible, lastClosedPosition]);
 
     if (!isPanelVisible) {
         return null;
@@ -168,7 +180,8 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
             title="Workplaces Distribution"
             onClose={handleClose}
             initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.255 }}
-            initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+            initialPosition={panelPosition}
+            onSavePosition={handleSavePosition}
         >
             {workplaces.length === 0 ? (
                 <p>Waiting...</p>

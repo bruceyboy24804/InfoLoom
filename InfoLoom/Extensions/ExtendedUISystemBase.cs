@@ -5,7 +5,7 @@ namespace InfoLoomTwo.Extensions
     using System;
     using Colossal.UI.Binding;
     using Game.UI;
-    using InfoLoomTwo;
+    
     
 
     public abstract partial class ExtendedUISystemBase : UISystemBase

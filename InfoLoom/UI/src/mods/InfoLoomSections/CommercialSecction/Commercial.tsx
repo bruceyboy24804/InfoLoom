@@ -183,7 +183,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
     <$Panel 
       title="Commercial Data" 
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.30 }} 
+      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.31 }} 
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >	
       {commercialData.length === 0 ? (

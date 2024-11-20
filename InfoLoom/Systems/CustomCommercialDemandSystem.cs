@@ -25,11 +25,12 @@ using UnityEngine.Scripting;
 using static Game.Rendering.Debug.RenderPrefabRenderer;
 using static InfoLoomTwo.Systems.CommercialUISystem;
 using System.Linq;
+using Game.UI;
 
 namespace InfoLoomTwo.Systems;
 
 [CompilerGenerated]
-public partial class CustomCommercialDemandSystem : GameSystemBase, IDefaultSerializable, ISerializable
+public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerializable, ISerializable
 {
     Setting setting = Mod.setting;
     [BurstCompile]

@@ -1,0 +1,57 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--panelBackground);
+}
+
+.header {
+    display: flex;
+    padding: 10px 15px;
+    background: var(--headerBackground, rgba(255, 255, 255, 0.1));
+    border-bottom: 1px solid var(--borderColor, rgba(255, 255, 255, 0.2));
+}
+
+.headerCell {
+    color: var(--headerText, #ffffff);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.districtsContainer {
+    padding: 16px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.districtsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--borderColor);
+    }
+
+    th {
+        font-weight: bold;
+        color: var(--textColorAccent);
+    }
+
+    tr:hover {
+        background-color: var(--backgroundColorHover);
+    }
+}
+
+.emptyMessage {
+    text-align: center;
+    padding: 16px;
+    color: var(--textColorDimmed);
+}
+
+.districtName {
+    color: var(--menuText1Normal);
+    font-size: 14px;
+}

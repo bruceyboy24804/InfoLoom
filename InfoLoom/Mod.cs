@@ -11,8 +11,7 @@ using HarmonyLib;
 using InfoLoomTwo.Systems;
 using System.Linq;
 
-
-
+// Mod namespace
 namespace InfoLoomTwo
 {
     // Mod class implementing IMod interface
@@ -21,17 +20,15 @@ namespace InfoLoomTwo
         public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
         public static Setting setting;
-        public static readonly string Id = "InfoLoom";
+        public static readonly string Id = "InfoLoomTwo";
         public static Mod Instance { get; private set; }
-        
+     
         public static ExecutableAsset modAsset { get; private set; }    
         internal ILog Log { get; private set; }
 
         // Static logger instance with custom logger name and settings
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
             .SetShowsErrorsInUI(false);
-
-        
 
         // Method that runs when the mod is loaded
         public void OnLoad(UpdateSystem updateSystem)
@@ -60,8 +57,7 @@ namespace InfoLoomTwo
             {
                 log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
             }
-           updateSystem.World.GetOrCreateSystemManaged<CommercialDemandSystem>().Enabled = false;
-           updateSystem.World.GetOrCreateSystemManaged<IndustrialDemandSystem>().Enabled = false;
+          
 
             // Register custom update systems for UI updates
             updateSystem.UpdateAt<PopulationStructureUISystem>(SystemUpdatePhase.UIUpdate);
@@ -72,9 +68,10 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<CustomCommercialDemandSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CustomIndustrialDemandSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CustomCommercialDemandSystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CustomIndustrialDemandSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialUISystem>(SystemUpdatePhase.UIUpdate);
+            
             
            
         }

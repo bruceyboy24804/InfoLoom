@@ -17,13 +17,15 @@ using System.Collections.Generic;
 using System;
 using Game.Buildings;
 using Game;
+using InfoLoomTwo.Extensions;
 
 namespace InfoLoomTwo.Systems;
 
 // This System is based on PopulationInfoviewUISystem by CO
 [CompilerGenerated]
-public partial class PopulationStructureUISystem : UISystemBase
+public partial class PopulationStructureUISystem : ExtendedUISystemBase
 {
+    
     /// <summary>
     /// Holds info about population at Age
     /// </summary>
@@ -61,6 +63,10 @@ public partial class PopulationStructureUISystem : UISystemBase
         writer.Write(info.Other);
         writer.TypeEnd();
     }
+
+    
+
+
 
     //[BurstCompile]
     private struct PopulationStructureJob : IJobChunk
@@ -115,6 +121,8 @@ public partial class PopulationStructureUISystem : UISystemBase
 
         public TimeData m_TimeData;
 
+        public float m_AgeCap;
+
         //public uint m_UpdateFrameIndex;
 
         public uint m_SimulationFrame;
@@ -122,6 +130,9 @@ public partial class PopulationStructureUISystem : UISystemBase
         public NativeArray<int> m_Totals; 
 
         public NativeArray<PopulationAtAgeInfo> m_Results;
+        
+
+
 
         // this job is based on AgingJob
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -213,7 +224,7 @@ public partial class PopulationStructureUISystem : UISystemBase
 
                 // Get age using the game's built-in methods
                 CitizenAge age = value.GetAge();
-                int ageInDays = Math.Min(day - value.m_BirthDay, 109);
+                int ageInDays = (int)Math.Min(day - value.m_BirthDay, m_AgeCap);
 
                 // Ensure ageInDays is non-negative and within the bounds of m_Results
                 if (ageInDays >= 0 && ageInDays < m_Results.Length)
@@ -351,12 +362,16 @@ public partial class PopulationStructureUISystem : UISystemBase
     }
 
     private const string kGroup = "populationInfo";
+    protected const string group = "demographicsAge";
 
+    
     //private CitySystem m_CitySystem;
 
     private SimulationSystem m_SimulationSystem;
 
     private RawValueBinding m_uiTotals;
+
+    private ValueBindingHelper<float> m_AgeCapUISetting;
 
     private RawValueBinding m_uiResults;
 
@@ -393,6 +408,9 @@ public partial class PopulationStructureUISystem : UISystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
+        Setting setting = Mod.setting;
+        float m_AgeCap = setting.AgeCapSetting;
+        m_AgeCapUISetting = CreateBinding("AgeCap", setting.AgeCapSetting);
 
         //m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
         m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
@@ -428,10 +446,10 @@ public partial class PopulationStructureUISystem : UISystemBase
         AddUpdateBinding(new GetterValueBinding<int>(kGroup, "oldest_citizen", () => {
             return m_Totals[6];
         }));
-
+       
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-        m_Results = new NativeArray<PopulationAtAgeInfo>(110, Allocator.Persistent); // INFIXO: TODO
+        m_Results = new NativeArray<PopulationAtAgeInfo>((int)m_AgeCap, Allocator.Persistent); // INFIXO: TODO
         Mod.log.Info("PopulationStructureUISystem created.");
     }
 
@@ -445,11 +463,18 @@ public partial class PopulationStructureUISystem : UISystemBase
 
     protected override void OnUpdate()
     {
+
         if (m_SimulationSystem.frameIndex % 128 != 44)
             return;
 
         //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
         base.OnUpdate();
+
+        
+
+        Setting setting = Mod.setting;
+        m_AgeCapUISetting.UpdateCallback(setting.AgeCapSetting);
+        
         ResetResults();
 
         // code based on AgingJob
@@ -493,6 +518,7 @@ public partial class PopulationStructureUISystem : UISystemBase
         //PopulationStructureJob jobData = structureJob;
         //base.Dependency = JobChunkExtensions.ScheduleParallel(jobData, m_CitizenGroup, base.Dependency);
         //m_EndFrameBarrier.AddJobHandleForProducer(base.Dependency); // Infixo: frame barrier is not used because we wait to complete the job
+        structureJob.m_AgeCap = setting.AgeCapSetting;
         structureJob.m_Totals = m_Totals;
         structureJob.m_Results = m_Results;
         JobChunkExtensions.Schedule(structureJob, m_CitizenQuery, base.Dependency).Complete();
@@ -517,9 +543,10 @@ public partial class PopulationStructureUISystem : UISystemBase
             Plugin.Log($"...[{i}]: {info.Age} {info.Total} students {info.School1} {info.School2} {info.School3} {info.School4} workers {info.Work} other {info.Other}");
         }
         */
-
+        
         m_uiTotals.Update();
         m_uiResults.Update();
+       
 
         //InspectComponentsInQuery(m_CitizenQuery);
 
