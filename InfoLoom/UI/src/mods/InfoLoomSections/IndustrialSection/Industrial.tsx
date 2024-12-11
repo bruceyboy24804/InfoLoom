@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
@@ -131,9 +131,9 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
   );
 };
 
-const ColumnIndustrialData: React.FC<ColumnIndustrialDataProps> = ({ data }) => {
+const ColumnIndustrialData: FC<ColumnIndustrialDataProps> = ({ data }) => {
   return (
-    <div style={{ width: '75%', boxSizing: 'border-box', border: '1px solid gray' }}>
+    <div style={{ width: '70%', boxSizing: 'border-box', border: '1px solid gray' }}>
       <div className="labels_L7Q row_S2v">
         <div className="row_S2v" style={{ width: '60%' }}></div>
         <SingleValue value="INDUSTRIAL" />
@@ -244,26 +244,24 @@ const ColumnIndustrialData: React.FC<ColumnIndustrialDataProps> = ({ data }) => 
   );
 };
 
-const ColumnExcludedResources: React.FC<ColumnExcludedResourcesProps> = ({ resources }) => {
-	return (
-	  <div style={{ width: '25%', boxSizing: 'border-box', border: '1px solid gray' }}>
-		<div className="row_S2v" style={{ 
-		  fontSize: '2em',  // Make text larger
-		  color: 'white',     // Make text white
-		  padding: '0.5em 0'  // Add some padding for better spacing
-		}}>
-		  No demand for:
-		</div>
-		<ul>
-		  {resources.map((item, index) => (
-			<li key={index}>
-			  <div className="row_S2v small_ExK">{item}</div>
-			</li>
-		  ))}
-		</ul>
-	  </div>
-	);
-  }
+const ColumnExcludedResources: FC<ColumnExcludedResourcesProps> = ({ resources }) => {
+  return (
+    <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray' }}>
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '100%' }}>
+          <p style={{ margin: 0 }}>NO DEMAND FOR</p>
+        </div>
+      </div>
+      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+        {resources.map((item, index) => (
+          <li key={index}>
+            <div className="row_S2v small_ExK">{item}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 
 // Declare the engine object if it's globally available
@@ -295,7 +293,7 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
 
   return (
     <$Panel
-      
+      id="infoloom-industrial"
       title="Industrial and Office Data"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.36 }}
@@ -314,13 +312,3 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
 };
 
 export default $Industrial;
-
-// Registering the panel with HookUI so it shows up in the menu
-/*
-window._$hookui.registerPanel({
-  id: "infoloom.industrial",
-  name: "InfoLoom: Industrial and Office Data",
-  icon: "Media/Game/Icons/ZoneIndustrial.svg",
-  component: $Industrial
-});
-*/

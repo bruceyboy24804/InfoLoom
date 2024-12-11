@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.Serialization.Entities;
@@ -165,7 +165,7 @@ public partial class IndustrialDemandUISystem : UISystemBase
         [ReadOnly]
         public NativeArray<int> m_Productions;
 
-        
+
         [ReadOnly]
         public NativeArray<int> m_Companies;
 
@@ -1430,7 +1430,7 @@ public partial class IndustrialDemandUISystem : UISystemBase
             updateIndustrialDemandJob.m_StorageCompanyDemands = m_StorageCompanyDemands;
             updateIndustrialDemandJob.m_Companies = industrialCompanyDatas.m_ProductionCompanies;
             updateIndustrialDemandJob.m_Propertyless = industrialCompanyDatas.m_ProductionPropertyless;
-           
+
             updateIndustrialDemandJob.m_FreeProperties = m_FreeProperties;
             updateIndustrialDemandJob.m_Productions = industrialCompanyDatas.m_Production;
             updateIndustrialDemandJob.m_TotalCurrentWorkers = industrialCompanyDatas.m_CurrentProductionWorkers;

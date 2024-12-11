@@ -2,13 +2,19 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  //background-color: var(--panelColorNormal);
-  //border: 1px solid #444;
   border-radius: 8px;
-  //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  transition: box-shadow 0.2s ease;
   
-  //backdrop-filter: var(--panelBlur);
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accentColorNormal);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accentColorNormal);
+    outline-offset: 2px;
+  }
 }
 
 .header {
@@ -27,28 +33,127 @@
   border-bottom-width: 3px;
   border-bottom-style: solid;
   border-bottom-color: var(--accentColorNormal);
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
-.exitbutton FormattedText {
-  color: white;
+.exitbutton {
+  FormattedText {
+    color: white;
+  }
+  
+  &:focus {
+    outline: 2px solid var(--accentColorNormal);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
 }
 
 .content {
   flex: 1 1 auto;
   padding: 10px;
-  overflow: auto; 
+  overflow: auto;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95));
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--accentColorNormal);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--accentColorHover);
+    }
+  }
 }
 
-.resizer {
+.resizeHandles {
   position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  > div {
+    position: absolute;
+    pointer-events: auto;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.n {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: n-resize;
+}
+
+.s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: s-resize;
+}
+
+.e {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: e-resize;
+}
+
+.w {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: w-resize;
+}
+
+.ne {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  cursor: ne-resize;
+}
+
+.nw {
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: nw-resize;
+}
+
+.se {
   bottom: 0;
   right: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  background: linear-gradient(45deg, transparent 50%, white 50%);
- 
+  width: 8px;
+  height: 8px;
+  cursor: se-resize;
+}
+
+.sw {
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: sw-resize;
 }

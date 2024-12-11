@@ -24,6 +24,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="Setting.cs~RF27a28093.TMP" />
+	  <None Remove="Systems\IndustrialDemandUISystem.cs~RF1b638036.TMP" />
 	  <None Remove="UI\src\mods\Bindings.ts" />
 	</ItemGroup>
 

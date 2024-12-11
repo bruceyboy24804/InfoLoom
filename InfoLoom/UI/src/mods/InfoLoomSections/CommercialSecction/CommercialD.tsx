@@ -2,10 +2,8 @@ import React, { useState, useCallback, FC } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 
-
 // Declare the global 'engine' object to avoid TypeScript errors.
 // You should replace 'any' with the appropriate type if available.
-
 
 // Interface for RowWithTwoColumns props
 interface RowWithTwoColumnsProps {
@@ -69,8 +67,8 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
           {right1text}
         </div>
       )}
-      {right2 !== undefined && (
-        flag2 ? (
+      {right2 !== undefined &&
+        (flag2 ? (
           <div className="row_S2v negative_YWY" style={centerStyle}>
             {right2text}
           </div>
@@ -78,8 +76,7 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
           <div className="row_S2v positive_zrK" style={centerStyle}>
             {right2text}
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 };
@@ -87,7 +84,9 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
 // Component: DataDivider
 const DataDivider: React.FC = () => {
   return (
-    <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
+    <div
+      style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}
+    >
       <div style={{ borderBottom: '1px solid white' }}></div>
     </div>
   );
@@ -159,14 +158,28 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <SingleValue value={data.free} width="4%" flag={data.free <= 0} />
       <SingleValue value={data.companies} width="5%" />
 
-    
-      <SingleValue value={`${data.svcpercent}%`} width="12%" flag={data.svcpercent > 50} small={true} />
+      <SingleValue
+        value={`${data.svcpercent}%`}
+        width="12%"
+        flag={data.svcpercent > 50}
+        small={true}
+      />
 
       <SingleValue value={data.cappercompany} width="10%" small={true} />
-      <SingleValue value={`${data.cappercent}%`} width="10%" flag={data.cappercent > 200} small={true} />
-      
+      <SingleValue
+        value={`${data.cappercent}%`}
+        width="10%"
+        flag={data.cappercent > 200}
+        small={true}
+      />
+
       <SingleValue value={data.workers} width="9%" small={true} />
-      <SingleValue value={`${data.wrkpercent}%`} width="9%" flag={data.wrkpercent < 90} small={true} />
+      <SingleValue
+        value={`${data.wrkpercent}%`}
+        width="9%"
+        flag={data.wrkpercent < 90}
+        small={true}
+      />
 
       <SingleValue value={data.taxfactor} width="12%" flag={data.taxfactor < 0} small={true} />
     </div>
@@ -176,12 +189,11 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
 
 // Interface for $Commercial props
 interface CommercialProps {
-  
   onClose: () => void;
 }
 
 // Component: $Commercial
-const $Commercial: FC<CommercialProps> = ({ onClose }) => {
+const $CommercialD: FC<CommercialProps> = ({ onClose }) => {
   // Demand data for each resource
   const [demandData, setDemandData] = useState<ResourceData[]>([]);
 
@@ -202,6 +214,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
 
   return (
     <$Panel
+      id="infoloom-commercial-products"
       title="Commercial Products"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
@@ -226,8 +239,8 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
           </div>
 
           {demandData
-            .filter((item) => item.resource !== 'NoResource')
-            .map((item) => (
+            .filter(item => item.resource !== 'NoResource')
+            .map(item => (
               <ResourceLine key={item.resource} data={item} />
             ))}
         </div>
@@ -236,7 +249,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
   );
 };
 
-export default $Commercial;
+export default $CommercialD;
 
 // Registering the panel with HookUI so it shows up in the menu
 /*

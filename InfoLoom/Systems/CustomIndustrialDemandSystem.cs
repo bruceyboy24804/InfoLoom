@@ -23,6 +23,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
+using static InfoLoomTwo.Systems.CommercialUISystem;
 using static InfoLoomTwo.Systems.IndustrialUISystem;
 
 namespace InfoLoomTwo.Systems;
@@ -155,26 +156,25 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
         public NativeArray<int> m_Storages;
 
         public NativeArray<int> m_StorageCapacities;
-
         public NativeArray<int> m_ResourceDemands;
 
-        public NativeArray<DemandData> m_DemandData; // Added for UI data
+        public NativeArray<IDemandData> m_DemandData; // Added for UI data
 
         public NativeArray<int> m_CurrentProductionWorkers;
 
         public NativeArray<int> m_MaxProductionWorkers;
 
-        
 
-       
+
+
 
         public NativeArray<int> m_ProductionCompanies;
 
         public NativeArray<int> m_ProductionPropertyless;
 
-        
 
-       
+
+
 
         public void Execute()
         {
@@ -434,17 +434,17 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
                 }
 
                 // Update the uiData for the current resource
-                DemandData uiData = m_DemandData[resourceIndex4];
+                IDemandData uiData = m_DemandData[resourceIndex4];
                 uiData.Resource = iterator.resource;
                 uiData.Demand = m_ResourceDemands[resourceIndex4];
                 uiData.Building = m_IndustrialCompanyDemands[resourceIndex4];
-                
+
                 uiData.Free = m_FreeProperties[resourceIndex4];
                 uiData.Companies = m_ProductionCompanies[resourceIndex4];
 
                 uiData.SvcPercent = m_Storages[resourceIndex4];
-               
-                
+
+
                 uiData.CapPercent = m_CompanyResourceDemands[resourceIndex4];
                 uiData.CapPerCompany = m_Productions[resourceIndex4];
 
@@ -453,8 +453,8 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
 
 
                 uiData.TaxFactor = Mathf.RoundToInt(100f * num16);
-               
-               
+
+
                 m_DemandData[resourceIndex4] = uiData;
 
 
@@ -464,7 +464,7 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
 
 
 
-               
+
                 if (m_ResourceDemands[resourceIndex4] > 0)
                 {
                     if (!isMaterial && m_IndustrialCompanyDemands[resourceIndex4] > 0)
@@ -631,10 +631,9 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
     private NativeValue<int> m_StorageBuildingDemand;
 
     private NativeValue<int> m_OfficeCompanyDemand;
-
     private NativeValue<int> m_OfficeBuildingDemand;
 
-    public static NativeArray<DemandData> m_DemandData;
+    public static NativeArray<IDemandData> m_DemandData;
 
     [ResourceArray]
     [DebugWatchValue]
@@ -821,7 +820,7 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
         m_FreeStorages = new NativeArray<int>(resourceCount, Allocator.Persistent);
         m_Storages = new NativeArray<int>(resourceCount, Allocator.Persistent);
         m_StorageCapacities = new NativeArray<int>(resourceCount, Allocator.Persistent);
-        m_DemandData = new NativeArray<DemandData>(resourceCount, Allocator.Persistent);
+        m_DemandData = new NativeArray<IDemandData>(resourceCount, Allocator.Persistent);
         RequireForUpdate(m_EconomyParameterQuery);
         RequireForUpdate(m_DemandParameterQuery);
         RequireForUpdate(m_ProcessDataQuery);

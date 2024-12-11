@@ -28,7 +28,7 @@ namespace InfoLoomTwo.Systems;
 [CompilerGenerated]
 public partial class IndustrialUISystem : UISystemBase
 {
-    public struct DemandData
+    public struct IDemandData
     {
         public Resource Resource;
         //public FixedString32Bytes Name; // resource name
@@ -48,10 +48,10 @@ public partial class IndustrialUISystem : UISystemBase
         public int TaxFactor; // tax factor
         //public FixedString512Bytes Details;
 
-        public DemandData(Resource resource) { Resource = resource; } // Name = EconomyUtils.GetNameFixed(EconomyUtils.GetResource(resource)); }
+        public IDemandData(Resource resource) { Resource = resource; } // Name = EconomyUtils.GetNameFixed(EconomyUtils.GetResource(resource)); }
     }
 
-    private static void WriteData(IJsonWriter writer, DemandData data)
+    private static void WriteData(IJsonWriter writer, IDemandData data)
     {
         writer.TypeBegin("DemandData");
         writer.PropertyName("resource");
@@ -68,18 +68,18 @@ public partial class IndustrialUISystem : UISystemBase
 
         writer.PropertyName("svcpercent");
         writer.Write(data.SvcPercent);
-       
-        
+
+
         writer.PropertyName("cappercent");
         writer.Write(data.CapPercent);
         writer.PropertyName("cappercompany");
         writer.Write(data.CapPerCompany);
-        
+
         writer.PropertyName("workers");
         writer.Write(data.Workers);
         writer.PropertyName("wrkpercent");
         writer.Write(data.WrkPercent);
-       
+
         writer.PropertyName("taxfactor");
         writer.Write(data.TaxFactor);
         //writer.PropertyName("details");
@@ -93,7 +93,7 @@ public partial class IndustrialUISystem : UISystemBase
 
     private RawValueBinding m_uiResults;
 
-    private NativeArray<DemandData> m_Results;
+    private NativeArray<IDemandData> m_Results;
 
     // Set gameMode to avoid errors in the Editor
     public override GameMode gameMode => GameMode.Game;

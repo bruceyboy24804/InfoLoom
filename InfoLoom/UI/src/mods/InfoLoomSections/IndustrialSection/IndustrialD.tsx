@@ -204,6 +204,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
 
   return (
     <$Panel
+      id="infoloom-industrial-products"
       title="Industrial and Office Products"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.53 }}

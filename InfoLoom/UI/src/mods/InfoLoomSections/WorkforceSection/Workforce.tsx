@@ -114,6 +114,7 @@ const Workforce: React.FC<WorkforceProps> = ({ onClose }) => {
 
   return (
     <$Panel
+      id="infoloom.workforce"
       title="Workforce Structure"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.37, height: window.innerHeight * 0.222 }}

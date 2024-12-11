@@ -31,7 +31,7 @@ namespace InfoLoomTwo.Systems;
 [CompilerGenerated]
 public partial class ResidentialDemandUISystem : UISystemBase
 {
-    
+
 
     //[BurstCompile]
     private struct UpdateResidentialDemandJob : IJob
@@ -200,7 +200,7 @@ public partial class ResidentialDemandUISystem : UISystemBase
                 math.clamp(m_HouseholdDemand.value / 2 + num11 + num14, 0, 100)
             );
             m_BuildingDemand.value = math.select(default(int3), m_BuildingDemand.value, c);
-           
+
             // InfoLoom: Store results instead of enqueueing trigger
             m_Results[0] = totalProperties.x;
             m_Results[1] = totalProperties.y;
@@ -220,9 +220,9 @@ public partial class ResidentialDemandUISystem : UISystemBase
             m_Results[15] = Mathf.RoundToInt(10f * (10f - num5 / demandParameterData.m_TaxEffect));
             m_Results[16] = m_HouseholdDemand.value;
             m_Results[17] = Mathf.RoundToInt(100f * num7 / (num7 + math.max(0, num8)));
-           
+
         }
-        
+
     }
 
     private struct TypeHandle

@@ -1,0 +1,37 @@
+.subPanel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    background-color: transparent;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.iconLabelSection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.labelCheckboxSection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.8;
+}
+
+.label {
+    font-size: 13px;
+    color: #fff;
+}

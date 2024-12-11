@@ -48,7 +48,9 @@ $laneButtonSize: 64rem;
   padding: 8rem;
   border-radius: 4rem;
   border: none;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -4,13 +4,12 @@ import useDataUpdate from 'mods/use-data-update';
 
 // Declare 'engine' if it's a global variable
 
-
 interface AlignedParagraphProps {
   left: number;
   right: string;
 }
 
-const AlignedParagraph: React.FC<AlignedParagraphProps> = ({ left, right }) => {
+const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
   // Set color based on value of left
   let color: string;
   if (left < -50) {
@@ -53,7 +52,21 @@ interface DemandSection2Props {
   factors: { factor: string; weight: number }[];
 }
 
-const DemandSection2: React.FC<DemandSection2Props> = ({ title, value, factors }) => {
+// Function to map factor names to display names
+const getDisplayName = (factor: string): string => {
+  const displayNames: { [key: string]: string } = {
+    'EmptyBuildings': 'Building Occupancy',
+    'Unemployment': 'Availability of Jobs',
+    'Homelessness': 'Cost of Living',
+    'Warehouses': 'Availability of Warehouses',
+    'UneducatedWorkforce': 'Labour Availability',
+    'EducatedWorkforce': 'High Skill Labour Availability',
+    'PetrolLocalDemand': 'Gas Station Availability',
+  };
+  return displayNames[factor] || factor;
+};
+
+const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   return (
     <div
       className="infoview-panel-section_RXJ"
@@ -62,19 +75,13 @@ const DemandSection2: React.FC<DemandSection2Props> = ({ title, value, factors }
       {/* title */}
       <div className="labels_L7Q row_S2v uppercase_RJI">
         <div className="left_Lgw row_S2v">{title}</div>
-        {value >= 0 && (
-          <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>
-        )}
+        {value >= 0 && <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>}
       </div>
       <div className="space_uKL" style={{ height: '3rem' }}></div>
       {/* factors */}
       {factors.map((item, index) => (
-        <div
-          key={index}
-          className="labels_L7Q row_S2v small_ExK"
-          style={{ marginTop: '1rem' }}
-        >
-          <div className="left_Lgw row_S2v">{item.factor}</div>
+        <div key={index} className="labels_L7Q row_S2v small_ExK" style={{ marginTop: '1rem' }}>
+          <div className="left_Lgw row_S2v">{getDisplayName(item.factor)}</div>
           <div className="right_k30 row_S2v">
             {item.weight < 0 ? (
               <div className="negative_YWY">{item.weight}</div>
@@ -93,10 +100,7 @@ interface DemandFactorsProps {
   onClose: () => void;
 }
 
-
 const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
-  
-
   // Demand values are just single numbers
   const [residentialLowDemand, setResidentialLowDemand] = useState<number>(0);
   useDataUpdate('cityInfo.residentialLowDemand', setResidentialLowDemand);
@@ -117,7 +121,29 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
   useDataUpdate('cityInfo.officeDemand', setOfficeDemand);
 
   // Demand factors: an array with properties: __Type, factor, weight
-  type DemandFactor = { __Type?: string; factor: string; weight: number };
+  type DemandFactor = {
+    __Type?: string;
+    factor:
+      | 'StorageLevels'
+      | 'UneducatedWorkforce'
+      | 'EducatedWorkforce'
+      | 'CompanyWealth'
+      | 'LocalDemand'
+      | 'Unemployment'
+      | 'FreeWorkplaces'
+      | 'Happiness'
+      | 'Homelessness'
+      | 'TouristDemand'
+      | 'LocalInputs'
+      | 'Taxes'
+      | 'Students'
+      | 'UnoccupiedBuildings'
+      | 'EmptyZones'
+      | 'PoorZoneLocation'
+      | 'PetrolLocalDemand'
+      | 'Warehouses';
+    weight: number;
+  };
 
   const [residentialLowFactors, setResidentialLowFactors] = useState<DemandFactor[]>([]);
   useDataUpdate('cityInfo.residentialLowFactors', setResidentialLowFactors);
@@ -156,8 +182,6 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     weight: buildingDemand[index] || 0,
   }));
 
-  
-
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   // Handler for closing the panel
@@ -171,6 +195,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
 
   return (
     <$Panel
+      id="infoloom-demand"
       title="Demand"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.11, height: window.innerHeight * 0.73 }}
@@ -178,13 +203,8 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
         top: window.innerHeight * 0.05,
         left: window.innerWidth * 0.005,
       }}
-      
     >
-      <DemandSection2
-        title="BUILDING DEMAND"
-        value={-1}
-        factors={buildingDemandFactors}
-      />
+      <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
       <DemandSection2
         title="RESIDENTIAL LOW"
         value={residentialLowDemand}
@@ -200,16 +220,8 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
         value={residentialHighDemand}
         factors={residentialHighFactors}
       />
-      <DemandSection2
-        title="COMMERCIAL"
-        value={commercialDemand}
-        factors={commercialFactors}
-      />
-      <DemandSection2
-        title="INDUSTRIAL"
-        value={industrialDemand}
-        factors={industrialFactors}
-      />
+      <DemandSection2 title="COMMERCIAL" value={commercialDemand} factors={commercialFactors} />
+      <DemandSection2 title="INDUSTRIAL" value={industrialDemand} factors={industrialFactors} />
       <DemandSection2 title="OFFICE" value={officeDemand} factors={officeFactors} />
     </$Panel>
   );

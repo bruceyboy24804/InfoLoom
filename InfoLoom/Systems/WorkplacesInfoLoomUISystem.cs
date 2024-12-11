@@ -369,7 +369,7 @@ namespace InfoLoomTwo.Systems
 
             JobChunkExtensions.Schedule(jobData, m_WorkplaceQuery, base.Dependency).Complete();
 
-            
+
 
             // Calculate totals
             WorkplacesAtLevelInfo totals = new WorkplacesAtLevelInfo(-1);

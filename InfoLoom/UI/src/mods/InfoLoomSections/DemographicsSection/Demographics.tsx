@@ -1,4 +1,4 @@
-import React, { useState, useMemo, KeyboardEvent, useCallback, FC } from 'react';
+import React, { useState, useMemo, KeyboardEvent, useCallback, FC, useRef, useEffect } from 'react';
 import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 import mod from "mod.json";
@@ -15,6 +15,7 @@ import {
   Title,
 } from 'chart.js';
 import { bindValue, useValue } from 'cs2/api';
+import { InfoCheckbox } from "../../InfoCheckbox/InfoCheckbox";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
@@ -192,7 +193,7 @@ const AlignedParagraph: React.FC<AlignedParagraphProps> = ({ left, right }) => (
 );
 
 // DemographicsLevel Component
-const DemographicsLevel: React.FC<{
+interface DemographicsLevelProps {
   levelColor: string;
   levelName: string;
   levelValues: {
@@ -202,9 +203,12 @@ const DemographicsLevel: React.FC<{
     college: number;
     university: number;
     other: number;
+    total: number;
   };
   total: number;
-}> = ({ levelColor, levelName, levelValues, total }) => (
+}
+
+const DemographicsLevel: React.FC<DemographicsLevelProps> = ({ levelColor, levelName, levelValues, total }) => (
   <div
     className="labels_L7Q row_S2v"
     style={{ width: '99%', padding: '1rem 0', backgroundColor: levelColor }}
@@ -259,6 +263,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   // State hooks for grouping and summary statistics visibility
   const [isGrouped, setIsGrouped] = useState<boolean>(false);
   const [showSummaryStats, setShowSummaryStats] = useState<boolean>(false);
+  const [groupingStrategy, setGroupingStrategy] = useState<'none' | 'fiveYear' | 'tenYear' | 'custom' | 'lifecycle'>('none');
 
   // Fetch totals data using useDataUpdate hook
   useDataUpdate('populationInfo.structureTotals', data => setTotals(data || []));
@@ -274,92 +279,93 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const BAR_HEIGHT = 40;
   const MAX_CHART_HEIGHT = 1200;
 
+  // Memoized chart colors
+  const chartColors = {
+    work: '#624532',
+    elementary: '#7E9EAE',
+    highSchool: '#00C217',
+    college: '#005C4E',
+    university: '#2462FF',
+    other: '#A1A1A1',
+  } as const;
+
+  // Memoized dataset configuration
+  const createDatasetConfig = useMemo(() => ({
+    work: { label: 'Work', backgroundColor: chartColors.work },
+    elementary: { label: 'Elementary', backgroundColor: chartColors.elementary },
+    highSchool: { label: 'High School', backgroundColor: chartColors.highSchool },
+    college: { label: 'College', backgroundColor: chartColors.college },
+    university: { label: 'University', backgroundColor: chartColors.university },
+    other: { label: 'Other', backgroundColor: chartColors.other },
+  }), []);
+
   // Prepare detailed data for Chart.js with grouping
   const detailedChartData = useMemo(() => {
-    const groupedData = groupDetailsByAge(details)
-      .filter(data => parseInt(data.label) <= AgeCap); // Filter by AgeCap
-    const sortedAges = groupedData.sort((a, b) => parseInt(a.label) - parseInt(b.label));
+    // Early return if no details
+    if (!details.length) return { labels: [], datasets: [] };
+
+    const validDetails = details.filter(detail => detail.age <= AgeCap);
+    const sortedAges = validDetails.sort((a, b) => a.age - b.age);
   
-    return {
-      labels: sortedAges.map(data => data.label),
-      datasets: [
-        {
-          label: 'Work',
-          data: sortedAges.map(data => data.work),
-          backgroundColor: '#624532',
-        },
-        {
-          label: 'Elementary',
-          data: sortedAges.map(data => data.elementary),
-          backgroundColor: '#7E9EAE',
-        },
-        {
-          label: 'High School',
-          data: sortedAges.map(data => data.highSchool),
-          backgroundColor: '#00C217',
-        },
-        {
-          label: 'College',
-          data: sortedAges.map(data => data.college),
-          backgroundColor: '#005C4E',
-        },
-        {
-          label: 'University',
-          data: sortedAges.map(data => data.university),
-          backgroundColor: '#2462FF',
-        },
-        {
-          label: 'Other',
-          data: sortedAges.map(data => data.other),
-          backgroundColor: '#A1A1A1',
-        },
-      ],
-    };
-  }, [details, AgeCap]);
+    const labels = sortedAges.map(data => String(data.age));
+  
+    const datasets = Object.entries(createDatasetConfig).map(([key, config]) => ({
+      ...config,
+      data: sortedAges.map(data => 
+        key === 'work' ? data.work :
+        key === 'elementary' ? data.school1 :
+        key === 'highSchool' ? data.school2 :
+        key === 'college' ? data.school3 :
+        key === 'university' ? data.school4 :
+        data.other
+      )
+    }));
 
-  // Prepare grouped data for Chart.js
+    return { labels, datasets };
+  }, [details, AgeCap, createDatasetConfig]);
+
+  // Prepare grouped data for Chart.js with optimized processing
   const groupedChartData = useMemo(() => {
-    const aggregated = aggregateDataByAgeRanges(details);
+    // Early return if no details
+    if (!details.length) return { labels: [], datasets: [] };
 
+    const aggregated = aggregateDataByAgeRanges(details);
+    const labels = aggregated.map(data => data.label);
+  
+    const datasets = Object.entries(createDatasetConfig).map(([key, config]) => ({
+      ...config,
+      data: aggregated.map(data => 
+        key === 'work' ? data.work :
+        key === 'elementary' ? data.elementary :
+        key === 'highSchool' ? data.highSchool :
+        key === 'college' ? data.college :
+        key === 'university' ? data.university :
+        data.other
+      )
+    }));
+
+    return { labels, datasets };
+  }, [details, createDatasetConfig]);
+
+  // Optimized dynamic font size calculation
+  const dynamicFontConfig = useMemo(() => {
+    const baseFontSize = 8;
+    const fontSizeMultiplier = Math.max(0.5, 50 / AgeCap);
     return {
-      labels: aggregated.map(data => data.label),
-      datasets: [
-        {
-          label: 'Work',
-          data: aggregated.map(data => data.work),
-          backgroundColor: '#624532',
-        },
-        {
-          label: 'Elementary',
-          data: aggregated.map(data => data.elementary),
-          backgroundColor: '#7E9EAE',
-        },
-        {
-          label: 'High School',
-          data: aggregated.map(data => data.highSchool),
-          backgroundColor: '#00C217',
-        },
-        {
-          label: 'College',
-          data: aggregated.map(data => data.college),
-          backgroundColor: '#005C4E',
-        },
-        {
-          label: 'University',
-          data: aggregated.map(data => data.university),
-          backgroundColor: '#2462FF',
-        },
-        {
-          label: 'Other',
-          data: aggregated.map(data => data.other),
-          backgroundColor: '#A1A1A1',
-        },
-      ],
+      size: Math.max(8, Math.floor(baseFontSize * fontSizeMultiplier))
     };
-  }, [details, AgeCap]);
-  const baseFontSize = 8; // Base font size
-  const fontSizeMultiplier = Math.max(0.5, 50 / AgeCap); // Inverse relationship: larger AgeCap = smaller font
-  const dynamicFontSize = Math.max(8, Math.floor(baseFontSize * fontSizeMultiplier)); // Never go below 8px
+  }, [AgeCap]);
+
+  // Debounced chart height calculation
+  const chartHeight = useMemo(() => {
+    if (!details.length) return MAX_CHART_HEIGHT;
+
+    const baseHeight = 50;
+    const heightMultiplier = Math.max(1, AgeCap / 50);
+    const dataLength = isGrouped ? AGE_RANGES.length : details.length;
+    return Math.min(dataLength * baseHeight * heightMultiplier, MAX_CHART_HEIGHT);
+  }, [isGrouped, details.length, AgeCap]);
+
   // Chart options with aligned font settings
   const chartOptions = useMemo(
     () => ({
@@ -420,7 +426,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             font: { ...yaxisfont, size: yaxisfont.size},
             baseFontSize: yaxisfont.size,
             fontSizeMultiplier: Math.max(0.5, 50 / AgeCap), // Inverse relationship: larger AgeCap = smaller font
-            dynamicFontSize: Math.max(8, Math.floor(baseFontSize * fontSizeMultiplier)), // Never go below 8px
+            dynamicFontSize: Math.max(8, Math.floor(dynamicFontConfig.size * (50 / AgeCap))), // Never go below 8px
             autoSkip: false,
             stepSize: isGrouped ? 1 : 5,
             padding: 10, 
@@ -438,20 +444,29 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const chartDataToUse = isGrouped ? groupedChartData : detailedChartData;
 
   // Calculate dynamic chart height with a new maximum limit
-  const chartHeight = useMemo(() => {
-    const baseHeight = 50; // Base height per data point
-    const heightMultiplier = Math.max(1, AgeCap / 50); // Same multiplier logic as above
-    const dataLength = isGrouped ? AGE_RANGES.length : details.length;
-    return Math.min(dataLength * baseHeight * heightMultiplier, MAX_CHART_HEIGHT);
-  }, [isGrouped, details.length, AgeCap]);
+  const chartHeightToUse = chartHeight;
 
   // Calculate detailed summary statistics per age or age group
   const detailedSummaryStats = useMemo(() => {
     return isGrouped ? aggregateDataByAgeRanges(details) : groupDetailsByAge(details);
   }, [details, isGrouped]);
 
-  // Define functions to handle keypress on buttons for accessibility
-  const handleToggleKeyPress = (
+  // Optimized toggle handlers using useCallback
+  const toggleGrouped = useCallback(() => {
+    setIsGrouped(prev => !prev);
+  }, []);
+
+  const toggleSummaryStats = useCallback(() => {
+    setShowSummaryStats(prev => !prev);
+  }, []);
+
+  const handleResetData = useCallback(() => {
+    setTotals([]);
+    setDetails([]);
+  }, []);
+
+  // Optimized key press handler
+  const handleToggleKeyPress = useCallback((
     e: KeyboardEvent<HTMLButtonElement>,
     toggleFunction: () => void
   ) => {
@@ -459,12 +474,121 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       e.preventDefault();
       toggleFunction();
     }
-  };
+  }, []);
 
-  // NEW: Function to handle data reset
-  const handleResetData = () => {
-    setTotals([]);
-    setDetails([]);
+  // Memoized panel style
+  const panelStyle = useMemo(() => ({
+    backgroundColor: 'var(--panelColorNormal)',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    overflow: 'hidden',
+    margin: '3rem',
+  }), []);
+
+  // Memoized button styles
+  const buttonStyle = useMemo(() => ({
+    base: {
+      padding: '0.5rem 1rem',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      margin: '3rem',
+    },
+    normal: {
+      backgroundColor: '#34495e',
+    },
+    reset: {
+      backgroundColor: '#e74c3c',
+    }
+  }), []);
+
+  // Virtualized summary stats list
+  interface VirtualizedListProps {
+    items: AggregatedInfo[];
+    itemHeight?: number;
+  }
+
+  const VirtualizedSummaryList: FC<VirtualizedListProps> = useCallback(({ items, itemHeight = 40 }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
+
+    const handleScroll = useCallback(() => {
+      if (!containerRef.current) return;
+      
+      const { scrollTop, clientHeight } = containerRef.current;
+      const start = Math.floor(scrollTop / itemHeight);
+      const end = Math.min(
+        start + Math.ceil(clientHeight / itemHeight) + 1,
+        items.length
+      );
+      
+      setVisibleRange({ start, end });
+    }, [items.length, itemHeight]);
+
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      container.addEventListener('scroll', handleScroll);
+      handleScroll();
+
+      return () => container.removeEventListener('scroll', handleScroll);
+    }, [handleScroll]);
+
+    const visibleItems = items.slice(visibleRange.start, visibleRange.end);
+    const totalHeight = items.length * itemHeight;
+    const offsetY = visibleRange.start * itemHeight;
+
+    return (
+      <div
+        ref={containerRef}
+        style={{
+          overflowY: 'auto',
+          maxHeight: '250px',
+          paddingRight: '10px',
+          position: 'relative'
+        }}
+      >
+        <div style={{ height: totalHeight, position: 'relative' }}>
+          <div style={{ transform: `translateY(${offsetY}px)` }}>
+            {visibleItems.map((stat: AggregatedInfo, index: number) => (
+              <DemographicsLevel
+                key={visibleRange.start + index}
+                levelColor={(visibleRange.start + index) % 2 === 0 ? 'rgba(255, 255, 255, 0.1)' : 'transparent'}
+                levelName={stat.label}
+                levelValues={{
+                  work: stat.work,
+                  elementary: stat.elementary,
+                  highSchool: stat.highSchool,
+                  college: stat.college,
+                  university: stat.university,
+                  other: stat.other,
+                  total: stat.total
+                }}
+                total={stat.total}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }, []);
+
+  // Performance monitoring hook
+  const usePerformanceMonitor = (componentName: string) => {
+    useEffect(() => {
+      const startTime = performance.now();
+      
+      return () => {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        if (duration > 16.67) { // Longer than one frame (60fps)
+          console.warn(`${componentName} render took ${duration.toFixed(2)}ms`);
+        }
+      };
+    });
   };
 
   // New state to control panel visibility
@@ -475,23 +599,159 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
     onClose();
   }, [onClose]);
 
+  // Define grouping strategies
+  type GroupingStrategy = 'none' | 'fiveYear' | 'tenYear' | 'custom' | 'lifecycle';
+
+  interface GroupingOption {
+    label: string;
+    value: GroupingStrategy;
+    ranges: { label: string; min: number; max: number }[];
+  }
+
+  const GROUP_STRATEGIES: GroupingOption[] = [
+    {
+      label: 'Detailed View',
+      value: 'none',
+      ranges: []
+    },
+    {
+      label: '5-Year Groups',
+      value: 'fiveYear',
+      ranges: AGE_RANGES
+    },
+    {
+      label: '10-Year Groups',
+      value: 'tenYear',
+      ranges: [
+        { label: '0-10', min: 0, max: 10 },
+        { label: '11-20', min: 11, max: 20 },
+        { label: '21-30', min: 21, max: 30 },
+        { label: '31-40', min: 31, max: 40 },
+        { label: '41-50', min: 41, max: 50 },
+        { label: '51-60', min: 51, max: 60 },
+        { label: '61-70', min: 61, max: 70 },
+        { label: '71-80', min: 71, max: 80 },
+        { label: '81-90', min: 81, max: 90 },
+        { label: '91-100', min: 91, max: 100 },
+        { label: '101+', min: 101, max: 200 }
+      ]
+    },
+    {
+      label: 'Lifecycle Groups',
+      value: 'lifecycle',
+      ranges: [
+        { label: 'Child (0-20)', min: 0, max: 20 },
+        { label: 'Teen (21-35)', min: 21, max: 35 },
+        { label: 'Adult (36-83)', min: 36, max: 83 },
+        { label: 'Elderly (84-200+)', min: 84, max: 200 },
+        
+      ]
+    }
+  ];
+
+  // Modified aggregation function to use selected grouping strategy
+  const aggregateDataByStrategy = useCallback((details: Info[], strategy: GroupingStrategy): AggregatedInfo[] => {
+    if (strategy === 'none') {
+      return groupDetailsByAge(details);
+    }
+
+    const selectedStrategy = GROUP_STRATEGIES.find(s => s.value === strategy);
+    if (!selectedStrategy) return [];
+
+    const aggregated = selectedStrategy.ranges.map(range => ({
+      label: range.label,
+      work: 0,
+      elementary: 0,
+      highSchool: 0,
+      college: 0,
+      university: 0,
+      other: 0,
+      total: 0,
+    }));
+
+    details.forEach(info => {
+      const index = selectedStrategy.ranges.findIndex(
+        range => info.age >= range.min && info.age <= range.max
+      );
+
+      if (index !== -1) {
+        const agg = aggregated[index];
+        agg.work += info.work;
+        agg.elementary += info.school1;
+        agg.highSchool += info.school2;
+        agg.college += info.school3;
+        agg.university += info.school4;
+        agg.other += info.other;
+        agg.total += info.total;
+      }
+    });
+
+    return aggregated;
+  }, []);
+
+  // Modified chart data preparation
+  const chartData = useMemo(() => {
+    // Early return if no details
+    if (!details.length) return { labels: [], datasets: [] };
+
+    const aggregated = aggregateDataByStrategy(details, groupingStrategy);
+    const labels = aggregated.map(data => data.label);
+    
+    const datasets = Object.entries(createDatasetConfig).map(([key, config]) => ({
+      ...config,
+      data: aggregated.map(data => 
+        key === 'work' ? data.work :
+        key === 'elementary' ? data.elementary :
+        key === 'highSchool' ? data.highSchool :
+        key === 'college' ? data.college :
+        key === 'university' ? data.university :
+        data.other
+      )
+    }));
+
+    return { labels, datasets };
+  }, [details, groupingStrategy, createDatasetConfig]);
+
+  // Grouping options component
+  const GroupingOptions = () => {
+    const containerStyle = useMemo(() => ({
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '0.5rem',
+      padding: '1rem',
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      borderRadius: '4px',
+      margin: '0 1rem'
+    }), []);
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '14px' }}>Age Grouping</div>
+        {GROUP_STRATEGIES.map(strategy => (
+          <InfoCheckbox
+            key={strategy.value}
+            label={strategy.label}
+            isChecked={groupingStrategy === strategy.value}
+            onToggle={() => setGroupingStrategy(strategy.value)}
+            count={strategy.ranges.length || details.length}
+          />
+        ))}
+      </div>
+    );
+  };
+
   if (!isPanelVisible) {
     return null;
   }
 
   return (
     <$Panel
+      id="infoloom-demographics"
       title="Demographics"
       onClose={handleClose}
       initialSize={{ width: panWidth, height: panHeight }}
       initialPosition={{ top: window.innerHeight * 0.009, left: window.innerWidth * 0.053 }}
-      style={{
-        backgroundColor: 'var(--panelColorNormal)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        margin: '3rem',
-      }}
+      style={panelStyle}
     >
       
       <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', width: '100%' }}>
@@ -527,72 +787,22 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   style={{
     flex: '0 0 auto',
     display: 'flex',
-    justifyContent: 'center',
-    margin: '5rem', // Increased gap between buttons
+    flexDirection: 'column',
+    margin: '1rem'
   }}
 >
-  <button
-    onClick={() => setIsGrouped(prev => !prev)}
-    onKeyPress={e => handleToggleKeyPress(e, () => setIsGrouped(prev => !prev))}
-    style={{
-      padding: '0.5rem 1rem', // Reduced padding for better appearance
-      backgroundColor: '#34495e',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      margin: '3rem',
-    }}
-    aria-pressed={isGrouped}
-    aria-label={isGrouped ? 'Show Detailed View' : 'Show Grouped View'}
-  >
-    {isGrouped ? 'Show Detailed View' : 'Show Grouped View'}
-  </button>
-
-  <button
-    onClick={() => setShowSummaryStats(prev => !prev)}
-    onKeyPress={e => handleToggleKeyPress(e, () => setShowSummaryStats(prev => !prev))}
-    style={{
-      padding: '0.5rem 1rem',
-      backgroundColor: '#34495e',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      margin: '3rem',
-    }}
-    aria-pressed={showSummaryStats}
-    aria-label={showSummaryStats ? 'Hide Summary Statistics' : 'Show Summary Statistics'}
-  >
-    {showSummaryStats ? 'Hide Summary Stats' : 'Show Summary Stats'}
-  </button>
-
-  {/* Reset Data Button */}
-  <button
-    onClick={handleResetData}
-    onKeyPress={e => handleToggleKeyPress(e, handleResetData)}
-    style={{
-      padding: '0.5rem 1rem',
-      backgroundColor: '#e74c3c',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      margin: '3rem',
-    }}
-    aria-label="Reset Data"
-  >
-    Reset Data
-  </button>
+  <GroupingOptions />
+  
+  <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem' }}>
+    
+    
+  </div>
 </div>
 
       {/* Spacer */}
       <div style={{ flex: '0 0 auto', height: '1rem' }}></div>
 
-      {/* Conditionally Render Summary Statistics */}
+      {/* Conditionally Render Summary Statistics with Virtualization */}
       {showSummaryStats && (
         <div
           style={{
@@ -606,68 +816,9 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           }}
         >
           <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>Summary Statistics</h3>
-
-          {/* Scrollable Container */}
-          <div
-            style={{
-              overflowY: 'auto',
-              maxHeight: '250px',
-              paddingRight: '10px',
-            }}
-          >
-            {/* Header Row */}
-            <div
-              className="labels_L7Q row_S2v"
-              style={{ width: '100%', padding: '1rem 0', borderBottom: '1px solid white' }}
-            >
-              <div style={{ width: '1%' }}></div>
-              <div style={{ display: 'flex', alignItems: 'center', width: '22%' }}>
-                <div>Age</div>
-              </div>
-              <div className="row_S2v" style={{ width: '11%', justifyContent: 'center' }}>
-                Total
-              </div>
-              <div className="row_S2v" style={{ width: '11%', justifyContent: 'center' }}>
-                Work
-              </div>
-              <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-                Elementary
-              </div>
-              <div className="row_S2v small_ExK" style={{ width: '9%', justifyContent: 'center' }}>
-                High School
-              </div>
-              <div className="row_S2v small_ExK" style={{ width: '9%', justifyContent: 'center' }}>
-                College
-              </div>
-              <div className="row_S2v small_ExK" style={{ width: '9%', justifyContent: 'center' }}>
-                University
-              </div>
-              <div className="row_S2v small_ExK" style={{ width: '9%', justifyContent: 'center' }}>
-                Other
-              </div>
-            </div>
-
-            {/* Summary Rows */}
-            {detailedSummaryStats.map((stat, index) => (
-              <DemographicsLevel
-                key={index}
-                levelColor={index % 2 === 0 ? 'rgba(255, 255, 255, 0.1)' : 'transparent'}
-                levelName={stat.label}
-                levelValues={{
-                  work: stat.work,
-                  elementary: stat.elementary,
-                  highSchool: stat.highSchool,
-                  college: stat.college,
-                  university: stat.university,
-                  other: stat.other,
-                }}
-                total={stat.total}
-              />
-            ))}
-          </div>
+          <VirtualizedSummaryList items={aggregateDataByStrategy(details, groupingStrategy)} />
         </div>
       )}
-
       {/* Spacer */}
       <div style={{ flex: '0 0 auto', height: '1rem' }}></div>
 
@@ -676,8 +827,8 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         {details.length === 0 ? (
           <p style={{ color: 'white' }}>No data available to display the chart.</p>
         ) : (
-          <div style={{ height: `${chartHeight}px`, width: '100%' }}>
-            <Bar data={chartDataToUse} options={chartOptions} />
+          <div style={{ height: `${chartHeightToUse}px`, width: '100%' }}>
+            <Bar data={chartData} options={chartOptions} />
           </div>
         )}
       </div>

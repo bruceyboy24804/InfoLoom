@@ -10,8 +10,12 @@ interface RowWithTwoColumnsProps {
 const RowWithTwoColumns: React.FC<RowWithTwoColumnsProps> = ({ left, right }) => {
   return (
     <div className="labels_L7Q row_S2v">
-      <div className="row_S2v" style={{ width: '70%' }}>{left}</div>
-      <div className="row_S2v" style={{ width: '30%', justifyContent: 'center' }}>{right}</div>
+      <div className="row_S2v" style={{ width: '70%' }}>
+        {left}
+      </div>
+      <div className="row_S2v" style={{ width: '30%', justifyContent: 'center' }}>
+        {right}
+      </div>
     </div>
   );
 };
@@ -25,7 +29,14 @@ interface RowWithThreeColumnsProps {
   flag2?: boolean;
 }
 
-const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({ left, leftSmall, right1, flag1, right2, flag2 }) => {
+const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
+  left,
+  leftSmall,
+  right1,
+  flag1,
+  right2,
+  flag2,
+}) => {
   const centerStyle: React.CSSProperties = {
     width: right2 === undefined ? '30%' : '15%',
     justifyContent: 'center',
@@ -39,17 +50,24 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({ left, leftSma
         {leftSmall && <p style={{ fontSize: '80%' }}>{leftSmall}</p>}
       </div>
       {flag1 ? (
-        <div className="row_S2v negative_YWY" style={centerStyle}>{right1text}</div>
+        <div className="row_S2v negative_YWY" style={centerStyle}>
+          {right1text}
+        </div>
       ) : (
-        <div className="row_S2v positive_zrK" style={centerStyle}>{right1text}</div>
+        <div className="row_S2v positive_zrK" style={centerStyle}>
+          {right1text}
+        </div>
       )}
-      {right2 !== undefined && (
-        flag2 ? (
-          <div className="row_S2v negative_YWY" style={centerStyle}>{right2text}</div>
+      {right2 !== undefined &&
+        (flag2 ? (
+          <div className="row_S2v negative_YWY" style={centerStyle}>
+            {right2text}
+          </div>
         ) : (
-          <div className="row_S2v positive_zrK" style={centerStyle}>{right2text}</div>
-        )
-      )}
+          <div className="row_S2v positive_zrK" style={centerStyle}>
+            {right2text}
+          </div>
+        ))}
     </div>
   );
 };
@@ -57,7 +75,9 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({ left, leftSma
 // Simple horizontal line
 const DataDivider: React.FC = () => {
   return (
-    <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
+    <div
+      style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}
+    >
       <div style={{ borderBottom: '1px solid gray' }}></div>
     </div>
   );
@@ -79,13 +99,17 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
     justifyContent: 'center',
   };
   return flag === undefined ? (
-    <div className={rowClass} style={centerStyle}>{value}</div>
+    <div className={rowClass} style={centerStyle}>
+      {value}
+    </div>
+  ) : flag ? (
+    <div className={`${rowClass} negative_YWY`} style={centerStyle}>
+      {value}
+    </div>
   ) : (
-    flag ? (
-      <div className={`${rowClass} negative_YWY`} style={centerStyle}>{value}</div>
-    ) : (
-      <div className={`${rowClass} positive_zrK`} style={centerStyle}>{value}</div>
-    )
+    <div className={`${rowClass} positive_zrK`} style={centerStyle}>
+      {value}
+    </div>
   );
 };
 
@@ -121,7 +145,9 @@ const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) =
       </div>
       <div className="labels_L7Q row_S2v">
         <div className="row_S2v" style={{ width: '2%' }}></div>
-        <div className="row_S2v" style={{ width: '34%' }}>Total properties</div>
+        <div className="row_S2v" style={{ width: '34%' }}>
+          Total properties
+        </div>
         <SingleValue value={data[0]} />
         <SingleValue value={data[1]} />
         <SingleValue value={data[2]} />
@@ -129,7 +155,9 @@ const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) =
       </div>
       <div className="labels_L7Q row_S2v">
         <div className="row_S2v small_ExK" style={{ width: '2%' }}></div>
-        <div className="row_S2v small_ExK" style={{ width: '34%' }}>- Occupied properties</div>
+        <div className="row_S2v small_ExK" style={{ width: '34%' }}>
+          - Occupied properties
+        </div>
         <SingleValue value={data[3]} small={true} />
         <SingleValue value={data[4]} small={true} />
         <SingleValue value={data[5]} small={true} />
@@ -137,7 +165,9 @@ const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) =
       </div>
       <div className="labels_L7Q row_S2v">
         <div className="row_S2v" style={{ width: '2%' }}></div>
-        <div className="row_S2v" style={{ width: '34%' }}>= Empty properties</div>
+        <div className="row_S2v" style={{ width: '34%' }}>
+          = Empty properties
+        </div>
         <SingleValue value={freeL} flag={freeL > needL} />
         <SingleValue value={freeM} flag={freeM > needM} />
         <SingleValue value={freeH} flag={freeH > needH} />
@@ -153,7 +183,9 @@ const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) =
       </div>
       <div className="labels_L7Q row_S2v">
         <div className="row_S2v" style={{ width: '2%' }}></div>
-        <div className="row_S2v" style={{ width: '34%' }}>BUILDING DEMAND</div>
+        <div className="row_S2v" style={{ width: '34%' }}>
+          BUILDING DEMAND
+        </div>
         <SingleValue value={demandL} flag={demandL < 0} />
         <SingleValue value={demandM} flag={demandM < 0} />
         <SingleValue value={demandH} flag={demandH < 0} />
@@ -185,13 +217,17 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
     return null;
   }
 
-  const homelessThreshold = residentialData.length > 13 ? Math.round((residentialData[12] * residentialData[13]) / 1000) : 0;
+  const homelessThreshold =
+    residentialData.length > 13
+      ? Math.round((residentialData[12] * residentialData[13]) / 1000)
+      : 0;
 
   return (
     <$Panel
+      id="infoloom.residential"
       title="Residential Data"
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.30 }}
+      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.3 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
       {residentialData.length === 0 ? (
@@ -201,7 +237,15 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
           <BuildingDemandSection data={residentialData} />
           {/* OTHER DATA, two columns */}
           <div style={{ display: 'flex' }}>
-            <div style={{ width: '50%', boxSizing: 'border-box', border: '1px solid gray', paddingLeft: '10rem', paddingRight: '10rem'  }}>
+            <div
+              style={{
+                width: '50%',
+                boxSizing: 'border-box',
+                border: '1px solid gray',
+                paddingLeft: '10rem',
+                paddingRight: '10rem',
+              }}
+            >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
               <RowWithTwoColumns left="STUDY POSITIONS" right={residentialData[14]} />
               <DataDivider />
@@ -213,16 +257,28 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
               />
               <DataDivider />
               <RowWithThreeColumns
-              left="UNEMPLOYMENT"
-              leftSmall={`${residentialData[10] / 10}% is neutral`}
-              right1={`${(residentialData[9] / 100).toFixed(2)}`}
-              flag1={residentialData[9] >= residentialData[10] * 10}  // Changed this line
-            />
+                left="UNEMPLOYMENT"
+                leftSmall={`${residentialData[10] / 10}% is neutral`}
+                right1={`${(residentialData[9] / 100).toFixed(2)}`}
+                flag1={residentialData[9] >= residentialData[10] * 10} // Changed this line
+              />
               <DataDivider />
-              <RowWithThreeColumns left="HOUSEHOLD DEMAND" right1={residentialData[16]} flag1={residentialData[16] < 0} />
+              <RowWithThreeColumns
+                left="HOUSEHOLD DEMAND"
+                right1={residentialData[16]}
+                flag1={residentialData[16] < 0}
+              />
               <div className="space_uKL" style={{ height: '3rem' }}></div>
             </div>
-            <div style={{ width: '50%', boxSizing: 'border-box', border: '1px solid gray', paddingLeft: '10rem', paddingRight: '10rem' }}>
+            <div
+              style={{
+                width: '50%',
+                boxSizing: 'border-box',
+                border: '1px solid gray',
+                paddingLeft: '10rem',
+                paddingRight: '10rem',
+              }}
+            >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
               <RowWithTwoColumns left="HOUSEHOLDS" right={residentialData[12]} />
               <DataDivider />

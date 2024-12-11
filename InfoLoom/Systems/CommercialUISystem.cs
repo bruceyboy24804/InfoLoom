@@ -21,7 +21,7 @@ using UnityEngine.Scripting;
 using Game;
 using Game.UI;
 using Game.Simulation;
-using InfoLoomTwo.Patches; // TODO: use UIUpdateState and Advance() eventully...
+//using InfoLoomTwo.Patches; // TODO: use UIUpdateState and Advance() eventully...
 
 namespace InfoLoomTwo.Systems;
 
@@ -63,12 +63,12 @@ public partial class CommercialUISystem : UISystemBase
         writer.Write(data.Free);
         writer.PropertyName("companies");
         writer.Write(data.Companies);
-       
-        
+
+
         writer.PropertyName("svcpercent");
         writer.Write(data.SvcPercent);
 
-        
+
         writer.PropertyName("cappercent");
         writer.Write(data.CapPercent);
         writer.PropertyName("cappercompany");

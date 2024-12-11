@@ -25,7 +25,7 @@ namespace InfoLoomTwo.Systems;
 [CompilerGenerated]
 public partial class PopulationStructureUISystem : ExtendedUISystemBase
 {
-    
+
     /// <summary>
     /// Holds info about population at Age
     /// </summary>
@@ -39,6 +39,12 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
         public int School4; // university
         public int Work; // working
         public int Other; // not working, not student
+        public int ChildCount;
+        public int AdultCount;
+        public int TeenCount;
+        public int ElderlyCount;
+
+
         public PopulationAtAgeInfo(int _age) { Age = _age; }
     }
 
@@ -64,7 +70,7 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
         writer.TypeEnd();
     }
 
-    
+
 
 
 
@@ -127,10 +133,10 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
 
         public uint m_SimulationFrame;
 
-        public NativeArray<int> m_Totals; 
+        public NativeArray<int> m_Totals;
 
         public NativeArray<PopulationAtAgeInfo> m_Results;
-        
+
 
 
 
@@ -225,38 +231,44 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
                 // Get age using the game's built-in methods
                 CitizenAge age = value.GetAge();
                 int ageInDays = (int)Math.Min(day - value.m_BirthDay, m_AgeCap);
-
                 // Ensure ageInDays is non-negative and within the bounds of m_Results
                 if (ageInDays >= 0 && ageInDays < m_Results.Length)
                 {
-                    // Retrieve the PopulationAtAgeInfo struct
                     PopulationAtAgeInfo info = m_Results[ageInDays];
+
+                    // Set age info using the game's age system
                     info.Age = ageInDays;
                     info.Total++;
+
+                    // You might want to add these fields to your PopulationAtAgeInfo struct
+                    switch (age)
+                    {
+                        case CitizenAge.Child:
+                            info.ChildCount++;
+                            break;
+                        case CitizenAge.Teen:
+                            info.TeenCount++;
+                            break;
+                        case CitizenAge.Adult:
+                            info.AdultCount++;
+                            break;
+                        case CitizenAge.Elderly:
+                            info.ElderlyCount++;
+                            break;
+                    }
 
                     // Process a student
                     if (isStudent)
                     {
                         m_Totals[4]++; // students
-
-                        // Retrieve the student once
                         Game.Citizens.Student student = studentArray[i];
 
-                        // Check what school level using the retrieved student variable
                         switch (student.m_Level)
                         {
-                            case 1:
-                                info.School1++;
-                                break;
-                            case 2:
-                                info.School2++;
-                                break;
-                            case 3:
-                                info.School3++;
-                                break;
-                            case 4:
-                                info.School4++;
-                                break;
+                            case 1: info.School1++; break;
+                            case 2: info.School2++; break;
+                            case 3: info.School3++; break;
+                            case 4: info.School4++; break;
                             default:
 #if DEBUG
                                 Mod.log.Info($"WARNING: incorrect school level, {student.m_Level}");
@@ -265,8 +277,8 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
                         }
                     }
 
-                    // Process a worker
-                    if (isWorker)
+                    // Process a worker (only adults can be workers in the game)
+                    if (isWorker && age == CitizenAge.Adult)
                     {
                         m_Totals[5]++; // workers
                         info.Work++;
@@ -364,7 +376,7 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
     private const string kGroup = "populationInfo";
     protected const string group = "demographicsAge";
 
-    
+
     //private CitySystem m_CitySystem;
 
     private SimulationSystem m_SimulationSystem;
@@ -446,7 +458,7 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
         AddUpdateBinding(new GetterValueBinding<int>(kGroup, "oldest_citizen", () => {
             return m_Totals[6];
         }));
-       
+
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
         m_Results = new NativeArray<PopulationAtAgeInfo>((int)m_AgeCap, Allocator.Persistent); // INFIXO: TODO
@@ -470,11 +482,11 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
         //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
         base.OnUpdate();
 
-        
+
 
         Setting setting = Mod.setting;
         m_AgeCapUISetting.UpdateCallback(setting.AgeCapSetting);
-        
+
         ResetResults();
 
         // code based on AgingJob
@@ -543,10 +555,10 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
             Plugin.Log($"...[{i}]: {info.Age} {info.Total} students {info.School1} {info.School2} {info.School3} {info.School4} workers {info.Work} other {info.Other}");
         }
         */
-        
+
         m_uiTotals.Update();
         m_uiResults.Update();
-       
+
 
         //InspectComponentsInQuery(m_CitizenQuery);
 

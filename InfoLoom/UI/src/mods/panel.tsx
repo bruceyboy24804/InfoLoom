@@ -1,226 +1,355 @@
-import React, { useState, useEffect, useRef, useCallback, FC } from 'react';
+import React, { useState, useEffect, useRef, useCallback, FC, memo } from 'react';
 import classNames from 'classnames';
 import styles from './Panel.module.scss';
 
-interface PanelProps {
-    children: React.ReactNode;
-    title: string;
-    style?: React.CSSProperties;
-    initialPosition?: { top: number; left: number };
-    initialSize?: { width: number; height: number };
-    onPositionChange?: (newPosition: { top: number; left: number }) => void;
-    onSizeChange?: (newSize: { width: number; height: number }) => void;
-    className?: string;
-    onClose?: () => void;  // Make onClose optional
-    savedPosition?: { top: number; left: number };
-    savedSize?: { width: number; height: number };
-    onSavePosition?: (position: { top: number; left: number }) => void;
-    onSaveSize?: (size: { width: number; height: number }) => void;
+const SNAP_THRESHOLD = 20;
+const MIN_SIZE = { width: 200, height: 200 };
+
+type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+interface Position {
+  top: number;
+  left: number;
 }
 
-type InteractionState = 'none' | 'dragging' | 'resizing';
+interface Size {
+  width: number;
+  height: number;
+}
 
-const Panel: FC<PanelProps> = ({
-    children,
-    title,
-    style,
-    initialPosition = { top: 100, left: 10 },
-    initialSize = { width: 300, height: 600 },
-    onPositionChange = () => {},
-    onSizeChange = () => {},
-    className = '',
-    onClose,  // Add onClose to the props
-    savedPosition,
-    savedSize,
-    onSavePosition = () => {},
-    onSaveSize = () => {},
+interface ResizeState {
+  isResizing: boolean;
+  handle: ResizeHandle | null;
+  startSize: Size;
+  startPosition: Position;
+  startMousePosition: { x: number; y: number };
+}
+
+interface PanelProps {
+  children: React.ReactNode;
+  title: string;
+  style?: React.CSSProperties;
+  initialPosition?: Position;
+  initialSize?: Size;
+  onPositionChange?: (newPosition: Position) => void;
+  onSizeChange?: (newSize: Size) => void;
+  className?: string;
+  onClose?: () => void;
+  savedPosition?: Position;
+  savedSize?: Size;
+  onSavePosition?: (position: Position) => void;
+  onSaveSize?: (size: Size) => void;
+  zIndex?: number;
+  id?: string;
+}
+
+const PanelComponent: FC<PanelProps> = ({
+  children,
+  title,
+  style,
+  initialPosition = { top: 100, left: 10 },
+  initialSize = { width: 300, height: 600 },
+  onPositionChange = () => {},
+  onSizeChange = () => {},
+  className = '',
+  onClose,
+  savedPosition,
+  savedSize,
+  onSavePosition = () => {},
+  onSaveSize = () => {},
+  zIndex = 1,
+  id = 'default',
 }) => {
-    // State for position and size
-    const [position, setPosition] = useState(savedPosition || initialPosition);
-    const [size, setSize] = useState(savedSize || initialSize);
+  const getSavedState = useCallback(() => {
+    try {
+      const savedState = localStorage.getItem(`panel_state_${id}`);
+      if (savedState) {
+        const { position, size } = JSON.parse(savedState);
+        return { position, size };
+      }
+    } catch (error) {
+      console.error('Error loading panel state:', error);
+    }
+    return null;
+  }, [id]);
 
-    // State for interaction (dragging/resizing) and relative cursor position
-    const [interaction, setInteraction] = useState<{
-        state: InteractionState;
-        rel?: { x: number; y: number };
-        initialSize?: { width: number; height: number };
-    }>({ state: 'none' });
+  const [position, setPosition] = useState<Position>(() => {
+    const saved = getSavedState();
+    return saved?.position || savedPosition || initialPosition;
+  });
 
-    // Refs
-    const panelRef = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<Size>(() => {
+    const saved = getSavedState();
+    return saved?.size || savedSize || initialSize;
+  });
 
-    // Handler for mouse down on header (start dragging)
-    const handleDragMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.button !== 0) return; // Only left mouse button
-        const rect = panelRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        setInteraction({
-            state: 'dragging',
-            rel: { x: e.clientX - rect.left, y: e.clientY - rect.top },
-        });
-        e.stopPropagation();
-        e.preventDefault();
-    }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(`panel_state_${id}`, JSON.stringify({ position, size }));
+    } catch (error) {
+      console.error('Error saving panel state:', error);
+    }
+  }, [position, size, id]);
 
-    // Handler for mouse down on resizer (start resizing)
-    const handleResizeMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.button !== 0) return; // Only left mouse button
-        setInteraction({
-            state: 'resizing',
-            rel: { x: e.clientX, y: e.clientY },
-            initialSize: { ...size },
-        });
-        e.stopPropagation();
-        e.preventDefault();
-    }, [size]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeState, setResizeState] = useState<ResizeState>({
+    isResizing: false,
+    handle: null,
+    startSize: size,
+    startPosition: position,
+    startMousePosition: { x: 0, y: 0 },
+  });
 
-    // Unified mouse move handler
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (interaction.state === 'dragging') {
-            const newLeft = e.clientX - (interaction.rel?.x || 0);
-            const newTop = e.clientY - (interaction.rel?.y || 0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-            // Constrain within viewport
-            const maxLeft = window.innerWidth - size.width;
-            const maxTop = window.innerHeight - size.height;
+  const snapToEdge = useCallback((value: number, threshold: number, edge: number): number => {
+    if (Math.abs(value - edge) < threshold) {
+      return edge;
+    }
+    return value;
+  }, []);
 
-            const clampedLeft = Math.min(Math.max(newLeft, 0), maxLeft);
-            const clampedTop = Math.min(Math.max(newTop, 0), maxTop);
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    e.preventDefault();
+  }, []);
 
-            const newPosition = { top: clampedTop, left: clampedLeft };
-            setPosition(newPosition);
-            onPositionChange(newPosition);
-            onSavePosition(newPosition);
-        } else if (interaction.state === 'resizing') {
-            const deltaX = e.clientX - (interaction.rel?.x || 0);
-            const deltaY = e.clientY - (interaction.rel?.y || 0);
+  const handleResizeStart = useCallback((e: React.MouseEvent, handle: ResizeHandle) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    setResizeState({
+      isResizing: true,
+      handle,
+      startSize: { width: rect.width, height: rect.height },
+      startPosition: { top: rect.top, left: rect.left },
+      startMousePosition: { x: e.clientX, y: e.clientY },
+    });
+  }, []);
 
-            let newWidth = (interaction.initialSize?.width || size.width) + deltaX;
-            let newHeight = (interaction.initialSize?.height || size.height) + deltaY;
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizeState.isResizing || !resizeState.handle) return;
 
-            // Set minimum size constraints
-            newWidth = Math.max(newWidth, 200); // Minimum width
-            newHeight = Math.max(newHeight, 300); // Minimum height
+    const deltaX = e.clientX - resizeState.startMousePosition.x;
+    const deltaY = e.clientY - resizeState.startMousePosition.y;
+    let newSize = { ...resizeState.startSize };
+    let newPosition = { ...resizeState.startPosition };
 
-            // Optionally, set maximum size based on viewport
-            newWidth = Math.min(newWidth, window.innerWidth - position.left);
-            newHeight = Math.min(newHeight, window.innerHeight - position.top);
+    const handleResize: Record<ResizeHandle, () => void> = {
+      n: () => {
+        const newHeight = Math.max(MIN_SIZE.height, resizeState.startSize.height - deltaY);
+        newPosition.top = resizeState.startPosition.top + (resizeState.startSize.height - newHeight);
+        newSize.height = newHeight;
+      },
+      s: () => {
+        newSize.height = Math.max(MIN_SIZE.height, resizeState.startSize.height + deltaY);
+      },
+      e: () => {
+        newSize.width = Math.max(MIN_SIZE.width, resizeState.startSize.width + deltaX);
+      },
+      w: () => {
+        const newWidth = Math.max(MIN_SIZE.width, resizeState.startSize.width - deltaX);
+        newPosition.left = resizeState.startPosition.left + (resizeState.startSize.width - newWidth);
+        newSize.width = newWidth;
+      },
+      ne: () => {
+        handleResize.n();
+        handleResize.e();
+      },
+      nw: () => {
+        handleResize.n();
+        handleResize.w();
+      },
+      se: () => {
+        handleResize.s();
+        handleResize.e();
+      },
+      sw: () => {
+        handleResize.s();
+        handleResize.w();
+      }
+    };
 
-            const newSize = { width: newWidth, height: newHeight };
-            setSize(newSize);
-            onSizeChange(newSize);
-            onSaveSize(newSize);
+    handleResize[resizeState.handle]();
+
+    // Ensure the panel stays within viewport bounds
+    const maxWidth = window.innerWidth - newPosition.left;
+    const maxHeight = window.innerHeight - newPosition.top;
+    newSize.width = Math.min(newSize.width, maxWidth);
+    newSize.height = Math.min(newSize.height, maxHeight);
+
+    setSize(newSize);
+    setPosition(newPosition);
+    onSizeChange(newSize);
+    onPositionChange(newPosition);
+  }, [resizeState, onSizeChange, onPositionChange]);
+
+  const handleResizeEnd = useCallback(() => {
+    if (resizeState.isResizing) {
+      setResizeState((prev: ResizeState) => ({ ...prev, isResizing: false, handle: null }));
+      onSaveSize(size);
+      onSavePosition(position);
+      
+      // Save to localStorage after resize
+      try {
+        localStorage.setItem(`panel_state_${id}`, JSON.stringify({ position, size }));
+      } catch (error) {
+        console.error('Error saving panel state:', error);
+      }
+    }
+  }, [resizeState.isResizing, size, position, onSaveSize, onSavePosition, id]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      const newLeft = e.clientX - dragOffset.x;
+      const newTop = e.clientY - dragOffset.y;
+      const maxLeft = window.innerWidth - size.width;
+      const maxTop = window.innerHeight - size.height;
+
+      // Snap to edges
+      const snappedLeft = snapToEdge(newLeft, SNAP_THRESHOLD, 0);
+      const snappedTop = snapToEdge(newTop, SNAP_THRESHOLD, 0);
+      const snappedRight = snapToEdge(newLeft, SNAP_THRESHOLD, maxLeft);
+      const snappedBottom = snapToEdge(newTop, SNAP_THRESHOLD, maxTop);
+
+      const newPosition = {
+        left: Math.max(0, Math.min(snappedRight, snappedLeft)),
+        top: Math.max(0, Math.min(snappedBottom, snappedTop)),
+      };
+
+      setPosition(newPosition);
+      onPositionChange(newPosition);
+      onSavePosition(newPosition);
+      
+      // Save to localStorage immediately after position change
+      try {
+        localStorage.setItem(`panel_state_${id}`, JSON.stringify({ position: newPosition, size }));
+      } catch (error) {
+        console.error('Error saving panel state:', error);
+      }
+    }
+  }, [isDragging, dragOffset, size, onPositionChange, onSavePosition, snapToEdge, id]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    handleResizeEnd();
+  }, [handleResizeEnd]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && onClose) {
+      onClose();
+    }
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isDragging || resizeState.isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      if (resizeState.isResizing) {
+        window.addEventListener('mousemove', handleResizeMove);
+      }
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+        if (resizeState.isResizing) {
+          window.removeEventListener('mousemove', handleResizeMove);
         }
-    }, [interaction, size.width, size.height, position.left, position.top, onPositionChange, onSizeChange, onSavePosition, onSaveSize]);
+      };
+    }
+  }, [isDragging, resizeState.isResizing, handleMouseMove, handleMouseUp, handleResizeMove]);
 
-    // Mouse up handler to end interaction
-    const handleMouseUp = useCallback(() => {
-        if (interaction.state !== 'none') {
-            setInteraction({ state: 'none' });
-        }
-    }, [interaction.state]);
-
-    // Attach global mouse move and mouse up listeners when interacting
-    useEffect(() => {
-        if (interaction.state === 'none') return;
-
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [interaction.state, handleMouseMove, handleMouseUp]);
-
-    // Function to dynamically adjust font size based on panel size
-    const adjustFontSize = useCallback(() => {
-        if (contentRef.current) {
-            // Calculate font size based on the panel's width and height
-            const fontSize = Math.max(Math.min(size.width * 0.02, size.height * 0.02), 8); // Clamp between 8px and 2% of width/height
-            contentRef.current.style.fontSize = `${fontSize}px`;
-        }
-    }, [size]);
-
-    // Adjust font size whenever size changes
-    useEffect(() => {
-        adjustFontSize();
-    }, [size, adjustFontSize]);
-
-    return (
-        <div
-            ref={panelRef}
-            style={{
-                position: 'absolute',
-                top: position.top,
-                left: position.left,
-                width: size.width,
-                height: size.height,
-                backgroundColor: 'var(--panelColorNormal)',
-                border: '1px solid #444',
-                borderRadius: '8px',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                ...style,
-            }}
-            className={className}
-        >
-            <div className={styles.header} onMouseDown={handleDragMouseDown}>
-                <span>{title}</span>
-                {onClose && (
-                    <button
-                        className={classNames(
-                            styles.exitbutton,
-                            "button_bvQ button_bvQ close-button_wKK",
-                        )}
-                        onClick={onClose}
-                    >
-                        <div
-                            className="tinted-icon_iKo"
-                            style={{
-                                maskImage: "url(Media/Glyphs/Close.svg)",
-                                width: "var(--iconWidth)",
-                                height: "var(--iconHeight)",
-                            }}
-                        ></div>
-                    </button>
-                )}
-            </div>
-
-            {/* Content */}
+  return (
+    <div
+      ref={panelRef}
+      style={{
+        position: 'absolute',
+        top: position.top,
+        left: position.left,
+        width: size.width,
+        height: size.height,
+        backgroundColor: 'var(--panelColorNormal)',
+        border: '1px solid #444',
+        borderRadius: '8px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex,
+        ...style,
+      }}
+      className={classNames(styles.panel, className)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="dialog"
+      aria-labelledby="panel-title"
+    >
+      <div 
+        className={styles.header} 
+        onMouseDown={handleDragStart}
+        role="heading"
+        aria-level={1}
+        id="panel-title"
+      >
+        <span>{title}</span>
+        {onClose && (
+          <button
+            className={classNames(styles.exitbutton, 'button_bvQ button_bvQ close-button_wKK')}
+            onClick={onClose}
+            aria-label="Close panel"
+          >
             <div
-                ref={contentRef}
-                style={{
-                    flex: '1 1 auto',
-                    padding: '10px',
-                    overflow: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95))',
-                    ...style,
-                }}
-            >
-                {children}
-            </div>
-
-            {/* Resizer */}
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: '20px',
-                    height: '20px',
-                    cursor: 'nwse-resize',
-                    background: 'linear-gradient(45deg, transparent 50%, white 50%)',
-                }}
-                onMouseDown={handleResizeMouseDown}
+              className="tinted-icon_iKo"
+              style={{
+                maskImage: 'url(Media/Glyphs/Close.svg)',
+                width: 'var(--iconWidth)',
+                height: 'var(--iconHeight)',
+              }}
             />
-        </div>
-    );
+          </button>
+        )}
+      </div>
+
+      <div
+        ref={contentRef}
+        className={styles.content}
+        role="region"
+        aria-label={`${title} content`}
+      >
+        {children}
+      </div>
+
+      {(['n', 'e', 's', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map(handle => (
+        <div
+          key={handle}
+          className={styles[handle]}
+          onMouseDown={(e) => handleResizeStart(e, handle)}
+          style={{
+            position: 'absolute',
+            ...(handle.includes('n') && { top: 0 }),
+            ...(handle.includes('s') && { bottom: 0 }),
+            ...(handle.includes('e') && { right: 0 }),
+            ...(handle.includes('w') && { left: 0 }),
+            width: handle.length === 1 ? '4px' : '12px',
+            height: handle.length === 1 ? '4px' : '12px',
+            cursor: `${handle}-resize`,
+            zIndex: 1000,
+          }}
+        />
+      ))}
+    </div>
+  );
 };
 
+const Panel = memo(PanelComponent);
 export default Panel;

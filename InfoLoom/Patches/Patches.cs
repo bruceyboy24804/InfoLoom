@@ -17,20 +17,7 @@ namespace InfoLoomTwo.Patches
     [HarmonyPatch]
     static class GamePatches
     {
-        /* not used
-        [HarmonyPatch(typeof(Game.Common.SystemOrder), "Initialize")]
-        [HarmonyPostfix]
-        public static void Initialize_Postfix(UpdateSystem updateSystem)
-        {
-            updateSystem.UpdateAt<InfoLoom.BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.PopulationStructureUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.WorkplacesInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.WorkforceInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.CommercialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.ResidentialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<InfoLoom.IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-        }
-        */
+       
 
         [HarmonyPatch(typeof(CityInfoUISystem), "WriteDemandFactors")]
         [HarmonyPrefix]

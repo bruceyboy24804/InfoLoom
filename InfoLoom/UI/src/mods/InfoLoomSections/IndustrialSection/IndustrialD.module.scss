@@ -1,27 +1,27 @@
 // IndustrialD.module.scss
 
 .headerRow {
-    display: flex; /* Use flexbox for the header row */
-    background-color: #f2f2f2; /* Light background for headers */
-    font-weight: bold; /* Bold text for headers */
-  }
-  
-  .row {
-    display: flex; /* Use flexbox for each data row */
-    border-bottom: 1px solid #ccc; /* Optional: add a border between rows */
-  }
-  
-  .cell {
-    padding: 10px; /* Padding for cells */
-    text-align: center; /* Center align text */
-    flex: 1; /* Allow cells to grow equally */
-    min-width: 80px; /* Set a minimum width for better alignment */
-  }
-  
-  .negative_YWY {
-    color: red; /* Example style for negative values */
-  }
-  
-  .positive_zrK {
-    color: green; /* Example style for positive values */
-  }
+  display: flex; /* Use flexbox for the header row */
+  background-color: #f2f2f2; /* Light background for headers */
+  font-weight: bold; /* Bold text for headers */
+}
+
+.row {
+  display: flex; /* Use flexbox for each data row */
+  border-bottom: 1px solid #ccc; /* Optional: add a border between rows */
+}
+
+.cell {
+  padding: 10px; /* Padding for cells */
+  text-align: center; /* Center align text */
+  flex: 1; /* Allow cells to grow equally */
+  min-width: 80px; /* Set a minimum width for better alignment */
+}
+
+.negative_YWY {
+  color: red; /* Example style for negative values */
+}
+
+.positive_zrK {
+  color: green; /* Example style for positive values */
+}

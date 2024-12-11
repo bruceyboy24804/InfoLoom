@@ -1,4 +1,4 @@
-@use "../base.scss" as _base;
+@use '../base.scss' as _base;
 
 .panel {
   width: 150rem;
@@ -44,8 +44,6 @@
   flex-direction: column;
   padding: 3rem 6rem;
   background: rgba(255, 255, 255, 0.05);
-  
-  
 }
 
 .InfoLoomButton {
@@ -64,7 +62,9 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
   //box-shadow: 0 4rem 10rem rgba(0, 0, 0, 0.3);
 
   &:hover {
@@ -75,8 +75,8 @@
   }
 
   //&:active {
-    //transform: translateY(-2rem) scale(1.02); /* Keep the scale the same as hover to prevent shrinking */
-    //box-shadow: 0 5rem 14rem rgba(0, 0, 0, 0.4);
+  //transform: translateY(-2rem) scale(1.02); /* Keep the scale the same as hover to prevent shrinking */
+  //box-shadow: 0 5rem 14rem rgba(0, 0, 0, 0.4);
   //}
 
   &::before {
@@ -108,13 +108,8 @@
   background: linear-gradient(145deg, rgba(0, 55, 255, 0.85), rgba(0, 55, 255, 0.85));
   color: var(--menuText1Normal);
   font-size: 10rem;
-  //font-weight: bold;
   text-transform: uppercase;
   cursor: pointer;
-  //position: relative;
-  //overflow: hidden;
-  //transition: background 0.3s ease, transform 0.2s ease;
-  //box-shadow: 0 4rem 10rem rgba(0, 0, 0, 0.3);
   
 }
 
@@ -129,11 +124,4 @@
   }
 }
 
-/*@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 12rem rgba(255, 255, 255, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 24rem rgba(255, 255, 255, 0.8);
-  }
-}*/
+

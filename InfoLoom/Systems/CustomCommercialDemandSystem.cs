@@ -26,6 +26,7 @@ using static Game.Rendering.Debug.RenderPrefabRenderer;
 using static InfoLoomTwo.Systems.CommercialUISystem;
 using System.Linq;
 using Game.UI;
+using static InfoLoomTwo.Systems.IndustrialUISystem;
 
 namespace InfoLoomTwo.Systems;
 
@@ -101,7 +102,7 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
 
         [ReadOnly]
         public ComponentLookup<Population> m_Populations; // Added for population data
-        
+
 
 
         [ReadOnly]
@@ -199,7 +200,7 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
                     }
                 }
             }
-            
+
             m_CompanyDemand.value = 0;
             m_BuildingDemand.value = 0;
             iterator = ResourceIterator.GetIterator();
@@ -223,7 +224,7 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
                 m_BuildingDemand.value = ((num != 0 && flag) ? math.clamp(m_BuildingDemand.value / num, 0, 100) : 0);
                 // Calculate resource demands
                 m_ResourceDemands[resourceIndex2] = Mathf.RoundToInt((1f + num2) * math.clamp(math.max(m_DemandParameters.m_CommercialBaseDemand * (float)num3 - (float)num4, 0f), 0f, 100f));
-               
+
                 // Update UI data for the current resource
                 DemandData uiData = m_DemandData[resourceIndex2];
                 uiData.Resource = iterator.resource;
@@ -279,8 +280,8 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
                     m_DemandFactors[13] += math.min(0, num5 - num8); // Empty Buildings
 
                     num++; // Increment the counter for valid resources
-                   
-                   
+
+
                 }
             }
 
@@ -620,7 +621,7 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
             updateCommercialDemandJob.m_TotalAvailables = commercialCompanyDatas.m_TotalAvailables;
             updateCommercialDemandJob.m_ServiceCompanies = commercialCompanyDatas.m_ServiceCompanies;
             updateCommercialDemandJob.TaxRateEffect = Mod.setting.TaxRateEffect;
-            
+
             UpdateCommercialDemandJob jobData = updateCommercialDemandJob;
             base.Dependency = IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, outJobHandle2, deps));
             m_WriteDependencies = base.Dependency;

@@ -551,7 +551,7 @@ public partial class CommercialDemandUISystem : UISystemBase
         RequireForUpdate(m_CommercialProcessDataQuery);
 
         // InfoLoom
-        
+
         SetDefaults(); // there is no serialization, so init just for safety
         m_Results = new NativeArray<int>(10, Allocator.Persistent);
         m_ExcludedResources = new NativeValue<Resource>(Allocator.Persistent);
@@ -590,7 +590,7 @@ public partial class CommercialDemandUISystem : UISystemBase
         m_Consumption.Dispose();
         m_FreeProperties.Dispose();
         // InfoLoom
-        
+
         m_Results.Dispose();
         m_ExcludedResources.Dispose();
         base.OnDestroy();
@@ -607,7 +607,7 @@ public partial class CommercialDemandUISystem : UISystemBase
         m_FreeProperties.Fill(0);
         //m_LastCompanyDemand = 0;
         //m_LastBuildingDemand = 0;
-        
+
     }
 
     /* not used

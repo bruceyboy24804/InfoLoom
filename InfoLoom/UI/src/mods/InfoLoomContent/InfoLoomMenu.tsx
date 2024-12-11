@@ -11,13 +11,14 @@ import Commercial from "mods/InfoLoomSections/CommercialSecction/Commercial";
 import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
 import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialD";
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialD";
-import Districts from "mods/InfoLoomSections/DistrictsSection/Districts";
+
+
 
 
 
 
 // Define the Section type
-type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Commercial Products' |  'Industrial' | 'Industrial Products' | 'Districts';
+type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Commercial Products' |  'Industrial' | 'Industrial Products';
 
 // Define a new type for components that accept an onClose prop
 type SectionComponentProps = {
@@ -35,7 +36,7 @@ const sections: { name: Section; displayName: string; component: FC<SectionCompo
   { name: 'Commercial Products', displayName: 'Commercial Products', component: CommercialProducts },
   { name: 'Industrial', displayName: 'Industrial', component: Industrial },
   { name: 'Industrial Products', displayName: 'Industrial Products', component: IndustrialProducts },
-  { name: 'Districts', displayName: 'Districts', component: Districts},
+
 ];
 
 const InfoLoomButton: FC = () => {
@@ -50,7 +51,7 @@ const InfoLoomButton: FC = () => {
     'Commercial Products': false,
     Industrial: false,
     'Industrial Products': false,
-    Districts: false
+
     
     
 });

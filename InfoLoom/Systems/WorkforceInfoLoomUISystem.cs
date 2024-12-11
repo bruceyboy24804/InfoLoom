@@ -591,7 +591,7 @@ namespace InfoLoomTwo.Systems
                 binder.ArrayEnd();
             }));
 
-            
+
         }
 
         //[Preserve]
@@ -793,4 +793,3 @@ namespace InfoLoomTwo.Systems
     }
 
 }
-    
