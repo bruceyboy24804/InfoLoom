@@ -143,7 +143,7 @@ const generateRanges = (step: number): AgeRange[] => {
   const ranges: AgeRange[] = [];
   for (let i = 0; i < 200; i += step) {
     ranges.push({
-      label: i === 0 ? `0-${step}` : i >= 100 ? '100+' : `${i}-${i + step}`,
+      label: i === 0 ? `0-${step}` : i >= 200 ? '100+' : `${i}-${i + step}`,
       min: i,
       max: i + step
     });
@@ -324,10 +324,11 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
   const [showChartSettings, setShowChartSettings] = useState<boolean>(false);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
-  const [showGridLines, setShowGridLines] = useState<boolean>(true);
-  const [enableAnimation, setEnableAnimation] = useState<boolean>(true);
+  const [showGridLines, setShowGridLines] = useState(true);
+  const [enableAnimation, setEnableAnimation] = useState(false);
+  const [stackedView, setStackedView] = useState(true);
   const [legendPosition, setLegendPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('top');
-  const [stackedView, setStackedView] = useState<boolean>(false);
+  const [chartOrientation, setChartOrientation] = useState<'horizontal' | 'vertical'>('vertical');
   const [showAgeGrouping, setShowAgeGrouping] = useState<boolean>(true);
   const [showStatistics, setShowStatistics] = useState<boolean>(true);
   const [showDetailedStats, setShowDetailedStats] = useState<boolean>(false);
@@ -394,9 +395,12 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   // Chart options using the configuration function
   const chartOptions = useMemo(
     () => ({
-      indexAxis: 'y' as const,
+      indexAxis: chartOrientation === 'horizontal' ? 'y' as const : 'x' as const,
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: enableAnimation ? 750 : 0,
+      },
       plugins: {
         title: {
           display: true,
@@ -405,6 +409,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           font: commonFont,
         },
         legend: {
+          position: legendPosition,
           labels: {
             color: 'white',
             font: commonFont,
@@ -413,10 +418,10 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       },
       scales: {
         x: {
-          stacked: true,
+          stacked: stackedView,
           title: {
             display: true,
-            text: 'Number of People',
+            text: chartOrientation === 'horizontal' ? 'Number of People' : 'Age in Days',
             color: 'white',
             font: commonFont,
           },
@@ -425,41 +430,72 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             font: { ...commonFont, size: commonFont.size - 4 },
           },
           grid: {
+            display: showGridLines,
             color: 'rgba(255, 255, 255, 0.1)',
           },
         },
         y: {
-          stacked: true,
+          stacked: stackedView,
           beginAtZero: true,
-          max: AgeCap,
           position: 'left' as const,
           title: {
             display: true,
-            text: groupingStrategy !== 'none' ? 'Age Groups in Days' : 'Age in Days',
+            text: chartOrientation === 'horizontal' ? 'Age in Days' : 'Number of People',
             color: 'white',
             font: commonFont,
           },
           ticks: {
             color: 'white',
             font: { ...yaxisfont, size: yaxisfont.size },
-            autoSkip: false,
             stepSize: groupingStrategy !== 'none' ? 1 : 5,
             padding: 10,
           },
           grid: {
+            display: showGridLines,
             color: 'rgba(255, 255, 255, 0.1)',
           },
           afterFit: function(scaleInstance: { height: number }) {
-            const minSpacing = 30; // Minimum pixels between ticks
+            const minSpacing = 30;
             const numTicks = details.length;
             const totalSpacing = numTicks * minSpacing;
             scaleInstance.height = Math.max(scaleInstance.height, totalSpacing);
           },
         },
       },
+      layout: {
+        padding: {
+          top: 20,
+          bottom: 20,
+          left: 10,
+          right: 10,
+        }
+      },
+      barPercentage: 0.95,
+      categoryPercentage: 0.8,
     }),
-    [groupingStrategy, AgeCap, details.length, commonFont, yaxisfont]
+    [
+      chartOrientation,
+      enableAnimation,
+      legendPosition,
+      stackedView,
+      showGridLines,
+      groupingStrategy,
+      AgeCap,
+      details.length,
+      commonFont,
+      yaxisfont,
+    ]
   );
+
+  // Chart container style
+  const chartContainerStyle = useMemo(() => ({
+    height: '100%',
+    width: '100%',
+    position: 'relative' as const,
+    overflowY: 'auto' as const,
+    overflowX: 'hidden' as const,
+    minHeight: chartOrientation === 'horizontal' ? '800px' : '400px',
+  }), [chartOrientation]);
 
   // Prepare chart data based on grouping strategy
   const chartData = useMemo(() => {
@@ -477,48 +513,73 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           data: sortedAges.map(d => d.work),
           backgroundColor: chartColors.work,
           borderColor: chartColors.work,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'Elementary',
           data: sortedAges.map(d => d.school1),
           backgroundColor: chartColors.elementary,
           borderColor: chartColors.elementary,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'High School',
           data: sortedAges.map(d => d.school2),
           backgroundColor: chartColors.highSchool,
           borderColor: chartColors.highSchool,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'College',
           data: sortedAges.map(d => d.school3),
           backgroundColor: chartColors.college,
           borderColor: chartColors.college,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'University',
           data: sortedAges.map(d => d.school4),
           backgroundColor: chartColors.university,
           borderColor: chartColors.university,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'Other',
           data: sortedAges.map(d => d.other),
           backgroundColor: chartColors.other,
           borderColor: chartColors.other,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         }
       ];
 
       return { labels, datasets };
     } else {
-      // Grouped view
+      // Grouped view logic remains the same but with added bar properties
+      // ... existing grouped view code ...
       const selectedStrategy = GROUP_STRATEGIES.find(s => s.value === groupingStrategy);
       if (!selectedStrategy) return { labels: [], datasets: [] };
 
@@ -560,58 +621,90 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           data: aggregated.map(d => d.work),
           backgroundColor: chartColors.work,
           borderColor: chartColors.work,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'Elementary',
           data: aggregated.map(d => d.elementary),
           backgroundColor: chartColors.elementary,
           borderColor: chartColors.elementary,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'High School',
           data: aggregated.map(d => d.highSchool),
           backgroundColor: chartColors.highSchool,
           borderColor: chartColors.highSchool,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'College',
           data: aggregated.map(d => d.college),
           backgroundColor: chartColors.college,
           borderColor: chartColors.college,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'University',
           data: aggregated.map(d => d.university),
           backgroundColor: chartColors.university,
           borderColor: chartColors.university,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         },
         {
           label: 'Other',
           data: aggregated.map(d => d.other),
           backgroundColor: chartColors.other,
           borderColor: chartColors.other,
-          borderWidth: 1
+          borderWidth: 1,
+          barThickness: chartOrientation === 'vertical' ? 5 : undefined,
+          maxBarThickness: chartOrientation === 'vertical' ? 10 : undefined,
+          categoryPercentage: chartOrientation === 'vertical' ? 1.0 : 0.9,
+          barPercentage: chartOrientation === 'vertical' ? 1.0 : 0.8,
         }
       ];
 
       return { labels, datasets };
     }
-  }, [details, groupingStrategy, AgeCap, chartColors]);
+  }, [details, groupingStrategy, AgeCap, chartColors, chartOrientation]);
 
   // Render chart function
-  const renderChart = useCallback(() => {
-    const ChartComponent = chartType === 'bar' ? Bar : Line;
+  const renderChart = () => {
+    const commonProps = {
+      data: chartData,
+      options: chartOptions,
+    };
+
     return (
-      <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-        <ChartComponent data={chartData} options={chartOptions} />
+      <div style={chartContainerStyle}>
+        {chartType === 'bar' ? (
+          <Bar {...commonProps} />
+        ) : (
+          <Line {...commonProps} />
+        )}
       </div>
     );
-  }, [chartType, chartData, chartOptions]);
+  };
 
   // Optimized toggle handlers using useCallback
   const handleGroupingStrategyChange = useCallback((strategy: GroupingStrategy) => {
@@ -774,7 +867,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
     const containerStyle = useMemo(() => ({
       display: 'flex',
       flexDirection: 'column' as 'column',
-      gap: '0.5rem',
+      gap: '0.3rem',
       padding: '1rem',
       backgroundColor: 'rgba(0, 0, 0, 0.2)',
       borderRadius: '4px',
@@ -783,7 +876,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
 
     return (
       <div style={containerStyle}>
-        <div style={{ color: 'white', marginBottom: '0.5rem', fontSize: '14px' }}>Age Grouping</div>
+        <div style={{ color: 'white', marginBottom: '0.3rem', fontSize: '14px' }}>Age Grouping</div>
         {GROUP_STRATEGIES.map(strategy => (
           <InfoCheckbox
             key={strategy.value}
@@ -793,6 +886,119 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             count={strategy.ranges.length || details.length}
           />
         ))}
+      </div>
+    );
+  };
+
+  // Chart settings component
+  const ChartSettings = () => {
+    const containerStyle = useMemo(() => ({
+      display: 'flex',
+      flexDirection: 'column' as 'column',
+      gap: '0.3rem',
+      padding: '1rem',
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      borderRadius: '4px',
+      margin: '0 1rem'
+    }), []);
+
+    const titleStyle = useMemo(() => ({
+      color: 'white',
+      fontSize: '14px',
+      marginBottom: '0.3rem',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+      paddingBottom: '0.25rem'
+    }), []);
+
+    const sectionTitleStyle = useMemo(() => ({
+      color: 'white',
+      fontSize: '13px',
+      marginBottom: '0.1rem',
+      opacity: 0.9
+    }), []);
+
+    return (
+      <div style={containerStyle}>
+        <div style={titleStyle}>Chart Settings</div>
+        
+        <div style={{ marginBottom: '0.4rem' }}>
+          <div style={sectionTitleStyle}>Chart Type</div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <InfoCheckbox
+              label="Bar Chart"
+              isChecked={chartType === 'bar'}
+              onToggle={() => setChartType('bar')}
+            />
+            <InfoCheckbox
+              label="Line Chart"
+              isChecked={chartType === 'line'}
+              onToggle={() => setChartType('line')}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '0.4rem' }}>
+          <div style={sectionTitleStyle}>Layout</div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <InfoCheckbox
+              label="Show Grid Lines"
+              isChecked={showGridLines}
+              onToggle={() => setShowGridLines(prev => !prev)}
+            />
+            <InfoCheckbox
+              label="Enable Animation"
+              isChecked={enableAnimation}
+              onToggle={() => setEnableAnimation(prev => !prev)}
+            />
+            <InfoCheckbox
+              label="Stacked View"
+              isChecked={stackedView}
+              onToggle={() => setStackedView(prev => !prev)}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '0.4rem' }}>
+          <div style={sectionTitleStyle}>Legend Position</div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <InfoCheckbox
+              label="Top"
+              isChecked={legendPosition === 'top'}
+              onToggle={() => setLegendPosition('top')}
+            />
+            <InfoCheckbox
+              label="Bottom"
+              isChecked={legendPosition === 'bottom'}
+              onToggle={() => setLegendPosition('bottom')}
+            />
+            <InfoCheckbox
+              label="Left"
+              isChecked={legendPosition === 'left'}
+              onToggle={() => setLegendPosition('left')}
+            />
+            <InfoCheckbox
+              label="Right"
+              isChecked={legendPosition === 'right'}
+              onToggle={() => setLegendPosition('right')}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div style={sectionTitleStyle}>Chart Orientation</div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <InfoCheckbox
+              label="Horizontal"
+              isChecked={chartOrientation === 'horizontal'}
+              onToggle={() => setChartOrientation('horizontal')}
+            />
+            <InfoCheckbox
+              label="Vertical"
+              isChecked={chartOrientation === 'vertical'}
+              onToggle={() => setChartOrientation('vertical')}
+            />
+          </div>
+        </div>
       </div>
     );
   };
@@ -898,98 +1104,6 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
     );
   };
 
-  // Chart Settings Component
-  const ChartSettings = () => {
-    return (
-      <div style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.2)', 
-        padding: '1rem',
-        borderRadius: '4px',
-        margin: '1rem',
-        fontSize: '13px'
-      }}>
-        <div style={{ 
-          color: 'white', 
-          fontSize: '14px', 
-          fontWeight: 'bold', 
-          marginBottom: '1rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-          paddingBottom: '0.25rem'
-        }}>
-          Chart Settings
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Chart Type */}
-          <div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Chart Type</div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <InfoCheckbox
-                label="Bar Chart"
-                isChecked={chartType === 'bar'}
-                onToggle={() => setChartType('bar')}
-              />
-              <InfoCheckbox
-                label="Line Chart"
-                isChecked={chartType === 'line'}
-                onToggle={() => setChartType('line')}
-              />
-            </div>
-          </div>
-
-          {/* Layout Options */}
-          <div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Layout</div>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <InfoCheckbox
-                label="Show Grid Lines"
-                isChecked={showGridLines}
-                onToggle={setShowGridLines}
-              />
-              <InfoCheckbox
-                label="Enable Animation"
-                isChecked={enableAnimation}
-                onToggle={setEnableAnimation}
-              />
-              <InfoCheckbox
-                label="Stacked View"
-                isChecked={stackedView}
-                onToggle={setStackedView}
-              />
-            </div>
-          </div>
-
-          {/* Legend Position */}
-          <div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Legend Position</div>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {(['top', 'bottom', 'left', 'right'] as const).map(position => (
-                <InfoCheckbox
-                  key={position}
-                  label={position.charAt(0).toUpperCase() + position.slice(1)}
-                  isChecked={legendPosition === position}
-                  onToggle={() => setLegendPosition(position)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Chart Orientation */}
-          <div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Chart Orientation</div>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <InfoCheckbox
-                label="Horizontal"
-                isChecked={isHorizontal}
-                onToggle={() => setIsHorizontal(prev => !prev)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (!isPanelVisible) {
     return null;
   }
@@ -1013,31 +1127,26 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         overflow: 'hidden'
       }}>
         {/* View Options */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem', gap: '1rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem' }}>
           <InfoCheckbox
             label="Show Statistics"
             isChecked={showStatistics}
-            onToggle={() => setShowStatistics(prev => !prev)}
+            onToggle={setShowStatistics}
           />
           <InfoCheckbox
             label="Show Age Grouping"
             isChecked={showAgeGrouping}
-            onToggle={() => setShowAgeGrouping(prev => !prev)}
+            onToggle={setShowAgeGrouping}
           />
           <InfoCheckbox
-            label="Show Detailed Stats"
-            isChecked={showDetailedStats}
-            onToggle={() => setShowDetailedStats(prev => !prev)}
-          />
-          <InfoCheckbox
-            label="Chart Settings"
+            label="Show Chart Settings"
             isChecked={showChartSettings}
-            onToggle={() => setShowChartSettings(prev => !prev)}
+            onToggle={setShowChartSettings}
           />
         </div>
 
         {/* Chart Settings Panel */}
-        {showChartSettings && <div style={{ flexShrink: 0 }}><ChartSettings /></div>}
+        {showChartSettings && <ChartSettings />}
         
         {/* Statistics Panel */}
         {showStatistics && (
@@ -1094,7 +1203,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
               width: '100%',
               position: 'relative'
             }}>
-              <Bar data={chartData} options={chartOptions} />
+              {renderChart()}
             </div>
           )}
         </div>
