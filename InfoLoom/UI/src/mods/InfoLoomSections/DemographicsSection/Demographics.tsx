@@ -716,7 +716,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const GroupingOptions = () => {
     const containerStyle = useMemo(() => ({
       display: 'flex',
-      flexDirection: 'column' as const,
+      flexDirection: 'column' as 'column', // Fixing TypeScript type error for flexDirection style property
       gap: '0.5rem',
       padding: '1rem',
       backgroundColor: 'rgba(0, 0, 0, 0.2)',
@@ -740,6 +740,9 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
     );
   };
 
+  const [showAgeGrouping, setShowAgeGrouping] = useState<boolean>(true);
+  const [showStatistics, setShowStatistics] = useState<boolean>(true);
+
   if (!isPanelVisible) {
     return null;
   }
@@ -753,77 +756,57 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       initialPosition={{ top: window.innerHeight * 0.009, left: window.innerWidth * 0.053 }}
       style={panelStyle}
     >
-      
-      <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', width: '100%' }}>
-        <div style={{ width: '50%', paddingRight: '4rem'}}>
-          <AlignedParagraph left="All Citizens" right={totals[0] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="- Tourists" right={totals[2] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="- Commuters" right={totals[3] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="- Moving Away" right={totals[7] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="Population" right={totals[1] || 0} />
-        </div>
-        <div style={{ width: '50%', paddingLeft: '4rem'}}>
-          <AlignedParagraph left="Dead" right={totals[8] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="Students" right={totals[4] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="Workers" right={totals[5] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="Homeless" right={totals[9] || 0} />
-          <div style={{ height: '1rem' }}></div>
-          <AlignedParagraph left="Oldest Citizen" right={totals[6] || 0} />
-        </div>
+      {/* View Options */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem' }}>
+        <InfoCheckbox
+          label="Show Statistics"
+          isChecked={showStatistics}
+          onToggle={setShowStatistics}
+        />
+        <InfoCheckbox
+          label="Show Age Grouping"
+          isChecked={showAgeGrouping}
+          onToggle={setShowAgeGrouping}
+        />
       </div>
 
-      {/* Spacer */}
-      <div style={{ flex: '0 0 auto', height: '1rem' }}></div>
-
-      {/* Toggle Buttons */}
-<div
-  style={{
-    flex: '0 0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    margin: '1rem'
-  }}
->
-  <GroupingOptions />
-  
-  <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem' }}>
-    
-    
-  </div>
-</div>
-
-      {/* Spacer */}
-      <div style={{ flex: '0 0 auto', height: '1rem' }}></div>
-
-      {/* Conditionally Render Summary Statistics with Virtualization */}
-      {showSummaryStats && (
-        <div
-          style={{
-            flex: '0 0 auto',
-            padding: '2rem',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            borderRadius: '4px',
-            margin: '0 2rem',
-            overflow: 'hidden',
-            maxHeight: '300px',
-          }}
-        >
-          <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>Summary Statistics</h3>
-          <VirtualizedSummaryList items={aggregateDataByStrategy(details, groupingStrategy)} />
+      {/* Statistics Panel */}
+      {showStatistics && (
+        <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', width: '100%' }}>
+          <div style={{ width: '50%', paddingRight: '4rem'}}>
+            <AlignedParagraph left="All Citizens" right={totals[0] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="- Tourists" right={totals[2] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="- Commuters" right={totals[3] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="- Moving Away" right={totals[7] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="Population" right={totals[1] || 0} />
+          </div>
+          <div style={{ width: '50%', paddingLeft: '4rem'}}>
+            <AlignedParagraph left="Dead" right={totals[8] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="Students" right={totals[4] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="Workers" right={totals[5] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="Homeless" right={totals[9] || 0} />
+            <div style={{ height: '1rem' }}></div>
+            <AlignedParagraph left="Oldest Citizen" right={totals[6] || 0} />
+          </div>
         </div>
       )}
-      {/* Spacer */}
-      <div style={{ flex: '0 0 auto', height: '1rem' }}></div>
 
-      {/* Scrollable Chart Container */}
-      <div style={{ flex: '1 1 auto', width: '100%', overflowY: 'auto' }}>
+      {/* Age Grouping Section */}
+      {showAgeGrouping && (
+        <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', margin: '1rem' }}>
+          <GroupingOptions />
+        </div>
+      )}
+
+      {/* Chart Section */}
+      <div style={{ flex: '1 1 auto', minHeight: 0, padding: '1rem' }}>
         {details.length === 0 ? (
           <p style={{ color: 'white' }}>No data available to display the chart.</p>
         ) : (
