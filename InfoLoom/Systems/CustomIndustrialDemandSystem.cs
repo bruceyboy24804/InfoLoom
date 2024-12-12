@@ -29,7 +29,7 @@ namespace InfoLoomTwo.Systems;
 
 public partial class CustomIndustrialDemandSystem : UISystemBase
 {
-    [BurstCompile]
+    
     private struct UpdateIndustrialDemandJob : IJob
     {
         [DeallocateOnJobCompletion]
@@ -875,7 +875,7 @@ public partial class CustomIndustrialDemandSystem : UISystemBase
         m_LastOfficeBuildingDemand = 0;
     }
 
-    public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
+    /*public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
     {
         writer.Write(m_IndustrialCompanyDemand.value);
         writer.Write(m_IndustrialBuildingDemand.value);
@@ -970,7 +970,7 @@ public partial class CustomIndustrialDemandSystem : UISystemBase
         reader.Read(out m_LastStorageBuildingDemand);
         reader.Read(out m_LastOfficeCompanyDemand);
         reader.Read(out m_LastOfficeBuildingDemand);
-    }
+    }*/
 
     
     protected override void OnUpdate()

@@ -31,10 +31,10 @@ using Game.UI;
 namespace InfoLoomTwo.Systems;
 
 
-public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerializable, ISerializable
+public partial class CustomCommercialDemandSystem : UISystemBase
 {
     Setting setting = Mod.setting;
-    [BurstCompile]
+    
     private struct UpdateCommercialDemandJob : IJob
     {
 
@@ -501,7 +501,7 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
         m_LastBuildingDemand = 0;
     }
 
-    public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
+    /*public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
     {
         writer.Write(m_CompanyDemand.value);
         writer.Write(m_BuildingDemand.value);
@@ -566,9 +566,9 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
         }
         reader.Read(out m_LastCompanyDemand);
         reader.Read(out m_LastBuildingDemand);
-    }
+    }*/
 
-    [Preserve]
+    
     protected override void OnUpdate()
     {
 
