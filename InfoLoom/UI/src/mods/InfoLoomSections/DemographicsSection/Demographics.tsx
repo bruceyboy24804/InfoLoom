@@ -433,6 +433,8 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             display: showGridLines,
             color: 'rgba(255, 255, 255, 0.1)',
           },
+          barPercentage: 0.95,
+          categoryPercentage: 0.9,
         },
         y: {
           stacked: stackedView,
@@ -454,23 +456,17 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             display: showGridLines,
             color: 'rgba(255, 255, 255, 0.1)',
           },
-          afterFit: function(scaleInstance: { height: number }) {
-            const minSpacing = 30;
-            const numTicks = details.length;
-            const totalSpacing = numTicks * minSpacing;
-            scaleInstance.height = Math.max(scaleInstance.height, totalSpacing);
-          },
         },
       },
       layout: {
         padding: {
           top: 20,
           bottom: 20,
-          left: 20,
-          right: 20,
+          left: 10,
+          right: 10,
         }
       },
-      barPercentage: 0.8,
+      barPercentage: 0.95,
       categoryPercentage: 0.9,
     }),
     [
@@ -483,6 +479,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       AgeCap,
       details.length,
       commonFont,
+      yaxisfont,
     ]
   );
 
