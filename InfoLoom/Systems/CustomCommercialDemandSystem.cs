@@ -26,11 +26,11 @@ using static Game.Rendering.Debug.RenderPrefabRenderer;
 using static InfoLoomTwo.Systems.CommercialUISystem;
 using System.Linq;
 using Game.UI;
-using static InfoLoomTwo.Systems.IndustrialUISystem;
+
 
 namespace InfoLoomTwo.Systems;
 
-[CompilerGenerated]
+
 public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerializable, ISerializable
 {
     Setting setting = Mod.setting;
@@ -649,8 +649,5 @@ public partial class CustomCommercialDemandSystem : UISystemBase, IDefaultSerial
         __TypeHandle.__AssignHandles(ref base.CheckedStateRef);
     }
 
-    [Preserve]
-    public CustomCommercialDemandSystem()
-    {
-    }
+    
 }

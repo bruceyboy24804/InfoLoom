@@ -23,13 +23,11 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
-using static InfoLoomTwo.Systems.CommercialUISystem;
 using static InfoLoomTwo.Systems.IndustrialUISystem;
 
 namespace InfoLoomTwo.Systems;
 
-[CompilerGenerated]
-public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerializable, ISerializable
+public partial class CustomIndustrialDemandSystem : UISystemBase
 {
     [BurstCompile]
     private struct UpdateIndustrialDemandJob : IJob
@@ -974,7 +972,7 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
         reader.Read(out m_LastOfficeBuildingDemand);
     }
 
-    [Preserve]
+    
     protected override void OnUpdate()
     {
         if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
@@ -1076,8 +1074,5 @@ public partial class CustomIndustrialDemandSystem : UISystemBase, IDefaultSerial
         __TypeHandle.__AssignHandles(ref base.CheckedStateRef);
     }
 
-    [Preserve]
-    public CustomIndustrialDemandSystem()
-    {
-    }
+    
 }

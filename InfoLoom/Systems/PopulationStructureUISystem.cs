@@ -278,7 +278,7 @@ public partial class PopulationStructureUISystem : ExtendedUISystemBase
                     }
 
                     // Process a worker (only adults can be workers in the game)
-                    if (isWorker && age == CitizenAge.Adult)
+                    if (isWorker && ageInDays >= 21)
                     {
                         m_Totals[5]++; // workers
                         info.Work++;
