@@ -44,15 +44,30 @@ const resourceIconPaths: { [key: string]: string } = {
   'Wood': 'Media/Game/Resources/Wood.svg'
 };
 
+// Map display names to icon names and vice versa
+const resourceNameMapping: { [key: string]: string } = {
+  'MetalOre': 'Ore',
+  'CrudeOil': 'Oil',
+  'Ore': 'MetalOre',
+  'Oil': 'CrudeOil'
+};
+
 // Component to display the resource icon
 export const ResourceIcon: React.FC<{ resourceName: string }> = ({ resourceName }) => {
-  const iconPath = resourceIconPaths[resourceName];
+  // Map the resource name to its icon name if needed
+  const iconName = resourceNameMapping[resourceName] === 'MetalOre' || resourceNameMapping[resourceName] === 'CrudeOil' 
+    ? resourceName 
+    : (resourceNameMapping[resourceName] || resourceName);
+  const iconPath = resourceIconPaths[iconName];
   if (!iconPath) return null;
 
-  return <img src={iconPath} alt={resourceName} className="resource-icon" />;
+  return <img src={iconPath} alt={resourceName} style={{ width: '24px', height: '24px' }} />;
 };
 
 // Helper function to get resource icon
-export const getResourceIcon = (resourceName: string) => {
-  return <ResourceIcon resourceName={resourceName} />;
-};
+export function getResourceIcon(resourceName: string): string | undefined {
+  const iconName = resourceNameMapping[resourceName] === 'MetalOre' || resourceNameMapping[resourceName] === 'CrudeOil'
+    ? resourceName
+    : (resourceNameMapping[resourceName] || resourceName);
+  return resourceIconPaths[iconName];
+}

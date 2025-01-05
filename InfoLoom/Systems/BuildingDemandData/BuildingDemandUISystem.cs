@@ -6,14 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+using InfoLoomTwo.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.Scripting;
 
-namespace InfoLoomTwo.Systems;
-
-
-public partial class BuildingDemandUISystem : UISystemBase
+namespace InfoLoomTwo.Systems
+{
+    public partial class BuildingDemandUISystem : ExtendedUISystemBase
 {
     // systems to get the data from
     private SimulationSystem m_SimulationSystem;
@@ -22,11 +22,11 @@ public partial class BuildingDemandUISystem : UISystemBase
     private IndustrialDemandSystem m_IndustrialDemandSystem;
 
     // ui bindings
-    private RawValueBinding m_uiBuildingDemand;
-    //private RawValueBinding m_uiCompanyDemand;
+    private ValueBindingHelper<int[]> m_uiBuildingDemand;
+    
 
     // building demands
-    private NativeArray<int> m_BuildingDemand;
+        
     // 0 - low res (ResidentialDemandSystem.BuildingDemand.x)
     // 1 - med res (ResidentialDemandSystem.BuildingDemand.y)
     // 2 - high res (ResidentialDemandSystem.BuildingDemand.z)
@@ -59,46 +59,46 @@ public partial class BuildingDemandUISystem : UISystemBase
         m_ResidentialDemandSystem = base.World.GetOrCreateSystemManaged<ResidentialDemandSystem>();
         m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
         m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
-
-        // ui binding doe building demand data
-        AddBinding(m_uiBuildingDemand = new RawValueBinding("cityInfo", "ilBuildingDemand", delegate (IJsonWriter binder)
-        {
-            binder.ArrayBegin(m_BuildingDemand.Length);
-            for (int i = 0; i < m_BuildingDemand.Length; i++)
-                binder.Write(m_BuildingDemand[i]);
-            binder.ArrayEnd();
-        }));
+        m_uiBuildingDemand = CreateBinding("ilBuildingDemand", new int[0]);
+        
 
         // allocate storage
-        m_BuildingDemand = new NativeArray<int>(7, Allocator.Persistent);
+        
         Mod.log.Info("BuildingDemandUISystem created.");
     }
 
     protected override void OnUpdate()
     {
-        if (m_SimulationSystem.frameIndex % 128 != 77)
-            return;
+        
+			
 
-        //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
+        
         base.OnUpdate();
+        
+        m_uiBuildingDemand.Value = new int[]
+        {
+          m_ResidentialDemandSystem.buildingDemand.x,
+          m_ResidentialDemandSystem.buildingDemand.y,
+          m_ResidentialDemandSystem.buildingDemand.z,
+          m_CommercialDemandSystem.buildingDemand,
+          m_IndustrialDemandSystem.industrialBuildingDemand,
+          m_IndustrialDemandSystem.storageBuildingDemand,
+          m_IndustrialDemandSystem.officeBuildingDemand
+          
+        };
+        
+        
+        
 
-        m_BuildingDemand[0] = m_ResidentialDemandSystem.buildingDemand.x;
-        m_BuildingDemand[1] = m_ResidentialDemandSystem.buildingDemand.y;
-        m_BuildingDemand[2] = m_ResidentialDemandSystem.buildingDemand.z;
-        m_BuildingDemand[3] = m_CommercialDemandSystem.buildingDemand;
-        m_BuildingDemand[4] = m_IndustrialDemandSystem.industrialBuildingDemand;
-        m_BuildingDemand[5] = m_IndustrialDemandSystem.storageBuildingDemand;
-        m_BuildingDemand[6] = m_IndustrialDemandSystem.officeBuildingDemand;
+        
 
-        m_uiBuildingDemand.Update();
+        
     }
 
-    //[Preserve]
-    protected override void OnDestroy()
-    {
-        m_BuildingDemand.Dispose();
-        base.OnDestroy();
-    }
+    
 
 
 }
+}
+
+
