@@ -10,8 +10,11 @@ import React, {
 } from 'react';
 import classNames from 'classnames';
 import styles from './Panel.module.scss';
-import { trigger } from 'cs2/api'; 
+import { trigger, bindValue, useValue } from 'cs2/api'; 
 import mod from 'mod.json';        
+
+// These establishes the binding with C# side. Without C# side game ui will crash.
+const PanelStates$ = bindValue<PanelState[]>(mod.id, 'PanelStates');
 
 const SNAP_THRESHOLD = 20;
 const MIN_SIZE = { width: 200, height: 200 };
@@ -26,6 +29,12 @@ interface Position {
 interface Size {
   width: number;
   height: number;
+}
+
+interface PanelState {
+  Id: string,
+  Position : Position,
+  Size : Size,
 }
 
 interface PanelProps {
@@ -76,11 +85,8 @@ function usePanelState({
   
   const savePanelState = useCallback(
     (newPosition: Position, newSize: Size) => {
-      trigger(mod.id, 'SavePanelState', {
-        id,
-        position: newPosition,
-        size: newSize,
-      });
+      trigger(mod.id, 'SavePanelState',id, newPosition, newSize);
+      console.log("savePanelState");
     },
     [id]
   );
@@ -398,7 +404,10 @@ const PanelComponent: FC<PanelProps> = ({
   zIndex = 1,
   id = 'default',
 }) => {
- 
+ // These get the value of the bindings.
+  const PanelStates = useValue(PanelStates$);
+
+  
   const {
     position,
     setPosition,
@@ -413,6 +422,7 @@ const PanelComponent: FC<PanelProps> = ({
     savedSize,
   });
 
+  
  
   const { handleDragStart } = useDrag({
     position,

@@ -53,6 +53,13 @@ namespace InfoLoomTwo
                 Log.Error("Failed to initialize settings.");
                 return;
             }
+#if VERBOSE
+            log.effectivenessLevel = Level.Verbose;
+#elif DEBUG
+            log.effectivenessLevel = Level.Debug;
+#else
+            log.effectivenessLevel = Level.Info;
+#endif
             setting.RegisterInOptionsUI();
            AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
@@ -67,10 +74,10 @@ namespace InfoLoomTwo
             {
                 log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
             }
-          
+
 
             // Register custom update systems for UI updates
-            
+
             updateSystem.UpdateAt<Demographics>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DemographicsUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<WorkforceUISystem>(SystemUpdatePhase.UIUpdate);
@@ -88,10 +95,9 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
-            
-            
-            
-           
+            updateSystem.UpdateAt<PanelUISystem>(SystemUpdatePhase.UIUpdate);
+
+
         }
 
         // Method that runs when the mod is disposed of

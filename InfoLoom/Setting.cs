@@ -1,13 +1,10 @@
 ﻿using Colossal;
 using Colossal.IO.AssetDatabase;
-using Colossal.IO.AssetDatabase.Internal;
 using Game.Modding;
 using Game.Prefabs;
 using Game.Settings;
 using Game.UI;
-using Game.UI.InGame;
-using Game.UI.Widgets;
-using InfoLoomTwo.Systems;
+using InfoLoomTwo.Domain;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -60,9 +57,11 @@ namespace InfoLoomTwo
         [SettingsUISection(kSection, CommercialTax)]
         public string CommercialTaxLEffect => TextMaker((Math.Abs(TaxRateEffect) * 100).ToString("F2"), "commercial");
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the saved panel position.
+        /// </summary>
+        [SettingsUIHidden]
+        public PanelState[] PanelStates { get; set; }
 
         public Setting(IMod mod) : base(mod)
         {
@@ -72,8 +71,7 @@ namespace InfoLoomTwo
         public override void SetDefaults()
         {
             TaxRateEffect = -0.05f;
-            
-           
+            PanelStates = new PanelState[0];
         }
 
         
