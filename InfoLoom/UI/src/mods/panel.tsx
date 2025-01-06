@@ -86,7 +86,6 @@ function usePanelState({
   const savePanelState = useCallback(
     (newPosition: Position, newSize: Size) => {
       trigger(mod.id, 'SavePanelState',id, newPosition, newSize);
-      console.log("savePanelState");
     },
     [id]
   );
