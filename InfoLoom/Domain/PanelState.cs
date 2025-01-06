@@ -9,6 +9,13 @@
         /// <summary>
         /// Initializes a new instance of <see cref="PanelState"/>
         /// </summary>
+        public PanelState()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PanelState"/>
+        /// </summary>
         /// <param name="id">string id for panel</param>
         /// <param name="position">Position top and left.</param>
         /// <param name="size">Size height and width.</param>

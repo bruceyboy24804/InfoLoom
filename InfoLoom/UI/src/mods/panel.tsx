@@ -21,17 +21,17 @@ const MIN_SIZE = { width: 200, height: 200 };
 
 type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-interface Position {
+export interface Position {
   top: number;
   left: number;
 }
 
-interface Size {
+export interface Size {
   width: number;
   height: number;
 }
 
-interface PanelState {
+export interface PanelState {
   Id: string,
   Position : Position,
   Size : Size,

@@ -25,7 +25,6 @@ namespace InfoLoomTwo.Systems
             // Define Trigger Bindings
             CreateTrigger<string, Domain.Position, Domain.Size>("SavePanelState", TrySavePanelState);
 
-
             // allocate storage
 
             Mod.log.Info("BuildingDemandUISystem created.");

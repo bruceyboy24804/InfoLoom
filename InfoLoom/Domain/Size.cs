@@ -37,5 +37,12 @@ namespace InfoLoomTwo.Domain
             m_Width = width;
             m_Height = height;
         }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="Size"/>
+        /// </summary>
+        public Size()
+        {
+        }
     }
 }

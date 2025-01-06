@@ -50,7 +50,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
                 SvcPercent = CapPercent = CapPerCompany = WrkPercent = TaxFactor = 0;
             }
         }
-
         private struct UpdateIndustrialDemandJob : IJob
         {
             [DeallocateOnJobCompletion]
