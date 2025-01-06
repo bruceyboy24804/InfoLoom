@@ -99,7 +99,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  cursor: n-resize;
+  cursor: ns-resize;
 }
 
 .s {
@@ -107,7 +107,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  cursor: s-resize;
+  cursor: ns-resize;
 }
 
 .e {
@@ -115,7 +115,7 @@
   right: 0;
   bottom: 0;
   width: 4px;
-  cursor: e-resize;
+  cursor: ew-resize;
 }
 
 .w {
@@ -123,7 +123,7 @@
   left: 0;
   bottom: 0;
   width: 4px;
-  cursor: w-resize;
+  cursor: ew-resize;
 }
 
 .ne {
@@ -131,7 +131,7 @@
   right: 0;
   width: 8px;
   height: 8px;
-  cursor: ne-resize;
+  cursor: nesw-resize;
 }
 
 .nw {
@@ -139,7 +139,7 @@
   left: 0;
   width: 8px;
   height: 8px;
-  cursor: nw-resize;
+  cursor: nwse-resize;
 }
 
 .se {
@@ -147,7 +147,7 @@
   right: 0;
   width: 8px;
   height: 8px;
-  cursor: se-resize;
+  cursor: nwse-resize;
 }
 
 .sw {
@@ -155,5 +155,27 @@
   left: 0;
   width: 8px;
   height: 8px;
-  cursor: sw-resize;
+  cursor: nesw-resize;
+}
+.resize-handle {
+  background-color: transparent;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.resize-handle:hover {
+  background-color: rgba(0, 0, 0, 0.15);  // Light shading for visibility
+  border-radius: 2px;
+}
+
+.n:hover, .s:hover {
+  height: 8px;  // Make the top and bottom resize handles easier to grab
+}
+
+.e:hover, .w:hover {
+  width: 8px;  // Left and right edges are easier to resize
+}
+
+.ne:hover, .nw:hover, .se:hover, .sw:hover {
+  width: 12px;
+  height: 12px;
 }

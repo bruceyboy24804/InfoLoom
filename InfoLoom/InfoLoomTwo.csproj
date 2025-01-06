@@ -4,7 +4,7 @@
 		<OutputType>Library</OutputType>
 		<TargetFramework>net472</TargetFramework>
 		<Configurations>Debug;Release</Configurations>
-		<LangVersion>latest</LangVersion>
+		<LangVersion>9</LangVersion>
 		
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
@@ -21,6 +21,7 @@
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
 	  <Compile Remove="Systems\DistrictInfoLoomUISystem.cs" />
+	  <Compile Remove="Systems\ModifierDataUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="Setting.cs~RF27a28093.TMP" />
@@ -166,6 +167,9 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Domain\" />
 	</ItemGroup>
 
 </Project>

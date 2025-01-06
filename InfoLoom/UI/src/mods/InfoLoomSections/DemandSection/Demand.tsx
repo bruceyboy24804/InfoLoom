@@ -1,16 +1,21 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import $Panel from 'mods/panel';
-import useDataUpdate from 'mods/use-data-update';
+import { bindValue, useValue } from 'cs2/api';
+import mod from 'mod.json';
+import { cityInfo } from 'cs2/bindings';
 
-// Declare 'engine' if it's a global variable
+// Declare global 'engine' if needed
 
 interface AlignedParagraphProps {
   left: number;
   right: string;
 }
+// Define the TypeScript interface for demand data
+
+// Binding for demand data
+const Demand$ = bindValue<number[]>(mod.id, "ilBuildingDemand", []);
 
 const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
-  // Set color based on value of left
   let color: string;
   if (left < -50) {
     color = 'red';
@@ -30,14 +35,15 @@ const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
     color: color,
     fontSize: '80%',
     width: '20%',
-    marginLeft: '10%', // Start 10% from the left edge
+    marginLeft: '10%',
   };
   const rightTextStyle: React.CSSProperties = {
     fontSize: '80%',
     width: '60%',
-    marginRight: '10%', // Start 10% from the right edge
+    marginRight: '10%',
     textAlign: 'right',
   };
+
   return (
     <p style={containerStyle}>
       <span style={leftTextStyle}>{left}</span>
@@ -52,35 +58,42 @@ interface DemandSection2Props {
   factors: { factor: string; weight: number }[];
 }
 
-// Function to map factor names to display names
+// Map factor names to display-friendly names
 const getDisplayName = (factor: string): string => {
   const displayNames: { [key: string]: string } = {
-    'EmptyBuildings': 'Building Occupancy',
-    'Unemployment': 'Availability of Jobs',
-    'Homelessness': 'Cost of Living',
-    'Warehouses': 'Availability of Warehouses',
-    'UneducatedWorkforce': 'Labour Availability',
-    'EducatedWorkforce': 'High Skill Labour Availability',
-    'PetrolLocalDemand': 'Gas Station Availability',
+    EmptyBuildings: 'Building Occupancy',
+    Unemployment: 'Availability of Jobs',
+    Homelessness: 'Cost of Living',
+    Warehouses: 'Availability of Warehouses',
+    UneducatedWorkforce: 'Labour Availability',
+    EducatedWorkforce: 'High Skill Labour Availability',
+    PetrolLocalDemand: 'Gas Station Availability',
   };
   return displayNames[factor] || factor;
 };
 
+// Render demand sections
 const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   return (
     <div
       className="infoview-panel-section_RXJ"
       style={{ width: '95%', paddingTop: '3rem', paddingBottom: '3rem' }}
     >
-      {/* title */}
+      {/* Title */}
       <div className="labels_L7Q row_S2v uppercase_RJI">
         <div className="left_Lgw row_S2v">{title}</div>
-        {value >= 0 && <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>}
+        {value >= 0 && (
+          <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>
+        )}
       </div>
       <div className="space_uKL" style={{ height: '3rem' }}></div>
-      {/* factors */}
+      {/* Factors */}
       {factors.map((item, index) => (
-        <div key={index} className="labels_L7Q row_S2v small_ExK" style={{ marginTop: '1rem' }}>
+        <div
+          key={index}
+          className="labels_L7Q row_S2v small_ExK"
+          style={{ marginTop: '1rem' }}
+        >
           <div className="left_Lgw row_S2v">{getDisplayName(item.factor)}</div>
           <div className="right_k30 row_S2v">
             {item.weight < 0 ? (
@@ -95,79 +108,31 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   );
 };
 
-// DemandSection1 is not used in the final code, so it's omitted.
 interface DemandFactorsProps {
   onClose: () => void;
 }
 
 const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
-  // Demand values are just single numbers
-  const [residentialLowDemand, setResidentialLowDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.residentialLowDemand', setResidentialLowDemand);
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
 
-  const [residentialMediumDemand, setResidentialMediumDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.residentialMediumDemand', setResidentialMediumDemand);
+  // Demand values
+  const residentialLowDemand = useValue(cityInfo.residentialLowDemand$);
+  const residentialMediumDemand = useValue(cityInfo.residentialMediumDemand$);
+  const residentialHighDemand = useValue(cityInfo.residentialHighDemand$);
+  const commercialDemand = useValue(cityInfo.commercialDemand$);
+  const industrialDemand = useValue(cityInfo.industrialDemand$);
+  const officeDemand = useValue(cityInfo.officeDemand$);
 
-  const [residentialHighDemand, setResidentialHighDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.residentialHighDemand', setResidentialHighDemand);
-
-  const [commercialDemand, setCommercialDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.commercialDemand', setCommercialDemand);
-
-  const [industrialDemand, setIndustrialDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.industrialDemand', setIndustrialDemand);
-
-  const [officeDemand, setOfficeDemand] = useState<number>(0);
-  useDataUpdate('cityInfo.officeDemand', setOfficeDemand);
-
-  // Demand factors: an array with properties: __Type, factor, weight
-  type DemandFactor = {
-    __Type?: string;
-    factor:
-      | 'StorageLevels'
-      | 'UneducatedWorkforce'
-      | 'EducatedWorkforce'
-      | 'CompanyWealth'
-      | 'LocalDemand'
-      | 'Unemployment'
-      | 'FreeWorkplaces'
-      | 'Happiness'
-      | 'Homelessness'
-      | 'TouristDemand'
-      | 'LocalInputs'
-      | 'Taxes'
-      | 'Students'
-      | 'UnoccupiedBuildings'
-      | 'EmptyZones'
-      | 'PoorZoneLocation'
-      | 'PetrolLocalDemand'
-      | 'Warehouses';
-    weight: number;
-  };
-
-  const [residentialLowFactors, setResidentialLowFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.residentialLowFactors', setResidentialLowFactors);
-
-  const [residentialMediumFactors, setResidentialMediumFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.residentialMediumFactors', setResidentialMediumFactors);
-
-  const [residentialHighFactors, setResidentialHighFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.residentialHighFactors', setResidentialHighFactors);
-
-  const [commercialFactors, setCommercialFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.commercialFactors', setCommercialFactors);
-
-  const [industrialFactors, setIndustrialFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.industrialFactors', setIndustrialFactors);
-
-  const [officeFactors, setOfficeFactors] = useState<DemandFactor[]>([]);
-  useDataUpdate('cityInfo.officeFactors', setOfficeFactors);
+  // Demand factors
+  const residentialLowFactors = useValue(cityInfo.residentialLowFactors$);
+  const residentialMediumFactors = useValue(cityInfo.residentialMediumFactors$);
+  const residentialHighFactors = useValue(cityInfo.residentialHighFactors$);
+  const commercialFactors = useValue(cityInfo.commercialFactors$);
+  const industrialFactors = useValue(cityInfo.industrialFactors$);
+  const officeFactors = useValue(cityInfo.officeFactors$);
 
   // Building demand
-  const [buildingDemand, setBuildingDemand] = useState<number[]>([]);
-  useDataUpdate('cityInfo.ilBuildingDemand', setBuildingDemand);
-
-  // Convert buildingDemand array into "demand factors"
+  const ilBuildingDemand = useValue(Demand$);
   const titles = [
     'Residential Low',
     'Residential Medium',
@@ -178,16 +143,32 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     'Office',
   ];
   const buildingDemandFactors = titles.map((factor, index) => ({
-    factor,
-    weight: buildingDemand[index] || 0,
-  }));
+  factor,
+  weight: ilBuildingDemand[index] ?? 0, 
+}));
 
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
+  const defaultPosition = {
+    top: window.innerHeight * 0.05,
+    left: window.innerWidth * 0.005,
+  };
+  const [panelPosition, setPanelPosition] = useState(defaultPosition);
+  const [lastClosedPosition, setLastClosedPosition] = useState(defaultPosition);
 
-  // Handler for closing the panel
+  const handleSavePosition = useCallback((position: { top: number; left: number }) => {
+    setPanelPosition(position);
+  }, []);
+
   const handleClose = useCallback(() => {
+    setLastClosedPosition(panelPosition);
+    setIsPanelVisible(false);
     onClose();
-  }, [onClose]);
+  }, [onClose, panelPosition]);
+
+  useEffect(() => {
+    if (!isPanelVisible) {
+      setPanelPosition(lastClosedPosition);
+    }
+  }, [isPanelVisible, lastClosedPosition]);
 
   if (!isPanelVisible) {
     return null;
@@ -199,10 +180,8 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
       title="Demand"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.11, height: window.innerHeight * 0.73 }}
-      initialPosition={{
-        top: window.innerHeight * 0.05,
-        left: window.innerWidth * 0.005,
-      }}
+      initialPosition={panelPosition}
+      
     >
       <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
       <DemandSection2
@@ -228,13 +207,3 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
 };
 
 export default $DemandFactors;
-
-// Registering the panel with HookUI so it shows up in the menu
-/*
-window._$hookui.registerPanel({
-  id: 'infoloom.demandfactors',
-  name: 'InfoLoom: Demand Factors',
-  icon: 'Media/Game/Icons/ZoningDemand.svg',
-  component: $DemandFactors,
-});
-*/

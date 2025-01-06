@@ -23,17 +23,38 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
 using static Game.Rendering.Debug.RenderPrefabRenderer;
-using static InfoLoomTwo.Systems.CommercialUISystem;
+
+
 using System.Linq;
 using Game.UI;
 
 
-namespace InfoLoomTwo.Systems
+namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 {
-    public partial class CustomCommercialDemandSystem : UISystemBase
+    public partial class CommercialProductsSystem : SystemBase
     {
         Setting setting = Mod.setting;
+        public struct DemandData
+        {
+            public FixedString32Bytes ResourceName;
+            public int Demand;
+            public int Building;
+            public int Free;
+            public int Companies;
+            public int Workers;
+            public int SvcPercent;
+            public int CapPercent;
+            public int CapPerCompany;
+            public int WrkPercent;
+            public int TaxFactor;
 
+            public DemandData(Resource resource)
+            {
+                ResourceName = resource.ToString();
+                Demand = Building = Free = Companies = Workers = 
+                SvcPercent = CapPercent = CapPerCompany = WrkPercent = TaxFactor = 0;
+            }
+        }
         private struct UpdateCommercialDemandJob : IJob
         {
 
@@ -119,7 +140,7 @@ namespace InfoLoomTwo.Systems
             [ReadOnly]
             public NativeArray<int> m_Propertyless;
 
-            public NativeArray<DemandData> m_DemandData; // Added for UI data
+            public NativeArray<DemandData> m_DemandData; // Changed from NativeArray<int>
             [ReadOnly]
             public NativeArray<int> m_CurrentServiceWorkers;
             [ReadOnly]
@@ -225,19 +246,19 @@ namespace InfoLoomTwo.Systems
                     m_ResourceDemands[resourceIndex2] = Mathf.RoundToInt((1f + num2) * math.clamp(math.max(m_DemandParameters.m_CommercialBaseDemand * (float)num3 - (float)num4, 0f), 0f, 100f));
 
                     // Update UI data for the current resource
-                    DemandData uiData = m_DemandData[resourceIndex2];
-                    uiData.Resource = iterator.resource;
-                    uiData.Demand = m_ResourceDemands[resourceIndex2];
-                    uiData.Building = m_BuildingDemand.value;
-                    uiData.Free = m_FreeProperties[resourceIndex2];
-                    uiData.Companies = m_ServiceCompanies[resourceIndex2];
-                    uiData.Workers = m_CurrentServiceWorkers[resourceIndex2];
-                    uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
-                    uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
-                    uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
-                    uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
-                    uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
-                    m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
+                     DemandData uiData = m_DemandData[resourceIndex2];
+                uiData.ResourceName = iterator.resource.ToString();
+                uiData.Demand = m_ResourceDemands[resourceIndex2];
+                uiData.Building = m_BuildingDemand.value;
+                uiData.Free = m_FreeProperties[resourceIndex2];
+                uiData.Companies = m_ServiceCompanies[resourceIndex2];
+                uiData.Workers = m_CurrentServiceWorkers[resourceIndex2];
+                uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
+                uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
+                uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
+                uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
+                uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
+                m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
 
                     // Special case for Lodging
                     if (iterator.resource == Resource.Lodging && math.max((int)((float)m_Tourisms[m_City].m_CurrentTourists * m_DemandParameters.m_HotelRoomPercentRequirement) - m_Tourisms[m_City].m_Lodging.y, 0) > 0)
@@ -292,56 +313,7 @@ namespace InfoLoomTwo.Systems
         }
 
 
-        private struct TypeHandle
-        {
-
-
-            [ReadOnly]
-            public ComponentTypeHandle<PrefabRef> __Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public BufferTypeHandle<Renter> __Game_Buildings_Renter_RO_BufferTypeHandle;
-
-            [ReadOnly]
-            public ComponentLookup<BuildingPropertyData> __Game_Prefabs_BuildingPropertyData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<ResourceData> __Game_Prefabs_ResourceData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<CommercialCompany> __Game_Companies_CommercialCompany_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Tourism> __Game_City_Tourism_RO_ComponentLookup;
-
-            [ReadOnly]
-            public EntityTypeHandle __Unity_Entities_Entity_TypeHandle;
-
-            [ReadOnly]
-            public ComponentTypeHandle<IndustrialProcessData> __Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public ComponentLookup<WorkplaceData> __Game_Prefabs_WorkplaceData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Population> __Game_City_Population_RO_ComponentLookup;
-
-
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void __AssignHandles(ref SystemState state)
-            {
-                __Game_Prefabs_PrefabRef_RO_ComponentTypeHandle = state.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
-                __Game_Buildings_Renter_RO_BufferTypeHandle = state.GetBufferTypeHandle<Renter>(isReadOnly: true);
-                __Game_Prefabs_BuildingPropertyData_RO_ComponentLookup = state.GetComponentLookup<BuildingPropertyData>(isReadOnly: true);
-                __Game_Prefabs_ResourceData_RO_ComponentLookup = state.GetComponentLookup<ResourceData>(isReadOnly: true);
-                __Game_Companies_CommercialCompany_RO_ComponentLookup = state.GetComponentLookup<CommercialCompany>(isReadOnly: true);
-                __Game_City_Tourism_RO_ComponentLookup = state.GetComponentLookup<Tourism>(isReadOnly: true);
-                __Unity_Entities_Entity_TypeHandle = state.GetEntityTypeHandle();
-                __Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle = state.GetComponentTypeHandle<IndustrialProcessData>(isReadOnly: true);
-                __Game_Prefabs_WorkplaceData_RO_ComponentLookup = state.GetComponentLookup<WorkplaceData>(isReadOnly: true);
-            }
-        }
+        
 
         private ResourceSystem m_ResourceSystem;
 
@@ -398,7 +370,7 @@ namespace InfoLoomTwo.Systems
 
         private int m_LastBuildingDemand;
 
-        private TypeHandle __TypeHandle;
+        
 
         [DebugWatchValue(color = "#008fff")]
         public int companyDemand => m_LastCompanyDemand;
@@ -406,15 +378,7 @@ namespace InfoLoomTwo.Systems
         [DebugWatchValue(color = "#2b6795")]
         public int buildingDemand => m_LastBuildingDemand;
 
-        public override int GetUpdateInterval(SystemUpdatePhase phase)
-        {
-            return 16;
-        }
-
-        public override int GetUpdateOffset(SystemUpdatePhase phase)
-        {
-            return 4;
-        }
+        
 
         public NativeArray<int> GetDemandFactors(out JobHandle deps)
         {
@@ -500,72 +464,7 @@ namespace InfoLoomTwo.Systems
             m_LastBuildingDemand = 0;
         }
 
-        /*public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
-        {
-            writer.Write(m_CompanyDemand.value);
-            writer.Write(m_BuildingDemand.value);
-            writer.Write(m_DemandFactors.Length);
-            writer.Write(m_DemandFactors);
-            writer.Write(m_ResourceDemands);
-            writer.Write(m_BuildingDemands);
-            writer.Write(m_Consumption);
-            writer.Write(m_FreeProperties);
-            writer.Write(m_LastCompanyDemand);
-            writer.Write(m_LastBuildingDemand);
-        }
-
-        public void Deserialize<TReader>(TReader reader) where TReader : IReader
-        {
-            reader.Read(out int value);
-            m_CompanyDemand.value = value;
-            reader.Read(out int value2);
-            m_BuildingDemand.value = value2;
-            if (reader.context.version < Version.demandFactorCountSerialization)
-            {
-                NativeArray<int> nativeArray = new NativeArray<int>(13, Allocator.Temp);
-                reader.Read(nativeArray);
-                CollectionUtils.CopySafe(nativeArray, m_DemandFactors);
-                nativeArray.Dispose();
-            }
-            else
-            {
-                reader.Read(out int value3);
-                if (value3 == m_DemandFactors.Length)
-                {
-                    reader.Read(m_DemandFactors);
-                }
-                else
-                {
-                    NativeArray<int> nativeArray2 = new NativeArray<int>(value3, Allocator.Temp);
-                    reader.Read(nativeArray2);
-                    CollectionUtils.CopySafe(nativeArray2, m_DemandFactors);
-                    nativeArray2.Dispose();
-                }
-            }
-            reader.Read(m_ResourceDemands);
-            reader.Read(m_BuildingDemands);
-            NativeArray<int> value4 = default(NativeArray<int>);
-            if (reader.context.version < Version.companyDemandOptimization)
-            {
-                value4 = new NativeArray<int>(EconomyUtils.ResourceCount, Allocator.Temp);
-                reader.Read(value4);
-            }
-            reader.Read(m_Consumption);
-            if (reader.context.version < Version.companyDemandOptimization)
-            {
-                reader.Read(value4);
-                reader.Read(value4);
-                reader.Read(value4);
-            }
-            reader.Read(m_FreeProperties);
-            if (reader.context.version < Version.companyDemandOptimization)
-            {
-                reader.Read(value4);
-                value4.Dispose();
-            }
-            reader.Read(out m_LastCompanyDemand);
-            reader.Read(out m_LastBuildingDemand);
-        }*/
+        
 
 
         protected override void OnUpdate()
@@ -577,27 +476,22 @@ namespace InfoLoomTwo.Systems
                 m_LastBuildingDemand = m_BuildingDemand.value;
                 JobHandle deps;
                 CountCompanyDataSystem.CommercialCompanyDatas commercialCompanyDatas = m_CountCompanyDataSystem.GetCommercialCompanyDatas(out deps);
-                __TypeHandle.__Game_City_Tourism_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Companies_CommercialCompany_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_ResourceData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Buildings_Renter_RO_BufferTypeHandle.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_WorkplaceData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Unity_Entities_Entity_TypeHandle.Update(ref base.CheckedStateRef);
+                
+                
+                
+                
                 UpdateCommercialDemandJob updateCommercialDemandJob = default(UpdateCommercialDemandJob);
                 updateCommercialDemandJob.m_FreePropertyChunks = m_FreeCommercialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
                 updateCommercialDemandJob.m_CommercialProcessDataChunks = m_CommercialProcessDataQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);
                 updateCommercialDemandJob.m_UnlockedZoneDatas = m_UnlockedZoneDataQuery.ToComponentDataArray<ZoneData>(Allocator.TempJob);
-                updateCommercialDemandJob.m_EntityType = __TypeHandle.__Unity_Entities_Entity_TypeHandle;
-                updateCommercialDemandJob.m_ProcessType = __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentTypeHandle;
-                updateCommercialDemandJob.m_WorkplaceDatas = __TypeHandle.__Game_Prefabs_WorkplaceData_RO_ComponentLookup;
-                updateCommercialDemandJob.m_PrefabType = __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
-                updateCommercialDemandJob.m_RenterType = __TypeHandle.__Game_Buildings_Renter_RO_BufferTypeHandle;
-                updateCommercialDemandJob.m_BuildingPropertyDatas = __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup;
-                updateCommercialDemandJob.m_ResourceDatas = __TypeHandle.__Game_Prefabs_ResourceData_RO_ComponentLookup;
-                updateCommercialDemandJob.m_CommercialCompanies = __TypeHandle.__Game_Companies_CommercialCompany_RO_ComponentLookup;
+                updateCommercialDemandJob.m_EntityType = SystemAPI.GetEntityTypeHandle();
+                updateCommercialDemandJob.m_ProcessType = SystemAPI.GetComponentTypeHandle<IndustrialProcessData>(isReadOnly: true);
+                updateCommercialDemandJob.m_WorkplaceDatas = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true);
+                updateCommercialDemandJob.m_PrefabType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
+                updateCommercialDemandJob.m_RenterType = SystemAPI.GetBufferTypeHandle<Renter>(isReadOnly: true);
+                updateCommercialDemandJob.m_BuildingPropertyDatas = SystemAPI.GetComponentLookup<BuildingPropertyData>(isReadOnly: true);
+                updateCommercialDemandJob.m_ResourceDatas = SystemAPI.GetComponentLookup<ResourceData>(isReadOnly: true);
+                updateCommercialDemandJob.m_CommercialCompanies = SystemAPI.GetComponentLookup<CommercialCompany>(isReadOnly: true);
                 updateCommercialDemandJob.m_ResourcePrefabs = m_ResourceSystem.GetPrefabs();
                 updateCommercialDemandJob.m_DemandParameters = m_DemandParameterQuery.GetSingleton<DemandParameterData>();
                 updateCommercialDemandJob.m_TaxRates = m_TaxSystem.GetTaxRates();
@@ -612,7 +506,7 @@ namespace InfoLoomTwo.Systems
                 updateCommercialDemandJob.m_ResourceNeeds = m_CountHouseholdDataSystem.GetResourceNeeds();
                 updateCommercialDemandJob.m_FreeProperties = m_FreeProperties;
                 updateCommercialDemandJob.m_Propertyless = commercialCompanyDatas.m_ServicePropertyless;
-                updateCommercialDemandJob.m_Tourisms = __TypeHandle.__Game_City_Tourism_RO_ComponentLookup;
+                updateCommercialDemandJob.m_Tourisms = SystemAPI.GetComponentLookup<Tourism>(isReadOnly: true);
                 updateCommercialDemandJob.m_DemandData = m_DemandData; // MODDED
                 updateCommercialDemandJob.m_MaxServiceWorkers = commercialCompanyDatas.m_MaxServiceWorkers;
                 updateCommercialDemandJob.m_CurrentServiceWorkers = commercialCompanyDatas.m_CurrentServiceWorkers;
@@ -636,17 +530,7 @@ namespace InfoLoomTwo.Systems
 
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void __AssignQueries(ref SystemState state)
-        {
-        }
-
-        protected override void OnCreateForCompiler()
-        {
-            base.OnCreateForCompiler();
-            __AssignQueries(ref base.CheckedStateRef);
-            __TypeHandle.__AssignHandles(ref base.CheckedStateRef);
-        }
+        
 
 
     }

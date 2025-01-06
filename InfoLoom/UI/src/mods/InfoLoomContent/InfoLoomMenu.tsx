@@ -7,11 +7,11 @@ import Workforce from "mods/InfoLoomSections/WorkforceSection/Workforce";
 import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
 import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
 import Demand from "mods/InfoLoomSections/DemandSection/Demand";
-import Commercial from "mods/InfoLoomSections/CommercialSecction/Commercial";
-import Industrial from "mods/InfoLoomSections/IndustrialSection/Industrial";
-import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialD";
-import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialD";
-
+import Commercial from "mods/InfoLoomSections/CommercialSecction/CommercialDemandUI/CommercialDemand";
+import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand";
+import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
+import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
+import { ChartSettingsData, defaultChartSettings } from "mods/InfoLoomSections/DemographicsSection/ChartSettings";
 
 
 
@@ -23,6 +23,8 @@ type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residen
 // Define a new type for components that accept an onClose prop
 type SectionComponentProps = {
   onClose: () => void;
+  chartSettings: ChartSettingsData;
+  setChartSettings: React.Dispatch<React.SetStateAction<ChartSettingsData>>;
 };
 
 // Update the sections array type
@@ -55,7 +57,7 @@ const InfoLoomButton: FC = () => {
     
     
 });
-
+const [chartSettings, setChartSettings] = useState<ChartSettingsData>(defaultChartSettings);
   const toggleMainMenu = useCallback(() => {
     setMainMenuOpen(prev => !prev);
   }, []);
@@ -103,7 +105,12 @@ const InfoLoomButton: FC = () => {
 
       {sections.map(({ name, component: Component }) => (
         openSections[name] && (
-          <Component key={name} onClose={() => toggleSection(name, false)} />
+          <Component 
+            key={name} 
+            onClose={() => toggleSection(name, false)}
+            chartSettings={chartSettings}
+            setChartSettings={setChartSettings}
+          />
         )
       ))}
     </div>

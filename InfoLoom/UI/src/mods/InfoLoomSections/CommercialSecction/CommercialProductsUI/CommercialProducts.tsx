@@ -1,30 +1,32 @@
 import React, { useState, useCallback, FC } from 'react';
-import useDataUpdate from 'mods/use-data-update';
+
 import $Panel from 'mods/panel';
 import { Button, Dropdown, DropdownToggle } from 'cs2/ui';
-import { InfoCheckbox } from '../../InfoCheckbox/InfoCheckbox';
+import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './CommercialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
-import { formatWords } from '../utils/formatText';
+import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
+import {bindValue, useValue} from "cs2/api";
+import mod from "mod.json";
 
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
-interface ResourceData {
-  resource: string;
-  demand: number;
-  building: number;
-  free: number;
-  companies: number;
-  svcpercent: number;
-  cappercompany: number;
-  cappercent: number;
-  workers: number;
-  wrkpercent: number;
-  taxfactor: number;
-  details: string;
+interface CommercialProductData {
+  ResourceName: string;
+  Demand: number;
+  Building: number;
+  Free: number;
+  Companies: number;
+  SvcPercent: number;
+  CapPerCompany: number;
+  CapPercent: number;
+  Workers: number;
+  WrkPercent: number;
+  TaxFactor: number;
+  
 }
-
+const CommercialProduct$ = bindValue<CommercialProductData[]>(mod.id, "commercialProducts", []);
 interface CommercialProps {
   onClose: () => void;
 }
@@ -38,68 +40,68 @@ type ShowColumnsType = {
 };
 
 interface ResourceLineProps {
-  data: ResourceData;
+  data: CommercialProductData;
   showColumns: ShowColumnsType;
 }
 
 const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   // Use the display name mapping if available
-  const displayName = data.resource === 'Ore' ? 'MetalOre' : 
-                     data.resource === 'Oil' ? 'CrudeOil' : 
-                     data.resource;
+  const displayName = data.ResourceName === 'Ore' ? 'MetalOre' : 
+                     data.ResourceName === 'Oil' ? 'CrudeOil' : 
+                     data.ResourceName;
   const formattedResourceName = formatWords(displayName, true);
   
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
       <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
-        <ResourceIcon resourceName={data.resource} />
+        <ResourceIcon resourceName={data.ResourceName} />
         <span>{formattedResourceName}</span>
       </div>
       {showColumns.demand && (
         <>
-          <div className={`${styles.cell} ${data.demand < 0 ? styles.negative_YWY : ''}`} style={{ width: '6%' }}>
-            {data.demand}
+          <div className={`${styles.cell} ${data.Demand < 0 ? styles.negative_YWY : ''}`} style={{ width: '6%' }}>
+            {data.Demand}
           </div>
-          <div className={`${styles.cell} ${data.building <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
-            {data.building}
+          <div className={`${styles.cell} ${data.Building <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
+            {data.Building}
           </div>
-          <div className={`${styles.cell} ${data.free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
-            {data.free}
+          <div className={`${styles.cell} ${data.Free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
+            {data.Free}
           </div>
           <div className={styles.cell} style={{ width: '5%' }}>
-            {data.companies}
+            {data.Companies}
           </div>
         </>
       )}
       {showColumns.service && (
-        <div className={`${styles.cell} ${data.svcpercent > 50 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
-          {`${data.svcpercent}%`}
+        <div className={`${styles.cell} ${data.SvcPercent > 50 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
+          {`${data.SvcPercent}%`}
         </div>
       )}
       {showColumns.capacity && (
         <>
           <div className={styles.cell} style={{ width: '10%' }}>
-            {data.cappercompany}
+            {data.CapPerCompany}
           </div>
-          <div className={`${styles.cell} ${data.cappercent > 200 ? styles.negative_YWY : ''}`} style={{ width: '10%' }}>
-            {`${data.cappercent}%`}
+          <div className={`${styles.cell} ${data.CapPercent > 200 ? styles.negative_YWY : ''}`} style={{ width: '10%' }}>
+            {`${data.CapPercent}%`}
           </div>
         </>
       )}
       {showColumns.workers && (
         <>
           <div className={styles.cell} style={{ width: '9%' }}>
-            {data.workers}
+            {data.Workers}
           </div>
-          <div className={`${styles.cell} ${data.wrkpercent < 90 ? styles.negative_YWY : styles.positive_zrK}`} style={{ width: '9%' }}>
-            {`${data.wrkpercent}%`}
+          <div className={`${styles.cell} ${data.WrkPercent < 90 ? styles.negative_YWY : styles.positive_zrK}`} style={{ width: '9%' }}>
+            {`${data.WrkPercent}%`}
           </div>
         </>
       )}
       {showColumns.tax && (
-        <div className={`${styles.cell} ${data.taxfactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
-          {data.taxfactor}
+        <div className={`${styles.cell} ${data.TaxFactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
+          {data.TaxFactor}
         </div>
       )}
     </div>
@@ -147,10 +149,15 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
     </div>
   );
 };
-
-const CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
-  const [demandData, setDemandData] = useState<ResourceData[]>([]);
-  useDataUpdate('realEco.commercialDemand', setDemandData);
+interface CommercialProps {
+  onClose: () => void
+}
+const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
+  
+  const commercialProducts = useValue(CommercialProduct$);
+      
+  
+  
 
   const [showColumns, setShowColumns] = useState<ShowColumnsType>({
     demand: true,
@@ -170,24 +177,24 @@ const CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
     }));
   }, []);
 
-  const sortData = useCallback((a: ResourceData, b: ResourceData) => {
+  const sortData = useCallback((a: CommercialProductData, b: CommercialProductData) => {
     switch (sortBy) {
       case 'name':
-        return a.resource.localeCompare(b.resource);
+        return a.ResourceName.localeCompare(b.ResourceName);
       case 'demand':
-        return b.demand - a.demand;
+        return b.Demand - a.Demand;
       case 'workers':
-        return b.workers - a.workers;
+        return b.Workers - a.Workers;
       case 'tax':
-        return b.taxfactor - a.taxfactor;
+        return b.TaxFactor - a.TaxFactor;
       default:
         return 0;
     }
   }, [sortBy]);
 
-  const filterData = useCallback((item: ResourceData) => {
-    if (filterDemand === 'positive' && item.demand <= 0) return false;
-    if (filterDemand === 'negative' && item.demand >= 0) return false;
+  const filterData = useCallback((item: CommercialProductData) => {
+    if (filterDemand === 'positive' && item.Demand <= 0) return false;
+    if (filterDemand === 'negative' && item.Demand >= 0) return false;
     return true;
   }, [filterDemand]);
 
@@ -203,7 +210,7 @@ const CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {demandData.length === 0 ? (
+      {commercialProducts.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
@@ -331,17 +338,20 @@ const CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
 
           <TableHeader showColumns={showColumns} />
           
-          {demandData
-            .filter(item => item.resource !== 'NoResource')
+          {commercialProducts
+            .filter(item => item.ResourceName !== 'NoResource')
             .filter(filterData)
             .sort(sortData)
             .map(item => (
-              <ResourceLine key={item.resource} data={item} showColumns={showColumns} />
+              <ResourceLine key={item.ResourceName} data={item} showColumns={showColumns} />
             ))}
         </div>
       )}
     </$Panel>
   );
+  
+  
 };
+ 
 
-export default CommercialProducts;
+export default $CommercialProducts;

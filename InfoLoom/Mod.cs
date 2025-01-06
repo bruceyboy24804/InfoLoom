@@ -9,7 +9,17 @@ using Game.Settings;
 using Game.Simulation;
 using HarmonyLib;
 using InfoLoomTwo.Systems;
+
 using System.Linq;
+using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
+using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
+using InfoLoomTwo.Systems.DemographicsData;
+using InfoLoomTwo.Systems.DemographicsData.Demographics;
+using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
+using InfoLoomTwo.Systems.ResidentialData;
+using InfoLoomTwo.Systems.WorkforceData;
+using InfoLoomTwo.Systems.WorkplacesData;
+using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -60,17 +70,25 @@ namespace InfoLoomTwo
           
 
             // Register custom update systems for UI updates
-            updateSystem.UpdateAt<PopulationStructureUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<WorkforceInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<WorkplacesInfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<ResidentialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<CommercialDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<IndustrialDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            
+            updateSystem.UpdateAt<Demographics>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<DemographicsUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<WorkforceUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<WorkforceSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<WorkplacesUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<WorkplacesSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<ResidentialSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<ResidentialUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CommercialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<CustomCommercialDemandSystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<CustomIndustrialDemandSystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<BuildingDemandUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CommercialProductsUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<IndustrialProductsUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
+            
             
             
            

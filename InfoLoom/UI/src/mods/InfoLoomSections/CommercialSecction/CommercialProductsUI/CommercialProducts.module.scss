@@ -1,0 +1,144 @@
+.headerRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 2px solid #444;
+  background-color: rgba(255, 255, 255, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  backdrop-filter: blur(8px);
+}
+
+.headerCell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.80em;
+  font-weight: 600;
+  color: #8b8b8b;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+
+  &:hover {
+    .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background-color: #1a1a1a;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.85em;
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1a1a1a transparent transparent transparent;
+  }
+}
+
+.subHeader {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.row_S2v {
+  display: flex;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+  font-size: 0.9em;
+  min-height: 32px;
+  
+  &:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    min-width: 0;
+    flex-shrink: 0;
+    
+    img {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+  }
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ccc;
+}
+
+.negative_YWY {
+  color: #ff4d4d;
+  font-weight: 500;
+}
+
+.positive_zrK {
+  color: #4dff4d;
+  font-weight: 500;
+}
+
+.labels_L7Q {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin: 2px 0;
+}
+
+.dropdownItem {
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}

@@ -1,9 +1,18 @@
-import React, { useState, useMemo, KeyboardEvent, useCallback, FC, useRef, useEffect } from 'react';
-import useDataUpdate from 'mods/use-data-update';
-import $Panel from 'mods/panel';
-import mod from "mod.json";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  FC,
+  useRef,
+  useEffect,
+} from 'react';
 
-// Import Chart.js components
+// External hooks / frameworks
+import $Panel from 'mods/panel';
+import mod from 'mod.json';
+import { ChartSettings, defaultChartSettings, ChartSettingsData } from 'mods/InfoLoomSections/DemographicsSection/ChartSettings';
+
+// Chart.js
 import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -16,10 +25,17 @@ import {
   Legend,
   Title,
 } from 'chart.js';
-import { bindValue, useValue } from 'cs2/api';
-import { InfoCheckbox } from "../../InfoCheckbox/InfoCheckbox";
 
-// Register Chart.js components
+// Local or app-level imports
+import { bindValue, useValue, trigger } from 'cs2/api';
+import { InfoCheckbox } from '../../InfoCheckbox/InfoCheckbox';
+import { getModule } from 'cs2/modding';
+
+// Optional: Import lodash for debouncing
+// Uncomment the following line if you decide to implement debouncing
+// import { debounce } from 'lodash';
+
+// Register Chart.js components globally
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -31,40 +47,39 @@ ChartJS.register(
   Title
 );
 
-const AgeCap$ = bindValue<number>(mod.id, 'AgeCap');
+// ==== Bindings (these connect to your mod's data) ====
 
-// Define interfaces for component props
+
+const Population$ = bindValue<PopulationAtAge[]>(mod.id, 'StructureDetails', []);
+const Totals$ = bindValue<number[]>(mod.id, 'StructureTotals', []);
+const OldestCitizen$ = bindValue<number>(mod.id, 'OldestCitizen', 0);
+
+
+// ==== Types & Interfaces ====
+interface PopulationAtAge {
+  Age: number;
+  Work: number;
+  School1: number;
+  School2: number;
+  School3: number;
+  School4: number;
+  Other: number;
+  Total: number;
+}
+
+interface DemographicsProps {
+  onClose: () => void;
+  chartSettings: ChartSettingsData;
+  setChartSettings: React.Dispatch<React.SetStateAction<ChartSettingsData>>;
+}
+
 interface AlignedParagraphProps {
   left: string;
   right: number;
 }
 
-interface Info {
-  age: number;
-  work: number;
-  school1: number;
-  school2: number;
-  school3: number;
-  school4: number;
-  other: number;
-  total: number;
-}
-
-// Font configurations
-const commonFont = {
-  family: 'Arial, sans-serif',
-  size: 14,
-  weight: 'normal' as const,
-};
-
-const yaxisfont = {
-  family: 'Arial, sans-serif',
-  size: 11,
-  weight: 'normal' as const,
-};
-
-// Types and Interfaces
 type GroupingStrategy = 'none' | 'fiveYear' | 'tenYear' | 'lifecycle';
+type ChartOrientation = 'horizontal'; // we only have horizontal
 
 interface AgeRange {
   label: string;
@@ -89,154 +104,64 @@ interface AggregatedInfo {
   total: number;
 }
 
-// Chart configuration types
-type ChartOptions = {
-  responsive: boolean;
-  maintainAspectRatio: boolean;
-  indexAxis?: 'x' | 'y';
-  animation: {
-    duration: number;
+interface DemographicsLevelProps {
+  levelColor: string;
+  levelName: string;
+  total: number;
+  levelValues: {
+    work: number;
+    elementary: number;
+    highSchool: number;
+    college: number;
+    university: number;
+    other: number;
+    total: number;
   };
-  plugins: {
-    legend: {
-      position: 'top' | 'bottom' | 'left' | 'right';
-      labels: {
-        color: string;
-        font: {
-          size: number;
-        };
-      };
-    };
-  };
-  scales: {
-    x: {
-      stacked: boolean;
-      grid: {
-        display: boolean;
-        color: string;
-      };
-      ticks: {
-        color: string;
-        font: {
-          size: number;
-        };
-      };
-    };
-    y: {
-      stacked: boolean;
-      grid: {
-        display: boolean;
-        color: string;
-      };
-      ticks: {
-        color: string;
-        font: {
-          size: number;
-        };
-      };
-    };
-  };
+}
+
+interface VirtualizedListProps {
+  items: AggregatedInfo[];
+  itemHeight?: number;
+}
+
+// === Chart Settings Data ===
+
+// (Assuming ChartSettingsData and defaultChartSettings are defined elsewhere)
+
+// ==== Constants & Helper Functions ====
+const commonFont = {
+  family: 'Arial, sans-serif',
+  size: 14,
+  weight: 'normal' as const,
 };
 
-// Helper function to generate age ranges
-const generateRanges = (step: number): AgeRange[] => {
-  const ranges: AgeRange[] = [];
-  for (let i = 0; i < 200; i += step) {
-    ranges.push({
-      label: i === 0 ? `0-${step}` : i >= 200 ? '100+' : `${i}-${i + step}`,
-      min: i,
-      max: i + step
-    });
-  }
-  return ranges;
+const yaxisfont = {
+  family: 'Arial, sans-serif',
+  size: 11,
+  weight: 'normal' as const,
 };
 
-// Constants for chart configuration
-const GROUP_STRATEGIES: GroupingOption[] = [
-  {
-    label: 'Detailed View',
-    value: 'none',
-    ranges: []
-  },
-  {
-    label: '5-Year Groups',
-    value: 'fiveYear',
-    ranges: generateRanges(5)
-  },
-  {
-    label: '10-Year Groups',
-    value: 'tenYear',
-    ranges: generateRanges(10)
-  },
-  {
-    label: 'Lifecycle Groups',
-    value: 'lifecycle',
-    ranges: [
-      { label: 'Child', min: 0, max: 20 },
-      { label: 'Teen', min: 21, max: 35 },
-      { label: 'Adult', min: 36, max: 83 },
-      { label: 'Elderly', min: 84, max: 200 }
-    ]
-  }
-];
+/**
+ * Since we only have horizontal orientation,
+ * we can hardcode the orientation props.
+ */
+function getOrientationProps(): {
+  indexAxis: 'y';
+  mainAxisTitle: string;
+  crossAxisTitle: string;
+  minChartHeight: string;
+} {
+  return {
+    indexAxis: 'y',
+    mainAxisTitle: 'Age in Days', // For the index axis
+    crossAxisTitle: 'Number of People', // For the value axis
+    minChartHeight: '400px',
+  };
+}
 
-// Chart configuration function
-const getChartOptions = (
-  legendPosition: 'top' | 'bottom' | 'left' | 'right',
-  showGridLines: boolean,
-  enableAnimation: boolean,
-  stackedView: boolean
-): ChartOptions => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: {
-    duration: enableAnimation ? 750 : 0
-  },
-  plugins: {
-    legend: {
-      position: legendPosition,
-      labels: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        font: {
-          size: 12
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      stacked: stackedView,
-      grid: {
-        display: showGridLines,
-        color: 'rgba(255, 255, 255, 0.1)'
-      },
-      ticks: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        font: {
-          size: 12
-        }
-      }
-    },
-    y: {
-      stacked: stackedView,
-      grid: {
-        display: showGridLines,
-        color: 'rgba(255, 255, 255, 0.1)'
-      },
-      ticks: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        font: {
-          size: 12
-        }
-      }
-    }
-  }
-});
-
-// AlignedParagraph Component for Summary
+// AlignedParagraph: small summary row
 const AlignedParagraph: React.FC<AlignedParagraphProps> = ({ left, right }) => (
   <div
-    className="labels_L7Q row_S2v"
     style={{
       width: '100%',
       padding: '0.5rem 0',
@@ -253,31 +178,90 @@ const AlignedParagraph: React.FC<AlignedParagraphProps> = ({ left, right }) => (
   </div>
 );
 
-// DemographicsLevel Component
-interface DemographicsLevelProps {
-  levelColor: string;
-  levelName: string;
-  levelValues: {
-    work: number;
-    elementary: number;
-    highSchool: number;
-    college: number;
-    university: number;
-    other: number;
-    total: number;
-  };
-  total: number;
+const GROUP_STRATEGIES: GroupingOption[] = [
+  {
+    label: 'Detailed View',
+    value: 'none',
+    ranges: [],
+  },
+  {
+    label: '5-Year Groups',
+    value: 'fiveYear',
+    ranges: generateRanges(5),
+  },
+  {
+    label: '10-Year Groups',
+    value: 'tenYear',
+    ranges: generateRanges(10),
+  },
+  {
+    label: 'Lifecycle Groups',
+    value: 'lifecycle',
+    ranges: [
+      { label: 'Child', min: 0, max: 20 },
+      { label: 'Teen', min: 21, max: 35 },
+      { label: 'Adult', min: 36, max: 83 },
+      { label: 'Elderly', min: 84, max: 200 },
+    ],
+  },
+];
+
+/** Utility to generate AgeRange[] for grouping. */
+function generateRanges(step: number): AgeRange[] {
+  const ranges: AgeRange[] = [];
+  for (let i = 0; i < 200; i += step) {
+    ranges.push({
+      label: i === 0 ? `0-${step}` : i + step >= 200 ? `${i}-200` : `${i}-${i + step}`,
+      min: i,
+      max: i + step,
+    });
+  }
+  return ranges;
 }
 
-const DemographicsLevel: React.FC<DemographicsLevelProps> = ({ levelColor, levelName, levelValues, total }) => (
-  <div
-    className="labels_L7Q row_S2v"
-    style={{ width: '99%', padding: '1rem 0', backgroundColor: levelColor }}
-  >
-    <div style={{ width: '1%' }}></div>
+const GroupingOptions: React.FC<{
+  groupingStrategy: GroupingStrategy;
+  setGroupingStrategy: React.Dispatch<React.SetStateAction<GroupingStrategy>>;
+  totalEntries: number;
+}> = ({ groupingStrategy, setGroupingStrategy, totalEntries }) => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.3rem',
+        padding: '1rem',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        borderRadius: '4px',
+        margin: '0 1rem',
+      }}
+    >
+      <div style={{ color: 'white', marginBottom: '0.3rem', fontSize: '14px' }}>
+        Age Grouping
+      </div>
+      {GROUP_STRATEGIES.map((strategy) => (
+        <InfoCheckbox
+          key={strategy.value}
+          label={strategy.label}
+          isChecked={groupingStrategy === strategy.value}
+          onToggle={() => setGroupingStrategy(strategy.value)}
+          count={strategy.ranges.length || totalEntries}
+        />
+      ))}
+    </div>
+  );
+};
+
+const DemographicsLevel: React.FC<DemographicsLevelProps> = ({
+  levelColor,
+  levelName,
+  total,
+  levelValues,
+}) => (
+  <div style={{ width: '99%', padding: '1rem 0', backgroundColor: levelColor }}>
+    <div style={{ width: '1%' }} />
     <div style={{ display: 'flex', alignItems: 'center', width: '22%' }}>
       <div
-        className="symbol_aAH"
         style={{
           backgroundColor: levelColor,
           width: '1.2em',
@@ -285,121 +269,339 @@ const DemographicsLevel: React.FC<DemographicsLevelProps> = ({ levelColor, level
           marginRight: '0.5rem',
           borderRadius: '50%',
         }}
-      ></div>
+      />
       <div>{levelName}</div>
     </div>
-    <div className="row_S2v" style={{ width: '11%', justifyContent: 'center' }}>
-      {total}
-    </div>
-    <div className="row_S2v" style={{ width: '11%', justifyContent: 'center' }}>
-      {levelValues.work}
-    </div>
-    <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-      {levelValues.elementary}
-    </div>
-    <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-      {levelValues.highSchool}
-    </div>
-    <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-      {levelValues.college}
-    </div>
-    <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-      {levelValues.university}
-    </div>
-    <div className="row_S2v" style={{ width: '12%', justifyContent: 'center' }}>
-      {levelValues.other}
-    </div>
+    <div style={{ width: '11%', textAlign: 'center' }}>{total}</div>
+    <div style={{ width: '11%', textAlign: 'center' }}>{levelValues.work}</div>
+    <div style={{ width: '12%', textAlign: 'center' }}>{levelValues.elementary}</div>
+    <div style={{ width: '12%', textAlign: 'center' }}>{levelValues.highSchool}</div>
+    <div style={{ width: '12%', textAlign: 'center' }}>{levelValues.college}</div>
+    <div style={{ width: '12%', textAlign: 'center' }}>{levelValues.university}</div>
+    <div style={{ width: '12%', textAlign: 'center' }}>{levelValues.other}</div>
   </div>
 );
 
-interface DemographicsProps {
-  onClose: () => void;
+// DetailedStatistics
+const DetailedStatistics: React.FC<{
+  StructureDetails: PopulationAtAge[];
+  StructureTotals: number[];
+}> = ({ StructureDetails, StructureTotals }) => {
+  const totalPopulation = StructureTotals[1];
+
+  const stats = useMemo(() => {
+    if (!StructureDetails || StructureDetails.length === 0) return null;
+
+    const workingPopulation = StructureTotals[5];
+    const studentPopulation = StructureTotals[4];
+
+    const childCount = StructureDetails.filter((d) => d.Age <= 20).length;
+    const teenCount = StructureDetails.filter((d) => d.Age > 20 && d.Age <= 35).length;
+    const adultCount = StructureDetails.filter((d) => d.Age > 35 && d.Age <= 83).length;
+    const elderlyCount = StructureDetails.filter((d) => d.Age > 83).length;
+
+    const toPercent = (value: number) => ((value / totalPopulation) * 100).toFixed(1);
+
+    return {
+      populationDensity: {
+        workers: toPercent(workingPopulation),
+        students: toPercent(studentPopulation),
+        homeless: toPercent(StructureTotals[9]),
+        tourists: toPercent(StructureTotals[2]),
+      },
+      ageDistribution: {
+        child: toPercent(childCount),
+        teen: toPercent(teenCount),
+        adult: toPercent(adultCount),
+        elderly: toPercent(elderlyCount),
+      },
+      averageAge: (
+        StructureDetails.reduce((acc, d) => acc + d.Age, 0) / StructureDetails.length
+      ).toFixed(1),
+    };
+  }, [StructureDetails, StructureTotals, totalPopulation]);
+
+  if (!stats) return null;
+
+  return (
+    <div
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        padding: '1rem',
+        borderRadius: '4px',
+        margin: '1rem',
+        fontSize: '13px',
+        color: 'white',
+      }}
+    >
+      <h4 style={{ marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+        Detailed Statistics
+      </h4>
+      <p>Workers: {stats.populationDensity.workers}%</p>
+      <p>Students: {stats.populationDensity.students}%</p>
+      <p>Tourists: {stats.populationDensity.tourists}%</p>
+      <p>Homeless: {stats.populationDensity.homeless}%</p>
+
+      <p>Children: {stats.ageDistribution.child}%</p>
+      <p>Youth: {stats.ageDistribution.teen}%</p>
+      <p>Adults: {stats.ageDistribution.adult}%</p>
+      <p>Elderly: {stats.ageDistribution.elderly}%</p>
+
+      <p>Average Age: {stats.averageAge} days</p>
+    </div>
+  );
+};
+
+// Define the prop types for FloatSliderField
+interface FloatSliderFieldProps {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+  fractionDigits?: number;
+  // Add other props as needed based on actual implementation
 }
 
-export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
-  // State hooks
-  const [details, setDetails] = useState<Info[]>([]);
-  const [totals, setTotals] = useState<number[]>([]);
-  const [isPanelVisible, setIsPanelVisible] = useState<boolean>(true);
+// Main Demographics Component
+const Demographics: FC<DemographicsProps> = ({
+  onClose,
+  chartSettings,
+  setChartSettings,
+}) => {
+  const [showChartSettings, setShowChartSettings] = useState(false);
+
+  // We only have horizontal orientation now
+  const chartOrientation: ChartOrientation = 'horizontal';
+
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
-  const [showChartSettings, setShowChartSettings] = useState<boolean>(false);
-  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
-  const [showGridLines, setShowGridLines] = useState(true);
-  const [enableAnimation, setEnableAnimation] = useState(false);
-  const [stackedView, setStackedView] = useState(true);
-  const [legendPosition, setLegendPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('top');
-  const [chartOrientation, setChartOrientation] = useState<'horizontal' | 'vertical'>('vertical');
-  const [showAgeGrouping, setShowAgeGrouping] = useState<boolean>(true);
-  const [showStatistics, setShowStatistics] = useState<boolean>(true);
-  const [showDetailedStats, setShowDetailedStats] = useState<boolean>(false);
-  const [isHorizontal, setIsHorizontal] = useState<boolean>(false);
+
+  const [showAgeGrouping, setShowAgeGrouping] = useState(true);
+  const [showStatistics, setShowStatistics] = useState(true);
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
+
+  // Consolidated chart settings in one object:
+
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState<number>(600);
 
-  // Refs
-  const chartContainerRef = useRef<HTMLDivElement>(null);
+  // Data from ECS / mod
+  const StructureDetails = useValue(Population$);
+  const StructureTotals = useValue(Totals$);
+  const OldestCitizen = useValue(OldestCitizen$);
+  
 
-  // Get AgeCap value
-  const AgeCap = useValue(AgeCap$);
+  
 
-  // Effect for resize observer
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
+  // Synchronize localAgeCap with external AgeCap$
+  
 
-    const resizeObserver = new ResizeObserver(entries => {
-      const entry = entries[0];
-      if (entry) {
-        const height = entry.contentRect.height;
-        setContainerHeight(height);
-      }
-    });
+  // Optional: Debounced trigger
+  // Uncomment the following lines if you wish to implement debouncing
+  /*
+  const debounceTriggerRef = useRef(
+    debounce((value: number) => {
+      trigger(mod.id, 'SetAgeCap', value);
+    }, 300) // Adjust the delay as needed
+  );
 
-    resizeObserver.observe(chartContainerRef.current);
+  const handleSliderChange = (newValue: number) => {
+    const clampedValue = Math.max(100, Math.min(200, newValue));
+    setLocalAgeCap(clampedValue);
+    debounceTriggerRef.current(clampedValue);
+  };
+  */
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
+  // Handle slider change without debouncing
+  
 
-  // Fetch data using useDataUpdate hook
-  useDataUpdate('populationInfo.structureDetails', data => setDetails(data || []));
-  useDataUpdate('populationInfo.structureTotals', data => setTotals(data || []));
-
-  // Panel dimensions
+  // Panel dims
   const panWidth = window.innerWidth * 0.2;
   const panHeight = window.innerHeight * 0.86;
 
-  // Define per-bar height and maximum chart height
   const BAR_HEIGHT = 40;
   const MAX_CHART_HEIGHT = 1200;
 
-  // Memoized chart colors
-  const chartColors = useMemo(() => ({
-    work: '#624532',
-    elementary: '#7E9EAE',
-    highSchool: '#00C217',
-    college: '#005C4E',
-    university: '#2462FF',
-    other: '#A1A1A1',
-  } as const), []);
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setContainerHeight(entries[0].contentRect.height);
+      }
+    });
+    resizeObserver.observe(chartContainerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
-  // Memoized dataset configuration
-  const createDatasetConfig = useMemo(() => ({
-    work: { label: 'Work', backgroundColor: chartColors.work },
-    elementary: { label: 'Elementary', backgroundColor: chartColors.elementary },
-    highSchool: { label: 'High School', backgroundColor: chartColors.highSchool },
-    college: { label: 'College', backgroundColor: chartColors.college },
-    university: { label: 'University', backgroundColor: chartColors.university },
-    other: { label: 'Other', backgroundColor: chartColors.other },
-  }), [chartColors]);
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
-  // Chart options using the configuration function
-  const chartOptions = useMemo(
+  const chartColors = useMemo(
     () => ({
-      indexAxis: chartOrientation === 'horizontal' ? 'y' as const : 'x' as const,
+      work: '#624532',
+      elementary: '#7E9EAE',
+      highSchool: '#00C217',
+      college: '#005C4E',
+      university: '#2462FF',
+      other: '#A1A1A1',
+    }),
+    []
+  );
+
+  // Chart data
+  const chartData = useMemo(() => {
+    if (!StructureDetails.length) {
+      return { labels: [], datasets: [] };
+    }
+
+    if (groupingStrategy === 'none') {
+      const validDetails = StructureDetails.filter((d) => d.Age <= 200);
+      const sortedAges = [...validDetails].sort((a, b) => a.Age - b.Age);
+      const labels = sortedAges.map((d) => String(d.Age));
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Work',
+            data: sortedAges.map((d) => d.Work),
+            backgroundColor: chartColors.work,
+            borderColor: chartColors.work,
+            borderWidth: 1,
+          },
+          {
+            label: 'Elementary',
+            data: sortedAges.map((d) => d.School1),
+            backgroundColor: chartColors.elementary,
+            borderColor: chartColors.elementary,
+            borderWidth: 1,
+          },
+          {
+            label: 'High School',
+            data: sortedAges.map((d) => d.School2),
+            backgroundColor: chartColors.highSchool,
+            borderColor: chartColors.highSchool,
+            borderWidth: 1,
+          },
+          {
+            label: 'College',
+            data: sortedAges.map((d) => d.School3),
+            backgroundColor: chartColors.college,
+            borderColor: chartColors.college,
+            borderWidth: 1,
+          },
+          {
+            label: 'University',
+            data: sortedAges.map((d) => d.School4),
+            backgroundColor: chartColors.university,
+            borderColor: chartColors.university,
+            borderWidth: 1,
+          },
+          {
+            label: 'Other',
+            data: sortedAges.map((d) => d.Other),
+            backgroundColor: chartColors.other,
+            borderColor: chartColors.other,
+            borderWidth: 1,
+          },
+        ],
+      };
+    }
+
+    // Grouped
+    const selectedStrategy = GROUP_STRATEGIES.find((s) => s.value === groupingStrategy);
+    if (!selectedStrategy) return { labels: [], datasets: [] };
+
+    const aggregated = selectedStrategy.ranges.map((range) => ({
+      label: range.label,
+      work: 0,
+      elementary: 0,
+      highSchool: 0,
+      college: 0,
+      university: 0,
+      other: 0,
+      total: 0,
+    }));
+
+    StructureDetails.forEach((info) => {
+      if (info.Age > 200) return;
+      const idx = selectedStrategy.ranges.findIndex(
+        (range) => info.Age >= range.min && info.Age <= range.max
+      );
+      if (idx !== -1) {
+        const agg = aggregated[idx];
+        agg.work += info.Work;
+        agg.elementary += info.School1;
+        agg.highSchool += info.School2;
+        agg.college += info.School3;
+        agg.university += info.School4;
+        agg.other += info.Other;
+        agg.total += info.Total;
+      }
+    });
+
+    const labels = aggregated.map((d) => d.label);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Work',
+          data: aggregated.map((d) => d.work),
+          backgroundColor: chartColors.work,
+          borderColor: chartColors.work,
+          borderWidth: 1,
+        },
+        {
+          label: 'Elementary',
+          data: aggregated.map((d) => d.elementary),
+          backgroundColor: chartColors.elementary,
+          borderColor: chartColors.elementary,
+          borderWidth: 1,
+        },
+        {
+          label: 'High School',
+          data: aggregated.map((d) => d.highSchool),
+          backgroundColor: chartColors.highSchool,
+          borderColor: chartColors.highSchool,
+          borderWidth: 1,
+        },
+        {
+          label: 'College',
+          data: aggregated.map((d) => d.college),
+          backgroundColor: chartColors.college,
+          borderColor: chartColors.college,
+          borderWidth: 1,
+        },
+        {
+          label: 'University',
+          data: aggregated.map((d) => d.university),
+          backgroundColor: chartColors.university,
+          borderColor: chartColors.university,
+          borderWidth: 1,
+        },
+        {
+          label: 'Other',
+          data: aggregated.map((d) => d.other),
+          backgroundColor: chartColors.other,
+          borderColor: chartColors.other,
+          borderWidth: 1,
+        },
+      ],
+    };
+  }, [StructureDetails, groupingStrategy, 200, chartColors]);
+
+  // Chart options
+  const chartOptions = useMemo(() => {
+    const { indexAxis, mainAxisTitle, crossAxisTitle } = getOrientationProps();
+
+    return {
+      indexAxis, // always 'y'
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: enableAnimation ? 750 : 0,
+        duration: chartSettings.enableAnimation ? 750 : 0,
       },
       plugins: {
         title: {
@@ -409,7 +611,7 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           font: commonFont,
         },
         legend: {
-          position: legendPosition,
+          position: chartSettings.legendPosition,
           labels: {
             color: 'white',
             font: commonFont,
@@ -417,45 +619,47 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         },
       },
       scales: {
-        x: {
-          stacked: stackedView,
-          title: {
-            display: true,
-            text: chartOrientation === 'horizontal' ? 'Number of People' : 'Age in Days',
-            color: 'white',
-            font: commonFont,
-          },
-          ticks: {
-            color: 'white',
-            font: { ...commonFont, size: commonFont.size - 4 },
-          },
-          grid: {
-            display: showGridLines,
-            color: 'rgba(255, 255, 255, 0.1)',
-          },
-          barPercentage: 0.95,
-          categoryPercentage: 0.9,
-        },
         y: {
-          stacked: stackedView,
-          beginAtZero: true,
-          position: 'left' as const,
+          stacked: chartSettings.stackedView,
           title: {
             display: true,
-            text: chartOrientation === 'horizontal' ? 'Age in Days' : 'Number of People',
+            text: mainAxisTitle, // "Age in Days"
             color: 'white',
             font: commonFont,
           },
+          // Move 'max' here
+          max: 200, // Updated to use localAgeCap
           ticks: {
             color: 'white',
             font: { ...commonFont, size: commonFont.size - 4 },
             stepSize: groupingStrategy !== 'none' ? 1 : 5,
             padding: 10,
+            maxTicksLimit: 200, // Updated to use localAgeCap
           },
           grid: {
-            display: showGridLines,
+            display: chartSettings.showGridLines,
             color: 'rgba(255, 255, 255, 0.1)',
           },
+        },
+        x: {
+          stacked: chartSettings.stackedView,
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: crossAxisTitle, // "Number of People"
+            color: 'white',
+            font: commonFont,
+          },
+          ticks: {
+            color: 'white',
+            font: { ...commonFont, size: commonFont.size - 4 },
+          },
+          grid: {
+            display: chartSettings.showGridLines,
+            color: 'rgba(255, 255, 255, 0.1)',
+          },
+          barPercentage: 0.95,
+          categoryPercentage: 0.9,
         },
       },
       layout: {
@@ -464,647 +668,51 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           bottom: 20,
           left: 10,
           right: 10,
-        }
+        },
       },
-      barPercentage: 0.95,
-      categoryPercentage: 0.9,
-    }),
-    [
-      chartOrientation,
-      enableAnimation,
-      legendPosition,
-      stackedView,
-      showGridLines,
-      groupingStrategy,
-      AgeCap,
-      details.length,
-      commonFont,
-      yaxisfont,
-    ]
-  );
-
-  // Chart container style
-  const chartContainerStyle = useMemo(() => ({
-    height: '100%',
-    width: '100%',
-    position: 'relative' as const,
-    overflowY: 'auto' as const,
-    overflowX: 'hidden' as const,
-    minHeight: chartOrientation === 'horizontal' ? '800px' : '400px',
-  }), [chartOrientation]);
-
-  // Prepare chart data based on grouping strategy
-  const chartData = useMemo(() => {
-    if (!details.length) return { labels: [], datasets: [] };
-
-    if (groupingStrategy === 'none') {
-      // Detailed view
-      const validDetails = details.filter(detail => detail.age <= (AgeCap || 100));
-      const sortedAges = validDetails.sort((a, b) => a.age - b.age);
-      const labels = sortedAges.map(data => String(data.age));
-
-      const datasets = [
-        {
-          label: 'Work',
-          data: sortedAges.map(d => d.work),
-          backgroundColor: chartColors.work,
-          borderColor: chartColors.work,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'Elementary',
-          data: sortedAges.map(d => d.school1),
-          backgroundColor: chartColors.elementary,
-          borderColor: chartColors.elementary,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'High School',
-          data: sortedAges.map(d => d.school2),
-          backgroundColor: chartColors.highSchool,
-          borderColor: chartColors.highSchool,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'College',
-          data: sortedAges.map(d => d.school3),
-          backgroundColor: chartColors.college,
-          borderColor: chartColors.college,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'University',
-          data: sortedAges.map(d => d.school4),
-          backgroundColor: chartColors.university,
-          borderColor: chartColors.university,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'Other',
-          data: sortedAges.map(d => d.other),
-          backgroundColor: chartColors.other,
-          borderColor: chartColors.other,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        }
-      ];
-
-      return { labels, datasets };
-    } else {
-      // Grouped view logic remains the same but with added bar properties
-      // ... existing grouped view code ...
-      const selectedStrategy = GROUP_STRATEGIES.find(s => s.value === groupingStrategy);
-      if (!selectedStrategy) return { labels: [], datasets: [] };
-
-      const aggregated = selectedStrategy.ranges.map(range => ({
-        label: range.label,
-        work: 0,
-        elementary: 0,
-        highSchool: 0,
-        college: 0,
-        university: 0,
-        other: 0,
-        total: 0,
-      }));
-
-      details.forEach(info => {
-        if (info.age > (AgeCap || 100)) return;
-        
-        const index = selectedStrategy.ranges.findIndex(
-          range => info.age >= range.min && info.age <= range.max
-        );
-
-        if (index !== -1) {
-          const agg = aggregated[index];
-          agg.work += info.work;
-          agg.elementary += info.school1;
-          agg.highSchool += info.school2;
-          agg.college += info.school3;
-          agg.university += info.school4;
-          agg.other += info.other;
-          agg.total += info.total;
-        }
-      });
-
-      const labels = aggregated.map(data => data.label);
-      
-      const datasets = [
-        {
-          label: 'Work',
-          data: aggregated.map(d => d.work),
-          backgroundColor: chartColors.work,
-          borderColor: chartColors.work,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'Elementary',
-          data: aggregated.map(d => d.elementary),
-          backgroundColor: chartColors.elementary,
-          borderColor: chartColors.elementary,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'High School',
-          data: aggregated.map(d => d.highSchool),
-          backgroundColor: chartColors.highSchool,
-          borderColor: chartColors.highSchool,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'College',
-          data: aggregated.map(d => d.college),
-          backgroundColor: chartColors.college,
-          borderColor: chartColors.college,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'University',
-          data: aggregated.map(d => d.university),
-          backgroundColor: chartColors.university,
-          borderColor: chartColors.university,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        },
-        {
-          label: 'Other',
-          data: aggregated.map(d => d.other),
-          backgroundColor: chartColors.other,
-          borderColor: chartColors.other,
-          borderWidth: 1,
-          barThickness: undefined,
-          maxBarThickness: undefined,
-          categoryPercentage: 0.9,
-          barPercentage: 0.8,
-        }
-      ];
-
-      return { labels, datasets };
-    }
-  }, [details, groupingStrategy, AgeCap, chartColors, chartOrientation]);
-
-  // Render chart function
-  const renderChart = () => {
-    const commonProps = {
-      data: chartData,
-      options: chartOptions,
     };
+  }, [chartSettings, groupingStrategy, 200]);
+
+  // Render chart
+  const renderChart = () => {
+    const { minChartHeight } = getOrientationProps();
 
     return (
-      <div style={chartContainerStyle}>
-        {chartType === 'bar' ? (
-          <Bar {...commonProps} />
+      <div
+        style={{
+          height: '100%',
+          width: '100%',
+          position: 'relative',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: minChartHeight,
+        }}
+        ref={chartContainerRef}
+      >
+        {chartSettings.chartType === 'bar' ? (
+          <Bar data={chartData} options={chartOptions} />
         ) : (
-          <Line {...commonProps} />
+          <Line data={chartData} options={chartOptions} />
         )}
       </div>
     );
   };
 
-  // Optimized toggle handlers using useCallback
-  const handleGroupingStrategyChange = useCallback((strategy: GroupingStrategy) => {
-    setGroupingStrategy(strategy);
-  }, []);
-
-  const handleStatisticsToggle = useCallback(() => {
-    setShowStatistics((prev: boolean) => !prev);
-  }, []);
-
-  const handleDetailedStatsToggle = useCallback(() => {
-    setShowDetailedStats((prev: boolean) => !prev);
-  }, []);
-
-  const handleAgeGroupingToggle = useCallback(() => {
-    setShowAgeGrouping((prev: boolean) => !prev);
-    if (!showAgeGrouping) {
-      setGroupingStrategy('none');
-    }
-  }, [showAgeGrouping]);
-
-  const handleResetData = useCallback(() => {
-    setTotals([]);
-    setDetails([]);
-  }, []);
-
-  // Optimized key press handler
-  const handleToggleKeyPress = useCallback((
-    e: KeyboardEvent<HTMLButtonElement>,
-    toggleFunction: () => void
-  ) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleFunction();
-    }
-  }, []);
-
-  // Memoized panel style
-  const panelStyle = useMemo(() => ({
-    backgroundColor: 'var(--panelColorNormal)',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflow: 'hidden',
-    margin: '3rem',
-  }), []);
-
-  // Memoized button styles
-  const buttonStyle = useMemo(() => ({
-    base: {
-      padding: '0.5rem 1rem',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
+  const panelStyle = useMemo(
+    () => ({
+      backgroundColor: 'var(--panelColorNormal)',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      overflow: 'hidden',
       margin: '3rem',
-    },
-    normal: {
-      backgroundColor: '#34495e',
-    },
-    reset: {
-      backgroundColor: '#e74c3c',
-    }
-  }), []);
+    }),
+    []
+  );
 
-  // Virtualized summary stats list
-  interface VirtualizedListProps {
-    items: AggregatedInfo[];
-    itemHeight?: number;
-  }
+  if (!isPanelVisible) return null;
 
-  const VirtualizedSummaryList: FC<VirtualizedListProps> = useCallback(({ items, itemHeight = 40 }) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-
-    const handleScroll = useCallback(() => {
-      if (!containerRef.current) return;
-      
-      const { scrollTop, clientHeight } = containerRef.current;
-      const start = Math.floor(scrollTop / itemHeight);
-      const end = Math.min(
-        start + Math.ceil(clientHeight / itemHeight) + 1,
-        items.length
-      );
-      
-      setVisibleRange({ start, end });
-    }, [items.length, itemHeight]);
-
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      container.addEventListener('scroll', handleScroll);
-      handleScroll();
-
-      return () => container.removeEventListener('scroll', handleScroll);
-    }, [handleScroll]);
-
-    const visibleItems = items.slice(visibleRange.start, visibleRange.end);
-    const totalHeight = items.length * itemHeight;
-    const offsetY = visibleRange.start * itemHeight;
-
-    return (
-      <div
-        ref={containerRef}
-        style={{
-          overflowY: 'auto',
-          maxHeight: '250px',
-          paddingRight: '10px',
-          position: 'relative'
-        }}
-      >
-        <div style={{ height: totalHeight, position: 'relative' }}>
-          <div style={{ transform: `translateY(${offsetY}px)` }}>
-            {visibleItems.map((stat: AggregatedInfo, index: number) => (
-              <DemographicsLevel
-                key={visibleRange.start + index}
-                levelColor={(visibleRange.start + index) % 2 === 0 ? 'rgba(255, 255, 255, 0.1)' : 'transparent'}
-                levelName={stat.label}
-                levelValues={{
-                  work: stat.work,
-                  elementary: stat.elementary,
-                  highSchool: stat.highSchool,
-                  college: stat.college,
-                  university: stat.university,
-                  other: stat.other,
-                  total: stat.total
-                }}
-                total={stat.total}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }, []);
-
-  // Performance monitoring hook
-  const usePerformanceMonitor = (componentName: string) => {
-    useEffect(() => {
-      const startTime = performance.now();
-      
-      return () => {
-        const endTime = performance.now();
-        const duration = endTime - startTime;
-        if (duration > 16.67) { // Longer than one frame (60fps)
-          console.warn(`${componentName} render took ${duration.toFixed(2)}ms`);
-        }
-      };
-    });
-  };
-
-  // Handler for closing the panel
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  // Grouping options component
-  const GroupingOptions = () => {
-    const containerStyle = useMemo(() => ({
-      display: 'flex',
-      flexDirection: 'column' as 'column',
-      gap: '0.3rem',
-      padding: '1rem',
-      backgroundColor: 'rgba(0, 0, 0, 0.2)',
-      borderRadius: '4px',
-      margin: '0 1rem'
-    }), []);
-
-    return (
-      <div style={containerStyle}>
-        <div style={{ color: 'white', marginBottom: '0.3rem', fontSize: '14px' }}>Age Grouping</div>
-        {GROUP_STRATEGIES.map(strategy => (
-          <InfoCheckbox
-            key={strategy.value}
-            label={strategy.label}
-            isChecked={groupingStrategy === strategy.value}
-            onToggle={() => setGroupingStrategy(strategy.value)}
-            count={strategy.ranges.length || details.length}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  // Chart settings component
-  const ChartSettings = () => {
-    const containerStyle = useMemo(() => ({
-      display: 'flex',
-      flexDirection: 'column' as 'column',
-      gap: '0.3rem',
-      padding: '1rem',
-      backgroundColor: 'rgba(0, 0, 0, 0.2)',
-      borderRadius: '4px',
-      margin: '0 1rem'
-    }), []);
-
-    const titleStyle = useMemo(() => ({
-      color: 'white',
-      fontSize: '14px',
-      marginBottom: '0.3rem',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-      paddingBottom: '0.25rem'
-    }), []);
-
-    const sectionTitleStyle = useMemo(() => ({
-      color: 'white',
-      fontSize: '13px',
-      marginBottom: '0.1rem',
-      opacity: 0.9
-    }), []);
-
-    return (
-      <div style={containerStyle}>
-        <div style={titleStyle}>Chart Settings</div>
-        
-        <div style={{ marginBottom: '0.4rem' }}>
-          <div style={sectionTitleStyle}>Chart Type</div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <InfoCheckbox
-              label="Bar Chart"
-              isChecked={chartType === 'bar'}
-              onToggle={() => setChartType('bar')}
-            />
-            <InfoCheckbox
-              label="Line Chart"
-              isChecked={chartType === 'line'}
-              onToggle={() => setChartType('line')}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '0.4rem' }}>
-          <div style={sectionTitleStyle}>Layout</div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <InfoCheckbox
-              label="Show Grid Lines"
-              isChecked={showGridLines}
-              onToggle={() => setShowGridLines(prev => !prev)}
-            />
-            <InfoCheckbox
-              label="Enable Animation"
-              isChecked={enableAnimation}
-              onToggle={() => setEnableAnimation(prev => !prev)}
-            />
-            <InfoCheckbox
-              label="Stacked View"
-              isChecked={stackedView}
-              onToggle={() => setStackedView(prev => !prev)}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginBottom: '0.4rem' }}>
-          <div style={sectionTitleStyle}>Legend Position</div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <InfoCheckbox
-              label="Top"
-              isChecked={legendPosition === 'top'}
-              onToggle={() => setLegendPosition('top')}
-            />
-            <InfoCheckbox
-              label="Bottom"
-              isChecked={legendPosition === 'bottom'}
-              onToggle={() => setLegendPosition('bottom')}
-            />
-            <InfoCheckbox
-              label="Left"
-              isChecked={legendPosition === 'left'}
-              onToggle={() => setLegendPosition('left')}
-            />
-            <InfoCheckbox
-              label="Right"
-              isChecked={legendPosition === 'right'}
-              onToggle={() => setLegendPosition('right')}
-            />
-          </div>
-        </div>
-
-        <div>
-          <div style={sectionTitleStyle}>Chart Orientation</div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <InfoCheckbox
-              label="Horizontal"
-              isChecked={chartOrientation === 'horizontal'}
-              onToggle={() => setChartOrientation('horizontal')}
-            />
-            <InfoCheckbox
-              label="Vertical"
-              isChecked={chartOrientation === 'vertical'}
-              onToggle={() => setChartOrientation('vertical')}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Calculate additional statistics
-  const calculateDetailedStats = useCallback(() => {
-    if (!details.length) return null;
-
-    const totalPopulation = totals[1] || 0;
-    const workingPopulation = totals[5] || 0;
-    const studentPopulation = totals[4] || 0;
-
-    // Calculate age distribution
-    const ageGroups = {
-      child: details.filter(d => d.age <= 20).length,
-      teen: details.filter(d => d.age > 20 && d.age <= 35).length,
-      adult: details.filter(d => d.age > 35 && d.age <= 83).length,
-      elderly: details.filter(d => d.age > 83).length,
-    };
-
-    // Calculate percentages
-    const getPercentage = (value: number) => ((value / totalPopulation) * 100).toFixed(1);
-
-    return {
-      demographics: {
-        totalPopulation,
-        populationDensity: {
-          workers: getPercentage(workingPopulation),
-          students: getPercentage(studentPopulation),
-          homeless: getPercentage(totals[9] || 0),
-          tourists: getPercentage(totals[2] || 0),
-        },
-      },
-      ageDistribution: {
-        child: getPercentage(ageGroups.child),
-        teen: getPercentage(ageGroups.teen),
-        adult: getPercentage(ageGroups.adult),
-        elderly: getPercentage(ageGroups.elderly),
-      },
-      education: {
-        elementary: getPercentage(details.reduce((acc, d) => acc + d.school1, 0)),
-        highSchool: getPercentage(details.reduce((acc, d) => acc + d.school2, 0)),
-        college: getPercentage(details.reduce((acc, d) => acc + d.school3, 0)),
-        university: getPercentage(details.reduce((acc, d) => acc + d.school4, 0)),
-      },
-      averageAge: (details.reduce((acc, d) => acc + d.age, 0) / details.length).toFixed(1),
-    };
-  }, [details, totals]);
-
-  // Detailed Statistics Component
-  const DetailedStatistics = () => {
-    const stats = calculateDetailedStats();
-    if (!stats) return null;
-
-    const StatRow = ({ label, value, color = 'white' }: { label: string; value: string | number; color?: string }) => (
-      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.25rem 0' }}>
-        <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{label}</span>
-        <span style={{ color }}>{value}%</span>
-      </div>
-    );
-
-    const SectionTitle = ({ title }: { title: string }) => (
-      <div style={{ 
-        color: 'white', 
-        fontSize: '14px', 
-        fontWeight: 'bold', 
-        marginTop: '1rem', 
-        marginBottom: '0.5rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        paddingBottom: '0.25rem'
-      }}>
-        {title}
-      </div>
-    );
-
-    return (
-      <div style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.2)', 
-        padding: '1rem',
-        borderRadius: '4px',
-        margin: '1rem',
-        fontSize: '13px'
-      }}>
-        <SectionTitle title="Population Distribution" />
-        <StatRow label="Workers" value={stats.demographics.populationDensity.workers} color="#4CAF50" />
-        <StatRow label="Students" value={stats.demographics.populationDensity.students} color="#2196F3" />
-        <StatRow label="Tourists" value={stats.demographics.populationDensity.tourists} color="#FFC107" />
-        <StatRow label="Homeless" value={stats.demographics.populationDensity.homeless} color="#FF5722" />
-
-        <SectionTitle title="Age Distribution" />
-        <StatRow label="Children (0-20)" value={stats.ageDistribution.child} color="#81C784" />
-        <StatRow label="Young Adults (21-35)" value={stats.ageDistribution.teen} color="#64B5F6" />
-        <StatRow label="Adults (36-83)" value={stats.ageDistribution.adult} color="#FFB74D" />
-        <StatRow label="Elderly (84+)" value={stats.ageDistribution.elderly} color="#E57373" />
-        <StatRow label="Average Age" value={`${stats.averageAge} days`} />
-
-        <SectionTitle title="Education Levels" />
-        <StatRow label="Elementary" value={stats.education.elementary} color="#AED581" />
-        <StatRow label="High School" value={stats.education.highSchool} color="#4FC3F7" />
-        <StatRow label="College" value={stats.education.college} color="#FFD54F" />
-        <StatRow label="University" value={stats.education.university} color="#FF8A65" />
-      </div>
-    );
-  };
-
-  if (!isPanelVisible) {
-    return null;
-  }
-
-  const chartHeightToUse = Math.min(MAX_CHART_HEIGHT, details.length * BAR_HEIGHT);
+  // final chart height
+  const chartHeightToUse = Math.min(MAX_CHART_HEIGHT, StructureDetails.length * BAR_HEIGHT);
 
   return (
     <$Panel
@@ -1112,93 +720,127 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       onClose={handleClose}
       title="Demographics"
       initialSize={{ width: panWidth, height: panHeight }}
-      initialPosition={{ top: window.innerHeight * 0.009, left: window.innerWidth * 0.053 }}
+      initialPosition={{
+        top: window.innerHeight * 0.009,
+        left: window.innerWidth * 0.053,
+      }}
       style={panelStyle}
     >
-      <div style={{ 
-        padding: '10px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* View Options */}
+      <div
+        style={{
+          padding: '10px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Top checkboxes: toggles for statistics, age grouping, chart settings */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem' }}>
           <InfoCheckbox
             label="Show Statistics"
             isChecked={showStatistics}
-            onToggle={setShowStatistics}
+            onToggle={() => setShowStatistics((prev) => !prev)}
           />
           <InfoCheckbox
             label="Show Age Grouping"
             isChecked={showAgeGrouping}
-            onToggle={setShowAgeGrouping}
+            onToggle={() => setShowAgeGrouping((prev) => !prev)}
           />
           <InfoCheckbox
             label="Show Chart Settings"
             isChecked={showChartSettings}
-            onToggle={setShowChartSettings}
+            onToggle={() => setShowChartSettings((prev) => !prev)}
           />
         </div>
 
-        {/* Chart Settings Panel */}
-        {showChartSettings && <ChartSettings />}
         
-        {/* Statistics Panel */}
+        
+
+        {/* Statistics Summary */}
         {showStatistics && (
-          <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', width: '100%', flexShrink: 0 }}>
-            <div style={{ width: '50%', paddingRight: '4rem'}}>
-              <AlignedParagraph left="All Citizens" right={totals[0] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="- Tourists" right={totals[2] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="- Commuters" right={totals[3] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="- Moving Away" right={totals[7] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="Population" right={totals[1] || 0} />
+            <div
+                style={{
+                  flex: '0 0 auto',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  width: '100%',
+                  flexShrink: 0,
+                }}
+            >
+              <div style={{width: '50%', paddingRight: '4rem'}}>
+                <AlignedParagraph left="All Citizens" right={StructureTotals[0]}/>
+                <div style={{height: '1rem'}}/>
+                <AlignedParagraph left="- Tourists" right={StructureTotals[2]}/>
+                <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="- Commuters" right={StructureTotals[3]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="- Moving Away" right={StructureTotals[7]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="Population" right={StructureTotals[1]} />
             </div>
-            <div style={{ width: '50%', paddingLeft: '4rem'}}>
-              <AlignedParagraph left="Dead" right={totals[8] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="Students" right={totals[4] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="Workers" right={totals[5] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="Homeless" right={totals[9] || 0} />
-              <div style={{ height: '1rem' }}></div>
-              <AlignedParagraph left="Oldest Citizen" right={totals[6] || 0} />
+            <div style={{ width: '50%', paddingLeft: '4rem' }}>
+              <AlignedParagraph left="Dead" right={StructureTotals[8]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="Students" right={StructureTotals[4]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="Workers" right={StructureTotals[5]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="Homeless" right={StructureTotals[9]} />
+              <div style={{ height: '1rem' }} />
+              <AlignedParagraph left="Oldest Citizen" right={OldestCitizen} />
             </div>
           </div>
         )}
 
-        {/* Age Grouping Section */}
+        {/* Age Grouping section */}
         {showAgeGrouping && (
-          <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', margin: '1rem', flexShrink: 0 }}>
-            <GroupingOptions />
+          <div
+            style={{
+              flex: '0 0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: '1rem',
+              flexShrink: 0,
+            }}
+          >
+            <GroupingOptions
+              groupingStrategy={groupingStrategy}
+              setGroupingStrategy={setGroupingStrategy}
+              totalEntries={StructureDetails.length}
+            />
           </div>
         )}
 
-        {/* Detailed Statistics Panel */}
-        {showDetailedStats && <div style={{ flexShrink: 0 }}><DetailedStatistics /></div>}
+        {/* Detailed Statistics (Optional) */}
+        {showDetailedStats && (
+          <DetailedStatistics
+            StructureDetails={StructureDetails}
+            StructureTotals={StructureTotals}
+          />
+        )}
 
         {/* Chart Section */}
-        <div style={{ 
-          flex: '1 1 auto', 
-          minHeight: 0, 
-          padding: '1rem',
-          position: 'relative',
-          overflowY: 'auto',
-          overflowX: 'hidden'
-        }}>
-          {details.length === 0 ? (
+        <div
+          style={{
+            flex: '1 1 auto',
+            minHeight: 0,
+            padding: '1rem',
+            position: 'relative',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
+        >
+          {StructureDetails.length === 0 ? (
             <p style={{ color: 'white' }}>No data available to display the chart.</p>
           ) : (
-            <div style={{ 
-              height: `${chartHeightToUse}px`, 
-              width: '100%',
-              position: 'relative'
-            }}>
+            <div
+              style={{
+                height: `${chartHeightToUse}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
               {renderChart()}
             </div>
           )}
@@ -1206,23 +848,6 @@ export const Demographics: FC<DemographicsProps> = ({ onClose }) => {
       </div>
     </$Panel>
   );
-};
-
-// Helper function to get distinct colors for datasets
-const getColor = (index: number) => {
-  const colors = [
-    '#624532',
-    '#7E9EAE',
-    '#00C217',
-    '#005C4E',
-    '#2462FF',
-    '#A1A1A1',
-    '#FF5733',
-    '#C70039',
-    '#900C3F',
-    '#581845',
-  ];
-  return colors[index % colors.length];
 };
 
 export default Demographics;

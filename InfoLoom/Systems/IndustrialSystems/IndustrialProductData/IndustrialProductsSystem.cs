@@ -23,13 +23,33 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
-using static InfoLoomTwo.Systems.IndustrialUISystem;
 
-namespace InfoLoomTwo.Systems
+
+namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 {
-    public partial class CustomIndustrialDemandSystem : UISystemBase
+    public partial class IndustrialProductsSystem : SystemBase
     {
+        public struct IndustrialDemandData
+        {
+            public FixedString32Bytes ResourceName;
+            public int Demand;
+            public int Building;
+            public int Free;
+            public int Companies;
+            public int Workers;
+            public int SvcPercent;
+            public int CapPercent;
+            public int CapPerCompany;
+            public int WrkPercent;
+            public int TaxFactor;
 
+            public IndustrialDemandData(Resource resource)
+            {
+                ResourceName = resource.ToString();
+                Demand = Building = Free = Companies = Workers = 
+                SvcPercent = CapPercent = CapPerCompany = WrkPercent = TaxFactor = 0;
+            }
+        }
         private struct UpdateIndustrialDemandJob : IJob
         {
             [DeallocateOnJobCompletion]
@@ -156,7 +176,7 @@ namespace InfoLoomTwo.Systems
             public NativeArray<int> m_StorageCapacities;
             public NativeArray<int> m_ResourceDemands;
 
-            public NativeArray<IDemandData> m_DemandData; // Added for UI data
+            public NativeArray<IndustrialDemandData> m_DemandData; // Added for UI data
 
             public NativeArray<int> m_CurrentProductionWorkers;
 
@@ -432,8 +452,8 @@ namespace InfoLoomTwo.Systems
                     }
 
                     // Update the uiData for the current resource
-                    IDemandData uiData = m_DemandData[resourceIndex4];
-                    uiData.Resource = iterator.resource;
+                    IndustrialDemandData uiData = m_DemandData[resourceIndex4];
+                    uiData.ResourceName = iterator.resource.ToString();
                     uiData.Demand = m_ResourceDemands[resourceIndex4];
                     uiData.Building = m_IndustrialCompanyDemands[resourceIndex4];
 
@@ -520,73 +540,7 @@ namespace InfoLoomTwo.Systems
             }
         }
 
-        private struct TypeHandle
-        {
-            [ReadOnly]
-            public EntityTypeHandle __Unity_Entities_Entity_TypeHandle;
-
-            [ReadOnly]
-            public ComponentTypeHandle<PrefabRef> __Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public ComponentTypeHandle<CityServiceUpkeep> __Game_City_CityServiceUpkeep_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public ComponentLookup<StorageLimitData> __Game_Companies_StorageLimitData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<SpawnableBuildingData> __Game_Prefabs_SpawnableBuildingData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<BuildingData> __Game_Prefabs_BuildingData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<BuildingPropertyData> __Game_Prefabs_BuildingPropertyData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<IndustrialProcessData> __Game_Prefabs_IndustrialProcessData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<PrefabRef> __Game_Prefabs_PrefabRef_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<PropertyRenter> __Game_Buildings_PropertyRenter_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Attached> __Game_Objects_Attached_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<ResourceData> __Game_Prefabs_ResourceData_RO_ComponentLookup;
-
-            [ReadOnly]
-            public BufferLookup<ServiceUpkeepData> __Game_Prefabs_ServiceUpkeepData_RO_BufferLookup;
-
-            [ReadOnly]
-            public BufferLookup<CityModifier> __Game_City_CityModifier_RO_BufferLookup;
-
-            [ReadOnly]
-            public BufferLookup<InstalledUpgrade> __Game_Buildings_InstalledUpgrade_RO_BufferLookup;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void __AssignHandles(ref SystemState state)
-            {
-                __Unity_Entities_Entity_TypeHandle = state.GetEntityTypeHandle();
-                __Game_Prefabs_PrefabRef_RO_ComponentTypeHandle = state.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
-                __Game_City_CityServiceUpkeep_RO_ComponentTypeHandle = state.GetComponentTypeHandle<CityServiceUpkeep>(isReadOnly: true);
-                __Game_Companies_StorageLimitData_RO_ComponentLookup = state.GetComponentLookup<StorageLimitData>(isReadOnly: true);
-                __Game_Prefabs_SpawnableBuildingData_RO_ComponentLookup = state.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
-                __Game_Prefabs_BuildingData_RO_ComponentLookup = state.GetComponentLookup<BuildingData>(isReadOnly: true);
-                __Game_Prefabs_BuildingPropertyData_RO_ComponentLookup = state.GetComponentLookup<BuildingPropertyData>(isReadOnly: true);
-                __Game_Prefabs_IndustrialProcessData_RO_ComponentLookup = state.GetComponentLookup<IndustrialProcessData>(isReadOnly: true);
-                __Game_Prefabs_PrefabRef_RO_ComponentLookup = state.GetComponentLookup<PrefabRef>(isReadOnly: true);
-                __Game_Buildings_PropertyRenter_RO_ComponentLookup = state.GetComponentLookup<PropertyRenter>(isReadOnly: true);
-                __Game_Objects_Attached_RO_ComponentLookup = state.GetComponentLookup<Attached>(isReadOnly: true);
-                __Game_Prefabs_ResourceData_RO_ComponentLookup = state.GetComponentLookup<ResourceData>(isReadOnly: true);
-                __Game_Prefabs_ServiceUpkeepData_RO_BufferLookup = state.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
-                __Game_City_CityModifier_RO_BufferLookup = state.GetBufferLookup<CityModifier>(isReadOnly: true);
-                __Game_Buildings_InstalledUpgrade_RO_BufferLookup = state.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
-            }
-        }
+        
 
         private static readonly int kStorageProductionDemand = 2000;
 
@@ -631,7 +585,7 @@ namespace InfoLoomTwo.Systems
         private NativeValue<int> m_OfficeCompanyDemand;
         private NativeValue<int> m_OfficeBuildingDemand;
 
-        public static NativeArray<IDemandData> m_DemandData;
+        public static NativeArray<IndustrialDemandData> m_DemandData;
 
         [ResourceArray]
         [DebugWatchValue]
@@ -698,7 +652,7 @@ namespace InfoLoomTwo.Systems
 
         private int m_LastOfficeBuildingDemand;
 
-        private TypeHandle __TypeHandle;
+        
 
         [DebugWatchValue(color = "#f7dc6f")]
         public int industrialCompanyDemand => m_LastIndustrialCompanyDemand;
@@ -718,15 +672,7 @@ namespace InfoLoomTwo.Systems
         [DebugWatchValue(color = "#6c3483")]
         public int officeBuildingDemand => m_LastOfficeBuildingDemand;
 
-        public override int GetUpdateInterval(SystemUpdatePhase phase)
-        {
-            return 16;
-        }
-
-        public override int GetUpdateOffset(SystemUpdatePhase phase)
-        {
-            return 7;
-        }
+        
 
         public NativeArray<int> GetConsumption(out JobHandle deps)
         {
@@ -818,7 +764,7 @@ namespace InfoLoomTwo.Systems
             m_FreeStorages = new NativeArray<int>(resourceCount, Allocator.Persistent);
             m_Storages = new NativeArray<int>(resourceCount, Allocator.Persistent);
             m_StorageCapacities = new NativeArray<int>(resourceCount, Allocator.Persistent);
-            m_DemandData = new NativeArray<IDemandData>(resourceCount, Allocator.Persistent);
+            m_DemandData = new NativeArray<IndustrialDemandData>(resourceCount, Allocator.Persistent);
             RequireForUpdate(m_EconomyParameterQuery);
             RequireForUpdate(m_DemandParameterQuery);
             RequireForUpdate(m_ProcessDataQuery);
@@ -875,102 +821,7 @@ namespace InfoLoomTwo.Systems
             m_LastOfficeBuildingDemand = 0;
         }
 
-        /*public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
-        {
-            writer.Write(m_IndustrialCompanyDemand.value);
-            writer.Write(m_IndustrialBuildingDemand.value);
-            writer.Write(m_StorageCompanyDemand.value);
-            writer.Write(m_StorageBuildingDemand.value);
-            writer.Write(m_OfficeCompanyDemand.value);
-            writer.Write(m_OfficeBuildingDemand.value);
-            writer.Write(m_IndustrialDemandFactors.Length);
-            writer.Write(m_IndustrialDemandFactors);
-            writer.Write(m_OfficeDemandFactors);
-            writer.Write(m_IndustrialCompanyDemands);
-            writer.Write(m_IndustrialZoningDemands);
-            writer.Write(m_IndustrialBuildingDemands);
-            writer.Write(m_StorageBuildingDemands);
-            writer.Write(m_StorageCompanyDemands);
-            writer.Write(m_FreeProperties);
-            writer.Write(m_Storages);
-            writer.Write(m_FreeStorages);
-            writer.Write(m_LastIndustrialCompanyDemand);
-            writer.Write(m_LastIndustrialBuildingDemand);
-            writer.Write(m_LastStorageCompanyDemand);
-            writer.Write(m_LastStorageBuildingDemand);
-            writer.Write(m_LastOfficeCompanyDemand);
-            writer.Write(m_LastOfficeBuildingDemand);
-        }
-
-        public void Deserialize<TReader>(TReader reader) where TReader : IReader
-        {
-            reader.Read(out int value);
-            m_IndustrialCompanyDemand.value = value;
-            reader.Read(out int value2);
-            m_IndustrialBuildingDemand.value = value2;
-            reader.Read(out int value3);
-            m_StorageCompanyDemand.value = value3;
-            reader.Read(out int value4);
-            m_StorageBuildingDemand.value = value4;
-            reader.Read(out int value5);
-            m_OfficeCompanyDemand.value = value5;
-            reader.Read(out int value6);
-            m_OfficeBuildingDemand.value = value6;
-            if (reader.context.version < Version.demandFactorCountSerialization)
-            {
-                NativeArray<int> nativeArray = new NativeArray<int>(13, Allocator.Temp);
-                reader.Read(nativeArray);
-                CollectionUtils.CopySafe(nativeArray, m_IndustrialDemandFactors);
-                reader.Read(nativeArray);
-                CollectionUtils.CopySafe(nativeArray, m_OfficeDemandFactors);
-                nativeArray.Dispose();
-            }
-            else
-            {
-                reader.Read(out int value7);
-                if (value7 == m_IndustrialDemandFactors.Length)
-                {
-                    reader.Read(m_IndustrialDemandFactors);
-                    reader.Read(m_OfficeDemandFactors);
-                }
-                else
-                {
-                    NativeArray<int> nativeArray2 = new NativeArray<int>(value7, Allocator.Temp);
-                    reader.Read(nativeArray2);
-                    CollectionUtils.CopySafe(nativeArray2, m_IndustrialDemandFactors);
-                    reader.Read(nativeArray2);
-                    CollectionUtils.CopySafe(nativeArray2, m_OfficeDemandFactors);
-                    nativeArray2.Dispose();
-                }
-            }
-            reader.Read(m_IndustrialCompanyDemands);
-            reader.Read(m_IndustrialZoningDemands);
-            reader.Read(m_IndustrialBuildingDemands);
-            reader.Read(m_StorageBuildingDemands);
-            reader.Read(m_StorageCompanyDemands);
-            if (reader.context.version <= Version.companyDemandOptimization)
-            {
-                NativeArray<int> value8 = new NativeArray<int>(EconomyUtils.ResourceCount, Allocator.Temp);
-                reader.Read(value8);
-                reader.Read(value8);
-                if (reader.context.version <= Version.demandFactorCountSerialization)
-                {
-                    reader.Read(value8);
-                    reader.Read(value8);
-                }
-                reader.Read(value8);
-                reader.Read(value8);
-            }
-            reader.Read(m_FreeProperties);
-            reader.Read(m_Storages);
-            reader.Read(m_FreeStorages);
-            reader.Read(out m_LastIndustrialCompanyDemand);
-            reader.Read(out m_LastIndustrialBuildingDemand);
-            reader.Read(out m_LastStorageCompanyDemand);
-            reader.Read(out m_LastStorageBuildingDemand);
-            reader.Read(out m_LastOfficeCompanyDemand);
-            reader.Read(out m_LastOfficeBuildingDemand);
-        }*/
+        
 
 
         protected override void OnUpdate()
@@ -985,42 +836,41 @@ namespace InfoLoomTwo.Systems
                 m_LastOfficeBuildingDemand = m_OfficeBuildingDemand.value;
                 JobHandle deps;
                 CountCompanyDataSystem.IndustrialCompanyDatas industrialCompanyDatas = m_CountCompanyDataSystem.GetIndustrialCompanyDatas(out deps);
-                __TypeHandle.__Game_Buildings_InstalledUpgrade_RO_BufferLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_City_CityModifier_RO_BufferLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_ServiceUpkeepData_RO_BufferLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_ResourceData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Objects_Attached_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Buildings_PropertyRenter_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_BuildingData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_SpawnableBuildingData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Companies_StorageLimitData_RO_ComponentLookup.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_City_CityServiceUpkeep_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle.Update(ref base.CheckedStateRef);
-                __TypeHandle.__Unity_Entities_Entity_TypeHandle.Update(ref base.CheckedStateRef);
+               
+               
+                
+               
+               
+               
+               
+               
+               
+                
+                
+               
+                
+                
                 UpdateIndustrialDemandJob updateIndustrialDemandJob = default(UpdateIndustrialDemandJob);
                 updateIndustrialDemandJob.m_FreePropertyChunks = m_FreeIndustrialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
                 updateIndustrialDemandJob.m_StorageCompanyChunks = m_StorageCompanyQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);
                 updateIndustrialDemandJob.m_CityServiceChunks = m_CityServiceQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle3);
                 updateIndustrialDemandJob.m_UnlockedZoneDatas = m_UnlockedZoneDataQuery.ToComponentDataArray<ZoneData>(Allocator.TempJob);
-                updateIndustrialDemandJob.m_EntityType = __TypeHandle.__Unity_Entities_Entity_TypeHandle;
-                updateIndustrialDemandJob.m_PrefabType = __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentTypeHandle;
-                updateIndustrialDemandJob.m_ServiceUpkeepType = __TypeHandle.__Game_City_CityServiceUpkeep_RO_ComponentTypeHandle;
-                updateIndustrialDemandJob.m_StorageLimitDatas = __TypeHandle.__Game_Companies_StorageLimitData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_SpawnableBuildingDatas = __TypeHandle.__Game_Prefabs_SpawnableBuildingData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_BuildingDatas = __TypeHandle.__Game_Prefabs_BuildingData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_BuildingPropertyDatas = __TypeHandle.__Game_Prefabs_BuildingPropertyData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_IndustrialProcessDatas = __TypeHandle.__Game_Prefabs_IndustrialProcessData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_Prefabs = __TypeHandle.__Game_Prefabs_PrefabRef_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_PropertyRenters = __TypeHandle.__Game_Buildings_PropertyRenter_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_Attached = __TypeHandle.__Game_Objects_Attached_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_ResourceDatas = __TypeHandle.__Game_Prefabs_ResourceData_RO_ComponentLookup;
-                updateIndustrialDemandJob.m_ServiceUpkeeps = __TypeHandle.__Game_Prefabs_ServiceUpkeepData_RO_BufferLookup;
-                updateIndustrialDemandJob.m_CityModifiers = __TypeHandle.__Game_City_CityModifier_RO_BufferLookup;
-                updateIndustrialDemandJob.m_InstalledUpgrades = __TypeHandle.__Game_Buildings_InstalledUpgrade_RO_BufferLookup;
-                updateIndustrialDemandJob.m_Upkeeps = __TypeHandle.__Game_Prefabs_ServiceUpkeepData_RO_BufferLookup;
+                updateIndustrialDemandJob.m_EntityType = SystemAPI.GetEntityTypeHandle();
+                updateIndustrialDemandJob.m_PrefabType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
+                updateIndustrialDemandJob.m_ServiceUpkeepType = SystemAPI.GetComponentTypeHandle<CityServiceUpkeep>(isReadOnly: true);
+                updateIndustrialDemandJob.m_StorageLimitDatas = SystemAPI.GetComponentLookup<StorageLimitData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_SpawnableBuildingDatas = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_BuildingDatas = SystemAPI.GetComponentLookup<BuildingData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_BuildingPropertyDatas = SystemAPI.GetComponentLookup<BuildingPropertyData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_IndustrialProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_Prefabs = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+                updateIndustrialDemandJob.m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
+                updateIndustrialDemandJob.m_Attached = SystemAPI.GetComponentLookup<Attached>(isReadOnly: true);
+                updateIndustrialDemandJob.m_ResourceDatas = SystemAPI.GetComponentLookup<ResourceData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_ServiceUpkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_CityModifiers = SystemAPI.GetBufferLookup<CityModifier>(isReadOnly: true);
+                updateIndustrialDemandJob.m_InstalledUpgrades = SystemAPI.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
+                updateIndustrialDemandJob.m_Upkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true); 
                 updateIndustrialDemandJob.m_DemandParameters = m_DemandParameterQuery.GetSingleton<DemandParameterData>();
                 updateIndustrialDemandJob.m_EconomyParameters = m_EconomyParameterQuery.GetSingleton<EconomyParameterData>();
                 updateIndustrialDemandJob.m_ResourcePrefabs = m_ResourceSystem.GetPrefabs();
@@ -1062,17 +912,7 @@ namespace InfoLoomTwo.Systems
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void __AssignQueries(ref SystemState state)
-        {
-        }
-
-        protected override void OnCreateForCompiler()
-        {
-            base.OnCreateForCompiler();
-            __AssignQueries(ref base.CheckedStateRef);
-            __TypeHandle.__AssignHandles(ref base.CheckedStateRef);
-        }
+        
 
 
     }

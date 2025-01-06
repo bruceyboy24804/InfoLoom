@@ -1,7 +1,10 @@
 import React, { FC, useCallback, useState } from 'react';
-import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
+import {bindValue, useValue} from "cs2/api";
+import mod from "mod.json";
 
+
+const Residential$ = bindValue<number[]>(mod.id, "ilResidential", []);
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
   right: React.ReactNode;
@@ -202,8 +205,10 @@ interface ResidentialProps {
 
 const Residential: FC<ResidentialProps> = ({ onClose }) => {
   // Residential data
-  const [residentialData, setResidentialData] = useState<number[]>([]);
-  useDataUpdate('cityInfo.ilResidential', setResidentialData);
+  
+  const ilResidential = useValue(Residential$);
+  
+  
 
   // New state to control panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -218,8 +223,8 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
   }
 
   const homelessThreshold =
-    residentialData.length > 13
-      ? Math.round((residentialData[12] * residentialData[13]) / 1000)
+    ilResidential.length > 13
+      ? Math.round((ilResidential[12] * ilResidential[13]) / 1000)
       : 0;
 
   return (
@@ -230,11 +235,11 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.3 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {residentialData.length === 0 ? (
+      {ilResidential.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
-          <BuildingDemandSection data={residentialData} />
+          <BuildingDemandSection data={ilResidential} />
           {/* OTHER DATA, two columns */}
           <div style={{ display: 'flex' }}>
             <div
@@ -247,26 +252,26 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
               }}
             >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
-              <RowWithTwoColumns left="STUDY POSITIONS" right={residentialData[14]} />
+              <RowWithTwoColumns left="STUDY POSITIONS" right={ilResidential[14]} />
               <DataDivider />
               <RowWithThreeColumns
                 left="HAPPINESS"
-                leftSmall={`${residentialData[8]} is neutral`}
-                right1={residentialData[7]}
-                flag1={residentialData[7] < residentialData[8]}
+                leftSmall={`${ilResidential[8]} is neutral`}
+                right1={ilResidential[7]}
+                flag1={ilResidential[7] < ilResidential[8]}
               />
               <DataDivider />
               <RowWithThreeColumns
                 left="UNEMPLOYMENT"
-                leftSmall={`${residentialData[10] / 10}% is neutral`}
-                right1={`${(residentialData[9] / 100).toFixed(2)}`}
-                flag1={residentialData[9] >= residentialData[10] * 10} // Changed this line
+                leftSmall={`${ilResidential[10] / 10}% is neutral`}
+                right1={`${(ilResidential[9] / 100).toFixed(2)}`}
+                flag1={ilResidential[9] >= ilResidential[10] * 10} // Changed this line
               />
               <DataDivider />
               <RowWithThreeColumns
                 left="HOUSEHOLD DEMAND"
-                right1={residentialData[16]}
-                flag1={residentialData[16] < 0}
+                right1={ilResidential[16]}
+                flag1={ilResidential[16] < 0}
               />
               <div className="space_uKL" style={{ height: '3rem' }}></div>
             </div>
@@ -280,23 +285,23 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
               }}
             >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
-              <RowWithTwoColumns left="HOUSEHOLDS" right={residentialData[12]} />
+              <RowWithTwoColumns left="HOUSEHOLDS" right={ilResidential[12]} />
               <DataDivider />
               <RowWithThreeColumns
                 left="HOMELESS"
                 leftSmall={`${homelessThreshold} is neutral`}
-                right1={residentialData[11]}
-                flag1={residentialData[11] > homelessThreshold}
+                right1={ilResidential[11]}
+                flag1={ilResidential[11] > homelessThreshold}
               />
               <DataDivider />
               <RowWithThreeColumns
                 left="TAX RATE (weighted)"
                 leftSmall="10% is neutral"
-                right1={residentialData[15] / 10}
-                flag1={residentialData[15] > 100}
+                right1={ilResidential[15] / 10}
+                flag1={ilResidential[15] > 100}
               />
               <DataDivider />
-              <RowWithTwoColumns left="STUDENT CHANCE" right={`${residentialData[17]} %`} />
+              <RowWithTwoColumns left="STUDENT CHANCE" right={`${ilResidential[17]} %`} />
               <div className="space_uKL" style={{ height: '3rem' }}></div>
             </div>
           </div>

@@ -1,18 +1,32 @@
 import React, { useState, useCallback, FC } from 'react';
-import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
 import { Button, Dropdown, DropdownToggle } from 'cs2/ui';
-import { InfoCheckbox } from '../../InfoCheckbox/InfoCheckbox';
+import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
-import styles from './IndustrialD.module.scss';
+import styles from './IndustrialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
-import { formatWords } from '../utils/formatText';
+import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
+import {bindValue, useValue} from "cs2/api";
+import mod from "mod.json";
 
 
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
-// Declare the global 'engine' object to avoid TypeScript errors.
-// You should replace 'any' with the appropriate type if available.
+interface IndustrialProductData {
+  ResourceName: string;
+  Demand: number;
+  Building: number;
+  Free: number;
+  Companies: number;
+  SvcPercent: number;
+  CapPerCompany: number;
+  CapPercent: number;
+  Workers: number;
+  WrkPercent: number;
+  TaxFactor: number;
+  
+}
+const IndustrialProduct$ = bindValue<IndustrialProductData[]>(mod.id, "industrialProducts", []);
 
 // Interface for RowWithTwoColumns props
 interface RowWithTwoColumnsProps {
@@ -132,26 +146,10 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
 };
 
 // Interface for ResourceLine props
-interface ResourceData {
-  resource: string;
-  demand: number;
-  building: number;
-  free: number;
-  companies: number;
-  svcfactor: number;
-  svcpercent: number;
-  capfactor: number;
-  cappercent: number;
-  cappercompany: number;
-  wrkfactor: number;
-  wrkpercent: number;
-  workers: number;
-  edufactor: number;
-  taxfactor: number;
-}
+
 
 interface ResourceLineProps {
-  data: ResourceData;
+  data: IndustrialProductData;
   showColumns: {
     demand: boolean;
     buildings: boolean;
@@ -165,62 +163,62 @@ interface ResourceLineProps {
 // Component: ResourceLine
 const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   // Use the display name mapping if available
-  const displayName = data.resource === 'Ore' ? 'MetalOre' : 
-                     data.resource === 'Oil' ? 'CrudeOil' : 
-                     data.resource;
+  const displayName = data.ResourceName === 'Ore' ? 'MetalOre' : 
+                     data.ResourceName === 'Oil' ? 'CrudeOil' : 
+                     data.ResourceName;
   const formattedResourceName = formatWords(displayName, true);
   
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
       <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
-        <ResourceIcon resourceName={data.resource} />
+        <ResourceIcon resourceName={data.ResourceName} />
         <span>{formattedResourceName}</span>
       </div>
       {showColumns.demand && (
         <>
-          <div className={`${styles.cell} ${data.demand < 0 ? styles.negative_YWY : ''}`} style={{ width: '6%' }}>
-            {data.demand}
+          <div className={`${styles.cell} ${data.Demand < 0 ? styles.negative_YWY : ''}`} style={{ width: '6%' }}>
+            {data.Demand}
           </div>
-          <div className={`${styles.cell} ${data.building <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
-            {data.building}
+          <div className={`${styles.cell} ${data.Building <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
+            {data.Building}
           </div>
-          <div className={`${styles.cell} ${data.free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
-            {data.free}
+          <div className={`${styles.cell} ${data.Free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
+            {data.Free}
           </div>
           <div className={styles.cell} style={{ width: '5%' }}>
-            {data.companies}
+            {data.Companies}
           </div>
         </>
       )}
       {showColumns.storage && (
         <div className={styles.cell} style={{ width: '12%' }}>
-          {data.svcpercent}
+          {data.SvcPercent}
         </div>
       )}
       {showColumns.production && (
         <>
           <div className={styles.cell} style={{ width: '10%' }}>
-            {data.cappercompany}
+            {data.CapPerCompany}
           </div>
           <div className={styles.cell} style={{ width: '10%' }}>
-            {data.cappercent}
+            {data.CapPercent}
           </div>
         </>
       )}
       {showColumns.workers && (
         <>
           <div className={styles.cell} style={{ width: '9%' }}>
-            {data.workers}
+            {data.Workers}
           </div>
-          <div className={`${styles.cell} ${data.wrkpercent < 90 ? styles.negative_YWY : styles.positive_zrK}`} style={{ width: '9%' }}>
-            {`${data.wrkpercent}%`}
+          <div className={`${styles.cell} ${data.WrkPercent < 90 ? styles.negative_YWY : styles.positive_zrK}`} style={{ width: '9%' }}>
+            {`${data.WrkPercent}%`}
           </div>
         </>
       )}
       {showColumns.tax && (
-        <div className={`${styles.cell} ${data.taxfactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
-          {data.taxfactor}
+        <div className={`${styles.cell} ${data.TaxFactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
+          {data.TaxFactor}
         </div>
       )}
     </div>
@@ -303,15 +301,13 @@ interface IndustrialProps {
 
 // Component: $Commercial
 const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
-  // Demand data for each resource
-  const [demandData, setDemandData] = useState<ResourceData[]>([]);
-
-  // Custom hook to update data
-  useDataUpdate('realEco.industrialDemand', setDemandData);
+  const industrialProducts = useValue(IndustrialProduct$);
 
   // State to control panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
+  
+  
   // Column visibility toggles
   const [showColumns, setShowColumns] = useState({
     demand: true,
@@ -341,33 +337,30 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   }, []);
 
   // Sort and filter functions
-  const sortData = useCallback((a: ResourceData, b: ResourceData) => {
-    switch (sortBy) {
-      case 'name':
-        return a.resource.localeCompare(b.resource);
-      case 'demand':
-        return b.demand - a.demand;
-      case 'workers':
-        return b.workers - a.workers;
-      case 'tax':
-        return b.taxfactor - a.taxfactor;
-      default:
-        return 0;
-    }
-  }, [sortBy]);
+  const sortData = useCallback((a: IndustrialProductData, b: IndustrialProductData) => {
+  switch (sortBy) {
+    case 'name':
+      return a.ResourceName.localeCompare(b.ResourceName);
+    case 'demand':
+      return b.Demand - a.Demand;
+    case 'workers':
+      return b.Workers - a.Workers;
+    case 'tax':
+      return b.TaxFactor - a.TaxFactor;
+    default:
+      return 0;
+  }
+}, [sortBy]);
 
-  const filterData = useCallback((item: ResourceData) => {
-    // Demand filter
-    if (filterDemand === 'positive' && item.demand <= 0) return false;
-    if (filterDemand === 'negative' && item.demand >= 0) return false;
 
-    // Workers filter
-    if (filterWorkers === 'full' && item.wrkpercent < 100) return false;
-    if (filterWorkers === 'partial' && (item.wrkpercent === 0 || item.wrkpercent === 100)) return false;
-    if (filterWorkers === 'none' && item.wrkpercent > 0) return false;
-
-    return true;
-  }, [filterDemand, filterWorkers]);
+  const applyDataFilter = useCallback((item: IndustrialProductData) => {
+  if (filterDemand === 'positive' && item.Demand <= 0) return false;
+  if (filterDemand === 'negative' && item.Demand >= 0) return false;
+  if (filterWorkers === 'full' && item.WrkPercent < 100) return false;
+  if (filterWorkers === 'partial' && (item.WrkPercent === 0 || item.WrkPercent === 100)) return false;
+  if (filterWorkers === 'none' && item.WrkPercent > 0) return false;
+  return true;
+}, [filterDemand, filterWorkers]);
 
   // Handler for closing the panel
   const handleClose = useCallback(() => {
@@ -386,7 +379,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.70 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {demandData.length === 0 ? (
+      {industrialProducts.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
@@ -560,21 +553,21 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           </div>
 
           <TableHeader showColumns={showColumns} />
-          {demandData
-            .filter((item) => item.resource !== 'NoResource')
-            .filter(filterData)
-            .sort((a, b) => sortData(a, b))
-            .map((item) => (
-              <ResourceLine 
-                key={item.resource} 
-                data={item} 
-                showColumns={showColumns}
-              />
-            ))}
+          {industrialProducts
+          .filter((item: IndustrialProductData) => item.ResourceName !== 'NoResource')
+          .filter(applyDataFilter)
+          .sort((a: IndustrialProductData, b: IndustrialProductData) => sortData(a, b))
+          .map((item: IndustrialProductData) => (
+            <ResourceLine 
+              key={item.ResourceName} 
+              data={item} 
+              showColumns={showColumns}
+    />
+  ))}
         </div>
       )}
     </$Panel>
   );
 };
 
-export default $IndustrialProducts;
+export default $IndustrialProducts;   

@@ -1,6 +1,8 @@
 import React, { FC, useCallback, useState } from 'react';
-import useDataUpdate from 'mods/use-data-update';
+
 import $Panel from 'mods/panel';
+import {bindValue, useValue} from "cs2/api";
+import mod from "mod.json";
 
 // Define interfaces for props
 interface RowWithTwoColumnsProps {
@@ -33,7 +35,8 @@ interface ColumnExcludedResourcesProps {
 }
 
 // Component Definitions
-
+const IndustrialDemand$ = bindValue<number[]>(mod.id, "ilIndustrial", []);
+const IndustrialExRes$ = bindValue<string[]>(mod.id, "ilIndustrialExRes", []);
 const RowWithTwoColumns: React.FC<RowWithTwoColumnsProps> = ({ left, right }) => {
   return (
     <div className="labels_L7Q row_S2v">
@@ -273,12 +276,8 @@ interface IndustrialProps {
 
 const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
   // Commercial data
-  const [industrialData, setIndustrialData] = useState<number[]>([]);
-  useDataUpdate('cityInfo.ilIndustrial', setIndustrialData);
-
-  // Excluded resources
-  const [excludedResources, setExcludedResources] = useState<string[]>([]);
-  useDataUpdate('cityInfo.ilIndustrialExRes', setExcludedResources);
+  const ilIndustrial = useValue(IndustrialDemand$);  
+  const ilIndustrialExRes = useValue(IndustrialExRes$);
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
@@ -299,12 +298,12 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.36 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {industrialData.length === 0 ? (
+      {ilIndustrial.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div style={{ display: 'flex' }}>
-          <ColumnIndustrialData data={industrialData} />
-          <ColumnExcludedResources resources={excludedResources} />
+          <ColumnIndustrialData data={ilIndustrial} />
+          <ColumnExcludedResources resources={ilIndustrialExRes} />
         </div>
       )}
     </$Panel>

@@ -21,6 +21,10 @@ namespace InfoLoomTwo
     [SettingsUIShowGroupName(CommercialTax, Other)]
     public class Setting : ModSetting
     {
+        
+        
+        
+        
         [ReadOnly]
         public DemandParameterData m_DemandParameters;
         public static World World { get; set; }
@@ -56,17 +60,8 @@ namespace InfoLoomTwo
         [SettingsUISection(kSection, CommercialTax)]
         public string CommercialTaxLEffect => TextMaker((Math.Abs(TaxRateEffect) * 100).ToString("F2"), "commercial");
 
-        [SettingsUISection(kSection, Other)]
-        [SettingsUISlider(min = 100f, max = 200f, step = 1f)]
         
-        public float AgeCapSetting { get; set; } = 100f;
 
-        /*[SettingsUISection(kSection, IndustrialTax)]
-        [SettingsUISlider(min = -5f, max = -10f, step = 0.1f, unit = Unit.kFloatThreeFractions)] // Slider range from -1.0 to 1.0 with a step of 0.1 [SettingsUISlider(min = -0.05, max = 1.0, step = 0.1)]
-        public float TaxRateEffect2 { get; set; } = -5f; // Default value
-
-        [SettingsUISection(kSection, IndustrialTax)]
-        public string IndustrialTaxLEffect => TextMaker((Math.Abs(TaxRateEffect2) * 100).ToString("F2"), "industrial");*/
 
 
         public Setting(IMod mod) : base(mod)
@@ -77,7 +72,7 @@ namespace InfoLoomTwo
         public override void SetDefaults()
         {
             TaxRateEffect = -0.05f;
-            AgeCapSetting = 100f;
+            
            
         }
 
@@ -105,8 +100,7 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.CommercialTaxLEffect)), " Tax rate" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.CommercialTaxLEffect)), "The current total tax rate to determine the strength of commercial tax when taxing commercial product companies" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.Other), "Other" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AgeCapSetting)), "Maximum chart age" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.AgeCapSetting)), "The maximum age that sets the demographic cap" },
+                
                
                 
             };

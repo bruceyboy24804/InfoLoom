@@ -1,0 +1,25 @@
+.info-checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin: 4px 0;
+
+  input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .checkbox-label {
+    font-size: 14px;
+    color: #333;
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

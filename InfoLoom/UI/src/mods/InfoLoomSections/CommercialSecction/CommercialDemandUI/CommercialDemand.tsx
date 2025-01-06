@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react';
-import useDataUpdate from 'mods/use-data-update';
 import $Panel from 'mods/panel';
-import { useLocalization } from 'cs2/l10n';
+import {bindValue, useValue} from "cs2/api";
+import mod from "mod.json";
 
 interface Factor {
   factor: string;
@@ -13,7 +13,8 @@ interface DemandSection2Props {
   value: number;
   factors: Factor[];
 }
-
+const CommercialDemand$ = bindValue<number[]>(mod.id, "ilCommercial", []);
+const CommercialExRes$ = bindValue<string[]>(mod.id, "ilCommercialExRes", []);
 const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   return (
     <div
@@ -212,11 +213,11 @@ interface CommercialProps {
 }
 
 const $Commercial: FC<CommercialProps> = ({ onClose }) => {
-  const [commercialData, setCommercialData] = useState<number[]>([]);
-  useDataUpdate('cityInfo.ilCommercial', setCommercialData);
+    
+  const ilCommercial = useValue(CommercialDemand$);  
+  const ilCommercialExRes = useValue(CommercialExRes$);
 
-  const [excludedResources, setExcludedResources] = useState<string[]>([]);
-  useDataUpdate('cityInfo.ilCommercialExRes', setExcludedResources);
+  
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
@@ -237,12 +238,12 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.31 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {commercialData.length === 0 ? (
+      {ilCommercial.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div style={{ display: 'flex' }}>
-          <ColumnCommercialData data={commercialData} />
-          <ColumnExcludedResources resources={excludedResources} />
+          <ColumnCommercialData data={ilCommercial} />
+          <ColumnExcludedResources resources={ilCommercialExRes} />
         </div>
       )}
     </$Panel>
