@@ -295,7 +295,7 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
       id="infoloom-industrial"
       title="Industrial and Office Data"
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.36 }}
+      initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.60 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
       {ilIndustrial.length === 0 ? (

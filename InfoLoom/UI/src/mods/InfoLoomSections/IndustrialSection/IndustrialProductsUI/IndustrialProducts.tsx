@@ -325,13 +325,13 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
 
   // Toggle column visibility
   const toggleColumn = useCallback((column: keyof typeof showColumns) => {
-    console.log('Toggling column:', column);
+    
     setShowColumns(prev => {
       const newState = {
         ...prev,
         [column]: !prev[column]
       };
-      console.log('New state:', newState);
+      
       return newState;
     });
   }, []);
@@ -374,9 +374,11 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   return (
     <$Panel
       id="infoloom-industrial-products"
+      
       title="Industrial and Office Products"
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.70 }}
+     
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
       {industrialProducts.length === 0 ? (

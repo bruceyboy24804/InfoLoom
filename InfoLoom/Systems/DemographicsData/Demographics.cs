@@ -15,6 +15,7 @@ using System;
 using Game.Buildings;
 using Game;
 using InfoLoomTwo.Extensions;
+using Unity.Burst;
 
 
 namespace InfoLoomTwo.Systems.DemographicsData.Demographics
@@ -35,7 +36,7 @@ public partial class Demographics : SystemBase
 
 
 
-    //[BurstCompile]
+    [BurstCompile]
     private struct PopulationStructureJob : IJobChunk
     {
         [ReadOnly]
@@ -191,7 +192,7 @@ public partial class Demographics : SystemBase
 
                 // Get age using the game's built-in methods
                 CitizenAge age = value.GetAge();
-                int ageInDays = (int)Math.Min(day - value.m_BirthDay, 200);
+                int ageInDays = (int)Math.Min(day - value.m_BirthDay, 120);
                 // Ensure ageInDays is non-negative and within the bounds of m_Results
                 if (ageInDays >= 0 && ageInDays < m_Results.Length)
                 {
@@ -326,7 +327,7 @@ public partial class Demographics : SystemBase
 
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-        m_Results = new NativeArray<DemographicsUISystem.PopulationAtAgeInfo>(200, Allocator.Persistent); // INFIXO: TODO
+        m_Results = new NativeArray<DemographicsUISystem.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TODO
         
     }
 

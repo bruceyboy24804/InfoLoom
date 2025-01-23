@@ -13,6 +13,7 @@ using Game.Companies;
 using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -23,6 +24,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
 {
     public partial class ResidentialSystem : SystemBase
     {
+        [BurstCompile]
         private struct UpdateResidentialDemandJob : IJob
         {
             /*[ReadOnly]

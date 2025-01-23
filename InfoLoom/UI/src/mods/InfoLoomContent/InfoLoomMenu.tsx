@@ -1,4 +1,4 @@
-import React, { useCallback, useState, FC } from 'react';
+import React, { useCallback, useState, FC, useEffect } from "react";
 import { Button, FloatingButton, Tooltip } from "cs2/ui";
 import icon from "images/infoloom.svg";
 import styles from "./InfoLoomMenu.module.scss";
@@ -11,37 +11,65 @@ import Commercial from "mods/InfoLoomSections/CommercialSecction/CommercialDeman
 import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand";
 import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
-import { ChartSettingsData, defaultChartSettings } from "mods/InfoLoomSections/DemographicsSection/ChartSettings";
+import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/ModdedCommercialDemand/ModdedCommercialDemand";
+import { bindValue, useValue, trigger } from "cs2/api";
+import mod from "mod.json";
 
-
-
-
+// This reactive boolean controls whether the "Modded Commercial Demand" UI is visible
+const ModdedCommercialDemandButton$ = bindValue<boolean>(mod.id, "MCDButton", false);
 
 // Define the Section type
-type Section = 'Demographics' | 'Workforce' | 'Workplaces' | 'Demand' | 'Residential' | 'Commercial' | 'Commercial Products' |  'Industrial' | 'Industrial Products';
+type Section =
+  | "Demographics"
+  | "Workforce"
+  | "Workplaces"
+  | "Demand"
+  | "Residential"
+  | "Commercial"
+  | "Commercial Products"
+  | "Industrial"
+  | "Industrial Products"
+  | "Modded Commercial Demand";
 
-// Define a new type for components that accept an onClose prop
+// Components that accept an onClose prop
 type SectionComponentProps = {
   onClose: () => void;
-  chartSettings: ChartSettingsData;
-  setChartSettings: React.Dispatch<React.SetStateAction<ChartSettingsData>>;
 };
 
-// Update the sections array type
-const sections: { name: Section; displayName: string; component: FC<SectionComponentProps> }[] = [
-  { name: 'Demographics', displayName: 'Demographics', component: Demographics },
-  { name: 'Workforce', displayName: 'Workforce', component: Workforce },
-  { name: 'Workplaces', displayName: 'Workplaces', component: Workplaces },
-  { name: 'Residential', displayName: 'Residential', component: Residential },
-  { name: 'Demand', displayName: 'Demand', component: Demand },
-  { name: 'Commercial', displayName: 'Commercial', component: Commercial },
-  { name: 'Commercial Products', displayName: 'Commercial Products', component: CommercialProducts },
-  { name: 'Industrial', displayName: 'Industrial', component: Industrial },
-  { name: 'Industrial Products', displayName: 'Industrial Products', component: IndustrialProducts },
-
+// All possible sections
+const allSections: {
+  name: Section;
+  displayName: string;
+  component: FC<SectionComponentProps>;
+}[] = [
+  { name: "Demographics", displayName: "Demographics", component: Demographics },
+  { name: "Workforce", displayName: "Workforce", component: Workforce },
+  { name: "Workplaces", displayName: "Workplaces", component: Workplaces },
+  { name: "Residential", displayName: "Residential", component: Residential },
+  { name: "Demand", displayName: "Demand", component: Demand },
+  { name: "Commercial", displayName: "Commercial", component: Commercial },
+  {
+    name: "Commercial Products",
+    displayName: "Commercial Products",
+    component: CommercialProducts,
+  },
+  { name: "Industrial", displayName: "Industrial", component: Industrial },
+  {
+    name: "Industrial Products",
+    displayName: "Industrial Products",
+    component: IndustrialProducts,
+  },
+  {
+    name: "Modded Commercial Demand",
+    displayName: "Modded Commercial Demand",
+    component: ModdedCommercialDemand,
+  },
 ];
 
 const InfoLoomButton: FC = () => {
+  // Reactively read the boolean from bindValue
+  const showModdedCommercialDemand = useValue(ModdedCommercialDemandButton$);
+
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
   const [openSections, setOpenSections] = useState<Record<Section, boolean>>({
     Demographics: false,
@@ -50,44 +78,61 @@ const InfoLoomButton: FC = () => {
     Demand: false,
     Residential: false,
     Commercial: false,
-    'Commercial Products': false,
+    "Commercial Products": false,
     Industrial: false,
-    'Industrial Products': false,
+    "Industrial Products": false,
+    "Modded Commercial Demand": false,
+  });
 
-    
-    
-});
-const [chartSettings, setChartSettings] = useState<ChartSettingsData>(defaultChartSettings);
+  // Force-close Modded Commercial Demand if turned off while open
+  useEffect(() => {
+    if (!showModdedCommercialDemand && openSections["Modded Commercial Demand"]) {
+      setOpenSections((prev) => ({
+        ...prev,
+        "Modded Commercial Demand": false,
+      }));
+    }
+  }, [showModdedCommercialDemand, openSections]);
+
   const toggleMainMenu = useCallback(() => {
-    setMainMenuOpen(prev => !prev);
+    setMainMenuOpen((prev) => !prev);
   }, []);
 
   const toggleSection = useCallback((section: Section, isOpen?: boolean) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
       [section]: isOpen !== undefined ? isOpen : !prev[section],
     }));
   }, []);
 
+  // Only include sections that should be visible
+  const visibleSections = allSections.filter((section) => {
+    if (section.name === "Modded Commercial Demand") {
+      return showModdedCommercialDemand; // Hide if false
+    }
+    return true; // Otherwise show
+  });
+
   return (
     <div>
       <Tooltip tooltip="Info Loom">
-        <FloatingButton onClick={toggleMainMenu} src={icon} aria-label="Toggle Info Loom Menu" />
+        <FloatingButton
+          onClick={toggleMainMenu}
+          src={icon}
+          aria-label="Toggle Info Loom Menu"
+        />
       </Tooltip>
 
       {mainMenuOpen && (
-        <div
-          draggable={true}
-          className={styles.panel}
-        >
+        <div draggable={true} className={styles.panel}>
           <header className={styles.header}>
             <h2>Info Loom</h2>
           </header>
           <div className={styles.buttonRow}>
-            {sections.map(({ name }) => (
+            {visibleSections.map(({ name }) => (
               <Button
                 key={name}
-                variant='flat'
+                variant="flat"
                 aria-label={name}
                 aria-expanded={openSections[name]}
                 className={
@@ -103,16 +148,16 @@ const [chartSettings, setChartSettings] = useState<ChartSettingsData>(defaultCha
         </div>
       )}
 
-      {sections.map(({ name, component: Component }) => (
-        openSections[name] && (
-          <Component 
-            key={name} 
-            onClose={() => toggleSection(name, false)}
-            chartSettings={chartSettings}
-            setChartSettings={setChartSettings}
-          />
-        )
-      ))}
+      {visibleSections.map(({ name, component: Component }) => {
+        return (
+          openSections[name] && (
+            <Component
+              key={name}
+              onClose={() => toggleSection(name, false)}
+            />
+          )
+        );
+      })}
     </div>
   );
 };

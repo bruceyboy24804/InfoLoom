@@ -11,7 +11,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
     {
         private ValueBindingHelper<IndustrialProductData[]> m_IndustrialProductBinding;
         public override GameMode gameMode => GameMode.Game;
-        
+
         // Define a new struct for UI representation
         public struct IndustrialProductData
         {

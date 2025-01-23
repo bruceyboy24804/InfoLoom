@@ -29,7 +29,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
 {
     public partial class CommercialSystem : SystemBase
     {
-
+        [BurstCompile]
         private struct UpdateCommercialDemandJob : IJob
         {
             [ReadOnly]

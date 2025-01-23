@@ -19,7 +19,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 {
     public partial class WorkplacesSystem : SystemBase
     {
-       
+
         private struct CalculateWorkplaceDataJob : IJobChunk
         {
             [ReadOnly]
@@ -177,7 +177,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             }
         }
 
-        
+
 
         private const string kGroup = "workplaces";
 
@@ -185,17 +185,17 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
         private EntityQuery m_WorkplaceQuery;
 
-        
+
 
         public NativeArray<WorkplacesUISystem.workplacesInfo> m_Results;
         private const int ResultsCount = 7;
-        
 
-        
-        
+
+
+
         protected override void OnCreate()
-		{
-			base.OnCreate();
+        {
+            base.OnCreate();
             m_Results = new NativeArray<WorkplacesUISystem.workplacesInfo>(7, Allocator.Persistent);
             m_WorkplaceQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -216,11 +216,11 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                 ComponentType.ReadOnly<Temp>()
             }
             });
-			m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
-		}
+            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
+        }
 
 
-        
+
 
         protected override void OnUpdate()
         {
@@ -230,7 +230,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             ResetResults();
 
             // Update handles
-            
+
 
             // Prepare and schedule job
             CalculateWorkplaceDataJob jobData = default(CalculateWorkplaceDataJob);
@@ -271,7 +271,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             m_Results[5] = totals;
 
             // Update UI bindings
-            
+
         }
 
         private void ResetResults()
@@ -283,9 +283,8 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             m_Results[6] = new WorkplacesUISystem.workplacesInfo(-2);
         }
 
-        
 
-        
+
+
     }
 }
-  

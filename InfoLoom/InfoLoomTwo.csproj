@@ -17,9 +17,11 @@
 	  <Compile Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <None Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
+	  <Compile Remove="Systems\CommercialSystems\CommercialDemandPatch\ModifiedCommercialDemandSystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
+	  <Compile Remove="Systems\CommercialSystems\CommercialDemandPatch\CommercialDemendPatch.cs" />
 	  <Compile Remove="Systems\DistrictInfoLoomUISystem.cs" />
 	  <Compile Remove="Systems\ModifierDataUISystem.cs" />
 	</ItemGroup>
@@ -169,7 +171,7 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Domain\" />
+	  <Folder Include="Systems\CommercialSystems\CommercialDemandPatch\" />
 	</ItemGroup>
 
 </Project>

@@ -238,11 +238,11 @@ namespace InfoLoomTwo.Systems.WorkforceData
             }
         }
 
-        
 
-        
 
-        
+
+
+
 
         private SimulationSystem m_SimulationSystem;
 
@@ -304,22 +304,22 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
         private NativeCounter m_PotentialWorkersByEducation4;
 
-        
 
-       
+
+
 
         // InfoLoom
 
-        
+
 
         public NativeArray<WorkforceUISystem.workforcesInfo> m_Results;
 
-        
-        
 
-        
 
-        
+
+
+
+
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -365,12 +365,12 @@ namespace InfoLoomTwo.Systems.WorkforceData
             // InfoLoom
             m_Results = new NativeArray<WorkforceUISystem.workforcesInfo>(6, Allocator.Persistent); // there are 5 education levels + 1 for totals
 
-            
+
 
 
         }
 
-        
+
         protected override void OnDestroy()
         {
             m_Workers.Dispose();
@@ -403,7 +403,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
             base.OnDestroy();
         }
 
-        
+
 
         //[Preserve]
         protected override void OnUpdate()
@@ -411,11 +411,11 @@ namespace InfoLoomTwo.Systems.WorkforceData
             if (m_SimulationSystem.frameIndex % 128 != 33)
                 return;
 
-           
+
 
             ResetResults();
-            
-            
+
+
             CountEmploymentJob jobData = default(CountEmploymentJob);
             jobData.m_CitizenType = SystemAPI.GetComponentTypeHandle<Citizen>(isReadOnly: true);
             jobData.m_HealthProblemType = SystemAPI.GetComponentTypeHandle<HealthProblem>(isReadOnly: true);
@@ -448,7 +448,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
             jobData.m_Results = m_Results;
             JobChunkExtensions.Schedule(jobData, m_AllAdultGroup, base.Dependency).Complete();
 
-            
+
 
             // calculate totals
             WorkforceUISystem.workforcesInfo totals = new WorkforceUISystem.workforcesInfo(-1);
@@ -464,24 +464,23 @@ namespace InfoLoomTwo.Systems.WorkforceData
             }
             m_Results[5] = totals;
 
-           
+
         }
 
         private void ResetResults()
         {
-           
+
             for (int i = 0; i < 6; i++) // there are 5 education levels + 1 for totals
             {
                 m_Results[i] = new WorkforceUISystem.workforcesInfo(i);
             }
         }
 
-        
 
-        
 
-        
+
+
+
     }
 }
 
-  

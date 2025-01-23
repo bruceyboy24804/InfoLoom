@@ -29,7 +29,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 {
     public partial class IndustrialSystem : SystemBase
     {
-
+        [BurstCompile]
         private struct UpdateIndustrialDemandJob : IJob
         {
             [ReadOnly]

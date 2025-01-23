@@ -1,3 +1,4 @@
+// Panel.tsx
 import React, {
   useState,
   useEffect,
@@ -10,22 +11,30 @@ import React, {
 } from 'react';
 import classNames from 'classnames';
 import styles from './Panel.module.scss';
-import { trigger } from 'cs2/api'; 
+import { trigger, bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';        
+
+const PanelStates$ = bindValue<PanelState[]>(mod.id, 'PanelStates');
 
 const SNAP_THRESHOLD = 20;
 const MIN_SIZE = { width: 200, height: 200 };
 
 type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-interface Position {
+export interface Position {
   top: number;
   left: number;
 }
 
-interface Size {
+export interface Size {
   width: number;
   height: number;
+}
+
+export interface PanelState {
+  Id: string;
+  Position: Position;
+  Size: Size;
 }
 
 interface PanelProps {
@@ -43,10 +52,16 @@ interface PanelProps {
   onSavePosition?: (position: Position) => void;
   onSaveSize?: (size: Size) => void;
   zIndex?: number;
-  id?: string; 
+  id?: string;
 }
 
-
+/**
+ * 1) A single hook that handles:
+ *    - reading the PanelStates from C# (via useValue),
+ *    - finding the matching panel state,
+ *    - merging with any provided savedPosition, savedSize, initialPosition, initialSize,
+ *    - and returning setPosition, setSize, etc.
+ */
 function usePanelState({
   id,
   initialPosition,
@@ -55,46 +70,50 @@ function usePanelState({
   savedSize,
 }: {
   id: string;
-  initialPosition: Position;
-  initialSize: Size;
+  initialPosition?: Position;
+  initialSize?: Size;
   savedPosition?: Position;
   savedSize?: Size;
 }) {
- 
-  const getDefaultPosition = useCallback((): Position => {
-    return savedPosition || initialPosition;
-  }, [savedPosition, initialPosition]);
+  // read from C# once
+  const panelStatesFromCSharp = useValue(PanelStates$);
 
-  
-  const getDefaultSize = useCallback((): Size => {
-    return savedSize || initialSize;
-  }, [savedSize, initialSize]);
+  // find the relevant panel state for our ID
+  const matchedState = panelStatesFromCSharp?.find((st) => st.Id === id);
 
-  const [position, setPosition] = useState<Position>(getDefaultPosition);
-  const [size, setSize] = useState<Size>(getDefaultSize);
+  // if found in C#, that is highest priority
+  // otherwise, fall back to savedPosition/Size from props
+  // then finally fallback to "initial" from props
+  const defaultPosition: Position = matchedState?.Position
+    ?? savedPosition
+    ?? initialPosition
+    ?? { top: 100, left: 10 };
+    
+  const defaultSize: Size = matchedState?.Size
+    ?? savedSize
+    ?? initialSize
+    ?? { width: 300, height: 600 };
 
-  
+  // Now create local states with those defaults
+  const [position, setPosition] = useState<Position>(defaultPosition);
+  const [size, setSize] = useState<Size>(defaultSize);
+
+  // This is the function to call when you want to save
   const savePanelState = useCallback(
     (newPosition: Position, newSize: Size) => {
-      trigger(mod.id, 'SavePanelState', {
-        id,
-        position: newPosition,
-        size: newSize,
-      });
+      trigger(mod.id, 'SavePanelState', id, newPosition, newSize);
     },
     [id]
   );
 
-  return {
-    position,
-    setPosition,
-    size,
-    setSize,
-    savePanelState,
-  };
+  return { position, setPosition, size, setSize, savePanelState };
 }
 
-
+/**
+ * 2) The usual hooks for drag and resize remain mostly the same.
+ *    But they no longer need to worry about "loading" states from the store, 
+ *    because we've already got the correct defaults above.
+ */
 function useDrag({
   position,
   setPosition,
@@ -119,7 +138,6 @@ function useDrag({
 
   const handleDragStart = useCallback(
     (e: ReactMouseEvent<HTMLDivElement>) => {
-      // Only allow left-click
       if (e.button !== 0) return;
       e.preventDefault();
       setIsDragging(true);
@@ -134,7 +152,6 @@ function useDrag({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isDragging) return;
-
       const newLeft = e.clientX - dragOffset.x;
       const newTop = e.clientY - dragOffset.y;
       const maxLeft = window.innerWidth - size.width;
@@ -154,8 +171,6 @@ function useDrag({
       setPosition(nextPosition);
       onPositionChange?.(nextPosition);
       onSavePosition?.(nextPosition);
-
-      
       savePanelState(nextPosition, size);
     },
     [
@@ -170,9 +185,7 @@ function useDrag({
     ]
   );
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
 
   useEffect(() => {
     if (isDragging) {
@@ -196,9 +209,6 @@ interface ResizeState {
   startMousePosition: { x: number; y: number };
 }
 
-/**
- * Hook that manages resizing logic.
- */
 function useResize({
   position,
   setPosition,
@@ -232,7 +242,6 @@ function useResize({
     (e: ReactMouseEvent, handle: ResizeHandle) => {
       e.preventDefault();
       e.stopPropagation();
-
       setResizeState({
         isResizing: true,
         handle,
@@ -300,7 +309,6 @@ function useResize({
   const handleResizeMove = useCallback(
     (e: MouseEvent) => {
       if (!resizeState.isResizing || !resizeState.handle) return;
-
       const deltaX = e.clientX - resizeState.startMousePosition.x;
       const deltaY = e.clientY - resizeState.startMousePosition.y;
       const { newSize, newPos } = performHandleResize(resizeState.handle, deltaX, deltaY);
@@ -310,21 +318,13 @@ function useResize({
       onSizeChange?.(newSize);
       onPositionChange?.(newPos);
     },
-    [
-      resizeState,
-      performHandleResize,
-      setSize,
-      setPosition,
-      onSizeChange,
-      onPositionChange,
-    ]
+    [resizeState, performHandleResize, setSize, setPosition, onSizeChange, onPositionChange]
   );
 
   const handleResizeEnd = useCallback(() => {
     if (!resizeState.isResizing) return;
-
     setResizeState((prev) => ({ ...prev, isResizing: false, handle: null }));
-    // Once done resizing, call any "onSave..." and also `savePanelState`
+
     onSaveSize?.(size);
     onSavePosition?.(position);
     savePanelState(position, size);
@@ -378,18 +378,15 @@ const ResizeHandles: FC<ResizeHandlesProps> = memo(({ onResizeStart, classNameMa
   );
 });
 
-/**
- * Main Panel component
- */
 const PanelComponent: FC<PanelProps> = ({
   children,
   title,
   style,
-  initialPosition = { top: 100, left: 10 },
-  initialSize = { width: 300, height: 600 },
+  initialPosition,
+  initialSize,
   onPositionChange,
   onSizeChange,
-  className = '',
+  className,
   onClose,
   savedPosition,
   savedSize,
@@ -398,14 +395,8 @@ const PanelComponent: FC<PanelProps> = ({
   zIndex = 1,
   id = 'default',
 }) => {
- 
-  const {
-    position,
-    setPosition,
-    size,
-    setSize,
-    savePanelState,
-  } = usePanelState({
+  // 1) Let our custom hook do *all* the heavy lifting.
+  const { position, setPosition, size, setSize, savePanelState } = usePanelState({
     id,
     initialPosition,
     initialSize,
@@ -413,7 +404,7 @@ const PanelComponent: FC<PanelProps> = ({
     savedSize,
   });
 
- 
+  // 2) Drag & resize as before
   const { handleDragStart } = useDrag({
     position,
     setPosition,
@@ -422,8 +413,6 @@ const PanelComponent: FC<PanelProps> = ({
     onSavePosition,
     savePanelState,
   });
-
-  
   const { handleResizeStart } = useResize({
     position,
     setPosition,
@@ -436,12 +425,10 @@ const PanelComponent: FC<PanelProps> = ({
     savePanelState,
   });
 
-  
+  // 3) Close on escape
   const handleKeyDown = useCallback(
     (e: ReactKeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose?.();
-      }
+      if (e.key === 'Escape') onClose?.();
     },
     [onClose]
   );
@@ -471,7 +458,6 @@ const PanelComponent: FC<PanelProps> = ({
       role="dialog"
       aria-labelledby="panel-title"
     >
-      {/* Panel Header */}
       <div
         className={styles.header}
         onMouseDown={handleDragStart}
@@ -480,7 +466,6 @@ const PanelComponent: FC<PanelProps> = ({
         id="panel-title"
       >
         <span>{title}</span>
-
         {onClose && (
           <button
             className={classNames(styles.exitbutton, 'button_bvQ close-button_wKK')}
@@ -498,8 +483,6 @@ const PanelComponent: FC<PanelProps> = ({
           </button>
         )}
       </div>
-
-      {/* Panel Content */}
       <div
         ref={useRef<HTMLDivElement>(null)}
         className={styles.content}
@@ -508,8 +491,6 @@ const PanelComponent: FC<PanelProps> = ({
       >
         {children}
       </div>
-
-      {/* Resize Handles */}
       <ResizeHandles onResizeStart={handleResizeStart} />
     </div>
   );

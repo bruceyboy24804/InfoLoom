@@ -132,7 +132,7 @@ const Workforce: FC<WorkforceProps> = ({ onClose }) => {
       id="infoloom.workforce"
       title="Workforce Structure"
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.3 }}
+      initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.33 }}
       initialPosition={panelPosition}
      
     >

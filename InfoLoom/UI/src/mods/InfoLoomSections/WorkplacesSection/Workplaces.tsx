@@ -84,6 +84,7 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
       </div>
       <div style={{ width: '8%', textAlign: 'center' }}>{levelValues.Total}</div>
       <div style={{ width: '7%', textAlign: 'center' }}>{percent}</div>
+
       {showAll && (
         <>
           <div style={{ width: '6%', textAlign: 'center' }}>{levelValues.Service}</div>
@@ -92,9 +93,15 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
           <div style={{ width: '7%', textAlign: 'center' }}>{levelValues.Extractor}</div>
           <div style={{ width: '8%', textAlign: 'center' }}>{levelValues.Industrial}</div>
           <div style={{ width: '6%', textAlign: 'center' }}>{levelValues.Office}</div>
-          <div style={{ width: '10%', textAlign: 'center' }}>{levelValues.Employee}</div>
-          <div style={{ width: '9%', textAlign: 'center' }}>{levelValues.Commuter}</div>
-          <div style={{ width: '7%', textAlign: 'center' }}>{levelValues.Open}</div>
+
+          {/** Only render these if it's NOT the "Companies" row */}
+          {levelName !== 'Companies' && (
+            <>
+              <div style={{ width: '10%', textAlign: 'center' }}>{levelValues.Employee}</div>
+              <div style={{ width: '9%', textAlign: 'center' }}>{levelValues.Commuter}</div>
+              <div style={{ width: '7%', textAlign: 'center' }}>{levelValues.Open}</div>
+            </>
+          )}
         </>
       )}
     </div>
@@ -151,9 +158,8 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
       id="infoloom.workplaces"
       title="Workplaces Distribution"
       onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.255 }}
+      initialSize={{ width: window.innerWidth * 0.55, height: window.innerHeight * 0.255 }}
       initialPosition={panelPosition}
-      
     >
       {ilWorkplaces.length === 0 ? (
         <p style={{ color: 'white' }}>Loading...</p>
@@ -166,7 +172,7 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
               display: 'flex',
               padding: '1rem',
               fontWeight: 'bold',
-              color: 'white', // Ensures white text
+              color: 'white',
             }}
           >
             <div style={{ width: '20%' }}>Education</div>
@@ -190,7 +196,7 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
               levelColor={levelColor}
               levelName={levelName}
               levelValues={levelValues}
-              total={Number(ilWorkplaces[5]?.Total) || 0} // Use Total from a specific entry
+              total={Number(ilWorkplaces[5]?.Total) || 0} // Use total from the 'TOTAL' row
               showAll={showAll}
             />
           ))}

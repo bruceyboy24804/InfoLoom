@@ -46,7 +46,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
             public IndustrialDemandData(Resource resource)
             {
                 ResourceName = resource.ToString();
-                Demand = Building = Free = Companies = Workers = 
+                Demand = Building = Free = Companies = Workers =
                 SvcPercent = CapPercent = CapPerCompany = WrkPercent = TaxFactor = 0;
             }
         }
@@ -540,7 +540,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
             }
         }
 
-        
+
 
         private static readonly int kStorageProductionDemand = 2000;
 
@@ -652,7 +652,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 
         private int m_LastOfficeBuildingDemand;
 
-        
+
 
         [DebugWatchValue(color = "#f7dc6f")]
         public int industrialCompanyDemand => m_LastIndustrialCompanyDemand;
@@ -672,7 +672,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
         [DebugWatchValue(color = "#6c3483")]
         public int officeBuildingDemand => m_LastOfficeBuildingDemand;
 
-        
+
 
         public NativeArray<int> GetConsumption(out JobHandle deps)
         {
@@ -821,7 +821,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
             m_LastOfficeBuildingDemand = 0;
         }
 
-        
+
 
 
         protected override void OnUpdate()
@@ -836,20 +836,20 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
                 m_LastOfficeBuildingDemand = m_OfficeBuildingDemand.value;
                 JobHandle deps;
                 CountCompanyDataSystem.IndustrialCompanyDatas industrialCompanyDatas = m_CountCompanyDataSystem.GetIndustrialCompanyDatas(out deps);
-               
-               
-                
-               
-               
-               
-               
-               
-               
-                
-                
-               
-                
-                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 UpdateIndustrialDemandJob updateIndustrialDemandJob = default(UpdateIndustrialDemandJob);
                 updateIndustrialDemandJob.m_FreePropertyChunks = m_FreeIndustrialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
                 updateIndustrialDemandJob.m_StorageCompanyChunks = m_StorageCompanyQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);
@@ -870,7 +870,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
                 updateIndustrialDemandJob.m_ServiceUpkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_CityModifiers = SystemAPI.GetBufferLookup<CityModifier>(isReadOnly: true);
                 updateIndustrialDemandJob.m_InstalledUpgrades = SystemAPI.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
-                updateIndustrialDemandJob.m_Upkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true); 
+                updateIndustrialDemandJob.m_Upkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_DemandParameters = m_DemandParameterQuery.GetSingleton<DemandParameterData>();
                 updateIndustrialDemandJob.m_EconomyParameters = m_EconomyParameterQuery.GetSingleton<EconomyParameterData>();
                 updateIndustrialDemandJob.m_ResourcePrefabs = m_ResourceSystem.GetPrefabs();
@@ -912,7 +912,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
             }
         }
 
-        
+
 
 
     }

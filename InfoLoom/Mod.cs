@@ -1,4 +1,4 @@
-﻿// Organized imports based on usage groups
+﻿
 using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
@@ -12,6 +12,7 @@ using InfoLoomTwo.Systems;
 
 using System.Linq;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
+//using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandPatch;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
 using InfoLoomTwo.Systems.DemographicsData.Demographics;
@@ -20,6 +21,7 @@ using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
+using Unity.Entities;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -88,6 +90,11 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<PanelUISystem>(SystemUpdatePhase.UIUpdate);
+            //updateSystem.UpdateAt<ModifiedCommercialDemandSystem>(SystemUpdatePhase.GameSimulation);
+            
+            
+
             
             
             

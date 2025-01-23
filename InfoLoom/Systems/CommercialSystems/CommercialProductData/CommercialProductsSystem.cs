@@ -51,7 +51,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
             public DemandData(Resource resource)
             {
                 ResourceName = resource.ToString();
-                Demand = Building = Free = Companies = Workers = 
+                Demand = Building = Free = Companies = Workers =
                 SvcPercent = CapPercent = CapPerCompany = WrkPercent = TaxFactor = 0;
             }
         }
@@ -246,19 +246,19 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                     m_ResourceDemands[resourceIndex2] = Mathf.RoundToInt((1f + num2) * math.clamp(math.max(m_DemandParameters.m_CommercialBaseDemand * (float)num3 - (float)num4, 0f), 0f, 100f));
 
                     // Update UI data for the current resource
-                     DemandData uiData = m_DemandData[resourceIndex2];
-                uiData.ResourceName = iterator.resource.ToString();
-                uiData.Demand = m_ResourceDemands[resourceIndex2];
-                uiData.Building = m_BuildingDemand.value;
-                uiData.Free = m_FreeProperties[resourceIndex2];
-                uiData.Companies = m_ServiceCompanies[resourceIndex2];
-                uiData.Workers = m_CurrentServiceWorkers[resourceIndex2];
-                uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
-                uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
-                uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
-                uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
-                uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
-                m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
+                    DemandData uiData = m_DemandData[resourceIndex2];
+                    uiData.ResourceName = iterator.resource.ToString();
+                    uiData.Demand = m_ResourceDemands[resourceIndex2];
+                    uiData.Building = m_BuildingDemand.value;
+                    uiData.Free = m_FreeProperties[resourceIndex2];
+                    uiData.Companies = m_ServiceCompanies[resourceIndex2];
+                    uiData.Workers = m_CurrentServiceWorkers[resourceIndex2];
+                    uiData.SvcPercent = (m_TotalAvailables[resourceIndex2] == 0 ? 0 : 100 * m_CurrentAvailables[resourceIndex2] / m_TotalAvailables[resourceIndex2]);
+                    uiData.CapPercent = 100 * m_ProduceCapacity[resourceIndex2] / math.max(100, m_ResourceNeeds[resourceIndex2]);
+                    uiData.CapPerCompany = (m_ServiceCompanies[resourceIndex2] == 0 ? 0 : m_ProduceCapacity[resourceIndex2] / m_ServiceCompanies[resourceIndex2]);
+                    uiData.WrkPercent = 100 * (m_CurrentServiceWorkers[resourceIndex2] + 1) / (m_MaxServiceWorkers[resourceIndex2] + 1);
+                    uiData.TaxFactor = Mathf.RoundToInt(100f * num2);
+                    m_DemandData[resourceIndex2] = uiData; // Update the demand data for UI
 
                     // Special case for Lodging
                     if (iterator.resource == Resource.Lodging && math.max((int)((float)m_Tourisms[m_City].m_CurrentTourists * m_DemandParameters.m_HotelRoomPercentRequirement) - m_Tourisms[m_City].m_Lodging.y, 0) > 0)
@@ -313,7 +313,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
         }
 
 
-        
+
 
         private ResourceSystem m_ResourceSystem;
 
@@ -370,7 +370,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
         private int m_LastBuildingDemand;
 
-        
+
 
         [DebugWatchValue(color = "#008fff")]
         public int companyDemand => m_LastCompanyDemand;
@@ -378,7 +378,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
         [DebugWatchValue(color = "#2b6795")]
         public int buildingDemand => m_LastBuildingDemand;
 
-        
+
 
         public NativeArray<int> GetDemandFactors(out JobHandle deps)
         {
@@ -464,7 +464,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
             m_LastBuildingDemand = 0;
         }
 
-        
+
 
 
         protected override void OnUpdate()
@@ -476,10 +476,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 m_LastBuildingDemand = m_BuildingDemand.value;
                 JobHandle deps;
                 CountCompanyDataSystem.CommercialCompanyDatas commercialCompanyDatas = m_CountCompanyDataSystem.GetCommercialCompanyDatas(out deps);
-                
-                
-                
-                
+
+
+
+
                 UpdateCommercialDemandJob updateCommercialDemandJob = default(UpdateCommercialDemandJob);
                 updateCommercialDemandJob.m_FreePropertyChunks = m_FreeCommercialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
                 updateCommercialDemandJob.m_CommercialProcessDataChunks = m_CommercialProcessDataQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);
@@ -518,7 +518,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 UpdateCommercialDemandJob jobData = updateCommercialDemandJob;
                 base.Dependency = IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, outJobHandle2, deps));
                 m_WriteDependencies = base.Dependency;
-                m_CountHouseholdDataSystem.AddHouseholdResourceNeedReader(base.Dependency);
+                m_CountHouseholdDataSystem.AddHouseholdDataReader(base.Dependency);
                 m_ResourceSystem.AddPrefabsReader(base.Dependency);
                 m_TaxSystem.AddReader(base.Dependency);
 
@@ -530,7 +530,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
 
 
-        
+
 
 
     }

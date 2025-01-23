@@ -12,13 +12,16 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using InfoLoomTwo.Domain;
+//using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandPatch;
+using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 
 namespace InfoLoomTwo
 {
     
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(CommercialTax, Other)]
-    [SettingsUIShowGroupName(CommercialTax, Other)]
+    [SettingsUIGroupOrder(CommercialTax, Other, CustomCommercialDemand)]
+    [SettingsUIShowGroupName(CommercialTax, Other, CustomCommercialDemand)]
     public class Setting : ModSetting
     {
         
@@ -32,6 +35,9 @@ namespace InfoLoomTwo
 
         public const string CommercialTax = "Commercial Tax";
         public const string Other = "Other";
+        public const string CustomCommercialDemand = "Custom Commercial Demand";
+        public bool m_FeatureCommercialDemand;
+        
 
         private string TextMaker(string value, string type, string pop = null)
         {
@@ -60,23 +66,57 @@ namespace InfoLoomTwo
         [SettingsUISection(kSection, CommercialTax)]
         public string CommercialTaxLEffect => TextMaker((Math.Abs(TaxRateEffect) * 100).ToString("F2"), "commercial");
 
+        /*[SettingsUISection(kSection, CustomCommercialDemand)]
+        [SettingsUISetter(typeof(Setting), nameof(HideModdedCommercialDemandButton))]
+        public bool FeatureCommercialDemand
+        {
+            get => m_FeatureCommercialDemand;
+            set
+            {
+                m_FeatureCommercialDemand = value;
+                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ModifiedCommercialDemandSystem>().Enabled = value;
+            }
+        }
         
-
+        
+        
+        [SettingsUISection(kSection, CustomCommercialDemand)]
+        [SettingsUIHideByCondition(typeof(Setting), nameof(FeatureCommercialDemand), invert: true)]
+        public bool OverrideLodgingDemand { get; set; }
+        
+        [SettingsUISection(kSection, CustomCommercialDemand)]
+        [SettingsUIHideByCondition(typeof(Setting), nameof(FeatureCommercialDemand), invert: true)]
+        [SettingsUISlider(min = 0, max = 100, step = 1)]
+        public int CustomLodgingDemandValue { get; set; }*/
+        /// <summary>
+        /// Gets or sets the saved panel position.
+        /// </summary>
+        [SettingsUIHidden]
+        public PanelState[] PanelStates { get; set; }
 
 
         public Setting(IMod mod) : base(mod)
         {
             SetDefaults();
+           
         }
 
         public override void SetDefaults()
         {
             TaxRateEffect = -0.05f;
+            PanelStates = new PanelState[0];
+            //FeatureCommercialDemand = false;
             
-           
+            //OverrideLodgingDemand = false;
+            //CustomLodgingDemandValue = 0;
+            
         }
 
-        
+        public void HideModdedCommercialDemandButton(bool value)
+        {
+            CommercialProductsUISystem commercialProductsUISystem = World.DefaultGameObjectInjectionWorld?.GetOrCreateSystemManaged<CommercialProductsUISystem>();
+            commercialProductsUISystem.MCDButton = value;
+        }
     }
     
     public class LocaleEN : IDictionarySource
@@ -100,6 +140,13 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.CommercialTaxLEffect)), " Tax rate" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.CommercialTaxLEffect)), "The current total tax rate to determine the strength of commercial tax when taxing commercial product companies" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.Other), "Other" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.CustomCommercialDemand), "Custom Commercial Demand" },
+                /*{ m_Setting.GetOptionLabelLocaleID(nameof(Setting.FeatureCommercialDemand)), "Enable Commercial Demand" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.FeatureCommercialDemand)), "Enables modded commercial demand and dedicated UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OverrideLodgingDemand)), "Override Lodging Demand" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.OverrideLodgingDemand)), "Override lodging demand to be able to sey a custom value" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.CustomLodgingDemandValue)), "Custom Lodging Demand" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.CustomLodgingDemandValue)), "Set lodging demand to a custom value" },*/
                 
                
                 

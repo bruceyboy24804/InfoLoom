@@ -41,9 +41,9 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
         protected override void OnUpdate()
         {
-            
+
             var workforcsSystem = base.World.GetOrCreateSystemManaged<WorkforceSystem>();
-		    m_WorkforcesBinder.Value = workforcsSystem.m_Results.ToArray();
+            m_WorkforcesBinder.Value = workforcsSystem.m_Results.ToArray();
             base.OnUpdate();
         }
     }
