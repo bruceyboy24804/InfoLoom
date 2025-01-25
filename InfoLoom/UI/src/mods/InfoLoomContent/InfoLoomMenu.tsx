@@ -12,6 +12,7 @@ import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemand
 import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
 import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/ModdedCommercialDemand/ModdedCommercialDemand";
+import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
 import { bindValue, useValue, trigger } from "cs2/api";
 import mod from "mod.json";
 
@@ -29,7 +30,9 @@ type Section =
   | "Commercial Products"
   | "Industrial"
   | "Industrial Products"
-  | "Modded Commercial Demand";
+  | "Modded Commercial Demand"
+  | "Trade Cost";
+   
 
 // Components that accept an onClose prop
 type SectionComponentProps = {
@@ -64,6 +67,7 @@ const allSections: {
     displayName: "Modded Commercial Demand",
     component: ModdedCommercialDemand,
   },
+  { name: "Trade Cost", displayName: "Trade Cost", component: TradeCost },
 ];
 
 const InfoLoomButton: FC = () => {
@@ -82,6 +86,7 @@ const InfoLoomButton: FC = () => {
     Industrial: false,
     "Industrial Products": false,
     "Modded Commercial Demand": false,
+    "Trade Cost": false,
   });
 
   // Force-close Modded Commercial Demand if turned off while open

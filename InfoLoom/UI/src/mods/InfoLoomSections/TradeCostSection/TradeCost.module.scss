@@ -1,0 +1,314 @@
+/* TradeCost.module.scss */
+
+/* Panel Theming */
+.panel {
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure the panel occupies full height */
+}
+
+.panelHeader {
+  background-color: rgba(255, 255, 255, 0.1); /* Light overlay for header */
+  padding: 0.5rem;
+}
+
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Allow content to fill the panel */
+  padding: 0.5rem;
+  box-sizing: border-box; /* Include padding in total dimensions */
+}
+
+.panelFooter {
+  background-color: rgba(255, 255, 255, 0.05); /* Light overlay for footer */
+  padding: 0.5rem;
+  text-align: center;
+}
+
+/* Inner Content to Handle Flex Layout */
+.innerContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow innerContent to expand and fill the available space */
+  overflow: hidden; /* Prevents innerContent from overflowing */
+}
+
+/* Controls Section (Dropdowns and Buttons) */
+.controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Dropdown Content Styling */
+.dropdownContent {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Individual Dropdown Items */
+.dropdownItem {
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Table Header Row */
+.headerRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 2px solid #444;
+  background-color: rgba(255, 255, 255, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  backdrop-filter: blur(8px);
+}
+
+/* Table Header Cells */
+.headerCell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.80em;
+  font-weight: 600;
+  color: #8b8b8b;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Table Body */
+.tableBody {
+  flex: 1 1 auto; /* Allow the table body to grow and shrink */
+  overflow-y: auto; /* Enable vertical scrolling within the table body */
+}
+
+/* Individual Table Rows */
+.row_S2v {
+  display: flex;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+  font-size: 0.9em;
+  min-height: 32px;
+
+  &:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    min-width: 0;
+    flex-shrink: 0;
+
+    img {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+  }
+}
+
+/* Table Cells */
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ccc;
+}
+
+/* Profit and Profit Margin Styling */
+.negative_YWY {
+  color: #ff4d4d;
+  font-weight: 500;
+}
+
+.positive_zrK {
+  color: #4dff4d;
+  font-weight: 500;
+}
+
+.neutral_blue {
+  color: #8cc0db; /* Blue for zero values */
+  font-weight: 500;
+}
+
+/* Action Button Base Styling */
+
+
+/* Graphs Button Specific Styling */
+
+
+/* Graph Header (Back Button Container) */
+.graphHeader {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+/* Graph View Container */
+.graphViewContainer {
+  display: flex;
+  flex: 1; /* Allow the container to expand */
+  gap: 1rem; /* Space between checkboxes and graph */
+  overflow: hidden; /* Prevent overflow */
+}
+
+/* Resource Checkboxes Container */
+.resourceCheckboxes {
+  width: 200px; /* Fixed width for checkboxes */
+  max-height: 100%; /* Prevent from exceeding container height */
+  overflow-y: auto; /* Enable scrolling if checkboxes exceed height */
+  padding-right: 0.5rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Checkbox Header */
+.checkboxHeader {
+  color: #ccc;
+  margin-bottom: 0.5rem;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+/* Checkbox Item Wrapper */
+.checkboxItem {
+  margin-bottom: 0.5rem; /* Space between checkboxes */
+}
+
+/* Checkbox Label with Icon */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between icon and label */
+  color: #ccc; /* Label color */
+}
+
+/* Graph Area Container */
+.graphArea {
+  flex: 1; /* Allow graph area to expand */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent overflow */
+}
+
+/* Graph Container */
+.graphContainer {
+  flex: 1; /* Allow the graph container to expand */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  /* Optional: Adjust as needed */
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Ensure the Line chart fills the graphContainer */
+.graphContainer canvas {
+  flex: 1;
+  width: 100% !important; /* Override any inline styles */
+  height: 100% !important; /* Ensure height fills the container */
+}
+
+/* Optional: Styling for the Loading Text */
+.loadingText {
+  color: #ccc;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dropdownToggle {
+    width: 100%;
+  }
+
+
+  .graphViewContainer {
+    flex-direction: column;
+  }
+
+  .resourceCheckboxes {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+  }
+
+  .graphArea {
+    flex: 1;
+  }
+}
+.graphButton {
+  width: 12%;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 3rem 0;
+  border: none;
+  background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
+  color: var(--menuText1Normal);
+  font-size: 20rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  &:hover {
+    background-color: white;
+  }
+}
+
+/* Fancy Back Button Styling */
+.backButton {
+  width: 12%;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 3rem 0;
+  border: none;
+  background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
+  color: var(--menuText1Normal);
+  font-size: 20rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  &:hover {
+    background-color: white;
+  }
+}
+

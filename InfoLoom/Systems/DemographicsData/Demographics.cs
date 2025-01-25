@@ -99,7 +99,7 @@ public partial class Demographics : SystemBase
 
         public NativeArray<DemographicsUISystem.PopulationAtAgeInfo> m_Results;
 
-        
+        public int day;
 
 
         // this job is based on AgingJob
@@ -116,7 +116,7 @@ public partial class Demographics : SystemBase
             bool isStudent = chunk.Has(ref m_StudentType); // are there students in this chunk?
             bool isWorker = chunk.Has(ref m_WorkerType); // are there workers in this chunk?
             bool isHealthProblem = chunk.Has(ref m_HealthProblemType); // for checking dead cims
-            int day = TimeSystem.GetDay(m_SimulationFrame, m_TimeData);
+            
             //Plugin.Log($"day {day} chunk: {entities.Length} entities, {citizens.Length} citizens, {isStudent} {students.Length} students, {isWorker} {workers.Length} workers");
 
             for (int i = 0; i < citizenArray.Length; i++)
@@ -342,10 +342,9 @@ public partial class Demographics : SystemBase
     protected override void OnUpdate()
     {
 
-        if (m_SimulationSystem.frameIndex % 128 != 44)
-            return;
+        
 
-        //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
+        
         
 
 
@@ -368,8 +367,8 @@ public partial class Demographics : SystemBase
         structureJob.m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
         structureJob.m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true);
         structureJob.m_SimulationFrame = m_SimulationSystem.frameIndex;
-        structureJob.m_TimeData = m_TimeDataQuery.GetSingleton<TimeData>();
-        
+        structureJob.day = TimeSystem.GetDay(m_SimulationSystem.frameIndex, m_TimeDataQuery.GetSingleton<Game.Common.TimeData>());
+
         structureJob.m_Totals = m_Totals;
         structureJob.m_Results = m_Results;
         JobChunkExtensions.Schedule(structureJob, m_CitizenQuery, base.Dependency).Complete();

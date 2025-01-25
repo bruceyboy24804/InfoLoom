@@ -1,4 +1,4 @@
-declare module "cs2/ui" {
+	declare module "cs2/ui" {
   import { CSSProperties, HTMLAttributes, PropsWithChildren, ReactElement, ReactNode, Ref, RefObject } from 'react';
   
   export interface RefReactElement<T = any, P = any> extends ReactElement<P> {
