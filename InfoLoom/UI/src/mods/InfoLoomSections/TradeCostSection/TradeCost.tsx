@@ -139,6 +139,7 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   const tradeCosts = useValue(TradeCosts$);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart<'bar', { x: string; y: number[] }[], string> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Filter tradeCosts based on selectedResources
   const filteredTradeCosts = useMemo(() => {
@@ -150,7 +151,7 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
     const labels = filteredTradeCosts.map(item => formatWords(item.Resource, true));
     const floatingBars = filteredTradeCosts.map(item => ({
       x: item.Resource,
-      y: [item.BuyCost, item.SellCost],
+      y: [item.BuyCost === item.SellCost ? 0 : item.BuyCost, item.SellCost],
     }));
 
     return {
@@ -161,10 +162,12 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
           data: floatingBars,
           backgroundColor: (context: any) => {
             const { y } = context.raw;
-            return y[0] < y[1] ? 'rgba(68, 151, 130, .5)' : 'rgba(223, 72, 76, .5)';
+            if (y[0] === 0 || y[1] === 0) return 'rgb(255, 211, 80)';
+            return y[0] < y[1] ? 'rgba(68, 151, 130, 1)' : 'rgba(223, 72, 76, 1)';
           },
           borderColor: (context: any) => {
             const { y } = context.raw;
+            if (y[0] === 0 || y[1] === 0) return 'rgb(255, 211, 80)';
             return y[0] < y[1] ? 'rgba(68, 151, 130, 1)' : 'rgba(223, 72, 76, 1)';
           },
           borderWidth: 1,
@@ -173,17 +176,20 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
     };
   }, [filteredTradeCosts]);
 
-  // Initialize Chart.js instance once
+  // Initialize Chart.js instance
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !containerRef.current) return;
+    if (filteredTradeCosts.length === 0) return;
 
     const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) {
-      console.error('Failed to get 2D context for canvas');
-      return;
+    if (!ctx) return;
+
+    // Destroy existing chart
+    if (chartRef.current) {
+      chartRef.current.destroy();
     }
 
-    // Create Chart instance
+    // Create new Chart instance
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: chartData,
@@ -193,140 +199,106 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
         scales: {
           x: {
             type: 'category',
-            title: {
-              display: true,
-              text: 'Resource',
-              color: 'white',
-              font: {
-                size: 14,
-                family: 'Arial, sans-serif',
-              },
-            },
-            ticks: {
-              color: 'white',
-              font: {
-                size: 12,
-                family: 'Arial, sans-serif',
-              },
-            },
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-            },
+            title: { display: true, text: 'Resource', color: 'white' },
+            ticks: { color: 'white' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
           },
           y: {
-            beginAtZero: false,
-            title: {
-              display: true,
-              text: 'Cost ($)',
-              color: 'white',
-              font: {
-                size: 14,
-                family: 'Arial, sans-serif',
-              },
-            },
-            ticks: {
-              color: 'white',
-              font: {
-                size: 12,
-                family: 'Arial, sans-serif',
-              },
-            },
+            type: 'linear',
+            title: { display: true, text: 'Cost ($)', color: 'white' },
+            ticks: { color: 'white' },
           },
         },
         plugins: {
           tooltip: {
             callbacks: {
-              label: function (context: any) {
+              label: (context: any) => {
                 const range = context.raw.y;
-                return `Buy Price: $${range[0].toFixed(2)}, Sell Price: $${range[1].toFixed(2)}`;
+                return range[0] === 0
+                  ? `Buy/Sell Price: $${range[1].toFixed(2)}`
+                  : `Buy: $${range[0].toFixed(2)}, Sell: $${range[1].toFixed(2)}`;
               },
             },
           },
-          legend: {
-            display: true,
-            labels: {
-              color: 'white',
-              font: {
-                size: 14,
-                family: 'Arial, sans-serif',
-              },
-            },
-          },
-          title: {
-            display: true,
-            text: 'Trade Costs Range Chart',
-            color: 'white',
-            font: {
-              size: 18,
-              family: 'Arial, sans-serif',
-            },
-          },
+          legend: { display: false },
+          title: { display: true, text: 'Trade Costs Range Chart', color: 'white' },
         },
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-
-        animation: {
-          duration: 0, // Disable animations to prevent flickering
-        },
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 0 },
       },
     });
 
     return () => {
-      // Cleanup on unmount
       if (chartRef.current) {
         chartRef.current.destroy();
+        chartRef.current = null;
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once
-
-  // Update Chart data when filteredTradeCosts change
-  useEffect(() => {
-    if (!chartRef.current) return;
-
-    chartRef.current.data = chartData;
-    chartRef.current.update();
-  }, [chartData]);
-
-  // Handle canvas resizing
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resizeCanvas = () => {
-      const parent = canvas.parentElement;
-      if (parent) {
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
-        if (chartRef.current) {
-          chartRef.current.resize();
-        }
-      }
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
 
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    // update silently
+    chartRef.current.data = chartData;
+    chartRef.current.update('none');
+  }, [chartData]);
+
+  // Handle container resizing with ResizeObserver
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      const entry = entries[0];
+      const { width, height } = entry.contentRect;
+
+      const offscreenCanvas = document.createElement('canvas');
+      const offscreenCtx = offscreenCanvas.getContext('2d')!;
+
+      // sync Canvas
+      offscreenCanvas.width = width;
+      offscreenCanvas.height = height;
+
+      // copy to
+      offscreenCtx.drawImage(canvasRef.current!, 0, 0);
+
+      // apply
+      canvasRef.current!.width = width;
+      canvasRef.current!.height = height;
+
+      // restore
+      const ctx = canvasRef.current!.getContext('2d')!;
+      ctx.drawImage(offscreenCanvas, 0, 0);
+
+      // resize
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   return (
-    <div className={styles.graphContainer}>
+    <div className={styles.graphContainer} ref={containerRef}>
       {filteredTradeCosts.length === 0 ? (
         <p className={styles.loadingText}>No resources selected to display the graph.</p>
       ) : (
-        <canvas
-          ref={canvasRef}
-          style={{ width: '100%', height: '100%', backgroundColor: 'rgba(6, 10, 16, 0.7)' }}
-        />
+        <canvas ref={canvasRef} />
       )}
     </div>
   );
 };
+
+// memo!
+const MemoizedTradeCostsGraph = React.memo(TradeCostsGraph, (prevProps, nextProps) => {
+  // compare selectedResources deeply
+  return (
+    prevProps.selectedResources.size === nextProps.selectedResources.size &&
+    [...prevProps.selectedResources].every(res => nextProps.selectedResources.has(res))
+  );
+});
 
 /**
  * Main TradeCosts Component
@@ -589,7 +561,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
                   </div>
 
                   {/* TradeCostsGraph with selectedResources passed as props */}
-                  <TradeCostsGraph selectedResources={selectedResources} />
+                  <MemoizedTradeCostsGraph selectedResources={selectedResources} />
                 </div>
               </div>
             </>
