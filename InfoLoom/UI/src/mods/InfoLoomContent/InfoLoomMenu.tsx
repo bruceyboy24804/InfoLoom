@@ -121,17 +121,13 @@ const InfoLoomButton: FC = () => {
   return (
     <div>
       <Tooltip tooltip="Info Loom">
-        <FloatingButton
-          onClick={toggleMainMenu}
-          src={icon}
-          aria-label="Toggle Info Loom Menu"
-        />
+        <FloatingButton onClick={toggleMainMenu} src={icon} aria-label="Toggle Info Loom Menu" />
       </Tooltip>
 
       {mainMenuOpen && (
         <div draggable={true} className={styles.panel}>
           <header className={styles.header}>
-            <h2>Info Loom</h2>
+            <div>Info Loom</div>
           </header>
           <div className={styles.buttonRow}>
             {visibleSections.map(({ name }) => (
@@ -140,11 +136,9 @@ const InfoLoomButton: FC = () => {
                 variant="flat"
                 aria-label={name}
                 aria-expanded={openSections[name]}
-                className={
-                  openSections[name] ? styles.buttonSelected : styles.InfoLoomButton
-                }
+                className={`${styles.InfoLoomButton} ${openSections[name] ? styles.buttonSelected : ''}`}
                 onClick={() => toggleSection(name)}
-                onMouseDown={(e) => e.preventDefault()}
+                onMouseDown={e => e.preventDefault()}
               >
                 {name}
               </Button>
@@ -155,12 +149,7 @@ const InfoLoomButton: FC = () => {
 
       {visibleSections.map(({ name, component: Component }) => {
         return (
-          openSections[name] && (
-            <Component
-              key={name}
-              onClose={() => toggleSection(name, false)}
-            />
-          )
+          openSections[name] && <Component key={name} onClose={() => toggleSection(name, false)} />
         );
       })}
     </div>
