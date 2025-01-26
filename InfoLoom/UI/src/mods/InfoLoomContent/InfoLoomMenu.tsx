@@ -11,7 +11,8 @@ import Commercial from "mods/InfoLoomSections/CommercialSecction/CommercialDeman
 import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand";
 import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
-import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/ModdedCommercialDemand/ModdedCommercialDemand";
+//import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/ModdedCommercialDemand/ModdedCommercialDemand";
+import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
 import { bindValue, useValue, trigger } from "cs2/api";
 import mod from "mod.json";
 
@@ -29,7 +30,9 @@ type Section =
   | "Commercial Products"
   | "Industrial"
   | "Industrial Products"
-  | "Modded Commercial Demand";
+  | "Modded Commercial Demand"
+  | "Trade Cost";
+
 
 // Components that accept an onClose prop
 type SectionComponentProps = {
@@ -59,11 +62,12 @@ const allSections: {
     displayName: "Industrial Products",
     component: IndustrialProducts,
   },
-  {
+  /*{
     name: "Modded Commercial Demand",
     displayName: "Modded Commercial Demand",
     component: ModdedCommercialDemand,
-  },
+  },*/
+  { name: "Trade Cost", displayName: "Trade Cost", component: TradeCost },
 ];
 
 const InfoLoomButton: FC = () => {
@@ -82,6 +86,7 @@ const InfoLoomButton: FC = () => {
     Industrial: false,
     "Industrial Products": false,
     "Modded Commercial Demand": false,
+    "Trade Cost": false,
   });
 
   // Force-close Modded Commercial Demand if turned off while open
@@ -116,17 +121,13 @@ const InfoLoomButton: FC = () => {
   return (
     <div>
       <Tooltip tooltip="Info Loom">
-        <FloatingButton
-          onClick={toggleMainMenu}
-          src={icon}
-          aria-label="Toggle Info Loom Menu"
-        />
+        <FloatingButton onClick={toggleMainMenu} src={icon} aria-label="Toggle Info Loom Menu" />
       </Tooltip>
 
       {mainMenuOpen && (
         <div draggable={true} className={styles.panel}>
           <header className={styles.header}>
-            <h2>Info Loom</h2>
+            <div>Info Loom</div>
           </header>
           <div className={styles.buttonRow}>
             {visibleSections.map(({ name }) => (
@@ -135,11 +136,9 @@ const InfoLoomButton: FC = () => {
                 variant="flat"
                 aria-label={name}
                 aria-expanded={openSections[name]}
-                className={
-                  openSections[name] ? styles.buttonSelected : styles.InfoLoomButton
-                }
+                className={`${styles.InfoLoomButton} ${openSections[name] ? styles.buttonSelected : ''}`}
                 onClick={() => toggleSection(name)}
-                onMouseDown={(e) => e.preventDefault()}
+                onMouseDown={e => e.preventDefault()}
               >
                 {name}
               </Button>
@@ -150,12 +149,7 @@ const InfoLoomButton: FC = () => {
 
       {visibleSections.map(({ name, component: Component }) => {
         return (
-          openSections[name] && (
-            <Component
-              key={name}
-              onClose={() => toggleSection(name, false)}
-            />
-          )
+          openSections[name] && <Component key={name} onClose={() => toggleSection(name, false)} />
         );
       })}
     </div>

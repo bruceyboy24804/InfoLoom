@@ -5,7 +5,7 @@ import styles from "./InfoCheckbox.module.scss";
 
 interface InfoCheckboxProps {
     //image: string;
-    label: string | null;
+    label: string | JSX.Element;
     count?: number;
     isChecked: boolean;
     onToggle: (newVal: boolean) => void;

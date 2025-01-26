@@ -21,6 +21,7 @@ using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
+using InfoLoomTwo.Systems.TradeCostData;
 using Unity.Entities;
 
 // Mod namespace
@@ -92,6 +93,8 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<PanelUISystem>(SystemUpdatePhase.UIUpdate);
             //updateSystem.UpdateAt<ModifiedCommercialDemandSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<TradeCostUISystem>(SystemUpdatePhase.UIUpdate);
             
             
 

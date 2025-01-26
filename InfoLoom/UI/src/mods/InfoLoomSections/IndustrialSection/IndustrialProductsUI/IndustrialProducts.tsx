@@ -1,6 +1,6 @@
 import React, { useState, useCallback, FC } from 'react';
 import $Panel from 'mods/panel';
-import { Button, Dropdown, DropdownToggle } from 'cs2/ui';
+import { Button, Dropdown, DropdownToggle, Scrollable } from 'cs2/ui';
 import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
@@ -555,17 +555,19 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           </div>
 
           <TableHeader showColumns={showColumns} />
-          {industrialProducts
-          .filter((item: IndustrialProductData) => item.ResourceName !== 'NoResource')
-          .filter(applyDataFilter)
-          .sort((a: IndustrialProductData, b: IndustrialProductData) => sortData(a, b))
-          .map((item: IndustrialProductData) => (
-            <ResourceLine 
-              key={item.ResourceName} 
-              data={item} 
-              showColumns={showColumns}
-    />
-  ))}
+            <Scrollable vertical={true} smooth={true} trackVisibility="scrollable">
+              {industrialProducts
+              .filter((item: IndustrialProductData) => item.ResourceName !== 'NoResource')
+              .filter(applyDataFilter)
+              .sort((a: IndustrialProductData, b: IndustrialProductData) => sortData(a, b))
+              .map((item: IndustrialProductData) => (
+                <ResourceLine
+                  key={item.ResourceName}
+                  data={item}
+                  showColumns={showColumns}
+                />
+              ))}
+            </Scrollable>
         </div>
       )}
     </$Panel>

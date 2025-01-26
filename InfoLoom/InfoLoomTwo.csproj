@@ -170,8 +170,5 @@
 	<ItemGroup>
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Systems\CommercialSystems\CommercialDemandPatch\" />
-	</ItemGroup>
 
 </Project>
