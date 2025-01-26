@@ -15,24 +15,25 @@ import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/Mod
 import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
 import { bindValue, useValue, trigger } from "cs2/api";
 import mod from "mod.json";
+import { useLocalization } from 'cs2/l10n';
+import { getKey } from 'mods/localizationHelper';
 
 // This reactive boolean controls whether the "Modded Commercial Demand" UI is visible
-const ModdedCommercialDemandButton$ = bindValue<boolean>(mod.id, "MCDButton", false);
+const ModdedCommercialDemandButton$ = bindValue<boolean>(mod.id, 'MCDButton', false);
 
 // Define the Section type
 type Section =
-  | "Demographics"
-  | "Workforce"
-  | "Workplaces"
-  | "Demand"
-  | "Residential"
-  | "Commercial"
-  | "Commercial Products"
-  | "Industrial"
-  | "Industrial Products"
-  | "Modded Commercial Demand"
-  | "Trade Cost";
-   
+  | 'Demographics'
+  | 'Workforce'
+  | 'Workplaces'
+  | 'Demand'
+  | 'Residential'
+  | 'Commercial'
+  | 'Commercial Products'
+  | 'Industrial'
+  | 'Industrial Products'
+  | 'Modded Commercial Demand'
+  | 'Trade Cost';
 
 // Components that accept an onClose prop
 type SectionComponentProps = {
@@ -45,35 +46,35 @@ const allSections: {
   displayName: string;
   component: FC<SectionComponentProps>;
 }[] = [
-  { name: "Demographics", displayName: "Demographics", component: Demographics },
-  { name: "Workforce", displayName: "Workforce", component: Workforce },
-  { name: "Workplaces", displayName: "Workplaces", component: Workplaces },
-  { name: "Residential", displayName: "Residential", component: Residential },
-  { name: "Demand", displayName: "Demand", component: Demand },
-  { name: "Commercial", displayName: "Commercial", component: Commercial },
+  { name: 'Demographics', displayName: 'Demographics', component: Demographics },
+  { name: 'Workforce', displayName: 'Workforce', component: Workforce },
+  { name: 'Workplaces', displayName: 'Workplaces', component: Workplaces },
+  { name: 'Residential', displayName: 'Residential', component: Residential },
+  { name: 'Demand', displayName: 'Demand', component: Demand },
+  { name: 'Commercial', displayName: 'Commercial', component: Commercial },
   {
-    name: "Commercial Products",
-    displayName: "Commercial Products",
+    name: 'Commercial Products',
+    displayName: 'Commercial Products',
     component: CommercialProducts,
   },
-  { name: "Industrial", displayName: "Industrial", component: Industrial },
+  { name: 'Industrial', displayName: 'Industrial', component: Industrial },
   {
-    name: "Industrial Products",
-    displayName: "Industrial Products",
+    name: 'Industrial Products',
+    displayName: 'Industrial Products',
     component: IndustrialProducts,
   },
   {
-    name: "Modded Commercial Demand",
-    displayName: "Modded Commercial Demand",
+    name: 'Modded Commercial Demand',
+    displayName: 'Modded Commercial Demand',
     component: ModdedCommercialDemand,
   },
-  { name: "Trade Cost", displayName: "Trade Cost", component: TradeCost },
+  { name: 'Trade Cost', displayName: 'Trade Cost', component: TradeCost },
 ];
 
 const InfoLoomButton: FC = () => {
   // Reactively read the boolean from bindValue
   const showModdedCommercialDemand = useValue(ModdedCommercialDemandButton$);
-
+  const { translate } = useLocalization();
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
   const [openSections, setOpenSections] = useState<Record<Section, boolean>>({
     Demographics: false,
@@ -82,37 +83,37 @@ const InfoLoomButton: FC = () => {
     Demand: false,
     Residential: false,
     Commercial: false,
-    "Commercial Products": false,
+    'Commercial Products': false,
     Industrial: false,
-    "Industrial Products": false,
-    "Modded Commercial Demand": false,
-    "Trade Cost": false,
+    'Industrial Products': false,
+    'Modded Commercial Demand': false,
+    'Trade Cost': false,
   });
 
   // Force-close Modded Commercial Demand if turned off while open
   useEffect(() => {
-    if (!showModdedCommercialDemand && openSections["Modded Commercial Demand"]) {
-      setOpenSections((prev) => ({
+    if (!showModdedCommercialDemand && openSections['Modded Commercial Demand']) {
+      setOpenSections(prev => ({
         ...prev,
-        "Modded Commercial Demand": false,
+        'Modded Commercial Demand': false,
       }));
     }
   }, [showModdedCommercialDemand, openSections]);
 
   const toggleMainMenu = useCallback(() => {
-    setMainMenuOpen((prev) => !prev);
+    setMainMenuOpen(prev => !prev);
   }, []);
 
   const toggleSection = useCallback((section: Section, isOpen?: boolean) => {
-    setOpenSections((prev) => ({
+    setOpenSections(prev => ({
       ...prev,
       [section]: isOpen !== undefined ? isOpen : !prev[section],
     }));
   }, []);
 
   // Only include sections that should be visible
-  const visibleSections = allSections.filter((section) => {
-    if (section.name === "Modded Commercial Demand") {
+  const visibleSections = allSections.filter(section => {
+    if (section.name === 'Modded Commercial Demand') {
       return showModdedCommercialDemand; // Hide if false
     }
     return true; // Otherwise show
@@ -120,14 +121,14 @@ const InfoLoomButton: FC = () => {
 
   return (
     <div>
-      <Tooltip tooltip="Info Loom">
+      <Tooltip tooltip={translate(getKey('modName', 'menu'), 'Info Loom')}>
         <FloatingButton onClick={toggleMainMenu} src={icon} aria-label="Toggle Info Loom Menu" />
       </Tooltip>
 
       {mainMenuOpen && (
         <div draggable={true} className={styles.panel}>
           <header className={styles.header}>
-            <div>Info Loom</div>
+            <div>{translate(getKey('modName', 'menu'), 'Info Loom')}</div>
           </header>
           <div className={styles.buttonRow}>
             {visibleSections.map(({ name }) => (
@@ -140,7 +141,7 @@ const InfoLoomButton: FC = () => {
                 onClick={() => toggleSection(name)}
                 onMouseDown={e => e.preventDefault()}
               >
-                {name}
+                {translate(getKey(name, 'menu'), name)}
               </Button>
             ))}
           </div>
