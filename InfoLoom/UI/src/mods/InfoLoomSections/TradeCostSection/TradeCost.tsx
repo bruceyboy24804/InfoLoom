@@ -12,7 +12,7 @@ import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
 import Chart from 'chart.js/auto'; // Import Chart.js
 
-const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
+const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
 interface ResourceTradeCost {
   Resource: string;
@@ -65,7 +65,10 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div className={styles.cell} style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}>
+      <div
+        className={styles.cell}
+        style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}
+      >
         <ResourceIcon resourceName={data.Resource} />
         <span>{formattedResourceName}</span>
       </div>
@@ -135,7 +138,7 @@ interface TradeCostsGraphProps {
 const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   const tradeCosts = useValue(TradeCosts$);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  const chartRef = useRef<Chart<'bar', { x: string; y: number[] }[], string> | null>(null);
 
   // Filter tradeCosts based on selectedResources
   const filteredTradeCosts = useMemo(() => {
@@ -145,35 +148,26 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   // Prepare chart data
   const chartData = useMemo(() => {
     const labels = filteredTradeCosts.map(item => formatWords(item.Resource, true));
-    const buyCosts = filteredTradeCosts.map(item => item.BuyCost);
-    const sellCosts = filteredTradeCosts.map(item => item.SellCost - item.BuyCost); // Difference
-
-    const sellBarColors = filteredTradeCosts.map(item =>
-      item.SellCost >= item.BuyCost ? 'rgba(255, 99, 132, 0.5)' : 'rgba(75, 192, 192, 0.5)'
-    );
-
-    const sellBarBorderColors = filteredTradeCosts.map(item =>
-      item.SellCost >= item.BuyCost ? 'rgba(255, 99, 132, 1)' : 'rgba(75, 192, 192, 1)'
-    );
+    const floatingBars = filteredTradeCosts.map(item => ({
+      x: item.Resource,
+      y: [item.BuyCost, item.SellCost],
+    }));
 
     return {
       labels: labels,
       datasets: [
         {
-          label: 'Buy Cost',
-          data: buyCosts,
-          backgroundColor: 'rgba(75, 192, 192, 0.5)', // Teal color
-          borderColor: 'rgba(75, 192, 192, 1)',
+          label: 'Trade Costs Range',
+          data: floatingBars,
+          backgroundColor: (context: any) => {
+            const { y } = context.raw;
+            return y[0] < y[1] ? 'rgba(68, 151, 130, .5)' : 'rgba(223, 72, 76, .5)';
+          },
+          borderColor: (context: any) => {
+            const { y } = context.raw;
+            return y[0] < y[1] ? 'rgba(68, 151, 130, 1)' : 'rgba(223, 72, 76, 1)';
+          },
           borderWidth: 1,
-          stack: 'Stack 0',
-        },
-        {
-          label: 'Sell Cost',
-          data: sellCosts,
-          backgroundColor: sellBarColors,
-          borderColor: sellBarBorderColors,
-          borderWidth: 1,
-          stack: 'Stack 0',
         },
       ],
     };
@@ -220,8 +214,7 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
             },
           },
           y: {
-            stacked: false, // Enable stacking
-            beginAtZero: true,
+            beginAtZero: false,
             title: {
               display: true,
               text: 'Cost ($)',
@@ -244,16 +237,8 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
           tooltip: {
             callbacks: {
               label: function (context: any) {
-                const label = context.dataset.label || '';
-                const value = context.parsed.y;
-                if (label === 'Buy Cost') {
-                  return `Buy Cost: $${value.toFixed(2)}`;
-                } else if (label === 'Sell Cost') {
-                  const resource = context.label;
-                  const totalSellCost = tradeCosts.find(item => formatWords(item.Resource, true) === resource)?.SellCost || 0;
-                  return `Sell Cost: $${totalSellCost.toFixed(2)}`;
-                }
-                return `${label}: $${value.toFixed(2)}`;
+                const range = context.raw.y;
+                return `Buy Price: $${range[0].toFixed(2)}, Sell Price: $${range[1].toFixed(2)}`;
               },
             },
           },
@@ -334,7 +319,10 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
       {filteredTradeCosts.length === 0 ? (
         <p className={styles.loadingText}>No resources selected to display the graph.</p>
       ) : (
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', backgroundColor: '#2c2c2c' }} />
+        <canvas
+          ref={canvasRef}
+          style={{ width: '100%', height: '100%', backgroundColor: 'rgba(6, 10, 16, 0.7)' }}
+        />
       )}
     </div>
   );
@@ -353,7 +341,9 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
     profitMargin: true,
   });
 
-  const [sortBy, setSortBy] = useState<'name' | 'buyCost' | 'sellCost' | 'profit' | 'profitMargin'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'buyCost' | 'sellCost' | 'profit' | 'profitMargin'>(
+    'name'
+  );
 
   // State to handle current view: 'table' or 'graph'
   const [view, setView] = useState<ViewType>('table');
@@ -381,7 +371,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
         case 'sellCost':
           return b.SellCost - a.SellCost;
         case 'profit':
-          return (b.SellCost - b.BuyCost) - (a.SellCost - a.BuyCost);
+          return b.SellCost - b.BuyCost - (a.SellCost - a.BuyCost);
         case 'profitMargin':
           const profitMarginA = a.BuyCost !== 0 ? ((a.SellCost - a.BuyCost) / a.BuyCost) * 100 : 0;
           const profitMarginB = b.BuyCost !== 0 ? ((b.SellCost - b.BuyCost) / b.BuyCost) * 100 : 0;
@@ -508,9 +498,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
                     </div>
                   }
                 >
-                  <DropdownToggle className={styles.dropdownToggle}>
-                    Sort Options
-                  </DropdownToggle>
+                  <DropdownToggle className={styles.dropdownToggle}>Sort Options</DropdownToggle>
                 </Dropdown>
 
                 <Dropdown
@@ -548,9 +536,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
                     </div>
                   }
                 >
-                  <DropdownToggle className={styles.dropdownToggle}>
-                    Column Options
-                  </DropdownToggle>
+                  <DropdownToggle className={styles.dropdownToggle}>Column Options</DropdownToggle>
                 </Dropdown>
 
                 {/* "Graph" Button with .graphButton class */}
@@ -564,12 +550,8 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
 
               {/* Table Body */}
               <div className={styles.tableBody}>
-                {sortedTradeCosts.map((item) => (
-                  <ResourceLine
-                    key={item.Resource}
-                    data={item}
-                    showColumns={showColumns}
-                  />
+                {sortedTradeCosts.map(item => (
+                  <ResourceLine key={item.Resource} data={item} showColumns={showColumns} />
                 ))}
               </div>
             </>
@@ -581,7 +563,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
                 {/* Checkboxes for Each Resource */}
                 <div className={styles.resourceCheckboxes}>
                   <h3 className={styles.checkboxHeader}>Select Resources:</h3>
-                  {tradeCosts.map((item) => (
+                  {tradeCosts.map(item => (
                     <div key={item.Resource} className={styles.checkboxItem}>
                       <InfoCheckbox
                         label={

@@ -3,6 +3,7 @@ import $Panel from 'mods/panel';
 import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
 import { cityInfo } from 'cs2/bindings';
+import { Scrollable } from 'cs2/ui';
 
 // Declare global 'engine' if needed
 
@@ -13,7 +14,7 @@ interface AlignedParagraphProps {
 // Define the TypeScript interface for demand data
 
 // Binding for demand data
-const Demand$ = bindValue<number[]>(mod.id, "ilBuildingDemand", []);
+const Demand$ = bindValue<number[]>(mod.id, 'ilBuildingDemand', []);
 
 const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
   let color: string;
@@ -77,29 +78,60 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   return (
     <div
       className="infoview-panel-section_RXJ"
-      style={{ width: '95%', paddingTop: '3rem', paddingBottom: '3rem' }}
+      style={{ width: '100%', paddingTop: '3rem', paddingBottom: '3rem' }}
     >
       {/* Title */}
       <div className="labels_L7Q row_S2v uppercase_RJI">
-        <div className="left_Lgw row_S2v">{title}</div>
+        <div
+          className="left_Lgw row_S2v"
+          style={{
+            fontSize: 'var(--fontSizeM)',
+          }}
+        >
+          {title}
+        </div>
         {value >= 0 && (
-          <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>
+          <div
+            className="right_k30 row_S2v"
+            style={{
+              fontSize: 'var(--fontSizeM)',
+            }}
+          >
+            {Math.round(value * 100)}
+          </div>
         )}
       </div>
       <div className="space_uKL" style={{ height: '3rem' }}></div>
       {/* Factors */}
       {factors.map((item, index) => (
-        <div
-          key={index}
-          className="labels_L7Q row_S2v small_ExK"
-          style={{ marginTop: '1rem' }}
-        >
-          <div className="left_Lgw row_S2v">{getDisplayName(item.factor)}</div>
+        <div key={index} className="labels_L7Q row_S2v small_ExK" style={{ marginTop: '1rem' }}>
+          <div
+            className="left_Lgw row_S2v"
+            style={{
+              fontSize: 'var(--fontSizeS)',
+            }}
+          >
+            {getDisplayName(item.factor)}
+          </div>
           <div className="right_k30 row_S2v">
             {item.weight < 0 ? (
-              <div className="negative_YWY">{item.weight}</div>
+              <div
+                className="negative_YWY"
+                style={{
+                  fontSize: 'var(--fontSizeS)',
+                }}
+              >
+                {item.weight}
+              </div>
             ) : (
-              <div className="positive_zrK">{item.weight}</div>
+              <div
+                className="positive_zrK"
+                style={{
+                  fontSize: 'var(--fontSizeS)',
+                }}
+              >
+                {item.weight}
+              </div>
             )}
           </div>
         </div>
@@ -143,9 +175,9 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     'Office',
   ];
   const buildingDemandFactors = titles.map((factor, index) => ({
-  factor,
-  weight: ilBuildingDemand[index] ?? 0, 
-}));
+    factor,
+    weight: ilBuildingDemand[index] ?? 0,
+  }));
 
   const defaultPosition = {
     top: window.innerHeight * 0.05,
@@ -181,27 +213,28 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
       onClose={handleClose}
       initialSize={{ width: window.innerWidth * 0.11, height: window.innerHeight * 0.73 }}
       initialPosition={panelPosition}
-      
     >
-      <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
-      <DemandSection2
-        title="RESIDENTIAL LOW"
-        value={residentialLowDemand}
-        factors={residentialLowFactors}
-      />
-      <DemandSection2
-        title="RESIDENTIAL MEDIUM"
-        value={residentialMediumDemand}
-        factors={residentialMediumFactors}
-      />
-      <DemandSection2
-        title="RESIDENTIAL HIGH"
-        value={residentialHighDemand}
-        factors={residentialHighFactors}
-      />
-      <DemandSection2 title="COMMERCIAL" value={commercialDemand} factors={commercialFactors} />
-      <DemandSection2 title="INDUSTRIAL" value={industrialDemand} factors={industrialFactors} />
-      <DemandSection2 title="OFFICE" value={officeDemand} factors={officeFactors} />
+      <Scrollable vertical={true} trackVisibility={'scrollable'} smooth={true}>
+        <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
+        <DemandSection2
+          title="RESIDENTIAL LOW"
+          value={residentialLowDemand}
+          factors={residentialLowFactors}
+        />
+        <DemandSection2
+          title="RESIDENTIAL MEDIUM"
+          value={residentialMediumDemand}
+          factors={residentialMediumFactors}
+        />
+        <DemandSection2
+          title="RESIDENTIAL HIGH"
+          value={residentialHighDemand}
+          factors={residentialHighFactors}
+        />
+        <DemandSection2 title="COMMERCIAL" value={commercialDemand} factors={commercialFactors} />
+        <DemandSection2 title="INDUSTRIAL" value={industrialDemand} factors={industrialFactors} />
+        <DemandSection2 title="OFFICE" value={officeDemand} factors={officeFactors} />
+      </Scrollable>
     </$Panel>
   );
 };
