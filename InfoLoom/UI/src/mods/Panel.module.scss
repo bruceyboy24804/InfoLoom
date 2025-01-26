@@ -2,10 +2,9 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: var(--panelRadiusInner);
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
-  
+
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px var(--accentColorNormal);
@@ -20,21 +19,22 @@
 .header {
   cursor: move;
   padding: 10px;
-  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95));
+  background-color: rgba(6, 10, 16, calc(var(--panelOpacityDark) + 0.2));
   backdrop-filter: var(--panelBlur);
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  font-size: 1.5vw;
+  font-size: var(--fontSizeXL);
   color: var(--accentColorNormal);
   font-weight: bold;
   border-bottom-width: 3px;
   border-bottom-style: solid;
   border-bottom-color: var(--accentColorNormal);
   user-select: none;
-
+  backdrop-filter: var(--panelBlur);
+  margin-left: 1rem;
   &:active {
     cursor: grabbing;
   }
@@ -44,7 +44,7 @@
   FormattedText {
     color: white;
   }
-  
+
   &:focus {
     outline: 2px solid var(--accentColorNormal);
     outline-offset: -2px;
@@ -58,21 +58,21 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(45, 45, 45, 0.95));
-  
+  background-color: rgba(6, 10, 16, calc(var(--panelOpacityDark) + 0.2));
+  backdrop-filter: var(--panelBlur);
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.1);
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--accentColorNormal);
     border-radius: 4px;
-    
+
     &:hover {
       background: var(--accentColorHover);
     }
@@ -87,7 +87,7 @@
   > div {
     position: absolute;
     pointer-events: auto;
-    
+
     &:hover {
       background-color: rgba(255, 255, 255, 0.1);
     }
@@ -163,19 +163,24 @@
 }
 
 .resize-handle:hover {
-  background-color: rgba(0, 0, 0, 0.15);  // Light shading for visibility
+  background-color: rgba(0, 0, 0, 0.15); // Light shading for visibility
   border-radius: 2px;
 }
 
-.n:hover, .s:hover {
-  height: 8px;  // Make the top and bottom resize handles easier to grab
+.n:hover,
+.s:hover {
+  height: 8px; // Make the top and bottom resize handles easier to grab
 }
 
-.e:hover, .w:hover {
-  width: 8px;  // Left and right edges are easier to resize
+.e:hover,
+.w:hover {
+  width: 8px; // Left and right edges are easier to resize
 }
 
-.ne:hover, .nw:hover, .se:hover, .sw:hover {
+.ne:hover,
+.nw:hover,
+.se:hover,
+.sw:hover {
   width: 12px;
   height: 12px;
 }
