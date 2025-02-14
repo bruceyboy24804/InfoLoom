@@ -29,13 +29,9 @@ namespace InfoLoomTwo.Systems.ResidentialData
         }
 
         protected override void OnUpdate()
-        {
-            ResidentialSystem residentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();
-
-            
-
-            // Populate the UI binding with the correct values
-           m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
+        { 
+            ResidentialSystem residentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();  
+            m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
 
             base.OnUpdate();
         }

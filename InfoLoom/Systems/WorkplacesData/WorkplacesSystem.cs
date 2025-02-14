@@ -12,6 +12,7 @@ using Game.UI.InGame;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using InfoLoomTwo.Domain;
 
 
 
@@ -61,7 +62,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             [ReadOnly]
             public ComponentLookup<Citizen> m_CitizenFromEntity;
 
-            public NativeArray<WorkplacesUISystem.workplacesInfo> m_Results;
+            public NativeArray<WorkplacesInfo> m_Results;
             private const int ResultsCount = 7;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -77,7 +78,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                 bool isCommercial = chunk.Has(ref m_CommercialCompanyHandle);
                 bool isService = !(isIndustrial || isCommercial);
 
-                WorkplacesUISystem.workplacesInfo count = m_Results[6];
+                WorkplacesInfo count = m_Results[6];
                 for (int i = 0; i < nativeArray.Length; i++)
                 {
                     int buildingLevel = 1;
@@ -121,7 +122,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                     }
 
                     // Work with a local variable to avoid CS0206 error
-                    WorkplacesUISystem.workplacesInfo ProcessLevel(WorkplacesUISystem.workplacesInfo info, int workplaces, int employees, int commuters)
+                    WorkplacesInfo ProcessLevel(WorkplacesInfo info, int workplaces, int employees, int commuters)
                     {
                         info.Total += workplaces;
                         if (isService) info.Service += workplaces;
@@ -187,7 +188,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
 
 
-        public NativeArray<WorkplacesUISystem.workplacesInfo> m_Results;
+        public NativeArray<WorkplacesInfo> m_Results;
         private const int ResultsCount = 7;
 
 
@@ -196,7 +197,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
         protected override void OnCreate()
         {
             base.OnCreate();
-            m_Results = new NativeArray<WorkplacesUISystem.workplacesInfo>(7, Allocator.Persistent);
+            m_Results = new NativeArray<WorkplacesInfo>(7, Allocator.Persistent);
             m_WorkplaceQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[]
@@ -254,7 +255,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
 
             // Calculate totals
-            WorkplacesUISystem.workplacesInfo totals = new WorkplacesUISystem.workplacesInfo(-1);
+            WorkplacesInfo totals = new WorkplacesInfo(-1);
             for (int i = 0; i < 5; i++)
             {
                 totals.Total += m_Results[i].Total;
@@ -278,9 +279,9 @@ namespace InfoLoomTwo.Systems.WorkplacesData
         {
             for (int i = 0; i < ResultsCount; i++)
             {
-                m_Results[i] = new WorkplacesUISystem.workplacesInfo(i);
+                m_Results[i] = new WorkplacesInfo(i);
             }
-            m_Results[6] = new WorkplacesUISystem.workplacesInfo(-2);
+            m_Results[6] = new WorkplacesInfo(-2);
         }
 
 

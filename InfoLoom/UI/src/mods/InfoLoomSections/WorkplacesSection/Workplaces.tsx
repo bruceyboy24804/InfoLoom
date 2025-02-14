@@ -2,6 +2,8 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import $Panel from 'mods/panel';
 import { useValue, bindValue } from 'cs2/api';
 import mod from 'mod.json';
+import {PanelProps, DraggablePanelProps, Panel} from "cs2/ui";
+import styles from "./Workplaces.module.scss";
 
 // Define interface for workplaces information
 interface WorkplacesInfo {
@@ -109,38 +111,20 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
 };
 
 // Main Workplaces Component Props
-interface WorkplacesProps {
-  onClose: () => void;
-}
+
 
 // Main Workplaces Component
-const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
+const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition}) => {
+ 
   const ilWorkplaces = useValue(IlWorkplaces$) || Array(7).fill(defaultWorkplacesInfo);
+  initialPosition = { x: 0.038, y: 0.15 };
+  
 
-  const defaultPosition = { top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 };
-  const [panelPosition, setPanelPosition] = useState(defaultPosition);
-  const [lastClosedPosition, setLastClosedPosition] = useState(defaultPosition);
+  
 
-  const handleSavePosition = useCallback((position: { top: number; left: number }) => {
-    setPanelPosition(position);
-  }, []);
+  
 
-  const handleClose = useCallback(() => {
-    setLastClosedPosition(panelPosition); // Save the current position before closing
-    setIsPanelVisible(false);
-    onClose();
-  }, [onClose, panelPosition]);
-
-  useEffect(() => {
-    if (!isPanelVisible) {
-      setPanelPosition(lastClosedPosition);
-    }
-  }, [isPanelVisible, lastClosedPosition]);
-
-  if (!isPanelVisible) {
-    return null;
-  }
+  
 
   // Workforce levels configuration
   const workforceLevels = [
@@ -154,12 +138,16 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
   ];
 
   return (
-    <$Panel
-      id="infoloom.workplaces"
-      title="Workplaces Distribution"
-      onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.55, height: window.innerHeight * 0.255 }}
-      initialPosition={panelPosition}
+    <Panel 
+        draggable={true}
+        onClose={onClose}
+        initialPosition={initialPosition}
+        className={styles.panel}
+        header={
+          <div className={styles.header}>
+            <span className={styles.headerText}>Workplaces</span>
+          </div>
+        }
     >
       {ilWorkplaces.length === 0 ? (
         <p style={{ color: 'white' }}>Loading...</p>
@@ -202,7 +190,7 @@ const Workplaces: FC<WorkplacesProps> = ({ onClose }) => {
           ))}
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 

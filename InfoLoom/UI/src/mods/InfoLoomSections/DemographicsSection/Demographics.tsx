@@ -26,6 +26,7 @@ import {
 // Local or app-level imports
 import { bindValue, useValue } from 'cs2/api';
 import { InfoCheckbox } from '../../InfoCheckbox/InfoCheckbox';
+import {PanelProps} from "cs2/ui";
 
 // Register Chart.js components
 ChartJS.register(
@@ -54,9 +55,7 @@ interface PopulationAtAge {
   Total: number;
 }
 
-interface DemographicsProps {
-  onClose: () => void;
-}
+interface DemographicsProps extends PanelProps {}
 
 interface AlignedParagraphProps {
   left: string;
@@ -560,9 +559,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const BAR_HEIGHT = 40;
   const MAX_CHART_HEIGHT = 1200;
 
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  
 
   if (!isPanelVisible) return null;
 
@@ -586,7 +583,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   return (
     <$Panel
       id="infoloom-demographics"
-      onClose={handleClose}
+      onClose={onClose}
       title="Demographics"
       initialSize={{ width: panWidth, height: panHeight }}
       initialPosition={{

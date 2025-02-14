@@ -1,0 +1,90 @@
+.panel {
+  width: 1000rem;
+  display: flex;
+  flex-direction: column; /* Ensure proper layout */
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+  
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
+
+.tableHeader {
+  margin: 25rem 0;
+}
+
+/* Row styling for each district */
+.DistrictRow {
+  width: 100%;
+  padding: 1rem 25rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Column headers */
+.DistrictNameHeader {
+  flex: 0 0 50%;
+  padding-right: 1rem;
+  text-align: left;
+}
+
+.DistrictInfoHeader {
+  flex: 0 0 15%;
+  text-align: center;
+}
+
+.DistrictEntityHeader {
+  flex: 0 0 20%;
+  text-align: center;
+}
+
+/* Data columns */
+.DistrictName {
+  flex: 0 0 50%;
+  padding-right: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.DistrictInfo {
+  flex: 0 0 15%;
+  text-align: center;
+}
+
+.DistrictEntity {
+  flex: 0 0 20%;
+  text-align: center;
+}
+
+/* List container and list items */
+.list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.listItem {
+  padding: 1rem 25rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border-bottom: 1px solid #ccc; /* Optional bottom border for separation */
+}
+
+/* Optional: style for a loading message */
+.loadingText {
+  text-align: center;
+  padding: 1rem;
+}

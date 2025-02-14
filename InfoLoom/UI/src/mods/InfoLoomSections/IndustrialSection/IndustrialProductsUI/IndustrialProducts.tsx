@@ -1,6 +1,6 @@
 import React, { useState, useCallback, FC } from 'react';
 import $Panel from 'mods/panel';
-import { Button, Dropdown, DropdownToggle, Scrollable } from 'cs2/ui';
+import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
@@ -295,8 +295,7 @@ const TableHeader: React.FC<{ showColumns: any }> = ({ showColumns }) => {
 };
 
 // Interface for $Industrial props
-interface IndustrialProps {
-  onClose: () => void;
+interface IndustrialProps extends PanelProps {
 }
 
 // Component: $Commercial
@@ -362,10 +361,8 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   return true;
 }, [filterDemand, filterWorkers]);
 
-  // Handler for closing the panel
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  
+  
 
   if (!isPanelVisible) {
     return null;
@@ -376,7 +373,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
       id="infoloom-industrial-products"
       
       title="Industrial and Office Products"
-      onClose={handleClose}
+      onClose={onClose}
       initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.70 }}
      
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}

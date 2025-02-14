@@ -1,8 +1,20 @@
-// TradeCosts.tsx
-
-import React, { useState, useCallback, FC, useMemo, useRef, useEffect } from 'react';
-import $Panel from 'mods/panel'; // Custom Panel component
-import { Button, Dropdown, DropdownToggle } from 'cs2/ui'; // Using only Button and Dropdown components
+import React, {
+  useState,
+  useCallback,
+  FC,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
+import {
+  Button,
+  DraggablePanelProps,
+  Dropdown,
+  DropdownToggle,
+  Number2,
+  Panel,
+  Scrollable,
+} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from 'cs2/modding';
 import styles from './TradeCost.module.scss';
@@ -10,28 +22,45 @@ import { ResourceIcon } from 'mods/InfoLoomSections/CommercialSecction/Commercia
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
-import Chart from 'chart.js/auto'; // Import Chart.js
+import Chart from 'chart.js/auto';
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
+
+type SortOption =
+  | 'name'
+  | 'buyCost'
+  | 'sellCost'
+  | 'profit'
+  | 'profitMargin'
+  | 'importAmount'
+  | 'exportAmount';
 
 interface ResourceTradeCost {
   Resource: string;
   BuyCost: number;
   SellCost: number;
   Count: number;
+  ImportAmount: number;
+  ExportAmount: number;
 }
 
-const TradeCosts$ = bindValue<ResourceTradeCost[]>(mod.id, 'tradeCosts', []);
-
-interface TradeCostsProps {
-  onClose: () => void;
+interface ImportData {
+  Amount: number;
 }
 
-type ShowColumnsType = {
+interface ExportData {
+  Amount: number;
+}
+
+interface TradeCostsProps extends DraggablePanelProps {}
+
+export type ShowColumnsType = {
   buyCost: boolean;
   sellCost: boolean;
   profit: boolean;
   profitMargin: boolean;
+  importAmount: boolean;
+  exportAmount: boolean;
 };
 
 interface ResourceLineProps {
@@ -41,121 +70,212 @@ interface ResourceLineProps {
 
 type ViewType = 'table' | 'graph';
 
-const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
-  const formattedResourceName = formatWords(data.Resource, true);
-  const profit = data.SellCost - data.BuyCost;
-  const profitMargin = data.BuyCost !== 0 ? (profit / data.BuyCost) * 100 : 0;
+interface TradeCostsGraphProps {
+  selectedResources: Set<string>;
+}
+const DataDivider: React.FC = () => (
+    <div style={{display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center'}}>
+        <div style={{borderBottom: '1px solid gray', width: '100%'}}></div>
+    </div>
+);
+const TradeCosts$ = bindValue<ResourceTradeCost[]>(mod.id, 'tradeCosts', []);
+const Imports$ = bindValue<ImportData[]>(mod.id, 'imports', []);
+const Exports$ = bindValue<ExportData[]>(mod.id, 'exports', []);
 
-  // Determine the CSS class based on profit value
-  let profitClass = styles.neutral_blue; // Default to blue for zero
-  if (profit < 0) {
-    profitClass = styles.negative_YWY;
-  } else if (profit > 0) {
-    profitClass = styles.positive_zrK;
-  }
+const calculateProfit = (data: ResourceTradeCost) => data.SellCost - data.BuyCost;
 
-  // Similarly for profitMargin
-  let profitMarginClass = styles.neutral_blue; // Default to blue for zero
-  if (profitMargin < 0) {
-    profitMarginClass = styles.negative_YWY;
-  } else if (profitMargin > 0) {
-    profitMarginClass = styles.positive_zrK;
-  }
+const calculateProfitMargin = (data: ResourceTradeCost) =>
+  data.BuyCost !== 0 ? (calculateProfit(data) / data.BuyCost) * 100 : 0;
 
+const getProfitClass = (profit: number): string => {
+  if (profit < 0) return styles.negative_YWY;
+  if (profit > 0) return styles.positive_zrK;
+  return styles.neutral_blue;
+};
+
+const getProfitMarginClass = (profitMargin: number): string => {
+  if (profitMargin < 0) return styles.negative_YWY;
+  if (profitMargin > 0) return styles.positive_zrK;
+  return styles.neutral_blue;
+};
+
+const ResourceLine: FC<ResourceLineProps> = ({ data, showColumns }) => {
+  const formattedName = formatWords(data.Resource, true);
+  const profit = calculateProfit(data);
+  const profitMargin = calculateProfitMargin(data);
+  const profitClass = getProfitClass(profit);
+  const profitMarginClass = getProfitMarginClass(profitMargin);
+  const importPerTon = data.Count !== 0 ? data.ImportAmount / data.Count : 0;
+  const exportPerTon = data.Count !== 0 ? data.ExportAmount / data.Count : 0;
   return (
     <div className={styles.row_S2v}>
-      <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div
-        className={styles.cell}
-        style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}
-      >
+      <div className={styles.cell} style={{ width: '3%' }} />
+      <div className={styles.cell} style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}>
         <ResourceIcon resourceName={data.Resource} />
-        <span>{formattedResourceName}</span>
+        <span>{formattedName}</span>
       </div>
       {showColumns.buyCost && (
-        <div className={styles.cell} style={{ width: '15%' }}>
+        <div className={styles.cell} style={{ width: '10%' }}>
           {data.BuyCost.toFixed(2)}
         </div>
       )}
       {showColumns.sellCost && (
-        <div className={styles.cell} style={{ width: '15%' }}>
+        <div className={styles.cell} style={{ width: '10%' }}>
           {data.SellCost.toFixed(2)}
         </div>
       )}
       {showColumns.profit && (
-        <div className={styles.cell} style={{ width: '15%' }}>
+        <div className={styles.cell} style={{ width: '10%' }}>
           <span className={profitClass}>{profit.toFixed(2)}</span>
         </div>
       )}
       {showColumns.profitMargin && (
-        <div className={styles.cell} style={{ width: '15%' }}>
+        <div className={styles.cell} style={{ width: '10%' }}>
           <span className={profitMarginClass}>{profitMargin.toFixed(2)}%</span>
         </div>
       )}
+      {showColumns.importAmount && (
+        <div className={styles.cell} style={{ width: '10%' }}>
+          {importPerTon.toFixed(2)} /t
+        </div>
+      )}
+      {showColumns.exportAmount && (
+        <div className={styles.cell} style={{ width: '10%' }}>
+          {exportPerTon.toFixed(2)} /t
+        </div>
+      )}
     </div>
   );
 };
 
-const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }) => {
-  return (
-    <div className={styles.headerRow}>
-      <div className={styles.headerCell} style={{ width: '3%' }}></div>
-      <div className={styles.headerCell} style={{ width: '25%' }}>
-        Resource
+const TableHeader: FC<{ showColumns: ShowColumnsType }> = ({ showColumns }) => (
+  <div className={styles.headerRow}>
+    <div className={styles.headerCell} style={{ width: '3%' }} />
+    <div className={styles.headerCell} style={{ width: '25%' }}>
+      Resource
+    </div>
+    {showColumns.buyCost && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Buy Cost</b></div>
       </div>
-      {showColumns.buyCost && (
-        <div className={styles.headerCell} style={{ width: '15%' }}>
-          Buy Cost
+    )}
+    {showColumns.sellCost && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Sell Cost</b></div>
+      </div>
+    )}
+    {showColumns.profit && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Profit</b></div>
+      </div>
+    )}
+    {showColumns.profitMargin && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Profit Margin</b></div>
+      </div>
+    )}
+    {showColumns.importAmount && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Import Amount</b></div>
+      </div>
+    )}
+    {showColumns.exportAmount && (
+      <div className={styles.headerCell} style={{ width: '10%' }}>
+        <div><b>Export Amount</b></div>
+      </div>
+    )}
+  </div>
+);
+
+const SortOptions: FC<{
+  sortBy: SortOption;
+  setSortBy: (option: SortOption) => void;
+}> = ({ sortBy, setSortBy }) => {
+  const options: { label: string; key: SortOption }[] = [
+    { label: 'Sort by Name', key: 'name' },
+    { label: 'Sort by Buy Cost', key: 'buyCost' },
+    { label: 'Sort by Sell Cost', key: 'sellCost' },
+    { label: 'Sort by Profit', key: 'profit' },
+    { label: 'Sort by Profit Margin', key: 'profitMargin' },
+    { label: 'Sort by Import Amount (tonnes/ton)', key: 'importAmount' },
+    { label: 'Sort by Export Amount (tonnes/ton)', key: 'exportAmount' },
+  ];
+  return (
+    <Dropdown
+      theme={DropdownStyle}
+      content={
+        <div className={styles.dropdownContent}>
+          {options.map(({ label, key }) => (
+            <div key={key} className={styles.dropdownItem}>
+              <InfoCheckbox
+                label={label}
+                isChecked={sortBy === key}
+                onToggle={() => setSortBy(key)}
+              />
+            </div>
+          ))}
         </div>
-      )}
-      {showColumns.sellCost && (
-        <div className={styles.headerCell} style={{ width: '15%' }}>
-          Sell Cost
-        </div>
-      )}
-      {showColumns.profit && (
-        <div className={styles.headerCell} style={{ width: '15%' }}>
-          Profit
-        </div>
-      )}
-      {showColumns.profitMargin && (
-        <div className={styles.headerCell} style={{ width: '15%' }}>
-          Profit Margin
-        </div>
-      )}
-    </div>
+      }
+    >
+      <DropdownToggle className={styles.dropdownToggle}>
+        Sort Options
+      </DropdownToggle>
+    </Dropdown>
   );
 };
 
-/**
- * TradeCostsGraph component renders the Floating Bar Chart for Trade Costs using Chart.js.
- * Receives selectedResources as props to filter displayed data.
- */
-interface TradeCostsGraphProps {
-  selectedResources: Set<string>;
-}
+const ColumnOptions: FC<{
+  showColumns: ShowColumnsType;
+  toggleColumn: (column: keyof ShowColumnsType) => void;
+}> = ({ showColumns, toggleColumn }) => (
+  <Dropdown
+    theme={DropdownStyle}
+    content={
+      <div className={styles.dropdownContent}>
+        {[
+          { label: 'Show Buy Cost', key: 'buyCost' },
+          { label: 'Show Sell Cost', key: 'sellCost' },
+          { label: 'Show Profit', key: 'profit' },
+          { label: 'Show Profit Margin', key: 'profitMargin' },
+          { label: 'Show Import Amount (tonnes/ton)', key: 'importAmount' },
+          { label: 'Show Export Amount (tonnes/ton)', key: 'exportAmount' },
+        ].map(({ label, key }) => (
+          <div key={key} className={styles.dropdownItem}>
+            <InfoCheckbox
+              label={label}
+              isChecked={showColumns[key as keyof ShowColumnsType]}
+              onToggle={() => toggleColumn(key as keyof ShowColumnsType)}
+            />
+          </div>
+        ))}
+      </div>
+    }
+  >
+    <DropdownToggle className={styles.dropdownToggle}>
+      Column Options
+    </DropdownToggle>
+  </Dropdown>
+);
 
 const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   const tradeCosts = useValue(TradeCosts$);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart<'bar', { x: string; y: number[] }[], string> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Filter tradeCosts based on selectedResources
-  const filteredTradeCosts = useMemo(() => {
-    return tradeCosts.filter(item => selectedResources.has(item.Resource));
-  }, [tradeCosts, selectedResources]);
-
-  // Prepare chart data
+  const filteredTradeCosts = useMemo(
+    () => tradeCosts.filter((item) => selectedResources.has(item.Resource)),
+    [tradeCosts, selectedResources]
+  );
   const chartData = useMemo(() => {
-    const labels = filteredTradeCosts.map(item => formatWords(item.Resource, true));
-    const floatingBars = filteredTradeCosts.map(item => ({
+    const labels = filteredTradeCosts.map((item) =>
+      formatWords(item.Resource, true)
+    );
+    const floatingBars = filteredTradeCosts.map((item) => ({
       x: item.Resource,
       y: [item.BuyCost === item.SellCost ? 0 : item.BuyCost, item.SellCost],
     }));
-
     return {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: 'Trade Costs Range',
@@ -163,33 +283,27 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
           backgroundColor: (context: any) => {
             const { y } = context.raw;
             if (y[0] === 0 || y[1] === 0) return 'rgb(255, 211, 80)';
-            return y[0] < y[1] ? 'rgba(68, 151, 130, 1)' : 'rgba(223, 72, 76, 1)';
+            return y[0] < y[1]
+              ? 'rgba(68, 151, 130, 1)'
+              : 'rgba(223, 72, 76, 1)';
           },
           borderColor: (context: any) => {
             const { y } = context.raw;
             if (y[0] === 0 || y[1] === 0) return 'rgb(255, 211, 80)';
-            return y[0] < y[1] ? 'rgba(68, 151, 130, 1)' : 'rgba(223, 72, 76, 1)';
+            return y[0] < y[1]
+              ? 'rgba(68, 151, 130, 1)'
+              : 'rgba(223, 72, 76, 1)';
           },
           borderWidth: 1,
         },
       ],
     };
   }, [filteredTradeCosts]);
-
-  // Initialize Chart.js instance
   useEffect(() => {
-    if (!canvasRef.current || !containerRef.current) return;
-    if (filteredTradeCosts.length === 0) return;
-
+    if (!canvasRef.current || !containerRef.current || filteredTradeCosts.length === 0)
+      return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
-
-    // Destroy existing chart
-    if (chartRef.current) {
-      chartRef.current.destroy();
-    }
-
-    // Create new Chart instance
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: chartData,
@@ -227,7 +341,6 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
         animation: { duration: 0 },
       },
     });
-
     return () => {
       if (chartRef.current) {
         chartRef.current.destroy();
@@ -235,55 +348,30 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
       }
     };
   }, []);
-
   useEffect(() => {
     if (!chartRef.current) return;
-
-    // update silently
     chartRef.current.data = chartData;
-    chartRef.current.update('none');
+    chartRef.current.update();
   }, [chartData]);
-
-  // Handle container resizing with ResizeObserver
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) return;
-
-    const resizeObserver = new ResizeObserver(entries => {
-      const entry = entries[0];
-      const { width, height } = entry.contentRect;
-
-      const offscreenCanvas = document.createElement('canvas');
-      const offscreenCtx = offscreenCanvas.getContext('2d')!;
-
-      // sync Canvas
-      offscreenCanvas.width = width;
-      offscreenCanvas.height = height;
-
-      // copy to
-      offscreenCtx.drawImage(canvasRef.current!, 0, 0);
-
-      // apply
-      canvasRef.current!.width = width;
-      canvasRef.current!.height = height;
-
-      // restore
-      const ctx = canvasRef.current!.getContext('2d')!;
-      ctx.drawImage(offscreenCanvas, 0, 0);
-
-      // resize
-      if (chartRef.current) {
-        chartRef.current.resize();
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (canvasRef.current) {
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
       }
+      chartRef.current?.resize();
     });
-
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
   }, []);
-
   return (
     <div className={styles.graphContainer} ref={containerRef}>
       {filteredTradeCosts.length === 0 ? (
-        <p className={styles.loadingText}>No resources selected to display the graph.</p>
+        <p className={styles.loadingText}>
+          No resources selected to display the graph.
+        </p>
       ) : (
         <canvas ref={canvasRef} />
       )}
@@ -291,48 +379,47 @@ const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   );
 };
 
-// memo!
 const MemoizedTradeCostsGraph = React.memo(TradeCostsGraph, (prevProps, nextProps) => {
-  // compare selectedResources deeply
   return (
     prevProps.selectedResources.size === nextProps.selectedResources.size &&
-    [...prevProps.selectedResources].every(res => nextProps.selectedResources.has(res))
+    [...prevProps.selectedResources].every((res) =>
+      nextProps.selectedResources.has(res)
+    )
   );
 });
 
-/**
- * Main TradeCosts Component
- */
-const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
+const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }) => {
   const tradeCosts = useValue(TradeCosts$);
-
+  const imports = useValue(Imports$);
+  const exports = useValue(Exports$);
+  const initialPos: Number2 = { x: 0.038, y: 0.15 };
+  const mergedTradeCosts = useMemo(() => {
+    return tradeCosts.map((tradeCost, index) => {
+      const importAmount = imports[index]?.Amount || 0;
+      const exportAmount = exports[index]?.Amount || 0;
+      return {
+        ...tradeCost,
+        ImportAmount: Number(importAmount.toFixed(5)),
+        ExportAmount: Number(exportAmount.toFixed(5)),
+      };
+    });
+  }, [tradeCosts, imports, exports]);
   const [showColumns, setShowColumns] = useState<ShowColumnsType>({
     buyCost: true,
     sellCost: true,
     profit: true,
     profitMargin: true,
+    importAmount: true,
+    exportAmount: true,
   });
-
-  const [sortBy, setSortBy] = useState<'name' | 'buyCost' | 'sellCost' | 'profit' | 'profitMargin'>(
-    'name'
-  );
-
-  // State to handle current view: 'table' or 'graph'
+  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [view, setView] = useState<ViewType>('table');
-
-  // State to track selected resources for the graph
-  const [selectedResources, setSelectedResources] = useState<Set<string>>(() => {
-    // Initialize with all resources selected
-    return new Set(tradeCosts.map(item => item.Resource));
-  });
-
+  const [selectedResources, setSelectedResources] = useState<Set<string>>(() =>
+    new Set(mergedTradeCosts.map((item) => item.Resource))
+  );
   const toggleColumn = useCallback((column: keyof ShowColumnsType) => {
-    setShowColumns(prev => ({
-      ...prev,
-      [column]: !prev[column],
-    }));
+    setShowColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   }, []);
-
   const sortData = useCallback(
     (a: ResourceTradeCost, b: ResourceTradeCost) => {
       switch (sortBy) {
@@ -343,232 +430,122 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose }) => {
         case 'sellCost':
           return b.SellCost - a.SellCost;
         case 'profit':
-          return b.SellCost - b.BuyCost - (a.SellCost - a.BuyCost);
-        case 'profitMargin':
-          const profitMarginA = a.BuyCost !== 0 ? ((a.SellCost - a.BuyCost) / a.BuyCost) * 100 : 0;
-          const profitMarginB = b.BuyCost !== 0 ? ((b.SellCost - b.BuyCost) / b.BuyCost) * 100 : 0;
-          return profitMarginB - profitMarginA;
+          return calculateProfit(b) - calculateProfit(a);
+        case 'profitMargin': {
+          const marginA = calculateProfitMargin(a);
+          const marginB = calculateProfitMargin(b);
+          return marginB - marginA;
+        }
+        case 'importAmount': {
+          const perTonA = a.Count !== 0 ? a.ImportAmount / a.Count : 0;
+          const perTonB = b.Count !== 0 ? b.ImportAmount / b.Count : 0;
+          return perTonB - perTonA;
+        }
+        case 'exportAmount': {
+          const perTonA = a.Count !== 0 ? a.ExportAmount / a.Count : 0;
+          const perTonB = b.Count !== 0 ? b.ExportAmount / b.Count : 0;
+          return perTonB - perTonA;
+        }
         default:
           return 0;
       }
     },
     [sortBy]
   );
-
-  const handleOpenGraph = useCallback(() => {
-    setView('graph');
-  }, []);
-
-  const handleBackToTable = useCallback(() => {
-    setView('table');
-  }, []);
-
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  const sortedTradeCosts = useMemo(() => {
-    return [...tradeCosts].sort(sortData);
-  }, [tradeCosts, sortData]);
-
-  /**
-   * Initialize selectedResources only once when tradeCosts are loaded.
-   * Prevents resetting selectedResources on every tradeCosts update.
-   */
+  const sortedTradeCosts = useMemo(
+    () => [...mergedTradeCosts].sort(sortData),
+    [mergedTradeCosts, sortData]
+  );
   useEffect(() => {
-    if (tradeCosts.length > 0 && selectedResources.size === 0) {
-      setSelectedResources(new Set(tradeCosts.map(item => item.Resource)));
+    if (mergedTradeCosts.length > 0 && selectedResources.size === 0) {
+      setSelectedResources(new Set(mergedTradeCosts.map((item) => item.Resource)));
     }
-  }, [tradeCosts, selectedResources]);
-
-  // Handler for toggling resource selection
+  }, [mergedTradeCosts, selectedResources]);
   const handleToggleResource = useCallback((resource: string) => {
-    setSelectedResources(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(resource)) {
-        newSet.delete(resource);
-      } else {
-        newSet.add(resource);
-      }
-      return newSet;
-    });
-  }, []);
-
-  // Panel dimensions
-  const panelWidth = window.innerWidth * 0.6;
-  const panelHeight = window.innerHeight * 0.7;
-
-  // Panel style
-  const panelStyle: React.CSSProperties = {
-    backgroundColor: 'var(--panelColorNormal)',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden', // Ensure that child components handle overflow
-    padding: '1rem',
-  };
-
+  setSelectedResources((prev) => {
+    const newSet = new Set(prev);
+    if (newSet.has(resource)) {
+      newSet.delete(resource);
+    } else {
+      newSet.add(resource);
+    }
+    return newSet;
+  });
+}, []);
   return (
-    <$Panel
+    <Panel
+      draggable={true}
       id="infoloom-trade-costs"
-      title="Trade Costs"
-      onClose={handleClose}
-      initialSize={{ width: panelWidth, height: panelHeight }}
-      initialPosition={{
-        top: window.innerHeight * 0.05,
-        left: window.innerWidth * 0.2,
-      }}
-      style={panelStyle}
+      onClose={onClose}
+      initialPosition={initialPosition || initialPos}
+      className={styles.panel}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Trade Costs</span>
+        </div>
+      }
     >
-      {tradeCosts.length === 0 ? (
+      {mergedTradeCosts.length === 0 ? (
         <p className={styles.loadingText}>Loading Trade Costs...</p>
       ) : (
         <div className={styles.panelContent}>
-          {/* Render either the table view or the graph view */}
           {view === 'table' ? (
             <>
-              {/* Controls: Sort Options, Column Options, Graphs Button */}
               <div className={styles.controls}>
-                <Dropdown
-                  theme={DropdownStyle}
-                  content={
-                    <div className={styles.dropdownContent}>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Sort by Name"
-                          isChecked={sortBy === 'name'}
-                          onToggle={() => setSortBy('name')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Sort by Buy Cost"
-                          isChecked={sortBy === 'buyCost'}
-                          onToggle={() => setSortBy('buyCost')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Sort by Sell Cost"
-                          isChecked={sortBy === 'sellCost'}
-                          onToggle={() => setSortBy('sellCost')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Sort by Profit"
-                          isChecked={sortBy === 'profit'}
-                          onToggle={() => setSortBy('profit')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Sort by Profit Margin"
-                          isChecked={sortBy === 'profitMargin'}
-                          onToggle={() => setSortBy('profitMargin')}
-                        />
-                      </div>
-                    </div>
-                  }
-                >
-                  <DropdownToggle className={styles.dropdownToggle}>Sort Options</DropdownToggle>
-                </Dropdown>
-
-                <Dropdown
-                  theme={DropdownStyle}
-                  content={
-                    <div className={styles.dropdownContent}>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Show Buy Cost"
-                          isChecked={showColumns.buyCost}
-                          onToggle={() => toggleColumn('buyCost')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Show Sell Cost"
-                          isChecked={showColumns.sellCost}
-                          onToggle={() => toggleColumn('sellCost')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Show Profit"
-                          isChecked={showColumns.profit}
-                          onToggle={() => toggleColumn('profit')}
-                        />
-                      </div>
-                      <div className={styles.dropdownItem}>
-                        <InfoCheckbox
-                          label="Show Profit Margin"
-                          isChecked={showColumns.profitMargin}
-                          onToggle={() => toggleColumn('profitMargin')}
-                        />
-                      </div>
-                    </div>
-                  }
-                >
-                  <DropdownToggle className={styles.dropdownToggle}>Column Options</DropdownToggle>
-                </Dropdown>
-
-                {/* "Graph" Button with .graphButton class */}
-                <Button onClick={handleOpenGraph} className={styles.graphButton}>
+                <SortOptions sortBy={sortBy} setSortBy={setSortBy} />
+                <ColumnOptions showColumns={showColumns} toggleColumn={toggleColumn} />
+                <Button onClick={() => setView('graph')} className={styles.graphButton}>
                   Trade Cost Graph
                 </Button>
               </div>
-
-              {/* Table Header */}
+              <DataDivider />
               <TableHeader showColumns={showColumns} />
-
-              {/* Table Body */}
+              <DataDivider />
               <div className={styles.tableBody}>
-                {sortedTradeCosts.map(item => (
+                {sortedTradeCosts.map((item) => (
                   <ResourceLine key={item.Resource} data={item} showColumns={showColumns} />
                 ))}
               </div>
+             
             </>
           ) : (
-            // Graph View
             <>
-              {/* Container for Checkboxes and Graph */}
               <div className={styles.graphViewContainer}>
-                {/* Checkboxes for Each Resource */}
                 <div className={styles.resourceCheckboxes}>
-                  <h3 className={styles.checkboxHeader}>Select Resources:</h3>
-                  {tradeCosts.map(item => (
-                    <div key={item.Resource} className={styles.checkboxItem}>
-                      <InfoCheckbox
-                        label={
-                          <div className={styles.checkboxLabel}>
-                            <ResourceIcon resourceName={item.Resource} />
-                            <span>{formatWords(item.Resource, true)}</span>
-                          </div>
-                        }
-                        isChecked={selectedResources.has(item.Resource)}
-                        onToggle={() => handleToggleResource(item.Resource)}
-                      />
-                    </div>
-                  ))}
+                  <Scrollable vertical={true} smooth={true} trackVisibility={"scrollable"} onOverflowY={() => false}>
+                  <div className={styles.checkboxHeader}>Select Resources:</div>
+                    {tradeCosts
+                        .sort((a, b) => a.Resource.localeCompare(b.Resource))
+                        .map((item) => (
+                            <div key={item.Resource} className={styles.checkboxItem}>
+                              <InfoCheckbox
+                                  label={
+                                    <div className={styles.checkboxLabel}>
+                                      <ResourceIcon resourceName={item.Resource}/>
+                                      <span>{formatWords(item.Resource, true)}</span>
+                                    </div>
+                                  }
+                                  isChecked={selectedResources.has(item.Resource)}
+                                  onToggle={() => handleToggleResource(item.Resource)}
+                              />
+                            </div>
+                        ))}
+                  </Scrollable>
                 </div>
-
-                {/* Graph Area */}
                 <div className={styles.graphArea}>
-                  {/* Back Button with .backButton class */}
                   <div className={styles.graphHeader}>
-                    <Button onClick={handleBackToTable} className={styles.backButton}>
+                    <Button onClick={() => setView('table')} className={styles.backButton}>
                       &larr; Back to Table
                     </Button>
                   </div>
-
-                  {/* TradeCostsGraph with selectedResources passed as props */}
-                  <MemoizedTradeCostsGraph selectedResources={selectedResources} />
+                  <MemoizedTradeCostsGraph selectedResources={selectedResources}/>
                 </div>
               </div>
             </>
           )}
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 

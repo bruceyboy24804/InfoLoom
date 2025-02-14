@@ -3,7 +3,7 @@ import $Panel from 'mods/panel';
 import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
 import { cityInfo } from 'cs2/bindings';
-import { Scrollable } from 'cs2/ui';
+import {PanelProps, Scrollable} from 'cs2/ui';
 
 // Declare global 'engine' if needed
 
@@ -140,9 +140,7 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   );
 };
 
-interface DemandFactorsProps {
-  onClose: () => void;
-}
+interface DemandFactorsProps extends PanelProps {}
 
 const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -190,11 +188,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     setPanelPosition(position);
   }, []);
 
-  const handleClose = useCallback(() => {
-    setLastClosedPosition(panelPosition);
-    setIsPanelVisible(false);
-    onClose();
-  }, [onClose, panelPosition]);
+  
 
   useEffect(() => {
     if (!isPanelVisible) {
@@ -210,7 +204,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     <$Panel
       id="infoloom-demand"
       title="Demand"
-      onClose={handleClose}
+      onClose={onClose}
       initialSize={{ width: window.innerWidth * 0.11, height: window.innerHeight * 0.73 }}
       initialPosition={panelPosition}
     >

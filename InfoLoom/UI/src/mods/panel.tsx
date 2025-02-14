@@ -81,9 +81,7 @@ function usePanelState({
   // find the relevant panel state for our ID
   const matchedState = panelStatesFromCSharp?.find((st) => st.Id === id);
 
-  // if found in C#, that is highest priority
-  // otherwise, fall back to savedPosition/Size from props
-  // then finally fallback to "initial" from props
+
   const defaultPosition: Position = matchedState?.Position
     ?? savedPosition
     ?? initialPosition

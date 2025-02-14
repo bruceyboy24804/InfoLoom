@@ -33,7 +33,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
             [ReadOnly]
             public NativeList<ArchetypeChunk> m_HouseholdChunks;*/
 
-            [DeallocateOnJobCompletion]
+            
             [ReadOnly]
             public NativeArray<ZonePropertiesData> m_UnlockedZones;
 
@@ -159,9 +159,9 @@ namespace InfoLoomTwo.Systems.ResidentialData
                     m_HouseholdDemand.value = math.min(200, (int)(num6 + x + num5 + num8 + num7));
                 }
 
-                int num9 = Mathf.RoundToInt(100f * (float)(demandParameterData.m_FreeResidentialRequirement.x - freeProperties.x) / (float)demandParameterData.m_FreeResidentialRequirement.x);
-                int num10 = Mathf.RoundToInt(100f * (float)(demandParameterData.m_FreeResidentialRequirement.y - freeProperties.y) / (float)demandParameterData.m_FreeResidentialRequirement.y);
-                int num11 = Mathf.RoundToInt(100f * (float)(demandParameterData.m_FreeResidentialRequirement.z - freeProperties.z) / (float)demandParameterData.m_FreeResidentialRequirement.z);
+                int num9 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.x - freeProperties.x) / demandParameterData.m_FreeResidentialRequirement.x);
+                int num10 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.y - freeProperties.y) / demandParameterData.m_FreeResidentialRequirement.y);
+                int num11 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.z - freeProperties.z) / demandParameterData.m_FreeResidentialRequirement.z);
 
                 m_LowDemandFactors[7] = Mathf.RoundToInt(num6);
                 m_LowDemandFactors[5] = Mathf.RoundToInt(num8);
@@ -192,6 +192,17 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 );
                 m_BuildingDemand.value = math.select(default(int3), m_BuildingDemand.value, c);
 
+
+
+                float3 freeReqFloat = (float3)demandParameterData.m_FreeResidentialRequirement;
+                float3 computedValue = new float3(
+                    math.max(5f, 0.01f * freeReqFloat.x * math.max(1f, freeReqFloat.x)),
+                    math.max(5f, 0.01f * freeReqFloat.y * math.max(1f, freeReqFloat.y)),
+                    math.max(5f, 0.01f * freeReqFloat.z * math.max(1f, freeReqFloat.z))
+                );
+                float average = math.csum(computedValue) / 3f;
+    
+
                 // InfoLoom: Store results instead of enqueueing trigger
                 m_Results[0] = totalProperties.x;
                 m_Results[1] = totalProperties.y;
@@ -199,7 +210,9 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 m_Results[3] = totalProperties.x - freeProperties.x;
                 m_Results[4] = totalProperties.y - freeProperties.y;
                 m_Results[5] = totalProperties.z - freeProperties.z;
-                m_Results[6] = Mathf.RoundToInt(10f * demandParameterData.m_FreeResidentialRequirement.x);
+                
+                m_Results[6] =  Mathf.RoundToInt(10f * average);
+
                 m_Results[7] = population.m_AverageHappiness;
                 m_Results[8] = demandParameterData.m_NeutralHappiness;
                 m_Results[9] = (int)(m_UnemploymentRate * 100f);
@@ -217,7 +230,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
         }
 
         
-        private ResidentialUISystem m_ResidentialUISystem;
+        
         private const string kGroup = "cityInfo";
 
         public static readonly int kMaxFactorEffect = 15;
@@ -312,7 +325,6 @@ namespace InfoLoomTwo.Systems.ResidentialData
         {
             base.OnCreate();
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>(); // TODO: use UIUpdateState eventually
-            m_ResidentialUISystem = World.GetOrCreateSystemManaged<ResidentialUISystem>();
             m_DemandParameterGroup = GetEntityQuery(ComponentType.ReadOnly<DemandParameterData>());
             m_AllHouseholdGroup = GetEntityQuery(ComponentType.ReadOnly<Household>(), ComponentType.Exclude<TouristHousehold>(), ComponentType.Exclude<CommuterHousehold>(), ComponentType.Exclude<MovingAway>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>());
             m_AllResidentialGroup = GetEntityQuery(ComponentType.ReadOnly<ResidentialProperty>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Condemned>(), ComponentType.Exclude<Abandoned>(), ComponentType.Exclude<Destroyed>(), ComponentType.Exclude<Temp>());

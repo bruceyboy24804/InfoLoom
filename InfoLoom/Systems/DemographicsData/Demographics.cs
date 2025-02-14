@@ -18,24 +18,15 @@ using InfoLoomTwo.Extensions;
 using Unity.Burst;
 
 
-namespace InfoLoomTwo.Systems.DemographicsData.Demographics
+namespace InfoLoomTwo.Systems.DemographicsData
 {
     // This System is based on PopulationInfoviewUISystem by CO
 
 public partial class Demographics : SystemBase
 {
-
     /// <summary>
     /// Holds info about population at Age
     /// </summary>
-    
-
-    
-
-
-
-
-
     [BurstCompile]
     private struct PopulationStructureJob : IJobChunk
     {
@@ -97,7 +88,7 @@ public partial class Demographics : SystemBase
 
         public NativeArray<int> m_Totals;
 
-        public NativeArray<DemographicsUISystem.PopulationAtAgeInfo> m_Results;
+        public NativeArray<Domain.PopulationAtAgeInfo> m_Results;
 
         
 
@@ -197,7 +188,7 @@ public partial class Demographics : SystemBase
                 if (ageInDays >= 0 && ageInDays < m_Results.Length)
                 {
                     // Retrieve the struct from the array
-                    DemographicsUISystem.PopulationAtAgeInfo info = m_Results[ageInDays];
+                    Domain.PopulationAtAgeInfo info = m_Results[ageInDays];
 
                     // Modify the fields
                     info.Age = ageInDays;
@@ -292,7 +283,7 @@ public partial class Demographics : SystemBase
     // 8 - dead cims
     // 9 - homeless citizens
 
-    public NativeArray<DemographicsUISystem.PopulationAtAgeInfo> m_Results; // final results, will be filled via jobs and then written as output
+    public NativeArray<Domain.PopulationAtAgeInfo> m_Results; // final results, will be filled via jobs and then written as output
 
     
     public int m_AgeCap;
@@ -327,7 +318,7 @@ public partial class Demographics : SystemBase
 
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-        m_Results = new NativeArray<DemographicsUISystem.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TODO
+        m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TODO
         
     }
 
@@ -345,7 +336,6 @@ public partial class Demographics : SystemBase
         if (m_SimulationSystem.frameIndex % 128 != 44)
             return;
 
-        //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
         
 
 
@@ -410,7 +400,7 @@ public partial class Demographics : SystemBase
         }
         for (int i = 0; i < m_Results.Length; i++)
         {
-            m_Results[i] = new DemographicsUISystem.PopulationAtAgeInfo(i);
+            m_Results[i] = new Domain.PopulationAtAgeInfo(i);
         }
         //Plugin.Log("reset",true);
     }

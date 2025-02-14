@@ -54,7 +54,6 @@ namespace InfoLoomTwo.Systems
     protected override void OnCreate()
     {
         base.OnCreate();
-        // get access to other systems
         m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
         m_ResidentialDemandSystem = base.World.GetOrCreateSystemManaged<ResidentialDemandSystem>();
         m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
@@ -64,7 +63,7 @@ namespace InfoLoomTwo.Systems
 
         // allocate storage
         
-        Mod.log.Info("BuildingDemandUISystem created.");
+        Mod.log.Info("InfoLoomUISystem created.");
     }
 
     protected override void OnUpdate()

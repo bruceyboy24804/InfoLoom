@@ -12,6 +12,8 @@
   pointer-events: auto;
   overflow: hidden;
   animation: scale-up-center-alternate 0.25s ease 0s 1 alternate none;
+  position: absolute;
+  top: 40rem;
 }
 
 .header {

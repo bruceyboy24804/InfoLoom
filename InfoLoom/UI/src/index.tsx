@@ -1,4 +1,4 @@
-import { ModRegistrar } from 'cs2/modding';
+import  { ModRegistrar } from 'cs2/modding';
 import InfoLoomMenu from './mods/InfoLoomContent/InfoLoomMenu';
 import 'intl';
 import 'intl/locale-data/jsonp/en-US';

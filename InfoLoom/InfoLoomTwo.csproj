@@ -18,6 +18,21 @@
 	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <None Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <Compile Remove="Systems\CommercialSystems\CommercialDemandPatch\ModifiedCommercialDemandSystem.cs" />
+	  <Compile Remove="Systems\HouseholdData\HouseholdDataSystem.cs" />
+	  <Compile Remove="Systems\HouseholdData\HouseholdCountByDistrictSystem.cs" />
+	  <Compile Remove="Systems\BuildingDemandData\**" />
+	  <EmbeddedResource Remove="Systems\BuildingDemandData\**" />
+	  <None Remove="Systems\BuildingDemandData\**" />
+	  <Compile Remove="Systems\CommercialSystems\CommercialDemandData\CommercialUISystem.cs" />
+	  <Compile Remove="Systems\CommercialSystems\CommercialProductData\CommercialProductsUISystem.cs" />
+	  <Compile Remove="Systems\DemographicsData\DemographicsUISystem.cs" />
+	  <Compile Remove="Systems\DistrictData\DistrictDataUISystem.cs" />
+	  <Compile Remove="Systems\IndustrialSystems\IndustrialDemandData\IndustrialUISystem.cs" />
+	  <Compile Remove="Systems\IndustrialSystems\IndustrialProductData\IndustrialProductsUISystem.cs" />
+	  <Compile Remove="Systems\ResidentialData\ResidentialUISystem.cs" />
+	  <Compile Remove="Systems\TradeCostData\TradeCostUISystem.cs" />
+	  <Compile Remove="Systems\WorkforceData\WorkforceUISystem.cs" />
+	  <Compile Remove="Systems\WorkplacesData\WorkplacesUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -169,6 +184,9 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 
 </Project>

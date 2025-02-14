@@ -11,6 +11,7 @@ using Game.Tools;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using InfoLoomTwo.Domain;
 
 
 namespace InfoLoomTwo.Systems.WorkforceData
@@ -85,7 +86,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
             public NativeCounter.Concurrent m_UnemploymentByEducation4;
 
-            public NativeArray<WorkforceUISystem.workforcesInfo> m_Results;
+            public NativeArray<WorkforcesInfo> m_Results;
 
             private void AddPotential(int level)
             {
@@ -187,7 +188,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
                     // PROCESS ENTITY
                     int educationLevel = citizen.GetEducationLevel();
                     //Plugin.Log($"{age} {educationLevel} {isWorker}");
-                    WorkforceUISystem.workforcesInfo info = m_Results[educationLevel];
+                    WorkforcesInfo info = m_Results[educationLevel];
                     //m_Adults.Increment(); // it is called Adults, but counts also Teens
                     info.Total++;
                     if (isWorker)
@@ -309,17 +310,8 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
 
         // InfoLoom
-
-
-
-        public NativeArray<WorkforceUISystem.workforcesInfo> m_Results;
-
-
-
-
-
-
-
+        public NativeArray<WorkforcesInfo> m_Results;
+        
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -363,7 +355,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
             m_PotentialWorkersByEducation4 = new NativeCounter(Allocator.Persistent);
 
             // InfoLoom
-            m_Results = new NativeArray<WorkforceUISystem.workforcesInfo>(6, Allocator.Persistent); // there are 5 education levels + 1 for totals
+            m_Results = new NativeArray<WorkforcesInfo>(6, Allocator.Persistent); // there are 5 education levels + 1 for totals
 
 
 
@@ -451,7 +443,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
 
             // calculate totals
-            WorkforceUISystem.workforcesInfo totals = new WorkforceUISystem.workforcesInfo(-1);
+            WorkforcesInfo totals = new WorkforcesInfo(-1);
             for (int i = 0; i < 5; i++)
             {
                 totals.Total += m_Results[i].Total;
@@ -472,7 +464,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
             for (int i = 0; i < 6; i++) // there are 5 education levels + 1 for totals
             {
-                m_Results[i] = new WorkforceUISystem.workforcesInfo(i);
+                m_Results[i] = new WorkforcesInfo(i);
             }
         }
 

@@ -1,7 +1,8 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import $Panel from 'mods/panel';
 import { useValue, bindValue } from 'cs2/api';
 import mod from 'mod.json';
+import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
+import styles from "./Workforce.module.scss";
 
 // Define the structure of workforce information
 interface WorkforceInfo {
@@ -82,40 +83,12 @@ const WorkforceLevel: FC<WorkforceLevelProps> = ({ levelColor, levelName, levelV
 };
 
 // Props for the main Workforce component
-interface WorkforceProps {
-  onClose: () => void;
-}
+
 
 // Workforce main component
-const Workforce: FC<WorkforceProps> = ({ onClose }) => {
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
+const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   const ilWorkforce = useValue(IlWorkforce$) || Array(6).fill(defaultWorkforceInfo);
-
-  const defaultPosition = { top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 };
-  const [panelPosition, setPanelPosition] = useState(defaultPosition);
-  const [lastClosedPosition, setLastClosedPosition] = useState(defaultPosition);
-
-  const handleSavePosition = useCallback((position: { top: number; left: number }) => {
-    setPanelPosition(position);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setLastClosedPosition(panelPosition);
-    setIsPanelVisible(false);
-    onClose();
-  }, [onClose, panelPosition]);
-
-  useEffect(() => {
-    if (!isPanelVisible) {
-      setPanelPosition(lastClosedPosition);
-    }
-  }, [isPanelVisible, lastClosedPosition]);
-
-  if (!isPanelVisible) {
-    return null;
-  }
-
-  // Workforce configuration
+  initialPosition = { x: 0.038, y: 0.15 };
   const workforceLevels = [
     { levelColor: '#808080', levelName: 'Uneducated', levelValues: ilWorkforce[0] },
     { levelColor: '#B09868', levelName: 'Poorly Educated', levelValues: ilWorkforce[1] },
@@ -128,13 +101,16 @@ const Workforce: FC<WorkforceProps> = ({ onClose }) => {
   const totalWorkers = ilWorkforce[5]?.Total || 0; // The total to calculate percentages
 
   return (
-    <$Panel
-      id="infoloom.workforce"
-      title="Workforce Structure"
-      onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.33 }}
-      initialPosition={panelPosition}
-     
+    <Panel 
+        draggable={true} 
+        onClose={onClose}
+        initialPosition={initialPosition}
+        className={styles.panel}
+        header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Workforce</span>
+        </div>
+      }
     >
       {ilWorkforce.length === 0 ? (
         <p style={{ color: 'white' }}>Loading...</p>
@@ -173,7 +149,7 @@ const Workforce: FC<WorkforceProps> = ({ onClose }) => {
           ))}
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 

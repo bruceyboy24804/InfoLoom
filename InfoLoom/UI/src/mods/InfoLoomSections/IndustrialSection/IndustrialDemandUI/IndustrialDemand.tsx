@@ -3,6 +3,7 @@ import React, { FC, useCallback, useState } from 'react';
 import $Panel from 'mods/panel';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
+import {PanelProps} from "cs2/ui";
 
 // Define interfaces for props
 interface RowWithTwoColumnsProps {
@@ -270,9 +271,7 @@ const ColumnExcludedResources: FC<ColumnExcludedResourcesProps> = ({ resources }
 // Declare the engine object if it's globally available
 
 
-interface IndustrialProps {
-  onClose: () => void;
-}
+interface IndustrialProps extends PanelProps {}
 
 const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
   // Commercial data
@@ -281,10 +280,8 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
-  // Handler for closing the panel
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  
+ 
 
   if (!isPanelVisible) {
     return null;
@@ -294,7 +291,7 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
     <$Panel
       id="infoloom-industrial"
       title="Industrial and Office Data"
-      onClose={handleClose}
+      onClose={onClose}
       initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.60 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, FC } from 'react';
 
 import $Panel from 'mods/panel';
-import { Button, Dropdown, DropdownToggle } from 'cs2/ui';
+import {Button, Dropdown, DropdownToggle, PanelProps} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './CommercialProducts.module.scss';
@@ -27,9 +27,7 @@ interface CommercialProductData {
   
 }
 const CommercialProduct$ = bindValue<CommercialProductData[]>(mod.id, "commercialProducts", []);
-interface CommercialProps {
-  onClose: () => void;
-}
+interface CommercialProps extends PanelProps {}
 
 type ShowColumnsType = {
   demand: boolean;
@@ -149,9 +147,7 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
     </div>
   );
 };
-interface CommercialProps {
-  onClose: () => void
-}
+
 const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
   
   const commercialProducts = useValue(CommercialProduct$);
@@ -198,15 +194,13 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
     return true;
   }, [filterDemand]);
 
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  
 
   return (
     <$Panel
       id="infoloom-commercial-products"
       title="Commercial Products"
-      onClose={handleClose}
+      onClose={onClose}
       initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >

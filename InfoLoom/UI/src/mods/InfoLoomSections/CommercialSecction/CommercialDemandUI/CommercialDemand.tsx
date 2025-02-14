@@ -2,6 +2,7 @@ import React, { FC, useCallback, useState } from 'react';
 import $Panel from 'mods/panel';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
+import {PanelProps} from "cs2/ui";
 
 interface Factor {
   factor: string;
@@ -208,9 +209,7 @@ const ColumnExcludedResources: FC<ColumnExcludedResourcesProps> = ({ resources }
   );
 };
 
-interface CommercialProps {
-  onClose: () => void;
-}
+interface CommercialProps extends PanelProps {}
 
 const $Commercial: FC<CommercialProps> = ({ onClose }) => {
     
@@ -222,9 +221,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   // Handler for closing the panel
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  
 
   if (!isPanelVisible) {
     return null;
@@ -233,7 +230,7 @@ const $Commercial: FC<CommercialProps> = ({ onClose }) => {
   return (
     <$Panel
       title="Commercial Data"
-      onClose={handleClose}
+      onClose={onClose}
       id="infoloom-commercial"
       initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.31 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}

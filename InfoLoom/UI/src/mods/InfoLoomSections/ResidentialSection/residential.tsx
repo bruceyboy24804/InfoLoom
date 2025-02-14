@@ -1,16 +1,17 @@
-import React, { FC, useCallback, useState } from 'react';
-import $Panel from 'mods/panel';
-import {bindValue, useValue} from "cs2/api";
+import React, { useCallback, useState } from 'react';
+import { bindValue, useValue } from "cs2/api";
 import mod from "mod.json";
-
+import { DraggablePanelProps, Panel, PanelProps } from "cs2/ui";
+import styles from "./Residential.module.scss";
 
 const Residential$ = bindValue<number[]>(mod.id, "ilResidential", []);
+
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
   right: React.ReactNode;
 }
 
-const RowWithTwoColumns: React.FC<RowWithTwoColumnsProps> = ({ left, right }) => {
+const RowWithTwoColumns = ({ left, right }: RowWithTwoColumnsProps): JSX.Element => {
   return (
     <div className="labels_L7Q row_S2v">
       <div className="row_S2v" style={{ width: '70%' }}>
@@ -32,14 +33,14 @@ interface RowWithThreeColumnsProps {
   flag2?: boolean;
 }
 
-const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
+const RowWithThreeColumns = ({
   left,
   leftSmall,
   right1,
   flag1,
   right2,
   flag2,
-}) => {
+}: RowWithThreeColumnsProps): JSX.Element => {
   const centerStyle: React.CSSProperties = {
     width: right2 === undefined ? '30%' : '15%',
     justifyContent: 'center',
@@ -76,7 +77,7 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
 };
 
 // Simple horizontal line
-const DataDivider: React.FC = () => {
+const DataDivider = (): JSX.Element => {
   return (
     <div
       style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}
@@ -95,7 +96,7 @@ interface SingleValueProps {
 
 // Centered value, if flag exists then uses colors for negative/positive
 // Width is 20% by default
-const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) => {
+const SingleValue = ({ value, flag, width, small }: SingleValueProps): JSX.Element => {
   const rowClass = small ? 'row_S2v small_ExK' : 'row_S2v';
   const centerStyle: React.CSSProperties = {
     width: width === undefined ? '16%' : width,
@@ -120,7 +121,7 @@ interface BuildingDemandSectionProps {
   data: number[];
 }
 
-const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) => {
+const BuildingDemandSection = ({ data }: BuildingDemandSectionProps): JSX.Element => {
   const freeL = data[0] - data[3];
   const freeM = data[1] - data[4];
   const freeH = data[2] - data[5];
@@ -199,28 +200,9 @@ const BuildingDemandSection: React.FC<BuildingDemandSectionProps> = ({ data }) =
   );
 };
 
-interface ResidentialProps {
-  onClose: () => void;
-}
-
-const Residential: FC<ResidentialProps> = ({ onClose }) => {
-  // Residential data
-  
+const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Element => {
   const ilResidential = useValue(Residential$);
-  
-  
-
-  // New state to control panel visibility
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
-
-  // Handler for closing the panel
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  if (!isPanelVisible) {
-    return null;
-  }
+  initialPosition = { x: 0.038, y: 0.15 };
 
   const homelessThreshold =
     ilResidential.length > 13
@@ -228,12 +210,16 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
       : 0;
 
   return (
-    <$Panel
-      id="infoloom.residential"
-      title="Residential Data"
-      onClose={handleClose}
-      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.3 }}
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+    <Panel
+      draggable={true}
+      onClose={onClose}
+      initialPosition={initialPosition}
+      className={styles.panel}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Residential</span>
+        </div>
+      }
     >
       {ilResidential.length === 0 ? (
         <p>Waiting...</p>
@@ -307,20 +293,8 @@ const Residential: FC<ResidentialProps> = ({ onClose }) => {
           </div>
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 
 export default Residential;
-
-/* Note: If you are using HookUI or need to register the panel, uncomment and adjust the following code:
-
-// Registering the panel with HookUI so it shows up in the menu
-window._$hookui.registerPanel({
-  id: 'infoloom.residential',
-  name: 'InfoLoom: Residential Data',
-  icon: 'Media/Game/Icons/ZoneResidential.svg',
-  component: $Residential,
-});
-
-*/

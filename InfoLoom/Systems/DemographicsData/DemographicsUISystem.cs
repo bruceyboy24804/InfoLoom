@@ -41,7 +41,6 @@ namespace InfoLoomTwo.Systems.DemographicsData
         }
         private GetterValueBinding<int> m_OldCitizenBinding;
         private ValueBindingHelper<PopulationAtAgeInfo[]>m_PopulationAtAgeInfoBinding;
-        
         private ValueBindingHelper<int[]> m_TotalsBinding;
         
 
@@ -49,13 +48,13 @@ namespace InfoLoomTwo.Systems.DemographicsData
         {
             base.OnCreate();
             Setting setting = Mod.setting;    
-            var demographics = World.GetExistingSystemManaged<Demographics.Demographics>();
+            var demographics = World.GetExistingSystemManaged<Demographics>();
             m_PopulationAtAgeInfoBinding = CreateBinding("StructureDetails", new PopulationAtAgeInfo[0]);
             m_TotalsBinding = CreateBinding("StructureTotals", new int[10]);
             
             m_OldCitizenBinding = CreateBinding("OldestCitizen", () => 
             {
-                var demographics = World.GetExistingSystemManaged<Demographics.Demographics>();
+                var demographics = World.GetExistingSystemManaged<Demographics>();
                 return demographics.m_Totals[6];
             });
             Mod.log.Info("DemographicsUISystem created.");
@@ -64,10 +63,9 @@ namespace InfoLoomTwo.Systems.DemographicsData
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            var demographics = World.GetExistingSystemManaged<Demographics.Demographics>();
-            m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-            m_TotalsBinding.Value = demographics.m_Totals.ToArray();
             
+            m_PopulationAtAgeInfoBinding.Value = new PopulationAtAgeInfo[120];
+            m_TotalsBinding.Value = new int[10];
             m_OldCitizenBinding.Update();
             
             

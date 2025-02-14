@@ -112,11 +112,11 @@ namespace InfoLoomTwo
             
         }
 
-        public void HideModdedCommercialDemandButton(bool value)
+        /*public void HideModdedCommercialDemandButton(bool value)
         {
             CommercialProductsUISystem commercialProductsUISystem = World.DefaultGameObjectInjectionWorld?.GetOrCreateSystemManaged<CommercialProductsUISystem>();
             commercialProductsUISystem.MCDButton = value;
-        }
+        }*/
     }
     
     public class LocaleEN : IDictionarySource

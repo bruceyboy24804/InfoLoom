@@ -1,0 +1,89 @@
+.panel {
+  width: 500rem;
+  display: flex;
+  flex-direction: column; /* Ensure proper layout */
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
+
+.labels_L7Q {
+  box-sizing: border-box;
+  border: 1px solid gray;
+}
+
+.row_S2v {
+  display: flex;
+  justify-content: center;
+}
+
+.small_ExK {
+  font-size: 80%;
+}
+
+.negative_YWY {
+  color: red;
+}
+
+.positive_zrK {
+  color: green;
+}
+
+.space_uKL {
+  height: 3rem;
+}
+
+.centerStyle {
+  justify-content: center;
+}
+
+.centerStyle16 {
+  width: 16%;
+}
+
+.centerStyle30 {
+  width: 30%;
+}
+
+.centerStyle70 {
+  width: 70%;
+}
+
+.centerStyle34 {
+  width: 34%;
+}
+
+.centerStyle2 {
+  width: 2%;
+}
+
+.centerStyle36 {
+  width: 36%;
+}
+
+.centerStyle50 {
+  width: 50%;
+}
+
+.centerStyle15 {
+  width: 15%;
+}
+
+.divider {
+  display: flex;
+  height: 4rem;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid gray;
+}

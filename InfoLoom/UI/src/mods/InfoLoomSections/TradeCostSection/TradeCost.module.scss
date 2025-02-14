@@ -2,17 +2,25 @@
 
 /* Panel Theming */
 .panel {
-  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+  //background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
   display: flex;
   flex-direction: column;
-  height: 100%; /* Ensure the panel occupies full height */
+  height: 800rem; /* Ensure the panel occupies full height */
+  width: 1400rem;
 }
 
-.panelHeader {
-  background-color: rgba(255, 255, 255, 0.1); /* Light overlay for header */
-  padding: 0.5rem;
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
 }
-
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
 .panelContent {
   display: flex;
   flex-direction: column;
@@ -32,7 +40,7 @@
   display: flex;
   flex-direction: column;
   flex: 1; /* Allow innerContent to expand and fill the available space */
-  overflow: hidden; /* Prevents innerContent from overflowing */
+  //overflow: hidden; /* Prevents innerContent from overflowing */
 }
 
 /* Controls Section (Dropdowns and Buttons) */
@@ -64,14 +72,8 @@
 /* Table Header Row */
 .headerRow {
   display: flex;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 2px solid #444;
-  background-color: rgba(255, 255, 255, 0.2);
   position: sticky;
-  top: 0;
-  z-index: 1;
-  backdrop-filter: blur(8px);
+  background-color:  var(--toolbarFieldColor-hover) ;
 }
 
 /* Table Header Cells */
@@ -80,7 +82,6 @@
   text-align: center;
   font-size: 0.80em;
   font-weight: 600;
-  color: #8b8b8b;
   position: relative;
   display: flex;
   align-items: center;
@@ -96,7 +97,7 @@
 /* Table Body */
 .tableBody {
   flex: 1 1 auto; /* Allow the table body to grow and shrink */
-  overflow-y: auto; /* Enable vertical scrolling within the table body */
+  //overflow-y: auto; /* Enable vertical scrolling within the table body */
 }
 
 /* Individual Table Rows */
@@ -187,7 +188,7 @@
 
 /* Resource Checkboxes Container */
 .resourceCheckboxes {
-  width: 200px; /* Fixed width for checkboxes */
+  width: 180rem; /* Fixed width for checkboxes */
   max-height: 100%; /* Prevent from exceeding container height */
   overflow-y: auto; /* Enable scrolling if checkboxes exceed height */
   padding-right: 0.5rem;
@@ -198,8 +199,10 @@
 .checkboxHeader {
   color: #ccc;
   margin-bottom: 0.5rem;
+  margin-left: 20rem;
   font-size: 1em;
   font-weight: 600;
+  align-items: center;
 }
 
 /* Checkbox Item Wrapper */
@@ -264,6 +267,8 @@
 
   .graphViewContainer {
     flex-direction: column;
+    overflow-y: hidden;
+    margin-bottom: 10rem;
   }
 
   .resourceCheckboxes {

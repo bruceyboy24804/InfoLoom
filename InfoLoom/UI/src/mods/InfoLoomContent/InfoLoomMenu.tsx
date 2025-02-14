@@ -1,4 +1,4 @@
-import React, { useCallback, useState, FC, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { Button, FloatingButton, Tooltip } from "cs2/ui";
 import icon from "images/infoloom.svg";
 import styles from "./InfoLoomMenu.module.scss";
@@ -11,71 +11,34 @@ import Commercial from "mods/InfoLoomSections/CommercialSecction/CommercialDeman
 import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand";
 import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
-//import ModdedCommercialDemand from "mods/InfoLoomSections/CommercialSecction/ModdedCommercialDemand/ModdedCommercialDemand";
 import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
-import { bindValue, useValue, trigger } from "cs2/api";
+import { bindValue, useValue } from "cs2/api";
 import mod from "mod.json";
+import Districts from "../InfoLoomSections/DistrictSection/Districts";
 
-// This reactive boolean controls whether the "Modded Commercial Demand" UI is visible
-const ModdedCommercialDemandButton$ = bindValue<boolean>(mod.id, "MCDButton", false);
-
-// Define the Section type
-type Section =
-  | "Demographics"
-  | "Workforce"
-  | "Workplaces"
-  | "Demand"
-  | "Residential"
-  | "Commercial"
-  | "Commercial Products"
-  | "Industrial"
-  | "Industrial Products"
-  | "Modded Commercial Demand"
-  | "Trade Cost";
-
-
-// Components that accept an onClose prop
-type SectionComponentProps = {
-  onClose: () => void;
+const sectionComponents: Record<string, JSX.Element> = {
+  Demographics: <Demographics />,
+  Workforce: <Workforce />,
+  Workplaces: <Workplaces />,
+  Residential: <Residential />,
+  Demand: <Demand />,
+  Commercial: <Commercial />,
+  "Commercial Products": <CommercialProducts />,
+  Industrial: <Industrial />,
+  "Industrial Products": <IndustrialProducts />,
+  "Trade Cost": <TradeCost />,
+  Districts: <Districts />,
 };
 
-// All possible sections
-const allSections: {
-  name: Section;
-  displayName: string;
-  component: FC<SectionComponentProps>;
-}[] = [
-  { name: "Demographics", displayName: "Demographics", component: Demographics },
-  { name: "Workforce", displayName: "Workforce", component: Workforce },
-  { name: "Workplaces", displayName: "Workplaces", component: Workplaces },
-  { name: "Residential", displayName: "Residential", component: Residential },
-  { name: "Demand", displayName: "Demand", component: Demand },
-  { name: "Commercial", displayName: "Commercial", component: Commercial },
-  {
-    name: "Commercial Products",
-    displayName: "Commercial Products",
-    component: CommercialProducts,
-  },
-  { name: "Industrial", displayName: "Industrial", component: Industrial },
-  {
-    name: "Industrial Products",
-    displayName: "Industrial Products",
-    component: IndustrialProducts,
-  },
-  /*{
-    name: "Modded Commercial Demand",
-    displayName: "Modded Commercial Demand",
-    component: ModdedCommercialDemand,
-  },*/
-  { name: "Trade Cost", displayName: "Trade Cost", component: TradeCost },
-];
+const allSections = Object.keys(sectionComponents).map((name) => ({
+  name,
+  displayName: name,
+  component: sectionComponents[name],
+}));
 
-const InfoLoomButton: FC = () => {
-  // Reactively read the boolean from bindValue
-  const showModdedCommercialDemand = useValue(ModdedCommercialDemandButton$);
-
+function InfoLoomButton(): JSX.Element {
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
-  const [openSections, setOpenSections] = useState<Record<Section, boolean>>({
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     Demographics: false,
     Workforce: false,
     Workplaces: false,
@@ -85,38 +48,22 @@ const InfoLoomButton: FC = () => {
     "Commercial Products": false,
     Industrial: false,
     "Industrial Products": false,
-    "Modded Commercial Demand": false,
     "Trade Cost": false,
+    Districts: false,
   });
-
-  // Force-close Modded Commercial Demand if turned off while open
-  useEffect(() => {
-    if (!showModdedCommercialDemand && openSections["Modded Commercial Demand"]) {
-      setOpenSections((prev) => ({
-        ...prev,
-        "Modded Commercial Demand": false,
-      }));
-    }
-  }, [showModdedCommercialDemand, openSections]);
 
   const toggleMainMenu = useCallback(() => {
     setMainMenuOpen((prev) => !prev);
   }, []);
 
-  const toggleSection = useCallback((section: Section, isOpen?: boolean) => {
+  const toggleSection = useCallback((section: string, isOpen?: boolean) => {
     setOpenSections((prev) => ({
       ...prev,
       [section]: isOpen !== undefined ? isOpen : !prev[section],
     }));
   }, []);
 
-  // Only include sections that should be visible
-  const visibleSections = allSections.filter((section) => {
-    if (section.name === "Modded Commercial Demand") {
-      return showModdedCommercialDemand; // Hide if false
-    }
-    return true; // Otherwise show
-  });
+  const visibleSections = allSections;
 
   return (
     <div>
@@ -138,7 +85,7 @@ const InfoLoomButton: FC = () => {
                 aria-expanded={openSections[name]}
                 className={`${styles.InfoLoomButton} ${openSections[name] ? styles.buttonSelected : ''}`}
                 onClick={() => toggleSection(name)}
-                onMouseDown={e => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
               >
                 {name}
               </Button>
@@ -147,13 +94,11 @@ const InfoLoomButton: FC = () => {
         </div>
       )}
 
-      {visibleSections.map(({ name, component: Component }) => {
-        return (
-          openSections[name] && <Component key={name} onClose={() => toggleSection(name, false)} />
-        );
+      {visibleSections.map(({ name }) => {
+        return openSections[name] && React.cloneElement(sectionComponents[name], { key: name, onClose: () => toggleSection(name, false) });
       })}
     </div>
   );
-};
+}
 
 export default InfoLoomButton;
