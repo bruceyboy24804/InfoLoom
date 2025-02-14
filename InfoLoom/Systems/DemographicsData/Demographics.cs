@@ -318,7 +318,7 @@ public partial class Demographics : SystemBase
 
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-        m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TODO
+        m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TOD
         
     }
 
