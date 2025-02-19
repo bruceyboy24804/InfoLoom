@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import $Panel from 'mods/panel';
-import { bindValue, useValue } from 'cs2/api';
-import mod from 'mod.json';
+import { useValue } from 'cs2/api';
 import { cityInfo } from 'cs2/bindings';
 import {PanelProps, Scrollable} from 'cs2/ui';
+import { BuildingDemandData } from '../../bindings';
 
 // Declare global 'engine' if needed
 
@@ -11,10 +11,6 @@ interface AlignedParagraphProps {
   left: number;
   right: string;
 }
-// Define the TypeScript interface for demand data
-
-// Binding for demand data
-const Demand$ = bindValue<number[]>(mod.id, 'ilBuildingDemand', []);
 
 const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
   let color: string;
@@ -162,7 +158,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
   const officeFactors = useValue(cityInfo.officeFactors$);
 
   // Building demand
-  const ilBuildingDemand = useValue(Demand$);
+  const buildingDemandData = useValue(BuildingDemandData);
   const titles = [
     'Residential Low',
     'Residential Medium',
@@ -174,7 +170,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
   ];
   const buildingDemandFactors = titles.map((factor, index) => ({
     factor,
-    weight: ilBuildingDemand[index] ?? 0,
+    weight: buildingDemandData[index] ?? 0,
   }));
 
   const defaultPosition = {

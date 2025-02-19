@@ -1,42 +1,14 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { useValue, bindValue } from 'cs2/api';
-import mod from 'mod.json';
 import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
 import styles from "./Workforce.module.scss";
+import {workforceInfo} from "../../domain/workforceInfo";
+import {WorkforceData} from "../../bindings";
 
-// Define the structure of workforce information
-interface WorkforceInfo {
-  Total: number;
-  Worker: number;
-  Unemployed: number;
-  Under: number;
-  Outside: number;
-  Homeless: number;
-}
 
-// Default values for workforce info
-const defaultWorkforceInfo: WorkforceInfo = {
-  Total: 0,
-  Worker: 0,
-  Unemployed: 0,
-  Under: 0,
-  Outside: 0,
-  Homeless: 0,
-};
 
-// Bind workforce data using CS2 API
-const IlWorkforce$ = bindValue<WorkforceInfo[]>(mod.id, 'ilWorkforce');
 
-// Props for each level of workforce representation
-interface WorkforceLevelProps {
-  levelColor?: string;
-  levelName: string;
-  levelValues: WorkforceInfo;
-  total: number;
-}
-
-// WorkforceLevel component
-const WorkforceLevel: FC<WorkforceLevelProps> = ({ levelColor, levelName, levelValues, total }) => {
+const WorkforceLevel: FC<workforceLevelProps> = ({ levelColor, levelName, levelValues, total }) => {
   const percent =
     total > 0 && typeof levelValues.Total === 'number'
       ? `${((100 * levelValues.Total) / total).toFixed(1)}%`
@@ -83,11 +55,16 @@ const WorkforceLevel: FC<WorkforceLevelProps> = ({ levelColor, levelName, levelV
 };
 
 // Props for the main Workforce component
-
+export interface workforceLevelProps {
+  levelColor?: string;
+  levelName: string;
+  levelValues: workforceInfo;
+  total: number;
+}
 
 // Workforce main component
 const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
-  const ilWorkforce = useValue(IlWorkforce$) || Array(6).fill(defaultWorkforceInfo);
+  const ilWorkforce = useValue(WorkforceData);
   initialPosition = { x: 0.038, y: 0.15 };
   const workforceLevels = [
     { levelColor: '#808080', levelName: 'Uneducated', levelValues: ilWorkforce[0] },

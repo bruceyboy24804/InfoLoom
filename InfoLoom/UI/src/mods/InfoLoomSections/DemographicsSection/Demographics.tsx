@@ -9,7 +9,6 @@ import React, {
 
 // External hooks / frameworks
 import $Panel from 'mods/panel';
-import mod from 'mod.json';
 
 // Chart.js
 import { Bar } from 'react-chartjs-2';
@@ -25,8 +24,10 @@ import {
 
 // Local or app-level imports
 import { bindValue, useValue } from 'cs2/api';
-import { InfoCheckbox } from '../../InfoCheckbox/InfoCheckbox';
-import {PanelProps} from "cs2/ui";
+import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
+import {DraggablePanelProps, PanelProps} from "cs2/ui";
+import {populationAtAge} from "../../domain/populationAtAge";
+import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
 
 // Register Chart.js components
 ChartJS.register(
@@ -39,23 +40,12 @@ ChartJS.register(
 );
 
 // ==== Bindings (connect to your mod's data) ====
-const Population$ = bindValue<PopulationAtAge[]>(mod.id, 'StructureDetails', []);
-const Totals$ = bindValue<number[]>(mod.id, 'StructureTotals', []);
-const OldestCitizen$ = bindValue<number>(mod.id, 'OldestCitizen', 0);
 
-// ==== Types & Interfaces ====
-interface PopulationAtAge {
-  Age: number;
-  Work: number;
-  School1: number;
-  School2: number;
-  School3: number;
-  School4: number;
-  Other: number;
-  Total: number;
-}
 
-interface DemographicsProps extends PanelProps {}
+
+
+
+
 
 interface AlignedParagraphProps {
   left: string;
@@ -177,7 +167,7 @@ const GROUP_STRATEGIES: GroupingOption[] = [
  * Helper function to group raw population data based on the selected grouping strategy.
  */
 function aggregatePopulationData(
-  details: PopulationAtAge[],
+  details: populationAtAge[],
   grouping: GroupingOption
 ): AggregatedInfo[] {
   // Initialize each range
@@ -339,7 +329,7 @@ const StatisticsSummary: FC<StatisticsSummaryProps> = ({
  * Main Chart renderer for the demographics data.
  */
 const DemographicsChart: FC<{
-  StructureDetails: PopulationAtAge[];
+  StructureDetails: populationAtAge[];
   groupingStrategy: GroupingStrategy;
 }> = ({ StructureDetails, groupingStrategy }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -535,7 +525,7 @@ const DemographicsChart: FC<{
 };
 
 // === Main Demographics Component ===
-const Demographics: FC<DemographicsProps> = ({ onClose }) => {
+const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   // Panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
@@ -547,9 +537,9 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
 
   // Data from ECS / mod
-  const StructureDetails = useValue(Population$);
-  const StructureTotals = useValue(Totals$);
-  const OldestCitizen = useValue(OldestCitizen$);
+  const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
+  const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
+  const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
 
   // Panel dims
   const panWidth = window.innerWidth * 0.2;
@@ -565,8 +555,8 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
 
   // The chart’s dynamic height
   const chartHeightToUse = useMemo(() => {
-    return Math.min(MAX_CHART_HEIGHT, StructureDetails.length * BAR_HEIGHT);
-  }, [StructureDetails]);
+    return Math.min(MAX_CHART_HEIGHT, demographicsDataStructureDetails.length * BAR_HEIGHT);
+  }, [demographicsDataStructureDetails]);
 
   // Panel style
   const panelStyle: React.CSSProperties = useMemo(
@@ -618,8 +608,8 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
         {/* Statistics Summary */}
         {showStatistics && (
           <StatisticsSummary
-            StructureTotals={StructureTotals}
-            OldestCitizen={OldestCitizen}
+            StructureTotals={demographicsDataStructureTotals}
+            OldestCitizen={demographicsDataOldestCitizen}
           />
         )}
 
@@ -628,7 +618,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
           <GroupingOptions
             groupingStrategy={groupingStrategy}
             setGroupingStrategy={setGroupingStrategy}
-            totalEntries={StructureDetails.length}
+            totalEntries={demographicsDataStructureDetails.length}
           />
         )}
 
@@ -651,7 +641,7 @@ const Demographics: FC<DemographicsProps> = ({ onClose }) => {
             }}
           >
             <DemographicsChart
-              StructureDetails={StructureDetails}
+              StructureDetails={demographicsDataStructureDetails}
               groupingStrategy={groupingStrategy}
             />
           </div>

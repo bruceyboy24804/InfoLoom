@@ -33,6 +33,11 @@
 	  <Compile Remove="Systems\TradeCostData\TradeCostUISystem.cs" />
 	  <Compile Remove="Systems\WorkforceData\WorkforceUISystem.cs" />
 	  <Compile Remove="Systems\WorkplacesData\WorkplacesUISystem.cs" />
+	  <None Include="UI\src\mods\bindings.ts" />
+	  <None Include="UI\src\mods\bindings.ts" />
+	  <None Include="UI\src\mods\bindings.ts" />
+	  <None Include="UI\src\mods\bindings.ts" />
+	  <Compile Remove="Systems\DistrictData\EmployeesDataSystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />

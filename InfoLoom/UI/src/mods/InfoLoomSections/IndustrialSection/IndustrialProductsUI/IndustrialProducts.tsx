@@ -1,32 +1,20 @@
 import React, { useState, useCallback, FC } from 'react';
 import $Panel from 'mods/panel';
 import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable} from 'cs2/ui';
-import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
+import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
+import { industrialProductData } from 'mods/domain/industrialProductData';
+import {IndustrialProductsData} from "../../../bindings";
 
 
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
-interface IndustrialProductData {
-  ResourceName: string;
-  Demand: number;
-  Building: number;
-  Free: number;
-  Companies: number;
-  SvcPercent: number;
-  CapPerCompany: number;
-  CapPercent: number;
-  Workers: number;
-  WrkPercent: number;
-  TaxFactor: number;
-  
-}
-const IndustrialProduct$ = bindValue<IndustrialProductData[]>(mod.id, "industrialProducts", []);
+
 
 // Interface for RowWithTwoColumns props
 interface RowWithTwoColumnsProps {
@@ -149,7 +137,7 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
 
 
 interface ResourceLineProps {
-  data: IndustrialProductData;
+  data: industrialProductData;
   showColumns: {
     demand: boolean;
     buildings: boolean;
@@ -300,7 +288,7 @@ interface IndustrialProps extends PanelProps {
 
 // Component: $Commercial
 const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
-  const industrialProducts = useValue(IndustrialProduct$);
+  const industrialProducts = useValue(IndustrialProductsData);
 
   // State to control panel visibility
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -336,7 +324,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   }, []);
 
   // Sort and filter functions
-  const sortData = useCallback((a: IndustrialProductData, b: IndustrialProductData) => {
+  const sortData = useCallback((a: industrialProductData, b: industrialProductData) => {
   switch (sortBy) {
     case 'name':
       return a.ResourceName.localeCompare(b.ResourceName);
@@ -352,7 +340,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
 }, [sortBy]);
 
 
-  const applyDataFilter = useCallback((item: IndustrialProductData) => {
+  const applyDataFilter = useCallback((item: industrialProductData) => {
   if (filterDemand === 'positive' && item.Demand <= 0) return false;
   if (filterDemand === 'negative' && item.Demand >= 0) return false;
   if (filterWorkers === 'full' && item.WrkPercent < 100) return false;
@@ -554,10 +542,10 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           <TableHeader showColumns={showColumns} />
             <Scrollable vertical={true} smooth={true} trackVisibility="scrollable">
               {industrialProducts
-              .filter((item: IndustrialProductData) => item.ResourceName !== 'NoResource')
+              .filter((item: industrialProductData) => item.ResourceName !== 'NoResource')
               .filter(applyDataFilter)
-              .sort((a: IndustrialProductData, b: IndustrialProductData) => sortData(a, b))
-              .map((item: IndustrialProductData) => (
+              .sort((a: industrialProductData, b: industrialProductData) => sortData(a, b))
+              .map((item: industrialProductData) => (
                 <ResourceLine
                   key={item.ResourceName}
                   data={item}

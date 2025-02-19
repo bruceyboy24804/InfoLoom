@@ -1,5 +1,5 @@
 import  { ModRegistrar } from 'cs2/modding';
-import InfoLoomMenu from './mods/InfoLoomContent/InfoLoomMenu';
+import InfoLoomMenu from 'mods/InfoLoomMenu/InfoLoomMenu';
 import 'intl';
 import 'intl/locale-data/jsonp/en-US';
 import {Chart} from 'chart.js';

@@ -3,8 +3,8 @@ import { bindValue, useValue } from "cs2/api";
 import mod from "mod.json";
 import { DraggablePanelProps, Panel, PanelProps } from "cs2/ui";
 import styles from "./Residential.module.scss";
+import { ResidentialData } from "mods/bindings";
 
-const Residential$ = bindValue<number[]>(mod.id, "ilResidential", []);
 
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
@@ -201,7 +201,7 @@ const BuildingDemandSection = ({ data }: BuildingDemandSectionProps): JSX.Elemen
 };
 
 const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Element => {
-  const ilResidential = useValue(Residential$);
+  const ilResidential = useValue(ResidentialData);
   initialPosition = { x: 0.038, y: 0.15 };
 
   const homelessThreshold =

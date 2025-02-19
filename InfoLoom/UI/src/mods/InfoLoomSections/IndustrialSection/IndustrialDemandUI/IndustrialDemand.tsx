@@ -4,6 +4,7 @@ import $Panel from 'mods/panel';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
 import {PanelProps} from "cs2/ui";
+import { IndustrialData, IndustrialDataExRes} from "../../../bindings";
 
 // Define interfaces for props
 interface RowWithTwoColumnsProps {
@@ -36,8 +37,7 @@ interface ColumnExcludedResourcesProps {
 }
 
 // Component Definitions
-const IndustrialDemand$ = bindValue<number[]>(mod.id, "ilIndustrial", []);
-const IndustrialExRes$ = bindValue<string[]>(mod.id, "ilIndustrialExRes", []);
+
 const RowWithTwoColumns: React.FC<RowWithTwoColumnsProps> = ({ left, right }) => {
   return (
     <div className="labels_L7Q row_S2v">
@@ -275,8 +275,8 @@ interface IndustrialProps extends PanelProps {}
 
 const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
   // Commercial data
-  const ilIndustrial = useValue(IndustrialDemand$);  
-  const ilIndustrialExRes = useValue(IndustrialExRes$);
+  const ilIndustrial = useValue(IndustrialData);  
+  const ilIndustrialExRes = useValue(IndustrialDataExRes);
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 

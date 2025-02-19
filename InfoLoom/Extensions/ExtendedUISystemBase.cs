@@ -17,6 +17,7 @@ namespace InfoLoomTwo.Extensions
 {
 	public abstract partial class ExtendedUISystemBase : UISystemBase
 	{
+		private const string ModID = "InfoLoomTwo";
 		private readonly List<Action> _updateCallbacks = new();
 
 		protected override void OnUpdate()
@@ -31,7 +32,7 @@ namespace InfoLoomTwo.Extensions
 
 		public ValueBindingHelper<T> CreateBinding<T>(string key, T initialValue)
 		{
-			var helper = new ValueBindingHelper<T>(new(Mod.Id, key, initialValue, new GenericUIWriter<T>()));
+			var helper = new ValueBindingHelper<T>(new(ModID, key, initialValue, new GenericUIWriter<T>()));
 
 			AddBinding(helper.Binding);
 
@@ -42,8 +43,8 @@ namespace InfoLoomTwo.Extensions
 
 		public ValueBindingHelper<T> CreateBinding<T>(string key, string setterKey, T initialValue, Action<T> updateCallBack = null)
 		{
-			var helper = new ValueBindingHelper<T>(new(Mod.Id, key, initialValue, new GenericUIWriter<T>()), updateCallBack);
-			var trigger = new TriggerBinding<T>(Mod.Id, setterKey, helper.UpdateCallback, GenericUIReader<T>.Create());
+			var helper = new ValueBindingHelper<T>(new(ModID, key, initialValue, new GenericUIWriter<T>()), updateCallBack);
+			var trigger = new TriggerBinding<T>(ModID, setterKey, helper.UpdateCallback, GenericUIReader<T>.Create());
 
 			AddBinding(helper.Binding);
 			AddBinding(trigger);
@@ -55,7 +56,7 @@ namespace InfoLoomTwo.Extensions
 
 		public GetterValueBinding<T> CreateBinding<T>(string key, Func<T> getterFunc)
 		{
-			var binding = new GetterValueBinding<T>(Mod.Id, key, getterFunc, new GenericUIWriter<T>());
+			var binding = new GetterValueBinding<T>(ModID, key, getterFunc, new GenericUIWriter<T>());
 
 			AddUpdateBinding(binding);
 
@@ -64,7 +65,7 @@ namespace InfoLoomTwo.Extensions
 
 		public TriggerBinding CreateTrigger(string key, Action action)
 		{
-			var binding = new TriggerBinding(Mod.Id, key, action);
+			var binding = new TriggerBinding(ModID, key, action);
 
 			AddBinding(binding);
 
@@ -73,7 +74,7 @@ namespace InfoLoomTwo.Extensions
 
 		public TriggerBinding<T1> CreateTrigger<T1>(string key, Action<T1> action)
 		{
-			var binding = new TriggerBinding<T1>(Mod.Id, key, action, GenericUIReader<T1>.Create());
+			var binding = new TriggerBinding<T1>(ModID, key, action, GenericUIReader<T1>.Create());
 
 			AddBinding(binding);
 
@@ -82,7 +83,7 @@ namespace InfoLoomTwo.Extensions
 
 		public TriggerBinding<T1, T2> CreateTrigger<T1, T2>(string key, Action<T1, T2> action)
 		{
-			var binding = new TriggerBinding<T1, T2>(Mod.Id, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create());
+			var binding = new TriggerBinding<T1, T2>(ModID, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create());
 
 			AddBinding(binding);
 
@@ -91,7 +92,7 @@ namespace InfoLoomTwo.Extensions
 
 		public TriggerBinding<T1, T2, T3> CreateTrigger<T1, T2, T3>(string key, Action<T1, T2, T3> action)
 		{
-			var binding = new TriggerBinding<T1, T2, T3>(Mod.Id, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create(), GenericUIReader<T3>.Create());
+			var binding = new TriggerBinding<T1, T2, T3>(ModID, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create(), GenericUIReader<T3>.Create());
 
 			AddBinding(binding);
 
@@ -100,7 +101,7 @@ namespace InfoLoomTwo.Extensions
 
 		public TriggerBinding<T1, T2, T3, T4> CreateTrigger<T1, T2, T3, T4>(string key, Action<T1, T2, T3, T4> action)
 		{
-			var binding = new TriggerBinding<T1, T2, T3, T4>(Mod.Id, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create(), GenericUIReader<T3>.Create(), GenericUIReader<T4>.Create());
+			var binding = new TriggerBinding<T1, T2, T3, T4>(ModID, key, action, GenericUIReader<T1>.Create(), GenericUIReader<T2>.Create(), GenericUIReader<T3>.Create(), GenericUIReader<T4>.Create());
 
 			AddBinding(binding);
 

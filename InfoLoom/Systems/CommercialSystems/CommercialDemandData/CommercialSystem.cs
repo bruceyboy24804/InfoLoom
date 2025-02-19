@@ -609,13 +609,12 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
             //m_Results[i] = 0; // new WorkforceAtLevelInfo(i);
             //}
         }
-
+        
+        
         
 
-        //[Preserve]
-        public CommercialSystem()
-        {
-        }
+        
+        
     }
 }
 

@@ -2,31 +2,18 @@ import React, { useState, useCallback, FC } from 'react';
 
 import $Panel from 'mods/panel';
 import {Button, Dropdown, DropdownToggle, PanelProps} from 'cs2/ui';
-import { InfoCheckbox } from 'mods/InfoCheckbox/InfoCheckbox';
+import { InfoCheckbox } from 'mods/components//InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './CommercialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import {bindValue, useValue} from "cs2/api";
-import mod from "mod.json";
-
+import {useValue} from "cs2/api";
+import { CommercialProductsData } from "mods/bindings";
+import { CommercialProductData } from "../../../domain/commercialProductData";
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
-interface CommercialProductData {
-  ResourceName: string;
-  Demand: number;
-  Building: number;
-  Free: number;
-  Companies: number;
-  SvcPercent: number;
-  CapPerCompany: number;
-  CapPercent: number;
-  Workers: number;
-  WrkPercent: number;
-  TaxFactor: number;
-  
-}
-const CommercialProduct$ = bindValue<CommercialProductData[]>(mod.id, "commercialProducts", []);
+
+
 interface CommercialProps extends PanelProps {}
 
 type ShowColumnsType = {
@@ -150,7 +137,7 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
 
 const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
   
-  const commercialProducts = useValue(CommercialProduct$);
+  const commercialProductsData = useValue(CommercialProductsData);
       
   
   
@@ -204,7 +191,7 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
       initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
       initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
     >
-      {commercialProducts.length === 0 ? (
+      {commercialProductsData.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
@@ -332,7 +319,7 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
 
           <TableHeader showColumns={showColumns} />
           
-          {commercialProducts
+          {commercialProductsData
             .filter(item => item.ResourceName !== 'NoResource')
             .filter(filterData)
             .sort(sortData)

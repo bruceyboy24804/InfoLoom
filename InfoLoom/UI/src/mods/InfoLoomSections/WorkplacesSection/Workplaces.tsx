@@ -1,54 +1,23 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import $Panel from 'mods/panel';
 import { useValue, bindValue } from 'cs2/api';
-import mod from 'mod.json';
 import {PanelProps, DraggablePanelProps, Panel} from "cs2/ui";
 import styles from "./Workplaces.module.scss";
+import {workplacesInfo} from 'mods/domain/WorkplacesInfo';
+import {WorkplacesData} from "../../bindings";
 
-// Define interface for workplaces information
-interface WorkplacesInfo {
-  Total: number;
-  Service: number;
-  Commercial: number;
-  Leisure: number;
-  Extractor: number;
-  Industrial: number;
-  Office: number;
-  Employee: number;
-  Commuter: number;
-  Open: number;
-  Name: string;
-}
 
-// Default placeholder for workplacesInfo
-const defaultWorkplacesInfo: WorkplacesInfo = {
-  Total: 0,
-  Service: 0,
-  Commercial: 0,
-  Leisure: 0,
-  Extractor: 0,
-  Industrial: 0,
-  Office: 0,
-  Employee: 0,
-  Commuter: 0,
-  Open: 0,
-  Name: '',
-};
-
-// Bind workplaces data using CS2 API
-const IlWorkplaces$ = bindValue<WorkplacesInfo[]>(mod.id, 'ilWorkplaces');
 
 // Define props for WorkforceLevel component
-interface WorkforceLevelProps {
+export interface workforceLevelProps {
   levelColor?: string;
   levelName: string;
-  levelValues: WorkplacesInfo;
+  levelValues: workplacesInfo;
   total: number;
   showAll?: boolean;
 }
 
 // WorkforceLevel Component
-const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
+const WorkforceLevel: React.FC<workforceLevelProps> = ({
   levelColor,
   levelName,
   levelValues,
@@ -116,7 +85,7 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
 // Main Workplaces Component
 const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition}) => {
  
-  const ilWorkplaces = useValue(IlWorkplaces$) || Array(7).fill(defaultWorkplacesInfo);
+  const ilWorkplaces = useValue(WorkplacesData);
   initialPosition = { x: 0.038, y: 0.15 };
   
 

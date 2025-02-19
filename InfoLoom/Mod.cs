@@ -7,6 +7,7 @@ using Game.SceneFlow;
 using HarmonyLib;
 using InfoLoomTwo.Systems;
 using System.Linq;
+using Game.UI.InGame;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
@@ -27,7 +28,6 @@ namespace InfoLoomTwo
         public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
         public static Setting setting;
-        public static readonly string Id = "InfoLoomTwo";
         public static Mod Instance { get; private set; }
      
         public static ExecutableAsset modAsset { get; private set; }    
