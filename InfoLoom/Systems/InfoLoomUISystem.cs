@@ -80,6 +80,7 @@ namespace InfoLoomTwo.Systems
         private CommercialProductsSystem m_CommercialProductsSystem;
         private Demographics m_Demographics;
         private DistrictDataSystem m_DistrictDataSystem;
+        
         private IndustrialSystem m_IndustrialSystem;
         private IndustrialProductsSystem m_IndustrialProductsSystem;
         private ResidentialSystem m_ResidentialSystem;
@@ -154,6 +155,7 @@ namespace InfoLoomTwo.Systems
             m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
             m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
             m_DistrictDataSystem = base.World.GetOrCreateSystemManaged<DistrictDataSystem>();
+            
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             
             //InfoLoomMenu
@@ -227,7 +229,7 @@ namespace InfoLoomTwo.Systems
             //DistrictDataUI
             // First binding: Basic district information
             AddBinding(m_uiDistricts = new RawValueBinding("InfoLoomTwo", "DistrictData", m_DistrictDataSystem.WriteDistricts));
-           
+            
 
             // Second binding: Resident statistics
             
@@ -356,6 +358,7 @@ namespace InfoLoomTwo.Systems
             if (_dDPVBinding.value)
             {
                 m_uiDistricts.Update();
+                
             }
         
             if (_iDPVBinding.value)
@@ -524,9 +527,12 @@ namespace InfoLoomTwo.Systems
         private void SetDistrictDataVisibility(bool open)
         {
             _dDPVBinding.Update(open);
+            m_DistrictDataSystem.IsPanelVisible = open;
 
             if (open)
             {
+                // Force immediate update when panel opens
+                m_DistrictDataSystem.ForceUpdateOnce();
                 m_uiDistricts.Update();
             }
         }

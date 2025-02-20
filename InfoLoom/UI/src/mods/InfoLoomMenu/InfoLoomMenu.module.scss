@@ -8,7 +8,11 @@
   margin-top: var(--gap8);
   background-color: var(--panelColorNormal);
   backdrop-filter: var(--panelBlur);
-  border-radius: var(--panelRadiusInner);
+  border-top-left-radius:  var(--panelRadiusInner);
+  border-top-right-radius: var(--panelRadiusInner);
+  border-bottom-left-radius: var(--panelRadiusInner);
+  border-bottom-right-radius: var(--panelRadiusInner);
+
   pointer-events: auto;
   overflow: hidden;
   animation: scale-up-center-alternate 0.25s ease 0s 1 alternate none;

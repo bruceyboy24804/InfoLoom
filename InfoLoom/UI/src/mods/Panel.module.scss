@@ -2,18 +2,11 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  border-radius: var(--panelRadiusInner);
+  border-top-left-radius:  var(--panelRadiusInner);
+  border-top-right-radius: var(--panelRadiusInner);
+  border-bottom-left-radius: var(--panelRadiusInner);
+  border-bottom-right-radius: var(--panelRadiusInner);
   overflow: hidden;
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--accentColorNormal);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accentColorNormal);
-    outline-offset: 2px;
-  }
 }
 
 .header {
@@ -60,23 +53,9 @@
   flex-direction: column;
   background-color: rgba(6, 10, 16, calc(var(--panelOpacityDark) + 0.2));
   backdrop-filter: var(--panelBlur);
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--accentColorNormal);
-    border-radius: 4px;
-
-    &:hover {
-      background: var(--accentColorHover);
-    }
-  }
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  
 }
 
 .resizeHandles {
