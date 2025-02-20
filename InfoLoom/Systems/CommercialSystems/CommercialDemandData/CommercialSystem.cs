@@ -449,8 +449,13 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
         {
             m_ReadDependencies = JobHandle.CombineDependencies(m_ReadDependencies, reader);
         }
-
-        //[Preserve]
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
+      
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -527,9 +532,11 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
         //[Preserve]
         protected override void OnUpdate()
         {
-            if (m_SimulationSystem.frameIndex % 128 != 55)
+           if (!IsPanelVisible)
                 return;
-            //Plugin.Log($"OnUpdate: {m_SimulationSystem.frameIndex}");
+           if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+           ForceUpdate = false;
             
             ResetResults();
 

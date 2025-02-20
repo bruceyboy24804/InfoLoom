@@ -304,13 +304,17 @@ namespace InfoLoomTwo.Systems.WorkforceData
         private NativeCounter m_PotentialWorkersByEducation3;
 
         private NativeCounter m_PotentialWorkersByEducation4;
-
-
-
-
-
+        
         // InfoLoom
         public NativeArray<WorkforcesInfo> m_Results;
+        
+        
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
         
         protected override void OnCreate()
         {
@@ -400,8 +404,11 @@ namespace InfoLoomTwo.Systems.WorkforceData
         //[Preserve]
         protected override void OnUpdate()
         {
-            if (m_SimulationSystem.frameIndex % 128 != 33)
+            if (!IsPanelVisible)
                 return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
 
 
 

@@ -74,28 +74,6 @@ namespace InfoLoomTwo.Systems.DistrictData
                 return true;
             }
 
-            void InitializeOrUpdateDistrict(Entity district)
-            {
-                for (int i = 0; i < m_Districts.Length; i++)
-                {
-                    if (m_Districts[i].district.Equals(district))
-                        return;
-                }
-
-                m_Districts.Add(new DistrictEntry
-                {
-                    district = district,
-                    households = new NativeList<Entity>(32, Allocator.TempJob),
-                    residentCount = 0,
-                    petCount = 0,
-                    householdCount = 0,
-                    maxHouseholds = 0,
-                    ageData = new AgeData(0, 0, 0, 0),
-                    educationData = new EducationData(0, 0, 0, 0, 0),
-                    wealthKey = default
-                });
-            }
-
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
@@ -106,6 +84,14 @@ namespace InfoLoomTwo.Systems.DistrictData
                 var districtAgeData = new NativeArray<int4>(m_Districts.Length, Allocator.Temp);
                 var districtEduData = new NativeArray<int4>(m_Districts.Length, Allocator.Temp);
                 var districtHighlyEducated = new NativeArray<int>(m_Districts.Length, Allocator.Temp);
+
+                // Initialize arrays with zeros
+                for (int i = 0; i < m_Districts.Length; i++)
+                {
+                    districtAgeData[i] = int4.zero;
+                    districtEduData[i] = int4.zero;
+                    districtHighlyEducated[i] = 0;
+                }
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -120,9 +106,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                         propertyData.m_ResidentialProperties <= 0)
                         continue;
 
-                    InitializeOrUpdateDistrict(district);
-
-                    // Find the district entry we just created or updated
+                    // Find the district entry
                     for (int j = 0; j < m_Districts.Length; j++)
                     {
                         if (m_Districts[j].district.Equals(district))
@@ -235,12 +219,10 @@ namespace InfoLoomTwo.Systems.DistrictData
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
         public bool ForceUpdate { get; private set; }
-
-        
         public void ForceUpdateOnce()
         {
             ForceUpdate = true;
-}
+        }
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -271,17 +253,13 @@ namespace InfoLoomTwo.Systems.DistrictData
 
         protected override void OnUpdate()
         {
-           
-            // Skip if panel is not visible
             if (!IsPanelVisible)
                 return;
-
-            // Update every 256 frames OR when forced
             if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
                 return;
-
-            // Reset force update flag
             ForceUpdate = false;
+            
+           
             for (int i = 0; i < m_Districts.Length; i++)
             {
                 if (m_Districts[i].households.IsCreated)
@@ -289,6 +267,28 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
             m_Districts.Clear();
 
+            // Get all districts first and initialize them with zero values
+            var districtQuery = GetEntityQuery(ComponentType.ReadOnly<District>(), ComponentType.Exclude<Temp>());
+            using (var districts = districtQuery.ToEntityArray(Allocator.Temp))
+            {
+                for (int i = 0; i < districts.Length; i++)
+                {
+                    m_Districts.Add(new DistrictEntry
+                    {
+                        district = districts[i],
+                        households = new NativeList<Entity>(32, Allocator.TempJob),
+                        residentCount = 0,
+                        petCount = 0,
+                        householdCount = 0,
+                        maxHouseholds = 0,
+                        ageData = new AgeData(0, 0, 0, 0),
+                        educationData = new EducationData(0, 0, 0, 0, 0),
+                        wealthKey = default
+                    });
+                }
+            }
+
+            // Now process buildings and update district data
             var jobData = new CountDistrictStatsJob
             {
                 m_EntityHandle = SystemAPI.GetEntityTypeHandle(),

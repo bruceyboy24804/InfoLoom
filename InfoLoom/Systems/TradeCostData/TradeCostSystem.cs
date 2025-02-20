@@ -14,7 +14,7 @@ using Unity.Mathematics;
 
 namespace InfoLoomTwo.Systems.TradeCostData
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    
     public partial class TradeCostSystem : SystemBase
     {
         private EntityQuery m_Query;
@@ -26,9 +26,16 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private PrefabSystem m_PrefabSystem;
         public List<TradeCostResource> m_Imports;
         public List<TradeCostResource> m_Exports;
-
+        private SimulationSystem m_SimulationSystem;
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
         protected override void OnCreate()
         {
+	        m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
             m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
             m_CountCompanyDataSystem = base.World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
@@ -47,6 +54,11 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
         protected override void OnUpdate()
 		{
+			if (!IsPanelVisible)
+                return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
 		    m_ResourceTradeCosts.Clear();
 
 		    // Retrieve all entities matching the query

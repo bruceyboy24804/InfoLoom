@@ -251,7 +251,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
 
         private CitySystem m_CitySystem;
 
-        //private TriggerSystem m_TriggerSystem;
+      
 
         private EntityQuery m_DemandParameterGroup;
 
@@ -321,6 +321,12 @@ namespace InfoLoomTwo.Systems.ResidentialData
         }
 
        
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -378,8 +384,11 @@ namespace InfoLoomTwo.Systems.ResidentialData
        
         protected override void OnUpdate()
         {
-            
-            //Plugin.Log($"OnUpdate: {m_SimulationSystem.frameIndex}");
+            if (!IsPanelVisible)
+                return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
             
             ResetResults();
 

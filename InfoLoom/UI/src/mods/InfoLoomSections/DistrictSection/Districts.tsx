@@ -1,5 +1,5 @@
 import React, { FC, useRef } from "react";
-import { Panel, Scrollable, DraggablePanelProps, Number2 } from "cs2/ui";
+import { Panel, Scrollable, DraggablePanelProps, Number2, Tooltip, TooltipProps } from "cs2/ui";
 import { useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { Name } from "cs2/bindings";
@@ -24,7 +24,25 @@ const getDisplayName = (name: Name, translate: (id: string, fallback?: string | 
     }
     return String(name);
 };
-
+const formatTooltip = (text: string, highlights: string[] = []): JSX.Element => {
+    if (!highlights.length) return <>{text}</>;
+    
+    const parts = text.split(new RegExp(`\\b(${highlights.join('|')})\\b`, 'gi'));
+    return (
+        <span style={{ 
+            whiteSpace: 'normal', 
+            display: 'inline',
+            maxWidth: '300px' 
+        }}>
+            {parts.map((part, i) => {
+                if (highlights.some(h => part.toLowerCase() === h.toLowerCase())) {
+                    return <strong key={i}>{part}</strong>;
+                }
+                return <span key={i}>{part}</span>;
+            })}
+        </span>
+    );
+};
 interface DistrictLineProps {
     data: District;
 }
@@ -43,7 +61,7 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
             }}
         >
             <div style={{
-                flex: '0 0 25%',
+                flex: '0 0 20%',
                 paddingRight: '1rem',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -51,7 +69,7 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
             }}>
                 {getDisplayName(data.name, translate)}
             </div>
-            <div style={{flex: '0 0 15%', textAlign: 'center'}}>{data.householdCount} / {data.maxHouseholds}</div>
+            <div style={{flex: '0 0 15%', textAlign: 'center', display: "flex"}}>{data.householdCount} / {data.maxHouseholds}</div>
             <div style={{flex: '0 0 15%', textAlign: 'center'}}>{data.residentCount}</div>
             <div style={{flex: '0 0 15%', textAlign: 'center'}}>{data.petCount}</div>
             <div style={{flex: '0 0 15%', textAlign: 'center'}}>{data.wealthKey}</div>
@@ -70,11 +88,22 @@ const TableHeader: FC = () => (
                 alignItems: 'center',
             }}
         >
-            <div style={{flex: '0 0 25%'}}><div><b>Name</b></div></div>
-            <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Households</b></div>
-            <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Residents</b></div>
+            <div style={{flex: '0 0 20%'}}><div><b>Name</b></div></div>
+            <Tooltip tooltip="The current and maximum number of households in a district. The size of a building is determined by the maximum number of households.">
+                <div style={{flex: '0 0 15%', textAlign: 'center', display: "flex"}}><b>Households</b></div>
+            </Tooltip>
+            <Tooltip tooltip="The number of residents living in a district.">
+                <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Residents</b></div>
+            </Tooltip>    
             <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Pets</b></div>
-            <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Wealth</b></div>
+            <Tooltip 
+                tooltip={formatTooltip(
+                    "The average financial situation of the residents in a district, taking into account their members' income and the households net worth.",
+                    ["income", "net worth"]
+                )}
+            >
+                <div style={{flex: '0 0 15%', textAlign: 'center'}}><b>Average wealth</b></div>
+            </Tooltip>
         </div>
     </div>
 );

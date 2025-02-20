@@ -192,7 +192,13 @@ namespace InfoLoomTwo.Systems.WorkplacesData
         private const int ResultsCount = 7;
 
 
-
+ 
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
 
         protected override void OnCreate()
         {
@@ -225,8 +231,11 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
         protected override void OnUpdate()
         {
-            if (m_SimulationSystem.frameIndex % 128 != 22)
+            if (!IsPanelVisible)
                 return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
 
             ResetResults();
 

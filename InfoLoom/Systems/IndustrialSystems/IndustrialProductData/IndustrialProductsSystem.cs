@@ -545,6 +545,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
         private static readonly int kStorageProductionDemand = 2000;
 
         private static readonly int kStorageCompanyEstimateLimit = 864000;
+        
+        private SimulationSystem m_SimulationSystem;
 
         private ResourceSystem m_ResourceSystem;
 
@@ -727,10 +729,16 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
             m_ReadDependencies = JobHandle.CombineDependencies(m_ReadDependencies, reader);
         }
 
-        [Preserve]
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_ResourceSystem = base.World.GetOrCreateSystemManaged<ResourceSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             m_ClimateSystem = base.World.GetOrCreateSystemManaged<ClimateSystem>();
@@ -826,6 +834,11 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 
         protected override void OnUpdate()
         {
+            if (!IsPanelVisible)
+                return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
             if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
             {
                 m_LastIndustrialCompanyDemand = m_IndustrialCompanyDemand.value;

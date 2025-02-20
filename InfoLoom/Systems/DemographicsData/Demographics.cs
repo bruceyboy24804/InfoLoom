@@ -290,7 +290,13 @@ public partial class Demographics : SystemBase
     // 240209 Set gameMode to avoid errors in the Editor
    
 
-    //[Preserve]
+    
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -313,7 +319,7 @@ public partial class Demographics : SystemBase
 
         
 
-        // TEST
+        
         
 
         // allocate memory for results
@@ -333,8 +339,11 @@ public partial class Demographics : SystemBase
     protected override void OnUpdate()
     {
 
-        if (m_SimulationSystem.frameIndex % 128 != 44)
-            return;
+        if (!IsPanelVisible)
+                return;
+            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+            ForceUpdate = false;
 
         
 

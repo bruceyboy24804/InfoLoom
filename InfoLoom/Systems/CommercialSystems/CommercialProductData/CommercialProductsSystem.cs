@@ -314,7 +314,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
 
 
-
+        private SimulationSystem m_SimulationSystem;
         private ResourceSystem m_ResourceSystem;
 
         private TaxSystem m_TaxSystem;
@@ -408,11 +408,17 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
         {
             m_ReadDependencies = JobHandle.CombineDependencies(m_ReadDependencies, reader);
         }
-
-        [Preserve]
+        public bool IsPanelVisible { get; set; }
+        public bool ForceUpdate { get; private set; }
+        public void ForceUpdateOnce()
+        {
+            ForceUpdate = true;
+        }
+        
         protected override void OnCreate()
         {
             base.OnCreate();
+            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_ResourceSystem = base.World.GetOrCreateSystemManaged<ResourceSystem>();
             m_TaxSystem = base.World.GetOrCreateSystemManaged<TaxSystem>();
             m_CountCompanyDataSystem = base.World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
@@ -469,7 +475,11 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
         protected override void OnUpdate()
         {
-
+             if (!IsPanelVisible)
+                return;
+             if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+                return;
+             ForceUpdate = false;
             if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
             {
                 m_LastCompanyDemand = m_CompanyDemand.value;
