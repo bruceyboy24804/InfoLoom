@@ -1,3 +1,25 @@
+.panel {
+    
+  display: flex;
+  flex-direction: column;
+  height: 600rem;
+  width: 1300rem;
+  background-color: var(--panelColorNormal);
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
+
 .headerRow {
   display: flex;
   align-items: center;
@@ -19,7 +41,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   white-space: nowrap;
   line-height: 1.2;
   text-transform: uppercase;
@@ -98,7 +119,6 @@
       height: 36px;
       margin-right: 8px;
       flex-shrink: 0;
-      object-fit: contain;
     }
   }
 }

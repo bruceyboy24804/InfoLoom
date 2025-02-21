@@ -8,19 +8,29 @@ import React, {
 } from 'react';
 
 // External hooks / frameworks
+import { Scrollable } from 'cs2/ui';
 
-
-// Chart.js
-import { Bar } from 'react-chartjs-2';
+// Chart.js imports
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
+  Title,
   Tooltip,
   Legend,
-  Title,
 } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 // Local or app-level imports
 import { useValue } from 'cs2/api';
@@ -29,15 +39,6 @@ import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
 import styles from './Demographics.module.scss';
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-  Title
-);
 
 
 interface AlignedParagraphProps {
@@ -313,7 +314,7 @@ const DemographicsChart: FC<{
     []
   );
 
-  // Build chart data
+  // Chart data setup
   const chartData = useMemo(() => {
     if (!StructureDetails.length) {
       return { labels: [], datasets: [] };
@@ -332,31 +333,37 @@ const DemographicsChart: FC<{
             label: 'Work',
             data: sortedAges.map((d) => d.Work),
             backgroundColor: chartColors.work,
+            offset: 2,
           },
           {
             label: 'Elementary',
             data: sortedAges.map((d) => d.School1),
             backgroundColor: chartColors.elementary,
+            offset: 2,
           },
           {
             label: 'High School',
             data: sortedAges.map((d) => d.School2),
             backgroundColor: chartColors.highSchool,
+            offset: 2,
           },
           {
             label: 'College',
             data: sortedAges.map((d) => d.School3),
             backgroundColor: chartColors.college,
+            offset: 2,
           },
           {
             label: 'University',
             data: sortedAges.map((d) => d.School4),
             backgroundColor: chartColors.university,
+            offset: 2,
           },
           {
             label: 'Other',
             data: sortedAges.map((d) => d.Other),
             backgroundColor: chartColors.other,
+            offset: 2,
           },
         ],
       };
@@ -376,91 +383,134 @@ const DemographicsChart: FC<{
           label: 'Work',
           data: aggregated.map((d) => d.work),
           backgroundColor: chartColors.work,
+          offset: 1,
         },
         {
           label: 'Elementary',
           data: aggregated.map((d) => d.elementary),
           backgroundColor: chartColors.elementary,
+          offset: 1,
         },
         {
           label: 'High School',
           data: aggregated.map((d) => d.highSchool),
           backgroundColor: chartColors.highSchool,
+          offset: 1,
         },
         {
           label: 'College',
           data: aggregated.map((d) => d.college),
           backgroundColor: chartColors.college,
+          offset: 1,
         },
         {
           label: 'University',
           data: aggregated.map((d) => d.university),
           backgroundColor: chartColors.university,
+          offset: 1,
         },
         {
           label: 'Other',
           data: aggregated.map((d) => d.other),
           backgroundColor: chartColors.other,
+          offset: 1,
         },
       ],
     };
   }, [StructureDetails, groupingStrategy, chartColors]);
 
-  // Define chart options
   const chartOptions = useMemo(() => {
     const { indexAxis, mainAxisTitle, crossAxisTitle } = getOrientationProps();
+    
     return {
-      indexAxis: indexAxis,
+      indexAxis,
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 20,
+          right: 20,
+          bottom: 20,
+          left: 20
+        }
+      },
       scales: {
-        [indexAxis]: {
+        y: {
+          barThickness: 20,          // Fixed width in pixels
+          maxBarThickness: 25,       // Maximum width in pixels
+          categoryPercentage: 0.9,   // Percentage of scale width
+          barPercentage: 0.9,     
+          beginAtZero: true,
           title: {
             display: true,
             text: mainAxisTitle,
             color: 'white',
-            font: yaxisfont,
+            font: { ...yaxisfont, size: 16 },
           },
           ticks: {
             color: 'white',
-            font: yaxisfont,
+            font: { ...yaxisfont, size: 14 },
+            padding: 15
           },
           stacked: true,
+          grid: {
+            display: true,
+            color: 'rgba(255, 255, 255, 0.1)'
+            
+          }
         },
         x: {
           title: {
             display: true,
             text: crossAxisTitle,
             color: 'white',
-            font: commonFont,
+            font: { ...commonFont, size: 16 },
           },
           ticks: {
             color: 'white',
-            font: commonFont,
+            font: { ...commonFont, size: 14 },
+            padding: 15
           },
           stacked: true,
+          grid: {
+            display: true,
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
         },
       },
       plugins: {
         legend: {
+          position: 'top' as const,
           labels: {
             color: 'white',
-            font: commonFont,
+            font: { ...commonFont, size: 14 },
+            boxWidth: 30,
+            padding: 15
           },
         },
         title: {
           display: false,
-        },
+        }
+        
       },
+      
     };
-  }, []);
-
-  const { minChartHeight } = getOrientationProps();
+  }, [groupingStrategy]);
 
   return (
-    <div className={styles.chartWrapper} ref={chartContainerRef}>
+    <div 
+      ref={chartContainerRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        minHeight: '400px',
+      }}
+    >
       {StructureDetails.length === 0 ? (
-        <p className={styles.noDataText}>No data available to display the chart.</p>
+        <p style={{ color: 'white' }}>No data available to display the chart.</p>
       ) : (
         <Bar data={chartData} options={chartOptions} />
       )}
@@ -475,9 +525,7 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
 
   // Toggles
   const [showStatistics, setShowStatistics] = useState(true);
-  const [showAgeGrouping, setShowAgeGrouping] = useState(true);
-
-  // Grouping
+  const [showAgeGrouping, setShowAgeGrouping] = useState(false);
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
 
   // Data from ECS / mod
@@ -486,12 +534,10 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
 
   // Panel dims
-  const panWidth = window.innerWidth * 0.2;
-  const panHeight = window.innerHeight * 0.86;
+  const panWidth = 800;  // Fixed width in pixels
+  const panHeight = window.innerHeight * 0.8; // 80% of viewport height
 
-  // Chart sizing
-  const BAR_HEIGHT = 40;
-  const MAX_CHART_HEIGHT = 1200;
+  
 
   
 
@@ -503,8 +549,8 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
       onClose={onClose}
       initialPosition={initialPosition}
       className={styles.panel}
-                  header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
-      
+      style={{ width: panWidth, height: panHeight }}
+      header={<div className={styles.header}><span className={styles.headerText}>Demographics</span></div>}
     >
       <div className={styles.contentContainer}>
         {/* Toggle checkboxes */}
@@ -540,14 +586,15 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
 
         {/* Chart Section */}
         <div className={styles.chartSection}>
-          <div className={styles.chartContainer}>
-            <DemographicsChart
-              StructureDetails={demographicsDataStructureDetails}
-              groupingStrategy={groupingStrategy}
-            />
-          </div>
+          
+          <DemographicsChart
+            StructureDetails={demographicsDataStructureDetails}
+            groupingStrategy={groupingStrategy}
+          />
+          
         </div>
       </div>
+  
     </Panel>
   );
 };

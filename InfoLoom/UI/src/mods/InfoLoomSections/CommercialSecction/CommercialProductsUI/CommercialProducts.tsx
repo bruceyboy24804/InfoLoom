@@ -1,7 +1,6 @@
 import React, { useState, useCallback, FC } from 'react';
 
-import $Panel from 'mods/panel';
-import {Button, Dropdown, DropdownToggle, PanelProps} from 'cs2/ui';
+import {Button, Dropdown, DropdownToggle, PanelProps, Panel, DraggablePanelProps} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components//InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './CommercialProducts.module.scss';
@@ -39,7 +38,7 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
+      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start'}}>
         <ResourceIcon resourceName={data.ResourceName} />
         <span>{formattedResourceName}</span>
       </div>
@@ -135,7 +134,7 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
   );
 };
 
-const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
+const $CommercialProducts: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   
   const commercialProductsData = useValue(CommercialProductsData);
       
@@ -184,22 +183,26 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
   
 
   return (
-    <$Panel
-      id="infoloom-commercial-products"
-      title="Commercial Products"
-      onClose={onClose}
-      initialSize={{ width: window.innerWidth * 0.45, height: window.innerHeight * 0.32 }}
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+    <Panel
+    draggable
+    initialPosition={initialPosition}
+    onClose={onClose}
+    className={styles.panel}
+          header={
+            <div className={styles.header}>
+              <span className={styles.headerText}>Commercial products</span>
+            </div>
+          }
     >
       {commercialProductsData.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap' }}>
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="Sort by Name"
@@ -239,7 +242,7 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="Show Demand"
@@ -286,7 +289,7 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="All Demand"
@@ -328,7 +331,7 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
             ))}
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
   
   

@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@types/recharts": "^1.8.29",
+    "chart.js": "^4.4.8",
     "recharts": "^2.14.1",
     "styled-components": "^6.1.13"
   }

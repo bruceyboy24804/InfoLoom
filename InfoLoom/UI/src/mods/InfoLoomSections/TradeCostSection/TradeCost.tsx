@@ -91,7 +91,7 @@ const ResourceLine: FC<ResourceLineProps> = ({ data, showColumns }) => {
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }} />
-      <div className={styles.cell} style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}>
+      <div className={styles.cell} style={{ width: '25%', justifyContent: 'flex-start'}}>
         <ResourceIcon resourceName={data.Resource} />
         <span>{formattedName}</span>
       </div>

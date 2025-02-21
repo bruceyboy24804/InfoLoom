@@ -1,13 +1,11 @@
 import React, { useState, useCallback, FC } from 'react';
-import $Panel from 'mods/panel';
-import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable} from 'cs2/ui';
+import {Dropdown, DropdownToggle, PanelProps, Scrollable, Panel, DraggablePanelProps} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import {bindValue, useValue} from "cs2/api";
-import mod from "mod.json";
+import {useValue} from "cs2/api";
 import { industrialProductData } from 'mods/domain/industrialProductData';
 import {IndustrialProductsData} from "../../../bindings";
 
@@ -159,7 +157,7 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
+      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start'}}>
         <ResourceIcon resourceName={data.ResourceName} />
         <span>{formattedResourceName}</span>
       </div>
@@ -283,11 +281,10 @@ const TableHeader: React.FC<{ showColumns: any }> = ({ showColumns }) => {
 };
 
 // Interface for $Industrial props
-interface IndustrialProps extends PanelProps {
-}
+
 
 // Component: $Commercial
-const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
+const $IndustrialProducts: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   const industrialProducts = useValue(IndustrialProductsData);
 
   // State to control panel visibility
@@ -357,24 +354,27 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   }
 
   return (
-    <$Panel
-      id="infoloom-industrial-products"
-      
-      title="Industrial and Office Products"
+    <Panel
+      draggable
+      initialPosition={initialPosition} 
       onClose={onClose}
-      initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.70 }}
-     
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+      className={styles.panel}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Industrial Products</span>
+        </div>
+      }
+      
     >
       {industrialProducts.length === 0 ? (
         <p>Waiting...</p>
       ) : (
         <div>
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap' }}>
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="Sort by Name"
@@ -414,7 +414,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="All Demand"
@@ -447,7 +447,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="All Workers"
@@ -487,7 +487,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column'}}>
                   <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
                     <InfoCheckbox
                       label="Demand Info"
@@ -540,7 +540,6 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           </div>
 
           <TableHeader showColumns={showColumns} />
-            <Scrollable vertical={true} smooth={true} trackVisibility="scrollable">
               {industrialProducts
               .filter((item: industrialProductData) => item.ResourceName !== 'NoResource')
               .filter(applyDataFilter)
@@ -552,10 +551,9 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
                   showColumns={showColumns}
                 />
               ))}
-            </Scrollable>
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 

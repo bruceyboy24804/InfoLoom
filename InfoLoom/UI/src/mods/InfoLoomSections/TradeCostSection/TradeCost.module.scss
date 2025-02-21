@@ -46,7 +46,6 @@
 /* Controls Section (Dropdowns and Buttons) */
 .controls {
   display: flex;
-  gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 1rem;
@@ -86,7 +85,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   white-space: nowrap;
   line-height: 1.2;
   text-transform: uppercase;
@@ -130,7 +128,6 @@
       height: 36px;
       margin-right: 8px;
       flex-shrink: 0;
-      object-fit: contain;
     }
   }
 }
@@ -182,7 +179,6 @@
 .graphViewContainer {
   display: flex;
   flex: 1; /* Allow the container to expand */
-  gap: 1rem; /* Space between checkboxes and graph */
   overflow: hidden; /* Prevent overflow */
 }
 
@@ -214,7 +210,6 @@
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Space between icon and label */
   color: #ccc; /* Label color */
 }
 
