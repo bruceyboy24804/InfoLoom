@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import $Panel from 'mods/panel';
 import { useValue } from 'cs2/api';
-import { cityInfo } from 'cs2/bindings';
-import {PanelProps, Scrollable} from 'cs2/ui';
+import { cityInfo, Number2 } from 'cs2/bindings';
+import {DraggablePanelProps, PanelProps, Scrollable, Panel} from 'cs2/ui';
 import { BuildingDemandData } from '../../bindings';
+import styles from './Demand.module.scss';
 
 // Declare global 'engine' if needed
 
@@ -136,10 +136,11 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
   );
 };
 
-interface DemandFactorsProps extends PanelProps {}
 
-const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
+
+const $DemandFactors: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
+  
+
 
   // Demand values
   const residentialLowDemand = useValue(cityInfo.residentialLowDemand$);
@@ -173,36 +174,24 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
     weight: buildingDemandData[index] ?? 0,
   }));
 
-  const defaultPosition = {
-    top: window.innerHeight * 0.05,
-    left: window.innerWidth * 0.005,
-  };
-  const [panelPosition, setPanelPosition] = useState(defaultPosition);
-  const [lastClosedPosition, setLastClosedPosition] = useState(defaultPosition);
-
-  const handleSavePosition = useCallback((position: { top: number; left: number }) => {
-    setPanelPosition(position);
-  }, []);
+  
 
   
 
-  useEffect(() => {
-    if (!isPanelVisible) {
-      setPanelPosition(lastClosedPosition);
-    }
-  }, [isPanelVisible, lastClosedPosition]);
-
-  if (!isPanelVisible) {
-    return null;
-  }
+  
+  
 
   return (
-    <$Panel
-      id="infoloom-demand"
-      title="Demand"
+    <Panel
+      draggable
       onClose={onClose}
-      initialSize={{ width: window.innerWidth * 0.11, height: window.innerHeight * 0.73 }}
-      initialPosition={panelPosition}
+      initialPosition={initialPosition}
+      className={styles.panel}
+            header={
+              <div className={styles.header}>
+                <span className={styles.headerText}>Demand</span>
+              </div>
+            }
     >
       <Scrollable vertical={true} trackVisibility={'scrollable'} smooth={true}>
         <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
@@ -225,7 +214,7 @@ const $DemandFactors: FC<DemandFactorsProps> = ({ onClose }) => {
         <DemandSection2 title="INDUSTRIAL" value={industrialDemand} factors={industrialFactors} />
         <DemandSection2 title="OFFICE" value={officeDemand} factors={officeFactors} />
       </Scrollable>
-    </$Panel>
+    </Panel>
   );
 };
 

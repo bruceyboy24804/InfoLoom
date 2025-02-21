@@ -116,7 +116,6 @@ const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, initialPosition }
     return (
         <Panel
             draggable
-            
             onClose={onClose}
             initialPosition={initialPosition || defaultPos}
             className={styles.panel}

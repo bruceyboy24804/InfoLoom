@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 
 // External hooks / frameworks
-import $Panel from 'mods/panel';
+
 
 // Chart.js
 import { Bar } from 'react-chartjs-2';
@@ -23,12 +23,12 @@ import {
 } from 'chart.js';
 
 // Local or app-level imports
-import { bindValue, useValue } from 'cs2/api';
+import { useValue } from 'cs2/api';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, PanelProps} from "cs2/ui";
+import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
-
+import styles from './Demographics.module.scss';
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -38,13 +38,6 @@ ChartJS.register(
   Legend,
   Title
 );
-
-// ==== Bindings (connect to your mod's data) ====
-
-
-
-
-
 
 
 interface AlignedParagraphProps {
@@ -551,36 +544,16 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
 
   
 
-  if (!isPanelVisible) return null;
-
-  // The chart’s dynamic height
-  const chartHeightToUse = useMemo(() => {
-    return Math.min(MAX_CHART_HEIGHT, demographicsDataStructureDetails.length * BAR_HEIGHT);
-  }, [demographicsDataStructureDetails]);
-
-  // Panel style
-  const panelStyle: React.CSSProperties = useMemo(
-    () => ({
-      backgroundColor: 'var(--panelColorNormal)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      margin: '3rem',
-    }),
-    []
-  );
+  
 
   return (
-    <$Panel
-      id="infoloom-demographics"
+    <Panel
+      draggable
       onClose={onClose}
-      title="Demographics"
-      initialSize={{ width: panWidth, height: panHeight }}
-      initialPosition={{
-        top: window.innerHeight * 0.009,
-        left: window.innerWidth * 0.100,
-      }}
-      style={panelStyle}
+      initialPosition={initialPosition}
+      className={styles.panel}
+                  header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
+      
     >
       <div
         style={{
@@ -635,7 +608,7 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
         >
           <div
             style={{
-              height: `${chartHeightToUse}px`,
+              
               width: '100%',
               position: 'relative',
             }}
@@ -647,7 +620,7 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
           </div>
         </div>
       </div>
-    </$Panel>
+    </Panel>
   );
 };
 

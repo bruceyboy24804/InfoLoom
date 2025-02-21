@@ -1,8 +1,8 @@
 import React from 'react';
-import $Panel from 'mods/panel';
 import {useValue} from "cs2/api";
-import { PanelProps } from "cs2/ui";
+import { DraggablePanelProps, PanelProps, Panel } from "cs2/ui";
 import { CommercialData, CommercialDataExRes } from "../../../bindings";
+import styles from "./CommercialDemand.module.scss";
 
 interface Factor {
   factor: string;
@@ -149,19 +149,24 @@ const ColumnExcludedResources = ({ resources }: ColumnExcludedResourcesProps): J
   </div>
 );
 
-interface CommercialProps extends PanelProps {}
 
-const $Commercial = ({ onClose }: CommercialProps): JSX.Element => {
+
+const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Element => {
   const commercialData = useValue(CommercialData);
   const commercialDataExRes = useValue(CommercialDataExRes);
 
   return (
-    <$Panel
-      title="Commercial Data"
+    <Panel
+      draggable
       onClose={onClose}
-      id="infoloom-commercial"
-      initialSize={{ width: window.innerWidth * 0.25, height: window.innerHeight * 0.31 }}
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+      initialPosition={initialPosition}
+      className={styles.panel}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Commercial Demand</span>
+        </div>
+      }
+      
     >
       {commercialData.length === 0 ? (
         <p>Waiting...</p>
@@ -171,7 +176,7 @@ const $Commercial = ({ onClose }: CommercialProps): JSX.Element => {
           <ColumnExcludedResources resources={commercialDataExRes} />
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 

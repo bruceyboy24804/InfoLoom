@@ -1,10 +1,10 @@
 import React, { FC, useCallback, useState } from 'react';
-
 import $Panel from 'mods/panel';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
-import {PanelProps} from "cs2/ui";
+import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
 import { IndustrialData, IndustrialDataExRes} from "../../../bindings";
+import styles from "./IndustrialDemand.module.scss";
 
 // Define interfaces for props
 interface RowWithTwoColumnsProps {
@@ -271,29 +271,30 @@ const ColumnExcludedResources: FC<ColumnExcludedResourcesProps> = ({ resources }
 // Declare the engine object if it's globally available
 
 
-interface IndustrialProps extends PanelProps {}
 
-const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
+const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, draggable }) => {
   // Commercial data
   const ilIndustrial = useValue(IndustrialData);  
   const ilIndustrialExRes = useValue(IndustrialDataExRes);
 
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
+  
 
   
  
 
-  if (!isPanelVisible) {
-    return null;
-  }
+  
 
   return (
-    <$Panel
-      id="infoloom-industrial"
-      title="Industrial and Office Data"
+    <Panel
+      draggable
       onClose={onClose}
-      initialSize={{ width: window.innerWidth * 0.3, height: window.innerHeight * 0.60 }}
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+      initialPosition={initialPosition}
+      className={styles.panel}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Industrial and Office Demand</span>
+        </div>
+      }
     >
       {ilIndustrial.length === 0 ? (
         <p>Waiting...</p>
@@ -303,7 +304,7 @@ const $Industrial: React.FC<IndustrialProps> = ({ onClose }) => {
           <ColumnExcludedResources resources={ilIndustrialExRes} />
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 
