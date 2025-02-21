@@ -201,21 +201,10 @@ function aggregatePopulationData(
  * A simple row displaying "left" label and "right" numeric value, aligned and spaced.
  */
 const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
-  const paragraphStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '0.5rem 0',
-    display: 'flex',
-    justifyContent: 'space-between',
-    color: 'white',
-    fontSize: `${commonFont.size}px`,
-    fontFamily: commonFont.family,
-    fontWeight: commonFont.weight,
-  };
-
   return (
-    <div style={paragraphStyle}>
-      <div style={{ textAlign: 'left' }}>{left}</div>
-      <div style={{ textAlign: 'right' }}>{right}</div>
+    <div className={styles.alignedParagraph}>
+      <div>{left}</div>
+      <div>{right}</div>
     </div>
   );
 };
@@ -228,25 +217,9 @@ const GroupingOptions: FC<GroupingOptionsProps> = ({
   setGroupingStrategy,
   totalEntries,
 }) => {
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.3rem',
-    padding: '1rem',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderRadius: '4px',
-    margin: '0 1rem',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    color: 'white',
-    marginBottom: '0.3rem',
-    fontSize: '14px',
-  };
-
   return (
-    <div style={containerStyle}>
-      <div style={labelStyle}>Age Grouping</div>
+    <div className={styles.groupingContainer}>
+      <div className={styles.groupingLabel}>Age Grouping</div>
       {GROUP_STRATEGIES.map((strategy) => (
         <InfoCheckbox
           key={strategy.value}
@@ -278,40 +251,28 @@ const StatisticsSummary: FC<StatisticsSummaryProps> = ({
   const dead = StructureTotals[8];
   const homeless = StructureTotals[9];
 
-  const containerStyle: React.CSSProperties = {
-    flex: '0 0 auto',
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    flexShrink: 0,
-  };
-
-  const columnLeft: React.CSSProperties = { width: '50%', paddingRight: '4rem' };
-  const columnRight: React.CSSProperties = { width: '50%', paddingLeft: '4rem' };
-  const spacer: React.CSSProperties = { height: '1rem' };
-
   return (
-    <div style={containerStyle}>
-      <div style={columnLeft}>
+    <div className={styles.statisticsContainer}>
+      <div className={styles.columnLeft}>
         <AlignedParagraph left="All Citizens" right={allCitizens} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="- Tourists" right={tourists} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="- Commuters" right={commuters} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="- Moving Away" right={movingAway} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="Population" right={population} />
       </div>
-      <div style={columnRight}>
+      <div className={styles.columnRight}>
         <AlignedParagraph left="Dead" right={dead} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="Students" right={students} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="Workers" right={workers} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="Homeless" right={homeless} />
-        <div style={spacer} />
+        <div className={styles.spacer} />
         <AlignedParagraph left="Oldest Citizen" right={OldestCitizen} />
       </div>
     </div>
@@ -497,19 +458,9 @@ const DemographicsChart: FC<{
   const { minChartHeight } = getOrientationProps();
 
   return (
-    <div
-      ref={chartContainerRef}
-      style={{
-        height: '100%',
-        width: '100%',
-        position: 'relative',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        minHeight: minChartHeight,
-      }}
-    >
+    <div className={styles.chartWrapper} ref={chartContainerRef}>
       {StructureDetails.length === 0 ? (
-        <p style={{ color: 'white' }}>No data available to display the chart.</p>
+        <p className={styles.noDataText}>No data available to display the chart.</p>
       ) : (
         <Bar data={chartData} options={chartOptions} />
       )}
@@ -555,17 +506,9 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
                   header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
       
     >
-      <div
-        style={{
-          padding: '10px',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
+      <div className={styles.contentContainer}>
         {/* Toggle checkboxes */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem' }}>
+        <div className={styles.toggleContainer}>
           <InfoCheckbox
             label="Show Statistics"
             isChecked={showStatistics}
@@ -596,23 +539,8 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
         )}
 
         {/* Chart Section */}
-        <div
-          style={{
-            flex: '1 1 auto',
-            minHeight: 0,
-            padding: '1rem',
-            position: 'relative',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              
-              width: '100%',
-              position: 'relative',
-            }}
-          >
+        <div className={styles.chartSection}>
+          <div className={styles.chartContainer}>
             <DemographicsChart
               StructureDetails={demographicsDataStructureDetails}
               groupingStrategy={groupingStrategy}
