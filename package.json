@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@types/recharts": "^1.8.29",
-    "recharts": "^2.14.1",
-    "styled-components": "^6.1.13"
-  }
-}

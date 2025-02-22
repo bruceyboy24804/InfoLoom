@@ -1,45 +1,124 @@
 .panel {
-    width: 700rem;
-    display: flex;
-    flex-direction: column; // Added to ensure proper layout
-  }
-  
-  .header {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    height: 20rem;
-    text-transform: none;
-  }
-  
-  .headerText {
-    margin-left: -5rem;
-    font-size: 115%;
-  }
-  
-  .tableHeader {
-    margin: 25rem;
-  }
-  
-  // New styles based on the inline JSX
-  .eventRow {
+  width: 700rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
+
+.tableHeader {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 25rem;
+}
+
+.row {
+  width: 100%;
+  padding: 1rem 25rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.headerRow {
+
+  padding: 1rem 0;
+}
+
+.column {
+  flex: 0 0 15%;
+  text-align: center;
+}
+
+.nameColumn {
+
+  text-align: left;
+  padding-right: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loadingText {
+  text-align: center;
+  padding: 20rem;
+}
+
+.scrollableContent {
+  padding: 1rem 0;
+}
+
+.dataDivider {
+  display: flex;
+  height: 4rem;
+  flex-direction: column;
+  justify-content: center;
+
+  &::after {
+    content: '';
+    border-bottom: 1px solid gray;
     width: 100%;
-    padding: 1rem 25rem;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
   }
-  
-  .eventLocation {
-    flex: 0 0 50%;
-    padding-right: 1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .eventTime {
-    flex: 0 0 25%;
-    text-align: center;
-  }
+}
+
+.tooltipContent {
+  white-space: pre-line;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: white;
+  min-width: 300px;
+}
+
+.chartSection {
+  margin-bottom: 16px;
+}
+
+.chartTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #ccc;
+}
+
+.chartBar {
+  display: flex;
+  height: 10rem;
+  margin-bottom: 8px;
+}
+
+.chartBarSegment {
+  transition: width 0.3s ease;
+}
+
+.chartLegendItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.colorIndicator {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.5em;
+  display: inline-block;
+}
+
+.legendLabel {
+  display: flex;
+  align-items: center;
+}
+

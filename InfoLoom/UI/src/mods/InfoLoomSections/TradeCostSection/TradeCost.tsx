@@ -20,11 +20,10 @@ import { getModule } from 'cs2/modding';
 import styles from './TradeCost.module.scss';
 import { ResourceIcon } from 'mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import { bindValue, useValue } from 'cs2/api';
+import { useValue } from 'cs2/api';
 import mod from 'mod.json';
 import Chart from 'chart.js/auto';
-import { ResourceTradeCost, ImportData, ExportData } from 'mods/domain/tradeCostData';
-import {TradeCostsDataExports, TradeCostsDataImports, TradeCostsData} from "../../bindings";
+import { TradeCostsDataImports, TradeCostsData, TradeCostsDataExports } from 'mods/bindings';
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
@@ -36,6 +35,25 @@ type SortOption =
   | 'profitMargin'
   | 'importAmount'
   | 'exportAmount';
+
+interface ResourceTradeCost {
+  Resource: string;
+  BuyCost: number;
+  SellCost: number;
+  Count: number;
+  ImportAmount: number;
+  ExportAmount: number;
+}
+
+interface ImportData {
+  Amount: number;
+}
+
+interface ExportData {
+  Amount: number;
+}
+
+interface TradeCostsProps extends DraggablePanelProps {}
 
 export type ShowColumnsType = {
   buyCost: boolean;
@@ -61,7 +79,6 @@ const DataDivider: React.FC = () => (
         <div style={{borderBottom: '1px solid gray', width: '100%'}}></div>
     </div>
 );
-
 
 const calculateProfit = (data: ResourceTradeCost) => data.SellCost - data.BuyCost;
 
@@ -369,10 +386,10 @@ const MemoizedTradeCostsGraph = React.memo(TradeCostsGraph, (prevProps, nextProp
   );
 });
 
-const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...props }) => {
+const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }) => {
   const tradeCosts = useValue(TradeCostsData);
   const imports = useValue(TradeCostsDataImports);
-  const exports = useValue(TradeCostsDataImports);
+  const exports = useValue(TradeCostsDataExports);
   const initialPos: Number2 = { x: 0.038, y: 0.15 };
   const mergedTradeCosts = useMemo(() => {
     return tradeCosts.map((tradeCost, index) => {

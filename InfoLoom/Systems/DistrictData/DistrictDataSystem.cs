@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.UI.Binding;
@@ -11,7 +10,7 @@ using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
-using Game.UI.InGame;
+using Game.UI.InGame; // Uses shared definitions for AgeData and EducationData
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Burst;
@@ -24,6 +23,7 @@ namespace InfoLoomTwo.Systems.DistrictData
 {
     public partial class DistrictDataSystem : SystemBase
     {
+        // DistrictEntry uses the shared AgeData and EducationData types.
         private struct DistrictEntry
         {
             public Entity district;
@@ -37,6 +37,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             public NativeList<Entity> households;
         }
 
+        // Job to count household data for each district.
         [BurstCompile]
         private struct CountDistrictStatsJob : IJobChunk
         {
@@ -49,27 +50,25 @@ namespace InfoLoomTwo.Systems.DistrictData
             [ReadOnly] public BufferLookup<HouseholdCitizen> m_HouseholdCitizenFromEntity;
             [ReadOnly] public BufferLookup<HouseholdAnimal> m_HouseholdAnimalFromEntity;
             [ReadOnly] public BufferLookup<Renter> m_RenterFromEntity;
-            [ReadOnly] public ComponentLookup<HealthProblem> m_HealthLookup;
-            [ReadOnly] public ComponentLookup<TravelPurpose> m_TravelLookup;
-            [ReadOnly] public ComponentLookup<Citizen> m_CitizenLookup;
             [ReadOnly] public CitizenHappinessParameterData m_HappinessData;
+            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap; // Map: district Entity -> index in m_Districts
 
             public NativeList<DistrictEntry> m_Districts;
 
             bool TryProcessHousehold(ref DistrictEntry entry, Entity household)
             {
-                if (!m_HouseholdFromEntity.HasComponent(household) || 
-                    !m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
+                if (!m_HouseholdFromEntity.HasComponent(household) ||
+                    !m_HouseholdCitizenFromEntity.TryGetBuffer(household, out _))
                     return false;
 
                 entry.householdCount++;
-                entry.households.Add(household);
+                // Add number of citizens as residents.
+                var citizens = m_HouseholdCitizenFromEntity[household];
                 entry.residentCount += citizens.Length;
+                entry.households.Add(household);
 
                 if (m_HouseholdAnimalFromEntity.TryGetBuffer(household, out var animals))
-                {
                     entry.petCount += animals.Length;
-                }
 
                 return true;
             }
@@ -80,19 +79,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                 NativeArray<CurrentDistrict> currentDistricts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
                 NativeArray<PrefabRef> prefabRefs = chunk.GetNativeArray(ref m_PrefabRefHandle);
 
-                // Create temp buffers for age/education counts per district
-                var districtAgeData = new NativeArray<int4>(m_Districts.Length, Allocator.Temp);
-                var districtEduData = new NativeArray<int4>(m_Districts.Length, Allocator.Temp);
-                var districtHighlyEducated = new NativeArray<int>(m_Districts.Length, Allocator.Temp);
-
-                // Initialize arrays with zeros
-                for (int i = 0; i < m_Districts.Length; i++)
-                {
-                    districtAgeData[i] = int4.zero;
-                    districtEduData[i] = int4.zero;
-                    districtHighlyEducated[i] = 0;
-                }
-
+                // Process each chunk entity.
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     Entity building = entities[i];
@@ -101,139 +88,152 @@ namespace InfoLoomTwo.Systems.DistrictData
 
                     if (m_AbandonedFromEntity.HasComponent(building))
                         continue;
-
-                    if (!m_PropertyDataFromEntity.TryGetComponent(prefab, out var propertyData) || 
-                        propertyData.m_ResidentialProperties <= 0)
+                    if (!m_PropertyDataFromEntity.HasComponent(prefab))
+                        continue;
+                    var propertyData = m_PropertyDataFromEntity[prefab];
+                    if (propertyData.m_ResidentialProperties <= 0)
+                        continue;
+                    if (!m_DistrictIndexMap.TryGetValue(district, out int districtIndex))
                         continue;
 
-                    // Find the district entry
-                    for (int j = 0; j < m_Districts.Length; j++)
+                    var entry = m_Districts[districtIndex];
+                    entry.maxHouseholds += propertyData.m_ResidentialProperties;
+
+                    if (m_RenterFromEntity.TryGetBuffer(building, out var renters))
                     {
-                        if (m_Districts[j].district.Equals(district))
+                        for (int k = 0; k < renters.Length; k++)
                         {
-                            var entry = m_Districts[j];
-                            entry.maxHouseholds += propertyData.m_ResidentialProperties;
-
-                            if (m_RenterFromEntity.TryGetBuffer(building, out var renters))
+                            Entity household = renters[k].m_Renter;
+                            if (TryProcessHousehold(ref entry, household) &&
+                                m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
                             {
-                                for (int k = 0; k < renters.Length; k++)
-                                {
-                                    Entity household = renters[k].m_Renter;
-                                    if (TryProcessHousehold(ref entry, household) &&
-                                        m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
-                                    {
-                                        // Process all citizens in this household for age/education
-                                        for (int c = 0; c < citizens.Length; c++)
-                                        {
-                                            Entity citizen = citizens[c].m_Citizen;
-                                            if (m_CitizenLookup.HasComponent(citizen) && 
-                                                m_CitizenLookup.TryGetComponent(citizen, out var component) && 
-                                                !CitizenUtils.IsCorpsePickedByHearse(citizen, ref m_HealthLookup, ref m_TravelLookup))
-                                            {
-                                                var ageData = districtAgeData[j];
-                                                switch (component.GetAge())
-                                                {
-                                                    case CitizenAge.Child: ageData.x++; break;
-                                                    case CitizenAge.Teen: ageData.y++; break;
-                                                    case CitizenAge.Adult: ageData.z++; break;
-                                                    case CitizenAge.Elderly: ageData.w++; break;
-                                                }
-                                                districtAgeData[j] = ageData;
-
-                                                var eduData = districtEduData[j];
-                                                switch (component.GetEducationLevel())
-                                                {
-                                                    case 0: eduData.x++; break;
-                                                    case 1: eduData.y++; break;
-                                                    case 2: eduData.z++; break;
-                                                    case 3: eduData.w++; break;
-                                                    case 4: districtHighlyEducated[j]++; break;
-                                                }
-                                                districtEduData[j] = eduData;
-                                            }
-                                        }
-                                    }
-                                }
+                                entry.residentCount += citizens.Length;
                             }
-
-                            m_Districts[j] = entry;
-                            break;
                         }
                     }
+                    m_Districts[districtIndex] = entry;
                 }
-
-                // Update the final age and education data for all districts
-                for (int i = 0; i < m_Districts.Length; i++)
-                {
-                    var district = m_Districts[i];
-                    var ageData = districtAgeData[i];
-                    var eduData = districtEduData[i];
-                    
-                    district.ageData = new AgeData((int)ageData.x, (int)ageData.y, (int)ageData.z, (int)ageData.w);
-                    district.educationData = new EducationData(
-                        (int)eduData.x, 
-                        (int)eduData.y, 
-                        (int)eduData.z, 
-                        (int)eduData.w, 
-                        districtHighlyEducated[i]
-                    );
-                    
-                    m_Districts[i] = district;
-                }
-
-                districtAgeData.Dispose();
-                districtEduData.Dispose();
-                districtHighlyEducated.Dispose();
-            }
-
-            void IJobChunk.Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                Execute(in chunk, unfilteredChunkIndex, useEnabledMask, in chunkEnabledMask);
             }
         }
 
-        private static readonly ComponentType[] k_DistrictTypes = new ComponentType[]
+        // Helper method to calculate AgeData.
+        private AgeData GetAgeData(DynamicBuffer<HouseholdCitizen> citizens)
         {
-            ComponentType.ReadOnly<District>()
-        };
+            int children = 0;
+            int teens = 0;
+            int adults = 0;
+            int elders = 0;
+            for (int i = 0; i < citizens.Length; i++)
+            {
+                Entity citizen = citizens[i].m_Citizen;
+                if (EntityManager.TryGetComponent<Citizen>(citizen, out var component) &&
+                    !CitizenUtils.IsCorpsePickedByHearse(EntityManager, citizen))
+                {
+                    switch (component.GetAge())
+                    {
+                        case CitizenAge.Child:
+                            children++;
+                            break;
+                        case CitizenAge.Teen:
+                            teens++;
+                            break;
+                        case CitizenAge.Adult:
+                            adults++;
+                            break;
+                        case CitizenAge.Elderly:
+                            elders++;
+                            break;
+                    }
+                }
+            }
+            return new AgeData(children, teens, adults, elders);
+        }
 
-        private static readonly ComponentType[] k_DistrictBuildingTypes = new ComponentType[]
+        // Helper method to calculate EducationData.
+        private EducationData GetEducationData(Entity household)
         {
-            ComponentType.ReadOnly<Building>(),
-            ComponentType.ReadOnly<ResidentialProperty>(),
-            ComponentType.ReadOnly<PrefabRef>(),
-            ComponentType.ReadOnly<Renter>(),
-            ComponentType.ReadOnly<CurrentDistrict>()
-        };
+            int uneducated = 0;
+            int poorlyEducated = 0;
+            int educated = 0;
+            int wellEducated = 0;
+            int highlyEducated = 0;
 
-        private static readonly ComponentType[] k_DistrictBuildingExcludeTypes = new ComponentType[]
-        {
-            ComponentType.ReadOnly<Temp>(),
-            ComponentType.ReadOnly<Deleted>()
-        };
+            if (EntityManager.HasComponent<HouseholdCitizen>(household))
+            {
+                DynamicBuffer<HouseholdCitizen> citizens = EntityManager.GetBuffer<HouseholdCitizen>(household);
+                for (int i = 0; i < citizens.Length; i++)
+                {
+                    if (EntityManager.TryGetComponent<Citizen>(citizens[i].m_Citizen, out var component) &&
+                        !CitizenUtils.IsCorpsePickedByHearse(EntityManager, citizens[i].m_Citizen))
+                    {
+                        switch (component.GetEducationLevel())
+                        {
+                            case 0:
+                                uneducated++;
+                                break;
+                            case 1:
+                                poorlyEducated++;
+                                break;
+                            case 2:
+                                educated++;
+                                break;
+                            case 3:
+                                wellEducated++;
+                                break;
+                            case 4:
+                                highlyEducated++;
+                                break;
+                        }
+                    }
+                }
+            }
+            return new EducationData(uneducated, poorlyEducated, educated, wellEducated, highlyEducated);
+        }
 
+        // Normal Entity Queries.
         private EntityQuery m_DistrictBuildingQuery;
         private EntityQuery m_HappinessParameterQuery;
+        private EntityQuery m_DistrictQuery;
+
         private NameSystem m_NameSystem;
         private NativeList<DistrictEntry> m_Districts;
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
         public bool ForceUpdate { get; private set; }
-        public void ForceUpdateOnce()
-        {
-            ForceUpdate = true;
-        }
+        public void ForceUpdateOnce() => ForceUpdate = true;
+
         protected override void OnCreate()
         {
             base.OnCreate();
-            
+
             m_DistrictBuildingQuery = GetEntityQuery(new EntityQueryDesc
             {
-                All = k_DistrictBuildingTypes,
-                None = k_DistrictBuildingExcludeTypes
+                All = new ComponentType[]
+                {
+                    typeof(Building),
+                    typeof(ResidentialProperty),
+                    typeof(PrefabRef),
+                    typeof(Renter),
+                    typeof(CurrentDistrict)
+                },
+                None = new ComponentType[]
+                {
+                    typeof(Temp),
+                    typeof(Deleted)
+                }
             });
 
-            m_HappinessParameterQuery = GetEntityQuery(ComponentType.ReadOnly<CitizenHappinessParameterData>());
+            m_HappinessParameterQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[] { typeof(CitizenHappinessParameterData) }
+            });
+
+            m_DistrictQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[] { typeof(District) },
+                None = new ComponentType[] { typeof(Temp) }
+            });
+
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
             m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
@@ -251,25 +251,40 @@ namespace InfoLoomTwo.Systems.DistrictData
                 m_Districts.Dispose();
         }
 
+        // Refactored OnUpdate that splits functionality to helper methods.
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
+
             if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
                 return;
             ForceUpdate = false;
-            
-           
+
+            ResetDistrictEntries();
+            BuildDistrictEntries();
+            using (var districtMap = BuildDistrictMap())
+            {
+                ScheduleStatsJob(districtMap);
+            }
+            ProcessAgeAndEducationData();
+        }
+
+        // Clears and disposes existing district entries.
+        private void ResetDistrictEntries()
+        {
             for (int i = 0; i < m_Districts.Length; i++)
             {
                 if (m_Districts[i].households.IsCreated)
                     m_Districts[i].households.Dispose();
             }
             m_Districts.Clear();
+        }
 
-            // Get all districts first and initialize them with zero values
-            var districtQuery = GetEntityQuery(ComponentType.ReadOnly<District>(), ComponentType.Exclude<Temp>());
-            using (var districts = districtQuery.ToEntityArray(Allocator.Temp))
+        // Builds new district entries from the district query.
+        private void BuildDistrictEntries()
+        {
+            using (var districts = m_DistrictQuery.ToEntityArray(Allocator.Temp))
             {
                 for (int i = 0; i < districts.Length; i++)
                 {
@@ -287,8 +302,22 @@ namespace InfoLoomTwo.Systems.DistrictData
                     });
                 }
             }
+        }
 
-            // Now process buildings and update district data
+        // Builds a NativeHashMap for fast lookup from district entity to index.
+        private NativeHashMap<Entity, int> BuildDistrictMap()
+        {
+            var districtMap = new NativeHashMap<Entity, int>(m_Districts.Length, Allocator.TempJob);
+            for (int i = 0; i < m_Districts.Length; i++)
+            {
+                districtMap.TryAdd(m_Districts[i].district, i);
+            }
+            return districtMap;
+        }
+
+        // Schedules the stats job that processes building and resident data.
+        private void ScheduleStatsJob(NativeHashMap<Entity, int> districtMap)
+        {
             var jobData = new CountDistrictStatsJob
             {
                 m_EntityHandle = SystemAPI.GetEntityTypeHandle(),
@@ -300,24 +329,41 @@ namespace InfoLoomTwo.Systems.DistrictData
                 m_HouseholdCitizenFromEntity = SystemAPI.GetBufferLookup<HouseholdCitizen>(true),
                 m_HouseholdAnimalFromEntity = SystemAPI.GetBufferLookup<HouseholdAnimal>(true),
                 m_RenterFromEntity = SystemAPI.GetBufferLookup<Renter>(true),
-                m_HealthLookup = SystemAPI.GetComponentLookup<HealthProblem>(true),
-                m_TravelLookup = SystemAPI.GetComponentLookup<TravelPurpose>(true),
-                m_CitizenLookup = SystemAPI.GetComponentLookup<Citizen>(true),
                 m_HappinessData = SystemAPI.GetSingleton<CitizenHappinessParameterData>(),
-                m_Districts = m_Districts
+                m_Districts = m_Districts,
+                m_DistrictIndexMap = districtMap
             };
 
-            this.Dependency = JobChunkExtensions.Schedule(jobData, m_DistrictBuildingQuery, this.Dependency);
-            this.Dependency.Complete();
+            Dependency = JobChunkExtensions.Schedule(jobData, m_DistrictBuildingQuery, Dependency);
+            Dependency.Complete();
+        }
 
-            // Calculate wealth keys after job completes
-            var happinessData = SystemAPI.GetSingleton<CitizenHappinessParameterData>();
+        // Processes AgeData, EducationData, and wealth key calculations on the main thread.
+        private void ProcessAgeAndEducationData()
+        {
             for (int i = 0; i < m_Districts.Length; i++)
             {
                 var district = m_Districts[i];
-                district.wealthKey = CitizenUIUtils.GetAverageHouseholdWealth(EntityManager, district.households, happinessData);
+                AgeData ageTotal = new AgeData(0, 0, 0, 0);
+                EducationData eduTotal = new EducationData(0, 0, 0, 0, 0);
+                for (int j = 0; j < district.households.Length; j++)
+                {
+                    var household = district.households[j];
+                    var citizens = EntityManager.GetBuffer<HouseholdCitizen>(household);
+                    ageTotal += GetAgeData(citizens);
+                    eduTotal += GetEducationData(household);
+                }
+                district.ageData = ageTotal;
+                district.educationData = eduTotal;
+                district.wealthKey = CitizenUIUtils.GetAverageHouseholdWealth(EntityManager, district.households, SystemAPI.GetSingleton<CitizenHappinessParameterData>());
                 m_Districts[i] = district;
             }
+        }
+
+        private void WriteProperty(IJsonWriter writer, string propertyName, Action writeValue)
+        {
+            writer.PropertyName(propertyName);
+            writeValue();
         }
 
         public void WriteDistricts(IJsonWriter writer)
@@ -327,27 +373,41 @@ namespace InfoLoomTwo.Systems.DistrictData
             {
                 var district = m_Districts[i];
                 writer.TypeBegin("District");
-                writer.PropertyName("name");
-                m_NameSystem.BindName(writer, district.district);
-                writer.PropertyName("householdCount");
-                writer.Write(district.householdCount);
-                writer.PropertyName("maxHouseholds");
-                writer.Write(district.maxHouseholds);
-                writer.PropertyName("residentCount");
-                writer.Write(district.residentCount);
-                writer.PropertyName("petCount");
-                writer.Write(district.petCount);
-                writer.PropertyName("wealthKey");
-                writer.Write(district.wealthKey.ToString());
-                writer.PropertyName("ageData");
-                writer.Write(district.ageData);
-                writer.PropertyName("educationData");
-                writer.Write(district.educationData);
-                writer.PropertyName("entity");
-                writer.Write(district.district);
+                WriteProperty(writer, "name", () => m_NameSystem.BindName(writer, district.district));
+                WriteProperty(writer, "householdCount", () => writer.Write(district.householdCount));
+                WriteProperty(writer, "maxHouseholds", () => writer.Write(district.maxHouseholds));
+                WriteProperty(writer, "residentCount", () => writer.Write(district.residentCount));
+                WriteProperty(writer, "petCount", () => writer.Write(district.petCount));
+                WriteProperty(writer, "wealthKey", () => writer.Write(district.wealthKey.ToString()));
+                WriteProperty(writer, "ageData", () => WriteAgeData(writer, district.ageData));
+                WriteProperty(writer, "educationData", () => WriteEducationData(writer, district.educationData));
+                WriteProperty(writer, "entity", () => writer.Write(district.district));
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
+        }
+
+        public void WriteAgeData(IJsonWriter writer, AgeData ageData)
+        {
+            writer.TypeBegin("AgeData");
+            WriteProperty(writer, "children", () => writer.Write(ageData.children));
+            WriteProperty(writer, "teens", () => writer.Write(ageData.teens));
+            WriteProperty(writer, "adults", () => writer.Write(ageData.adults));
+            WriteProperty(writer, "elders", () => writer.Write(ageData.elders));
+            WriteProperty(writer, "total", () => writer.Write(ageData.children + ageData.teens + ageData.adults + ageData.elders));
+            writer.TypeEnd();
+        }
+
+        public void WriteEducationData(IJsonWriter writer, EducationData educationData)
+        {
+            writer.TypeBegin("EducationData");
+            WriteProperty(writer, "uneducated", () => writer.Write(educationData.uneducated));
+            WriteProperty(writer, "poorlyEducated", () => writer.Write(educationData.poorlyEducated));
+            WriteProperty(writer, "educated", () => writer.Write(educationData.educated));
+            WriteProperty(writer, "wellEducated", () => writer.Write(educationData.wellEducated));
+            WriteProperty(writer, "highlyEducated", () => writer.Write(educationData.highlyEducated));
+            WriteProperty(writer, "total", () => writer.Write(educationData.uneducated + educationData.poorlyEducated + educationData.educated + educationData.wellEducated + educationData.highlyEducated));
+            writer.TypeEnd();
         }
     }
 }
