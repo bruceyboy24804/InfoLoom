@@ -3,28 +3,30 @@ using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game.Areas;
-using Game.Common;
 using Game.Buildings;
 using Game.Citizens;
+using Game.Common;
 using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
 using Game.UI.InGame; // Uses shared definitions for AgeData and EducationData
-using Unity.Collections;
-using Unity.Entities;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
+using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.DistrictData
 {
+    // For the purposes of the job below, we assume that Citizen is a job-safe IComponentData,
+    // and that it has fields "age" (of type CitizenAge) and "educationLevel" (an int).
+    // We also assume AgeData and EducationData are immutable structs that expose read-only properties and are initialized via constructors.
     public partial class DistrictDataSystem : SystemBase
     {
-        // DistrictEntry uses the shared AgeData and EducationData types.
-        private struct DistrictEntry
+        public struct DistrictEntry
         {
             public Entity district;
             public int residentCount;
@@ -107,7 +109,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                             if (TryProcessHousehold(ref entry, household) &&
                                 m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
                             {
-                                
+                                // Additional household processing could be done here.
                             }
                         }
                     }
@@ -116,57 +118,59 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        // Helper method to calculate AgeData.
-        private AgeData GetAgeData(DynamicBuffer<HouseholdCitizen> citizens)
+        // New job to process AgeData and EducationData for each district.
+        // This job now uses ComponentLookup<T> for citizen data.
+        [BurstCompile]
+        private struct ProcessDistrictDataJob : IJobParallelFor
         {
-            int children = 0;
-            int teens = 0;
-            int adults = 0;
-            int elders = 0;
-            for (int i = 0; i < citizens.Length; i++)
-            {
-                Entity citizen = citizens[i].m_Citizen;
-                if (EntityManager.TryGetComponent<Citizen>(citizen, out var component) &&
-                    !CitizenUtils.IsCorpsePickedByHearse(EntityManager, citizen))
-                {
-                    switch (component.GetAge())
-                    {
-                        case CitizenAge.Child:
-                            children++;
-                            break;
-                        case CitizenAge.Teen:
-                            teens++;
-                            break;
-                        case CitizenAge.Adult:
-                            adults++;
-                            break;
-                        case CitizenAge.Elderly:
-                            elders++;
-                            break;
-                    }
-                }
-            }
-            return new AgeData(children, teens, adults, elders);
-        }
+            public NativeArray<DistrictEntry> Districts;
 
-        // Helper method to calculate EducationData.
-        private EducationData GetEducationData(Entity household)
-        {
-            int uneducated = 0;
-            int poorlyEducated = 0;
-            int educated = 0;
-            int wellEducated = 0;
-            int highlyEducated = 0;
+            // Lookup for household citizens (job-safe).
+            [ReadOnly] public BufferLookup<HouseholdCitizen> HouseholdCitizenLookup;
 
-            if (EntityManager.HasComponent<HouseholdCitizen>(household))
+            // Lookup for citizen data.
+            [ReadOnly] public ComponentLookup<Citizen> CitizenDataLookup;
+
+            public void Execute(int index)
             {
-                DynamicBuffer<HouseholdCitizen> citizens = EntityManager.GetBuffer<HouseholdCitizen>(household);
-                for (int i = 0; i < citizens.Length; i++)
+                // Create local accumulators since AgeData and EducationData are immutable and have no setters.
+                int children = 0, teens = 0, adults = 0, elders = 0;
+                int uneducated = 0, poorlyEducated = 0, educated = 0, wellEducated = 0, highlyEducated = 0;
+
+                DistrictEntry district = Districts[index];
+                for (int j = 0; j < district.households.Length; j++)
                 {
-                    if (EntityManager.TryGetComponent<Citizen>(citizens[i].m_Citizen, out var component) &&
-                        !CitizenUtils.IsCorpsePickedByHearse(EntityManager, citizens[i].m_Citizen))
+                    Entity household = district.households[j];
+                    if (!HouseholdCitizenLookup.HasBuffer(household))
+                        continue;
+
+                    DynamicBuffer<HouseholdCitizen> citizens = HouseholdCitizenLookup[household];
+                    for (int k = 0; k < citizens.Length; k++)
                     {
-                        switch (component.GetEducationLevel())
+                        Entity citizenEntity = citizens[k].m_Citizen;
+                        if (!CitizenDataLookup.HasComponent(citizenEntity))
+                            continue;
+                        Citizen citizen = CitizenDataLookup[citizenEntity];
+
+                        // Accumulate AgeData values.
+                        switch (citizen.GetAge())
+                        {
+                            case CitizenAge.Child:
+                                children++;
+                                break;
+                            case CitizenAge.Teen:
+                                teens++;
+                                break;
+                            case CitizenAge.Adult:
+                                adults++;
+                                break;
+                            case CitizenAge.Elderly:
+                                elders++;
+                                break;
+                        }
+
+                        // Accumulate EducationData values.
+                        switch (citizen.GetEducationLevel())
                         {
                             case 0:
                                 uneducated++;
@@ -186,8 +190,12 @@ namespace InfoLoomTwo.Systems.DistrictData
                         }
                     }
                 }
+
+                // Create new structs using the accumulated values.
+                district.ageData = new AgeData(children, teens, adults, elders);
+                district.educationData = new EducationData(uneducated, poorlyEducated, educated, wellEducated, highlyEducated);
+                Districts[index] = district;
             }
-            return new EducationData(uneducated, poorlyEducated, educated, wellEducated, highlyEducated);
         }
 
         // Normal Entity Queries.
@@ -196,6 +204,8 @@ namespace InfoLoomTwo.Systems.DistrictData
         private EntityQuery m_DistrictQuery;
 
         private NameSystem m_NameSystem;
+        // We now store the district entries in a NativeList. Before processing in the job,
+        // we move them to a NativeArray (job friendly), then copy back the results.
         private NativeList<DistrictEntry> m_Districts;
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
@@ -263,11 +273,24 @@ namespace InfoLoomTwo.Systems.DistrictData
 
             ResetDistrictEntries();
             BuildDistrictEntries();
+
             using (var districtMap = BuildDistrictMap())
             {
                 ScheduleStatsJob(districtMap);
             }
-            ProcessAgeAndEducationData();
+
+            // Process age and education data in a parallel job.
+            var districtsArray = m_Districts.AsArray();
+            var processJob = new ProcessDistrictDataJob
+            {
+                Districts = districtsArray,
+                HouseholdCitizenLookup = GetBufferLookup<HouseholdCitizen>(true),
+                CitizenDataLookup = GetComponentLookup<Citizen>(true)
+            };
+            Dependency = processJob.Schedule(districtsArray.Length, 1, Dependency);
+            Dependency.Complete();
+
+            ProcessWealthData();
         }
 
         // Clears and disposes existing district entries.
@@ -338,23 +361,12 @@ namespace InfoLoomTwo.Systems.DistrictData
             Dependency.Complete();
         }
 
-        // Processes AgeData, EducationData, and wealth key calculations on the main thread.
-        private void ProcessAgeAndEducationData()
+        // Process wealth data on the main thread.
+        private void ProcessWealthData()
         {
             for (int i = 0; i < m_Districts.Length; i++)
             {
                 var district = m_Districts[i];
-                AgeData ageTotal = new AgeData(0, 0, 0, 0);
-                EducationData eduTotal = new EducationData(0, 0, 0, 0, 0);
-                for (int j = 0; j < district.households.Length; j++)
-                {
-                    var household = district.households[j];
-                    var citizens = EntityManager.GetBuffer<HouseholdCitizen>(household);
-                    ageTotal += GetAgeData(citizens);
-                    eduTotal += GetEducationData(household);
-                }
-                district.ageData = ageTotal;
-                district.educationData = eduTotal;
                 district.wealthKey = CitizenUIUtils.GetAverageHouseholdWealth(EntityManager, district.households, SystemAPI.GetSingleton<CitizenHappinessParameterData>());
                 m_Districts[i] = district;
             }
