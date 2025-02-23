@@ -385,7 +385,7 @@ namespace InfoLoomTwo.Systems
             {
                 m_uiDistricts.Update();
                 m_DistrictDataSystem.IsPanelVisible = true;
-                m_DistrictDataSystem.ForceUpdateOnce();
+               
             }
         
             if (_iDPVBinding.value && _uiUpdateState.Advance())
@@ -594,7 +594,7 @@ namespace InfoLoomTwo.Systems
 
             if (open)
             {
-                m_DistrictDataSystem.ForceUpdateOnce();
+                
                 m_uiDistricts.Update();
             }
         }

@@ -14,7 +14,7 @@
 }
 
 .headerText {
-  margin-left: -5rem;
+  margin-left: 5rem;
   font-size: 115%;
 }
 
@@ -33,17 +33,23 @@
 }
 
 .headerRow {
-
+  width: 100%;
+  display: flex;
+  align-items: center;
   padding: 1rem 0;
 }
-
+.householdColumn {
+  flex: 0 0 20%;
+  display: flex;
+}
 .column {
-  flex: 0 0 15%;
+ 
+  flex: 0 0 20%;
   text-align: center;
 }
 
 .nameColumn {
-
+  flex: 0 0 20%;
   text-align: left;
   padding-right: 1rem;
   overflow: hidden;
@@ -75,28 +81,51 @@
 
 .tooltipContent {
   white-space: pre-line;
-  padding: 12px;
-  font-size: 14px;
+  
+  font-size: 15rem;
   line-height: 1.6;
   color: white;
   min-width: 300px;
 }
-
-.chartSection {
-  margin-bottom: 16px;
+.tooltipText {
+  margin: 0.01rem;
+  color: #ffffff;
+  
+  p {
+      margin: 0.01rem;
+      font-size: 13rem;
+      text-align: left;
+      display: flex;
+      flex-direction: row;
+  }
 }
-
+.chartSection {
+  margin-bottom: 1rem;
+  color: #ffffff;
+  
+  p {
+      margin: 1rem;
+      font-size: 13rem;
+      text-align: left;
+      display: flex;
+      flex-direction: row;
+  }
+}
 .chartTitle {
-  font-size: 16px;
+  font-size: 13rem;
   font-weight: bold;
-  margin-bottom: 8px;
+  margin-top: 5rem;
   color: #ccc;
 }
-
+.boldText {
+  margin: 0 0.25em;  // Adds spacing before and after
+  font-weight: bold;
+  display: inline-block;
+}
 .chartBar {
   display: flex;
-  height: 10rem;
-  margin-bottom: 8px;
+  height:13rem;
+  margin-bottom: 5rem;
 }
 
 .chartBarSegment {
@@ -107,7 +136,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  font-size: 13rem;
+  margin-bottom: 1rem;
 }
 
 .colorIndicator {
@@ -115,10 +145,17 @@
   height: 1.2em;
   margin-right: 0.5em;
   display: inline-block;
+  border-top-left-radius: 4rem 4rem;
+    border-top-right-radius: 4rem 4rem;
+    border-bottom-left-radius: 4rem 4rem;
+    border-bottom-right-radius: 4rem 4rem;
 }
 
 .legendLabel {
   display: flex;
   align-items: center;
 }
-
+.multiline {
+    white-space: pre-line;
+    line-height: 1.5;
+}

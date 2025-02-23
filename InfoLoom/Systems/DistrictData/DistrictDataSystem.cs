@@ -107,7 +107,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                             if (TryProcessHousehold(ref entry, household) &&
                                 m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
                             {
-                                entry.residentCount += citizens.Length;
+                                
                             }
                         }
                     }

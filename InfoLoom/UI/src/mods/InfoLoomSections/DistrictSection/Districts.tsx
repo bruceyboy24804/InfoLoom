@@ -1,5 +1,5 @@
 import React, { FC, useRef } from "react";
-import { Panel, Scrollable, DraggablePanelProps, Number2, Tooltip } from "cs2/ui";
+import { Panel, Scrollable, DraggablePanelProps, Number2, Tooltip, BalloonTheme } from "cs2/ui";
 import { useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { Name } from "cs2/bindings";
@@ -28,13 +28,13 @@ const formatTooltip = (text: string, highlights: string[] = []): JSX.Element => 
     const parts = text.split(new RegExp(`\\b(${highlights.join('|')})\\b`, 'gi'));
     return (
         <span style={{ 
-            whiteSpace: 'normal', 
+            whiteSpace: 'pre-wrap', 
             display: 'inline',
             maxWidth: '300px' 
         }}>
             {parts.map((part, i) => {
                 if (highlights.some(h => part.toLowerCase() === h.toLowerCase())) {
-                    return <strong key={i}>{part}</strong>;
+                    return <strong key={i}> {part} </strong>;
                 }
                 return <span key={i}>{part}</span>;
             })}
@@ -143,10 +143,19 @@ const formatCombinedTooltip = (data: { ageData: AgeData; educationData: Educatio
                 <div className={styles.chartTitle}>Age Distribution</div>
                 <AgeChart />
             </div>
-            
+            <div className={styles.tooltipText}>
+                <p className={styles.multiline}>
+                    {"Citizen age determines their education opportunities and whether or not they can work. Age also affects citizen health. As they grow older, they are more prone to falling ill."}
+                </p>
+            </div>
             <div className={styles.chartSection}>
                 <div className={styles.chartTitle}>Education Levels</div>
                 <EducationChart />
+            </div>
+            <div className={styles.tooltipText}>
+                <p className={styles.multiline}>
+                    {"Education level determines the citizen's job opportunities, wages and their work efficiency. Their average education level also affects how much garbage they produce."}
+                </p>    
             </div>
         </div>
     );
@@ -160,7 +169,7 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
                 {getDisplayName(data.name, translate)}
             </div>
             <Tooltip tooltip={`Current households: ${data.householdCount}\nMaximum capacity: ${data.maxHouseholds}\nOccupancy rate: ${((data.householdCount / data.maxHouseholds) * 100).toFixed(1)}%`}>
-                <div className={styles.column}>{data.householdCount} / {data.maxHouseholds}</div>
+                <div className={styles.householdColumn}>{data.householdCount} / {data.maxHouseholds}</div>
             </Tooltip>
             <Tooltip tooltip={formatCombinedTooltip({
                 ageData: data.ageData,
@@ -183,7 +192,7 @@ const TableHeader: FC = () => (
         <div className={styles.headerRow}>
             <div className={styles.nameColumn}><b>Name</b></div>
             <Tooltip tooltip="Shows current occupancy vs maximum capacity of households in the district. Hover over the values to see detailed statistics.">
-                <div className={styles.column}><b>Households</b></div>
+                <div className={styles.householdColumn}><b>Households</b></div>
             </Tooltip>
             <Tooltip tooltip="Total number of residents. Hover to see detailed age and education demographics.">
                 <div className={styles.column}><b>Residents</b></div>
