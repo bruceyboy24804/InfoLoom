@@ -2,6 +2,7 @@
   width: 500rem;
   display: flex;
   flex-direction: column; /* Ensure proper layout */
+  background-color: var(--panelColorNormal); /* Ensure consistency with Workforce section */
 }
 
 .header {
@@ -21,11 +22,13 @@
 .labels_L7Q {
   box-sizing: border-box;
   border: 1px solid gray;
+  background-color: var(--panelColorNormal);
 }
 
 .row_S2v {
   display: flex;
   justify-content: center;
+  background-color: var(--panelColorNormal); /* Added to maintain consistency with other sections */
 }
 
 .small_ExK {
@@ -50,34 +53,42 @@
 
 .centerStyle16 {
   width: 16%;
+  background-color: var(--panelColorNormal);
 }
 
 .centerStyle30 {
   width: 30%;
+  background-color: var(--panelColorNormal);
 }
 
 .centerStyle70 {
   width: 70%;
+  background-color: var(--panelColorNormal); 
 }
 
 .centerStyle34 {
   width: 34%;
+  background-color: var(--panelColorNormal); 
 }
 
 .centerStyle2 {
   width: 2%;
+  background-color: var(--panelColorNormal);
 }
 
 .centerStyle36 {
   width: 36%;
+  background-color: var(--panelColorNormal);
 }
 
 .centerStyle50 {
   width: 50%;
+  background-color: var(--panelColorNormal);
 }
 
 .centerStyle15 {
   width: 15%;
+  background-color: var(--panelColorNormal);
 }
 
 .divider {

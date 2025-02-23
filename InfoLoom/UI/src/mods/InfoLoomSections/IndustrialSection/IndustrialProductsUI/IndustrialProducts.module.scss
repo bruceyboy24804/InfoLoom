@@ -3,7 +3,7 @@
   align-items: center;
   padding: 8px 0;
   border-bottom: 2px solid #444;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--sectionHeaderColor);
   top: 0;
   z-index: 1;
   backdrop-filter: blur(8px);
@@ -141,12 +141,111 @@
     background-color: rgba(255, 255, 255, 0.1);
   }
 }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 800rem;
+  width: 1400rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+}
+
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.panelFooter {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.innerContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dropdownContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableBody {
+  flex: 1 1 auto;
+}
+
+.neutral_blue {
+  color: #8cc0db;
+  font-weight: 500;
+}
+
+.graphButton {
+  width: 12%;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 3rem 0;
+  border: none;
+  background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
+  color: var(--menuText1Normal);
+  font-size: 20rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  &:hover {
+    background-color: white;
+  }
+}
+
+.backButton {
+  width: 12%;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 3rem 0;
+  border: none;
+  background: linear-gradient(145deg, rgba(60, 60, 60, 0.85), rgba(45, 45, 45, 0.85));
+  color: var(--menuText1Normal);
+  font-size: 20rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  &:hover {
+    background-color: white;
+  }
+}
+
 .filterContainer {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
+
 .table {
   width: 100%;
   margin-top: 1rem;

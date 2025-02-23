@@ -1,6 +1,6 @@
 import React, { useState, useCallback, FC } from 'react';
 import $Panel from 'mods/panel';
-import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable} from 'cs2/ui';
+import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable, Panel} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
@@ -357,46 +357,44 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   }
 
   return (
-    <$Panel
-      id="infoloom-industrial-products"
-      
-      title="Industrial and Office Products"
+    <Panel
+      draggable
       onClose={onClose}
-      initialSize={{ width: window.innerWidth * 0.50, height: window.innerHeight * 0.70 }}
-     
-      initialPosition={{ top: window.innerHeight * 0.05, left: window.innerWidth * 0.005 }}
+      initialPosition={{ x: 0, y: 0 }}     
+      className={styles.panel}
+      header={<div className={styles.header}><span className={styles.headerText}>Industrial & Office Products</span></div>}
     >
       {industrialProducts.length === 0 ? (
         <p>Waiting...</p>
       ) : (
-        <div>
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className={styles.panelContent}>
+          <div className={styles.controls}>
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                <div className={styles.dropdownContent}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Sort by Name"
                       isChecked={sortBy === 'name'}
                       onToggle={() => setSortBy('name')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Sort by Demand"
                       isChecked={sortBy === 'demand'}
                       onToggle={() => setSortBy('demand')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Sort by Workers"
                       isChecked={sortBy === 'workers'}
                       onToggle={() => setSortBy('workers')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Sort by Tax"
                       isChecked={sortBy === 'tax'}
@@ -414,22 +412,22 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                <div className={styles.dropdownContent}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="All Demand"
                       isChecked={filterDemand === 'all'}
                       onToggle={() => setFilterDemand('all')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Positive Demand"
                       isChecked={filterDemand === 'positive'}
                       onToggle={() => setFilterDemand('positive')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Negative Demand"
                       isChecked={filterDemand === 'negative'}
@@ -447,29 +445,29 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                <div className={styles.dropdownContent}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="All Workers"
                       isChecked={filterWorkers === 'all'}
                       onToggle={() => setFilterWorkers('all')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Fully Staffed"
                       isChecked={filterWorkers === 'full'}
                       onToggle={() => setFilterWorkers('full')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Partially Staffed"
                       isChecked={filterWorkers === 'partial'}
                       onToggle={() => setFilterWorkers('partial')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="No Workers"
                       isChecked={filterWorkers === 'none'}
@@ -487,43 +485,43 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <Dropdown
               theme={DropdownStyle}
               content={
-                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                <div className={styles.dropdownContent}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Demand Info"
                       isChecked={showColumns.demand}
                       onToggle={() => toggleColumn('demand')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Buildings"
                       isChecked={showColumns.buildings}
                       onToggle={() => toggleColumn('buildings')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Storage"
                       isChecked={showColumns.storage}
                       onToggle={() => toggleColumn('storage')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Production"
                       isChecked={showColumns.production}
                       onToggle={() => toggleColumn('production')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Workers"
                       isChecked={showColumns.workers}
                       onToggle={() => toggleColumn('workers')}
                     />
                   </div>
-                  <div style={{ padding: '4px 8px', cursor: 'pointer' }}>
+                  <div className={styles.dropdownItem}>
                     <InfoCheckbox
                       label="Tax"
                       isChecked={showColumns.tax}
@@ -540,7 +538,6 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           </div>
 
           <TableHeader showColumns={showColumns} />
-            <Scrollable vertical={true} smooth={true} trackVisibility="scrollable">
               {industrialProducts
               .filter((item: industrialProductData) => item.ResourceName !== 'NoResource')
               .filter(applyDataFilter)
@@ -552,11 +549,10 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
                   showColumns={showColumns}
                 />
               ))}
-            </Scrollable>
         </div>
       )}
-    </$Panel>
+    </Panel>
   );
 };
 
-export default $IndustrialProducts;   
+export default $IndustrialProducts;

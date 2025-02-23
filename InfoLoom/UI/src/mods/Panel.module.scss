@@ -7,30 +7,20 @@
   border-bottom-left-radius: var(--panelRadiusInner);
   border-bottom-right-radius: var(--panelRadiusInner);
   overflow: hidden;
+  background-color: var(--panelColorNormal);
 }
 
-.header {
-  cursor: move;
-  padding: 10px;
-  background-color: rgba(6, 10, 16, calc(var(--panelOpacityDark) + 0.2));
-  backdrop-filter: var(--panelBlur);
+header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: flex-start;
   align-items: center;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  font-size: var(--fontSizeXL);
-  color: var(--accentColorNormal);
-  font-weight: bold;
-  border-bottom-width: 3px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--accentColorNormal);
-  user-select: none;
-  backdrop-filter: var(--panelBlur);
-  margin-left: 1rem;
-  &:active {
-    cursor: grabbing;
-  }
+  height: 20rem;
+  text-transform: none;
+}
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
 }
 
 .exitbutton {
@@ -51,7 +41,7 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  background-color: rgba(6, 10, 16, calc(var(--panelOpacityDark) + 0.2));
+  background-color: var(--panelColorNormal);
   backdrop-filter: var(--panelBlur);
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;

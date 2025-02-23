@@ -212,15 +212,14 @@ const TableHeader: FC = () => (
     </div>
 );
 
-const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
+const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, }) => {
     const districts: District[] = useValue(DistrictData$) ?? [];
-    const defaultPos: Number2 = { x: 0.038, y: 0.15 };
 
     return (
         <Panel
             draggable
             onClose={onClose}
-            initialPosition={initialPosition || defaultPos}
+            initialPosition={{ x: 0.038, y: 0.15 }}
             className={styles.panel}
             header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
         >

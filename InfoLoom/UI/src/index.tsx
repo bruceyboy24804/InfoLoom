@@ -2,10 +2,9 @@ import  { ModRegistrar } from 'cs2/modding';
 import InfoLoomMenu from 'mods/InfoLoomMenu/InfoLoomMenu';
 import 'intl';
 import 'intl/locale-data/jsonp/en-US';
-import {Chart, CategoryScale} from 'chart.js';
 
-// Register the category scale
-Chart.register(CategoryScale);
+import {Chart} from 'chart.js/auto';
+
 
 const register: ModRegistrar = moduleRegistry => {
   moduleRegistry.append('GameTopLeft', InfoLoomMenu);

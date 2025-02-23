@@ -222,7 +222,7 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
       }
     >
       {ilResidential.length === 0 ? (
-        <p>Waiting...</p>
+        <p style={{ color: 'white' }}>Waiting...</p> 
       ) : (
         <div>
           <BuildingDemandSection data={ilResidential} />

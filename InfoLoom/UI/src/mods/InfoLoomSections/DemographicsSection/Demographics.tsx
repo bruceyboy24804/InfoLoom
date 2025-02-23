@@ -2,25 +2,49 @@ import React, {
   useState,
   useMemo,
   useCallback,
-  FC,
   useRef,
   useEffect,
 } from 'react';
+import styles from './Demographics.module.scss';
 
 // External hooks / frameworks
-import { Scrollable } from 'cs2/ui';
+import $Panel from 'mods/panel';
 
-// Chart.js imports
-import { Chart, ChartOptions } from 'chart.js/auto';
+// Chart.js
 import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  Title,
+} from 'chart.js';
 
 // Local or app-level imports
-import { useValue } from 'cs2/api';
+import { bindValue, useValue } from 'cs2/api';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";
+import {DraggablePanelProps, PanelProps, PanelTheme, Panel, Scrollable} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
-import styles from './Demographics.module.scss';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  Title
+);
+
+// ==== Bindings (connect to your mod's data) ====
+
+
+
+
+
 
 
 interface AlignedParagraphProps {
@@ -183,11 +207,11 @@ function aggregatePopulationData(
 /**
  * A simple row displaying "left" label and "right" numeric value, aligned and spaced.
  */
-const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
+const AlignedParagraph = ({ left, right }: AlignedParagraphProps): JSX.Element => {
   return (
     <div className={styles.alignedParagraph}>
-      <div>{left}</div>
-      <div>{right}</div>
+      <div className={styles.label}>{left}</div>
+      <div className={styles.value}>{right}</div>
     </div>
   );
 };
@@ -195,14 +219,14 @@ const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
 /**
  * Checkbox UI for selecting a grouping strategy.
  */
-const GroupingOptions: FC<GroupingOptionsProps> = ({
+const GroupingOptions = ({
   groupingStrategy,
   setGroupingStrategy,
   totalEntries,
-}) => {
+}: GroupingOptionsProps): JSX.Element => {
   return (
-    <div className={styles.groupingContainer}>
-      <div className={styles.groupingLabel}>Age Grouping</div>
+    <div className={styles.groupingOptions}>
+      <div className={styles.label}>Age Grouping</div>
       {GROUP_STRATEGIES.map((strategy) => (
         <InfoCheckbox
           key={strategy.value}
@@ -219,10 +243,10 @@ const GroupingOptions: FC<GroupingOptionsProps> = ({
 /**
  * Displays high-level statistics (Population, Tourists, etc.).
  */
-const StatisticsSummary: FC<StatisticsSummaryProps> = ({
+const StatisticsSummary = ({
   StructureTotals,
   OldestCitizen,
-}) => {
+}: StatisticsSummaryProps): JSX.Element => {
   // Safely extract required totals
   const allCitizens = StructureTotals[0];
   const population = StructureTotals[1];
@@ -236,7 +260,7 @@ const StatisticsSummary: FC<StatisticsSummaryProps> = ({
 
   return (
     <div className={styles.statisticsContainer}>
-      <div className={styles.columnLeft}>
+      <div className={`${styles.statisticsColumn} ${styles.left}`}>
         <AlignedParagraph left="All Citizens" right={allCitizens} />
         <div className={styles.spacer} />
         <AlignedParagraph left="- Tourists" right={tourists} />
@@ -247,7 +271,7 @@ const StatisticsSummary: FC<StatisticsSummaryProps> = ({
         <div className={styles.spacer} />
         <AlignedParagraph left="Population" right={population} />
       </div>
-      <div className={styles.columnRight}>
+      <div className={`${styles.statisticsColumn} ${styles.right}`}>
         <AlignedParagraph left="Dead" right={dead} />
         <div className={styles.spacer} />
         <AlignedParagraph left="Students" right={students} />
@@ -265,24 +289,13 @@ const StatisticsSummary: FC<StatisticsSummaryProps> = ({
 /**
  * Main Chart renderer for the demographics data.
  */
-const DemographicsChart: FC<{
+const DemographicsChart = ({
+  StructureDetails,
+  groupingStrategy,
+}: {
   StructureDetails: populationAtAge[];
   groupingStrategy: GroupingStrategy;
-}> = ({ StructureDetails, groupingStrategy }) => {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(600);
-
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        setContainerHeight(entries[0].contentRect.height);
-      }
-    });
-    resizeObserver.observe(chartContainerRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
+}): JSX.Element => {
   // Define chart colors for each category
   const chartColors = useMemo(
     () => ({
@@ -296,7 +309,7 @@ const DemographicsChart: FC<{
     []
   );
 
-  // Chart data setup
+  // Build chart data
   const chartData = useMemo(() => {
     if (!StructureDetails.length) {
       return { labels: [], datasets: [] };
@@ -315,37 +328,31 @@ const DemographicsChart: FC<{
             label: 'Work',
             data: sortedAges.map((d) => d.Work),
             backgroundColor: chartColors.work,
-            offset: 2,
           },
           {
             label: 'Elementary',
             data: sortedAges.map((d) => d.School1),
             backgroundColor: chartColors.elementary,
-            offset: 2,
           },
           {
             label: 'High School',
             data: sortedAges.map((d) => d.School2),
             backgroundColor: chartColors.highSchool,
-            offset: 2,
           },
           {
             label: 'College',
             data: sortedAges.map((d) => d.School3),
             backgroundColor: chartColors.college,
-            offset: 2,
           },
           {
             label: 'University',
             data: sortedAges.map((d) => d.School4),
             backgroundColor: chartColors.university,
-            offset: 2,
           },
           {
             label: 'Other',
             data: sortedAges.map((d) => d.Other),
             backgroundColor: chartColors.other,
-            offset: 2,
           },
         ],
       };
@@ -365,202 +372,92 @@ const DemographicsChart: FC<{
           label: 'Work',
           data: aggregated.map((d) => d.work),
           backgroundColor: chartColors.work,
-          offset: 1,
         },
         {
           label: 'Elementary',
           data: aggregated.map((d) => d.elementary),
           backgroundColor: chartColors.elementary,
-          offset: 1,
         },
         {
           label: 'High School',
           data: aggregated.map((d) => d.highSchool),
           backgroundColor: chartColors.highSchool,
-          offset: 1,
         },
         {
           label: 'College',
           data: aggregated.map((d) => d.college),
           backgroundColor: chartColors.college,
-          offset: 1,
         },
         {
           label: 'University',
           data: aggregated.map((d) => d.university),
           backgroundColor: chartColors.university,
-          offset: 1,
         },
         {
           label: 'Other',
           data: aggregated.map((d) => d.other),
           backgroundColor: chartColors.other,
-          offset: 1,
         },
       ],
     };
   }, [StructureDetails, groupingStrategy, chartColors]);
 
+  // Define chart options
   const chartOptions = useMemo(() => {
     const { indexAxis, mainAxisTitle, crossAxisTitle } = getOrientationProps();
-    
     return {
-      indexAxis,
+      indexAxis: indexAxis,
       responsive: true,
       maintainAspectRatio: false,
-      color: 'white',
-      layout: {
-        padding: {
-          top: 20,
-          right: 20,
-          bottom: 20,
-          left: 20
-        }
-      },
       scales: {
-        y: {
-          barThickness: 20,
-          maxBarThickness: 25,
-          barPercentage: 0.9,     
-          beginAtZero: true,
-          border: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.3)'
-          },
+        [indexAxis]: {
           title: {
             display: true,
             text: mainAxisTitle,
             color: 'white',
-            font: { ...yaxisfont, size: 16 },
-            padding: { top: 10, bottom: 10 }
+            font: yaxisfont,
           },
           ticks: {
             color: 'white',
-            font: { ...yaxisfont, size: 14 },
-            padding: 15,
-            maxRotation: 0
+            font: yaxisfont,
           },
           stacked: true,
-          grid: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.1)',
-            drawTicks: true
-          }
         },
         x: {
-          border: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.3)'
-          },
           title: {
             display: true,
             text: crossAxisTitle,
             color: 'white',
-            font: { ...commonFont, size: 16 },
-            padding: { top: 10, bottom: 10 }
+            font: commonFont,
           },
           ticks: {
             color: 'white',
-            font: { ...commonFont, size: 14 },
-            padding: 15,
-            callback: (value: number | string) => value
+            font: commonFont,
           },
           stacked: true,
-          grid: {
-            display: true,
-            color: 'rgba(255, 255, 255, 0.1)',
-            drawTicks: true
-          }
         },
       },
       plugins: {
         legend: {
-          position: 'top' as const,
           labels: {
             color: 'white',
-            font: { ...commonFont, size: 14 },
-            boxWidth: 30,
-            padding: 15,
-            usePointStyle: true,
-            generateLabels: (chart: Chart) => {
-              const datasets = chart.data.datasets;
-              return datasets.map((dataset: any, i: number) => ({
-                text: dataset.label || '',
-                fillStyle: dataset.backgroundColor as string,
-                hidden: !chart.isDatasetVisible(i),
-                lineCap: 'round',
-                lineDash: [],
-                lineDashOffset: 0,
-                lineWidth: 0,
-                strokeStyle: dataset.backgroundColor as string,
-                pointStyle: 'rect',
-                datasetIndex: i
-              }));
-            }
+            font: commonFont,
           },
-          onClick: (_event: any, legendItem: any, legend: any) => {
-            const index = legendItem.datasetIndex;
-            const ci = legend.chart;
-            if (ci) {
-              ci.setDatasetVisibility(index, !ci.isDatasetVisible(index));
-              ci.update();
-            }
-          }
         },
         title: {
           display: false,
         },
-        tooltip: {
-          animation: {
-            duration: 150
-          },
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleColor: 'white',
-          bodyColor: 'white',
-          bodyFont: { ...commonFont },
-          padding: 10,
-          cornerRadius: 4,
-          callbacks: {
-            label: (context: any) => {
-              const label = context.dataset.label || '';
-              const value = context.parsed.x;
-              return `${label}: ${value}`;
-            }
-          }
-        }
       },
-      animation: {
-        duration: 400,
-        easing: 'easeOutQuart'
-      },
-      transitions: {
-        active: {
-          animation: {
-            duration: 200
-          }
-        }
-      },
-      interaction: {
-        mode: 'index' as const,
-        intersect: false
-      }
-    } as ChartOptions<'bar'>;
-  }, [groupingStrategy]);
+    };
+  }, []);
 
   return (
     <div 
-      ref={chartContainerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        minHeight: '400px',
-      }}
+      className={styles.chartVisualization}
+      style={{ height: '1500px' }}
     >
       {StructureDetails.length === 0 ? (
-        <p style={{ color: 'white' }}>No data available to display the chart.</p>
+        <p className={styles.noData}>No data available to display the chart.</p>
       ) : (
         <Bar data={chartData} options={chartOptions} />
       )}
@@ -569,13 +466,12 @@ const DemographicsChart: FC<{
 };
 
 // === Main Demographics Component ===
-const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
-  // Panel visibility
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
-
+const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   // Toggles
   const [showStatistics, setShowStatistics] = useState(true);
-  const [showAgeGrouping, setShowAgeGrouping] = useState(false);
+  const [showAgeGrouping, setShowAgeGrouping] = useState(true);
+
+  // Grouping
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
 
   // Data from ECS / mod
@@ -583,20 +479,18 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
 
-  // Panel dims
-  const panWidth = 800;  // Fixed width in pixels
-  const panHeight = window.innerHeight * 0.8; // 80% of viewport height
-
   return (
     <Panel
       draggable
       onClose={onClose}
-      initialPosition={initialPosition}
       className={styles.panel}
-      style={{ width: panWidth, height: panHeight }}
-      header={<div className={styles.header}><span className={styles.headerText}>Demographics</span></div>}
+      header={
+        <div className={styles.header}>
+          <span className={styles.headerText}>Demographics</span>
+        </div>
+      }
     >
-      <div className={styles.contentContainer}>
+      <div className={styles.container}>
         {/* Toggle checkboxes */}
         <div className={styles.toggleContainer}>
           <InfoCheckbox
@@ -629,16 +523,15 @@ const Demographics: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => 
         )}
 
         {/* Chart Section */}
-        <div className={styles.chartSection}>
-          
+        <Scrollable smooth vertical trackVisibility="scrollable">
+        <div className={styles.chartContainer}>
           <DemographicsChart
             StructureDetails={demographicsDataStructureDetails}
             groupingStrategy={groupingStrategy}
           />
-          
         </div>
+        </Scrollable>
       </div>
-  
     </Panel>
   );
 };

@@ -1,445 +1,44 @@
-// Panel.tsx
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  FC,
-  memo,
-  MouseEvent as ReactMouseEvent,
-  KeyboardEvent as ReactKeyboardEvent,
-} from 'react';
+import React, { memo } from 'react';
 import classNames from 'classnames';
 import styles from './Panel.module.scss';
 import { trigger, bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';        
+import { PanelProps } from 'cs2/ui';
 
 const PanelStates$ = bindValue<PanelState[]>(mod.id, 'PanelStates');
 
-const SNAP_THRESHOLD = 20;
-const MIN_SIZE = { width: 200, height: 200 };
-
-type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
-
-export interface Position {
-  top: number;
-  left: number;
-}
-
-export interface Size {
-  width: number;
-  height: number;
-}
-
-export interface PanelState {
+interface PanelState {
   Id: string;
-  Position: Position;
-  Size: Size;
+  Position: { top: number; left: number };
+  Size: { width: number; height: number };
 }
 
-interface PanelProps {
-  children: React.ReactNode;
-  title: string;
-  style?: React.CSSProperties;
-  initialPosition?: Position;
-  initialSize?: Size;
-  onPositionChange?: (newPosition: Position) => void;
-  onSizeChange?: (newSize: Size) => void;
-  className?: string;
-  onClose?: () => void;
-  savedPosition?: Position;
-  savedSize?: Size;
-  onSavePosition?: (position: Position) => void;
-  onSaveSize?: (size: Size) => void;
-  zIndex?: number;
+interface ExtendedPanelProps extends PanelProps {
   id?: string;
+  zIndex?: number;
 }
 
-/**
- * 1) A single hook that handles:
- *    - reading the PanelStates from C# (via useValue),
- *    - finding the matching panel state,
- *    - merging with any provided savedPosition, savedSize, initialPosition, initialSize,
- *    - and returning setPosition, setSize, etc.
- */
-function usePanelState({
-  id,
-  initialPosition,
-  initialSize,
-  savedPosition,
-  savedSize,
-}: {
-  id: string;
-  initialPosition?: Position;
-  initialSize?: Size;
-  savedPosition?: Position;
-  savedSize?: Size;
-}) {
-  // read from C# once
-  const panelStatesFromCSharp = useValue(PanelStates$);
-
-  // find the relevant panel state for our ID
-  const matchedState = panelStatesFromCSharp?.find((st) => st.Id === id);
-
-
-  const defaultPosition: Position = matchedState?.Position
-    ?? savedPosition
-    ?? initialPosition
-    ?? { top: 100, left: 10 };
-    
-  const defaultSize: Size = matchedState?.Size
-    ?? savedSize
-    ?? initialSize
-    ?? { width: 300, height: 600 };
-
-  // Now create local states with those defaults
-  const [position, setPosition] = useState<Position>(defaultPosition);
-  const [size, setSize] = useState<Size>(defaultSize);
-
-  // This is the function to call when you want to save
-  const savePanelState = useCallback(
-    (newPosition: Position, newSize: Size) => {
-      trigger(mod.id, 'SavePanelState', id, newPosition, newSize);
-    },
-    [id]
-  );
-
-  return { position, setPosition, size, setSize, savePanelState };
-}
-
-/**
- * 2) The usual hooks for drag and resize remain mostly the same.
- *    But they no longer need to worry about "loading" states from the store, 
- *    because we've already got the correct defaults above.
- */
-function useDrag({
-  position,
-  setPosition,
-  size,
-  onPositionChange,
-  onSavePosition,
-  savePanelState,
-}: {
-  position: Position;
-  setPosition: React.Dispatch<React.SetStateAction<Position>>;
-  size: Size;
-  onPositionChange?: (p: Position) => void;
-  onSavePosition?: (p: Position) => void;
-  savePanelState: (p: Position, s: Size) => void;
-}) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-
-  const snapToEdge = useCallback((value: number, threshold: number, edge: number): number => {
-    return Math.abs(value - edge) < threshold ? edge : value;
-  }, []);
-
-  const handleDragStart = useCallback(
-    (e: ReactMouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      setIsDragging(true);
-      setDragOffset({
-        x: e.clientX - position.left,
-        y: e.clientY - position.top,
-      });
-    },
-    [position]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging) return;
-      const newLeft = e.clientX - dragOffset.x;
-      const newTop = e.clientY - dragOffset.y;
-      const maxLeft = window.innerWidth - size.width;
-      const maxTop = window.innerHeight - size.height;
-
-      // Snap to edges
-      const snappedLeft = snapToEdge(newLeft, SNAP_THRESHOLD, 0);
-      const snappedTop = snapToEdge(newTop, SNAP_THRESHOLD, 0);
-      const snappedRight = snapToEdge(newLeft, SNAP_THRESHOLD, maxLeft);
-      const snappedBottom = snapToEdge(newTop, SNAP_THRESHOLD, maxTop);
-
-      const nextPosition = {
-        left: Math.max(0, Math.min(snappedRight, snappedLeft)),
-        top: Math.max(0, Math.min(snappedBottom, snappedTop)),
-      };
-
-      setPosition(nextPosition);
-      onPositionChange?.(nextPosition);
-      onSavePosition?.(nextPosition);
-      savePanelState(nextPosition, size);
-    },
-    [
-      isDragging,
-      dragOffset,
-      size,
-      setPosition,
-      snapToEdge,
-      onPositionChange,
-      onSavePosition,
-      savePanelState,
-    ]
-  );
-
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
-
-  return { handleDragStart };
-}
-
-interface ResizeState {
-  isResizing: boolean;
-  handle: ResizeHandle | null;
-  startSize: Size;
-  startPosition: Position;
-  startMousePosition: { x: number; y: number };
-}
-
-function useResize({
-  position,
-  setPosition,
-  size,
-  setSize,
-  onPositionChange,
-  onSizeChange,
-  onSavePosition,
-  onSaveSize,
-  savePanelState,
-}: {
-  position: Position;
-  setPosition: React.Dispatch<React.SetStateAction<Position>>;
-  size: Size;
-  setSize: React.Dispatch<React.SetStateAction<Size>>;
-  onPositionChange?: (p: Position) => void;
-  onSizeChange?: (s: Size) => void;
-  onSavePosition?: (p: Position) => void;
-  onSaveSize?: (s: Size) => void;
-  savePanelState: (p: Position, s: Size) => void;
-}) {
-  const [resizeState, setResizeState] = useState<ResizeState>({
-    isResizing: false,
-    handle: null,
-    startSize: size,
-    startPosition: position,
-    startMousePosition: { x: 0, y: 0 },
-  });
-
-  const handleResizeStart = useCallback(
-    (e: ReactMouseEvent, handle: ResizeHandle) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setResizeState({
-        isResizing: true,
-        handle,
-        startSize: size,
-        startPosition: position,
-        startMousePosition: { x: e.clientX, y: e.clientY },
-      });
-    },
-    [position, size]
-  );
-
-  const performHandleResize = useCallback(
-    (handle: ResizeHandle, deltaX: number, deltaY: number) => {
-      let newSize = { ...resizeState.startSize };
-      let newPos = { ...resizeState.startPosition };
-
-      const constraints = {
-        n: () => {
-          const nextHeight = Math.max(MIN_SIZE.height, newSize.height - deltaY);
-          newPos.top += newSize.height - nextHeight;
-          newSize.height = nextHeight;
-        },
-        s: () => {
-          newSize.height = Math.max(MIN_SIZE.height, newSize.height + deltaY);
-        },
-        e: () => {
-          newSize.width = Math.max(MIN_SIZE.width, newSize.width + deltaX);
-        },
-        w: () => {
-          const nextWidth = Math.max(MIN_SIZE.width, newSize.width - deltaX);
-          newPos.left += newSize.width - nextWidth;
-          newSize.width = nextWidth;
-        },
-        ne: () => {
-          constraints.n();
-          constraints.e();
-        },
-        nw: () => {
-          constraints.n();
-          constraints.w();
-        },
-        se: () => {
-          constraints.s();
-          constraints.e();
-        },
-        sw: () => {
-          constraints.s();
-          constraints.w();
-        },
-      };
-
-      constraints[handle]();
-
-      // Constrain to viewport
-      const maxWidth = window.innerWidth - newPos.left;
-      const maxHeight = window.innerHeight - newPos.top;
-      newSize.width = Math.min(newSize.width, maxWidth);
-      newSize.height = Math.min(newSize.height, maxHeight);
-
-      return { newSize, newPos };
-    },
-    [resizeState.startSize, resizeState.startPosition]
-  );
-
-  const handleResizeMove = useCallback(
-    (e: MouseEvent) => {
-      if (!resizeState.isResizing || !resizeState.handle) return;
-      const deltaX = e.clientX - resizeState.startMousePosition.x;
-      const deltaY = e.clientY - resizeState.startMousePosition.y;
-      const { newSize, newPos } = performHandleResize(resizeState.handle, deltaX, deltaY);
-
-      setSize(newSize);
-      setPosition(newPos);
-      onSizeChange?.(newSize);
-      onPositionChange?.(newPos);
-    },
-    [resizeState, performHandleResize, setSize, setPosition, onSizeChange, onPositionChange]
-  );
-
-  const handleResizeEnd = useCallback(() => {
-    if (!resizeState.isResizing) return;
-    setResizeState((prev) => ({ ...prev, isResizing: false, handle: null }));
-
-    onSaveSize?.(size);
-    onSavePosition?.(position);
-    savePanelState(position, size);
-  }, [resizeState.isResizing, position, size, onSaveSize, onSavePosition, savePanelState]);
-
-  useEffect(() => {
-    if (resizeState.isResizing) {
-      window.addEventListener('mousemove', handleResizeMove);
-      window.addEventListener('mouseup', handleResizeEnd);
-      return () => {
-        window.removeEventListener('mousemove', handleResizeMove);
-        window.removeEventListener('mouseup', handleResizeEnd);
-      };
-    }
-  }, [resizeState.isResizing, handleResizeMove, handleResizeEnd]);
-
-  return { handleResizeStart };
-}
-
-/**
- * Renders the 8 resize handles (n, e, s, w, ne, nw, se, sw).
- */
-interface ResizeHandlesProps {
-  onResizeStart: (e: ReactMouseEvent, handle: ResizeHandle) => void;
-  classNameMap?: Record<ResizeHandle, string>;
-}
-
-const ResizeHandles: FC<ResizeHandlesProps> = memo(({ onResizeStart, classNameMap = {} }) => {
-  const handles: ResizeHandle[] = ['n', 'e', 's', 'w', 'ne', 'nw', 'se', 'sw'];
-  return (
-    <>
-      {handles.map((handle) => (
-        <div
-          key={handle}
-          className={classNames(styles[handle], classNameMap[handle])}
-          onMouseDown={(e) => onResizeStart(e, handle)}
-          style={{
-            position: 'absolute',
-            ...(handle.includes('n') && { top: 0 }),
-            ...(handle.includes('s') && { bottom: 0 }),
-            ...(handle.includes('e') && { right: 0 }),
-            ...(handle.includes('w') && { left: 0 }),
-            width: handle.length === 1 ? '4px' : '12px',
-            height: handle.length === 1 ? '4px' : '12px',
-            cursor: `${handle}-resize`,
-            zIndex: 1000,
-          }}
-        />
-      ))}
-    </>
-  );
-});
-
-const PanelComponent: FC<PanelProps> = ({
+const PanelComponent = ({
   children,
-  title,
+  header,
   style,
-  initialPosition,
-  initialSize,
-  onPositionChange,
-  onSizeChange,
   className,
   onClose,
-  savedPosition,
-  savedSize,
-  onSavePosition,
-  onSaveSize,
   zIndex = 1,
   id = 'default',
-}) => {
-  // 1) Let our custom hook do *all* the heavy lifting.
-  const { position, setPosition, size, setSize, savePanelState } = usePanelState({
-    id,
-    initialPosition,
-    initialSize,
-    savedPosition,
-    savedSize,
-  });
-
-  // 2) Drag & resize as before
-  const { handleDragStart } = useDrag({
-    position,
-    setPosition,
-    size,
-    onPositionChange,
-    onSavePosition,
-    savePanelState,
-  });
-  const { handleResizeStart } = useResize({
-    position,
-    setPosition,
-    size,
-    setSize,
-    onPositionChange,
-    onSizeChange,
-    onSavePosition,
-    onSaveSize,
-    savePanelState,
-  });
-
-  // 3) Close on escape
-  const handleKeyDown = useCallback(
-    (e: ReactKeyboardEvent) => {
-      if (e.key === 'Escape') onClose?.();
-    },
-    [onClose]
-  );
-
+  ...props
+}: ExtendedPanelProps): JSX.Element => {
+  const panelStatesFromCSharp = useValue(PanelStates$);
+  const matchedState = panelStatesFromCSharp?.find((st) => st.Id === id);
+  
   return (
     <div
-      ref={useRef<HTMLDivElement>(null)}
       style={{
         position: 'absolute',
-        top: position.top,
-        left: position.left,
-        width: size.width,
-        height: size.height,
+        top: matchedState?.Position.top ?? 100,
+        left: matchedState?.Position.left ?? 10,
+        width: matchedState?.Size.width ?? 300,
+        height: matchedState?.Size.height ?? 600,
         backgroundColor: 'var(--panelColorNormal)',
         border: '1px solid #444',
         borderRadius: '8px',
@@ -451,19 +50,10 @@ const PanelComponent: FC<PanelProps> = ({
         ...style,
       }}
       className={classNames(styles.panel, className)}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="dialog"
-      aria-labelledby="panel-title"
+      {...props}
     >
-      <div
-        className={styles.header}
-        onMouseDown={handleDragStart}
-        role="heading"
-        aria-level={1}
-        id="panel-title"
-      >
-        <span>{title}</span>
+      <div className={styles.header}>
+        {header}
         {onClose && (
           <button
             className={classNames(styles.exitbutton, 'button_bvQ close-button_wKK')}
@@ -481,15 +71,9 @@ const PanelComponent: FC<PanelProps> = ({
           </button>
         )}
       </div>
-      <div
-        ref={useRef<HTMLDivElement>(null)}
-        className={styles.content}
-        role="region"
-        aria-label={`${title} content`}
-      >
+      <div className={styles.content}>
         {children}
       </div>
-      <ResizeHandles onResizeStart={handleResizeStart} />
     </div>
   );
 };
