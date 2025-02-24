@@ -1,26 +1,5 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, memo, useLayoutEffect } from 'react';
 import styles from './Demographics.module.scss';
-
-// External hooks / frameworks
-import $Panel from 'mods/panel';
-
-// Chart.js
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-  Title,
-} from 'chart.js';
 
 // Local or app-level imports
 import { bindValue, useValue } from 'cs2/api';
@@ -29,21 +8,7 @@ import {DraggablePanelProps, PanelProps, PanelTheme, Panel, Scrollable} from "cs
 import {populationAtAge} from "../../domain/populationAtAge";
 import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-  Title
-);
-
 // ==== Bindings (connect to your mod's data) ====
-
-
-
-
 
 
 
@@ -170,7 +135,7 @@ function aggregatePopulationData(
   details: populationAtAge[],
   grouping: GroupingOption
 ): AggregatedInfo[] {
-  // Initialize each range
+  // Initialize aggregated data structure
   const aggregated = grouping.ranges.map((range) => ({
     label: range.label,
     work: 0,
@@ -287,197 +252,259 @@ const StatisticsSummary = ({
 };
 
 /**
- * Main Chart renderer for the demographics data.
+ * Redone DemographicsChart component for improved clarity and responsiveness
  */
 const DemographicsChart = ({
-  StructureDetails,
-  groupingStrategy,
+	StructureDetails,
+	groupingStrategy,
 }: {
-  StructureDetails: populationAtAge[];
-  groupingStrategy: GroupingStrategy;
+	StructureDetails: populationAtAge[];
+	groupingStrategy: GroupingStrategy;
 }): JSX.Element => {
-  // Define chart colors for each category
-  const chartColors = useMemo(
-    () => ({
-      work: '#624532',
-      elementary: '#7E9EAE',
-      highSchool: '#00C217',
-      college: '#005C4E',
-      university: '#2462FF',
-      other: '#A1A1A1',
-    }),
-    []
-  );
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: '' });
+	const segmentsRef = useRef<Array<{ x: number; y: number; width: number; height: number; datasetLabel: string; value: number }>>([]);
 
-  // Build chart data
-  const chartData = useMemo(() => {
-    if (!StructureDetails.length) {
-      return { labels: [], datasets: [] };
-    }
+	// Reuse existing logic to build chart data
+	const buildChartData = useCallback((): { labels: string[]; datasets: { label: string; data: number[]; backgroundColor: string; }[] } => {
+		if (!StructureDetails.length) {
+			return { labels: [], datasets: [] };
+		}
 
-    // If no grouping, show each age individually
-    if (groupingStrategy === 'none') {
-      const validDetails = StructureDetails.filter((d) => d.Age <= 120);
-      const sortedAges = [...validDetails].sort((a, b) => a.Age - b.Age);
-      const labels = sortedAges.map((d) => String(d.Age));
+		let labels: string[] = [];
+		let datasets: { label: string; data: number[]; backgroundColor: string; }[] = [];
 
-      return {
-        labels,
-        datasets: [
-          {
-            label: 'Work',
-            data: sortedAges.map((d) => d.Work),
-            backgroundColor: chartColors.work,
-          },
-          {
-            label: 'Elementary',
-            data: sortedAges.map((d) => d.School1),
-            backgroundColor: chartColors.elementary,
-          },
-          {
-            label: 'High School',
-            data: sortedAges.map((d) => d.School2),
-            backgroundColor: chartColors.highSchool,
-          },
-          {
-            label: 'College',
-            data: sortedAges.map((d) => d.School3),
-            backgroundColor: chartColors.college,
-          },
-          {
-            label: 'University',
-            data: sortedAges.map((d) => d.School4),
-            backgroundColor: chartColors.university,
-          },
-          {
-            label: 'Other',
-            data: sortedAges.map((d) => d.Other),
-            backgroundColor: chartColors.other,
-          },
-        ],
-      };
-    }
+		const chartColors = {
+			work: '#624532',
+			elementary: '#7E9EAE',
+			highSchool: '#00C217',
+			college: '#005C4E',
+			university: '#2462FF',
+			other: '#A1A1A1',
+		};
 
-    // If grouped, find the matching strategy and aggregate
-    const selectedStrategy = GROUP_STRATEGIES.find((s) => s.value === groupingStrategy);
-    if (!selectedStrategy) return { labels: [], datasets: [] };
+		if (groupingStrategy === 'none') {
+			// Generate detailed view from age 0 to 120, filling missing ages with zero values
+			const age_range = Array.from({ length: 121 }, (_, i) => i);
+			labels = age_range.map(age => String(age));
+			
+			// Helper function to sum values for a given attribute at a specific age
+			const get_value = (attr: keyof populationAtAge, age: number): number => {
+				return StructureDetails.filter(d => d.Age === age)
+					.reduce((sum, d) => sum + (d[attr] || 0), 0);
+			};
+			
+			datasets = [
+				{ label: 'Work', data: age_range.map(age => get_value('Work', age)), backgroundColor: chartColors.work },
+				{ label: 'Elementary', data: age_range.map(age => get_value('School1', age)), backgroundColor: chartColors.elementary },
+				{ label: 'High School', data: age_range.map(age => get_value('School2', age)), backgroundColor: chartColors.highSchool },
+				{ label: 'College', data: age_range.map(age => get_value('School3', age)), backgroundColor: chartColors.college },
+				{ label: 'University', data: age_range.map(age => get_value('School4', age)), backgroundColor: chartColors.university },
+				{ label: 'Other', data: age_range.map(age => get_value('Other', age)), backgroundColor: chartColors.other },
+			];
+		} else {
+			const step = groupingStrategy === 'fiveYear' ? 5 : 10;
+			const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; other: number; }[] = [];
+			for (let i = 0; i < 120; i += step) {
+				groups.push({
+					label: `${i}-${i + step}`,
+					work: 0,
+					elementary: 0,
+					highSchool: 0,
+					college: 0,
+					university: 0,
+					other: 0,
+				});
+			}
+			StructureDetails.forEach(d => {
+				if (d.Age > 120) return;
+				const idx = Math.floor(d.Age / step);
+				if (groups[idx]) {
+					groups[idx].work += d.Work;
+					groups[idx].elementary += d.School1;
+					groups[idx].highSchool += d.School2;
+					groups[idx].college += d.School3;
+					groups[idx].university += d.School4;
+					groups[idx].other += d.Other;
+				}
+			});
+			labels = groups.map(g => g.label);
+			datasets = [
+				{ label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
+				{ label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+				{ label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+				{ label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
+				{ label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
+				{ label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
+			];
+		}
+		return { labels, datasets };
+	}, [StructureDetails, groupingStrategy]);
 
-    const aggregated = aggregatePopulationData(StructureDetails, selectedStrategy);
-    const labels = aggregated.map((d) => d.label);
+	useEffect(() => {
+		const canvas = canvasRef.current;
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Work',
-          data: aggregated.map((d) => d.work),
-          backgroundColor: chartColors.work,
-        },
-        {
-          label: 'Elementary',
-          data: aggregated.map((d) => d.elementary),
-          backgroundColor: chartColors.elementary,
-        },
-        {
-          label: 'High School',
-          data: aggregated.map((d) => d.highSchool),
-          backgroundColor: chartColors.highSchool,
-        },
-        {
-          label: 'College',
-          data: aggregated.map((d) => d.college),
-          backgroundColor: chartColors.college,
-        },
-        {
-          label: 'University',
-          data: aggregated.map((d) => d.university),
-          backgroundColor: chartColors.university,
-        },
-        {
-          label: 'Other',
-          data: aggregated.map((d) => d.other),
-          backgroundColor: chartColors.other,
-        },
-      ],
-    };
-  }, [StructureDetails, groupingStrategy, chartColors]);
+		const chartData = buildChartData();
+		const { labels, datasets } = chartData;
+		if (!labels.length || !datasets.length) return;
 
-  // Define chart options
-  const chartOptions = useMemo(() => {
-    const { indexAxis, mainAxisTitle, crossAxisTitle } = getOrientationProps();
-    return {
-      indexAxis: indexAxis,
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        [indexAxis]: {
-          title: {
-            display: true,
-            text: mainAxisTitle,
-            color: 'white',
-            font: yaxisfont,
-          },
-          ticks: {
-            color: 'white',
-            font: yaxisfont,
-          },
-          stacked: true,
-        },
-        x: {
-          title: {
-            display: true,
-            text: crossAxisTitle,
-            color: 'white',
-            font: commonFont,
-          },
-          ticks: {
-            color: 'white',
-            font: commonFont,
-          },
-          stacked: true,
-        },
-      },
-      plugins: {
-        legend: {
-          labels: {
-            color: 'white',
-            font: commonFont,
-          },
-        },
-        title: {
-          display: false,
-        },
-      },
-    };
-  }, []);
+			// Define drawing dimensions
+		const margin_left = 50;
+		const margin_top = 20;
+		const bar_height = 30;
+		const bar_gap = 15;
+		const canvas_width = canvas.width;
 
-  return (
-    <div 
-      className={styles.chartVisualization}
-      style={{ height: '1500px' }}
-    >
-      {StructureDetails.length === 0 ? (
-        <p className={styles.noData}>No data available to display the chart.</p>
-      ) : (
-        <Bar data={chartData} options={chartOptions} />
-      )}
-    </div>
-  );
+		// Adjust canvas height dynamically for detailed view
+		if (groupingStrategy === 'none') {
+			canvas.height = margin_top + labels.length * (bar_height + bar_gap);
+		} else {
+			canvas.height = 600; // fixed height for grouped views
+		}
+
+		const canvas_height = canvas.height;
+
+		// Clear canvas
+		ctx.clearRect(0, 0, canvas_width, canvas_height);
+
+		// Compute total values for stacking per category
+		const totals = labels.map((_, i) =>
+			datasets.reduce((sum, ds) => sum + (ds.data[i] || 0), 0)
+		);
+		const max_total = Math.max(...totals);
+
+		// Calculate scale factor for horizontal bars
+		const scale = (canvas_width - margin_left - 20) / max_total;
+
+			// Add vertical grid lines
+		const gridSteps = 10;
+		ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+		ctx.lineWidth = 1;
+		for (let i = 0; i <= gridSteps; i++) {
+			const gridValue = (max_total / gridSteps) * i;
+			const xPos = margin_left + gridValue * scale;
+			ctx.beginPath();
+			ctx.moveTo(xPos, margin_top);
+			ctx.lineTo(xPos, canvas_height - 10);
+			ctx.stroke();
+			}
+
+		// Draw each bar group
+		labels.forEach((label, i) => {
+			let x = margin_left;
+			const y = margin_top + i * (bar_height + bar_gap);
+
+			// Draw label text
+			ctx.fillStyle = '#ffffff';
+			ctx.font = '12px Arial';
+			ctx.textAlign = 'right';
+			ctx.fillText(label, margin_left - 10, y + bar_height / 2 + 4);
+
+			// Draw each dataset segment
+			datasets.forEach(ds => {
+				const value = ds.data[i] || 0;
+				const segment_width = value * scale;
+				ctx.fillStyle = ds.backgroundColor;
+				ctx.fillRect(x, y, segment_width, bar_height);
+				x += segment_width;
+			});
+		});
+
+		// New tooltip logic: determine bar group index based on mouseY
+		const handleMouseMove = (e: MouseEvent) => {
+			const rect = canvas.getBoundingClientRect();
+			const mouseX = e.clientX - rect.left;
+			const mouseY = e.clientY - rect.top;
+			const group_index = Math.floor((mouseY - margin_top) / (bar_height + bar_gap));
+			if (group_index < 0 || group_index >= labels.length) {
+				setTooltip(prev => ({ ...prev, visible: false }));
+				return;
+			}
+			const content_lines = [];
+			content_lines.push(`Age: ${labels[group_index]}`);
+			datasets.forEach(ds => {
+				content_lines.push(`${ds.label}: ${ds.data[group_index] || 0}`);
+			});
+			setTooltip({
+				visible: true,
+				x: mouseX,
+				y: mouseY,
+				content: content_lines.join(' | ')
+			});
+		};
+
+		const handleMouseLeave = () => {
+			setTooltip(prev => ({ ...prev, visible: false }));
+		};
+
+		canvas.addEventListener('mousemove', handleMouseMove);
+		canvas.addEventListener('mouseleave', handleMouseLeave);
+
+		// Cleanup event listeners
+		return () => {
+			canvas.removeEventListener('mousemove', handleMouseMove);
+			canvas.removeEventListener('mouseleave', handleMouseLeave);
+		};
+	}, [buildChartData, groupingStrategy]);
+
+	return (
+		<div className={styles.chartContainer}>
+			<div className={styles.chartWrapper} style={{ position: 'relative' }}>
+				<canvas ref={canvasRef} width={800} height={600} style={{ display: 'block' }} />
+				{tooltip.visible && (
+					<div style={{
+						position: 'absolute',
+						left: tooltip.x,
+						top: tooltip.y - 30,
+						background: 'rgba(0, 0, 0, 0.7)',
+						color: 'white',
+						padding: '4px 8px',
+						borderRadius: '4px',
+						pointerEvents: 'none',
+						fontSize: '12px'
+					}}>
+					{tooltip.content}
+					</div>
+				)}
+			</div>
+		</div>
+	);
 };
+
+// Memoize the chart component to optimize rendering
+const MemoizedDemographicsChart = memo(DemographicsChart);
 
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
-  // Toggles
-  const [showStatistics, setShowStatistics] = useState(true);
-  const [showAgeGrouping, setShowAgeGrouping] = useState(true);
-
-  // Grouping
+  // Toggles with batch updates
+  const [displayState, setDisplayState] = useState({
+    showStatistics: true,
+    showAgeGrouping: true
+  });
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
 
   // Data from ECS / mod
   const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
+
+  // Handlers with useCallback to maintain reference stability
+  const handleToggleStatistics = useCallback(() => {
+    setDisplayState(prev => ({
+      ...prev,
+      showStatistics: !prev.showStatistics
+    }));
+  }, []);
+
+  const handleToggleAgeGrouping = useCallback(() => {
+    setDisplayState(prev => ({
+      ...prev,
+      showAgeGrouping: !prev.showAgeGrouping
+    }));
+  }, []);
 
   return (
     <Panel
@@ -495,18 +522,18 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
         <div className={styles.toggleContainer}>
           <InfoCheckbox
             label="Show Statistics"
-            isChecked={showStatistics}
-            onToggle={() => setShowStatistics((prev) => !prev)}
+            isChecked={displayState.showStatistics}
+            onToggle={handleToggleStatistics}
           />
           <InfoCheckbox
             label="Show Age Grouping"
-            isChecked={showAgeGrouping}
-            onToggle={() => setShowAgeGrouping((prev) => !prev)}
+            isChecked={displayState.showAgeGrouping}
+            onToggle={handleToggleAgeGrouping}
           />
         </div>
 
         {/* Statistics Summary */}
-        {showStatistics && (
+        {displayState.showStatistics && (
           <StatisticsSummary
             StructureTotals={demographicsDataStructureTotals}
             OldestCitizen={demographicsDataOldestCitizen}
@@ -514,26 +541,26 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
         )}
 
         {/* Age Grouping Options */}
-        {showAgeGrouping && (
+        {displayState.showAgeGrouping && (
           <GroupingOptions
             groupingStrategy={groupingStrategy}
             setGroupingStrategy={setGroupingStrategy}
-            totalEntries={demographicsDataStructureDetails.length}
+            totalEntries={demographicsDataStructureDetails?.length || 0} // Ensure defined value
           />
         )}
 
         {/* Chart Section */}
-        <Scrollable smooth vertical trackVisibility="scrollable">
-        <div className={styles.chartContainer}>
-          <DemographicsChart
-            StructureDetails={demographicsDataStructureDetails}
-            groupingStrategy={groupingStrategy}
-          />
-        </div>
+        <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
+          <div className={styles.chartContainer}>
+            <MemoizedDemographicsChart
+              StructureDetails={demographicsDataStructureDetails}
+              groupingStrategy={groupingStrategy}
+            />
+          </div>
         </Scrollable>
       </div>
     </Panel>
   );
 };
 
-export default Demographics;
+export default memo(Demographics);

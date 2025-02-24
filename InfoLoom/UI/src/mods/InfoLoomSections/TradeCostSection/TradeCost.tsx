@@ -21,7 +21,6 @@ import styles from './TradeCost.module.scss';
 import { ResourceIcon } from 'mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import { useValue } from 'cs2/api';
-import mod from 'mod.json';
 import Chart from 'chart.js/auto';
 import { TradeCostsDataImports, TradeCostsData, TradeCostsDataExports } from 'mods/bindings';
 

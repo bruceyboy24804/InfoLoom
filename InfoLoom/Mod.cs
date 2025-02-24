@@ -27,7 +27,7 @@ namespace InfoLoomTwo
     {
         public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
-        public static Setting setting;
+       public static Setting setting;
         public static Mod Instance { get; private set; }
      
         public static ExecutableAsset modAsset { get; private set; }    
@@ -43,7 +43,7 @@ namespace InfoLoomTwo
             // Log entry for debugging purposes
             log.Info(nameof(OnLoad));
             Instance = this;
-            // Try to fetch the mod asset from the mod manager
+            //Try to fetch the mod asset from the mod manager
             setting = new Setting(this);
             if (setting == null)
             {
@@ -53,7 +53,7 @@ namespace InfoLoomTwo
             setting.RegisterInOptionsUI();
            AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
-            // Load localization
+             //Load localization
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
 
             var harmony = new Harmony(harmonyId);
@@ -76,7 +76,6 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<PanelUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
@@ -92,12 +91,12 @@ namespace InfoLoomTwo
         // Method that runs when the mod is disposed of
         public void OnDispose()
         {
-            // Log entry for debugging purposes
+            //Log entry for debugging purposes
             log.Info(nameof(OnDispose));
             if (setting != null)
             {
-                setting.UnregisterInOptionsUI();
-                setting = null;
+              setting.UnregisterInOptionsUI();
+               setting = null;
             }
 
             var harmony = new Harmony(harmonyId);

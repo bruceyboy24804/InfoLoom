@@ -1,5 +1,4 @@
 import React, { useState, useCallback, FC } from 'react';
-import $Panel from 'mods/panel';
 import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable, Panel} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
@@ -7,7 +6,6 @@ import styles from './IndustrialProducts.module.scss';
 import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import {bindValue, useValue} from "cs2/api";
-import mod from "mod.json";
 import { industrialProductData } from 'mods/domain/industrialProductData';
 import {IndustrialProductsData} from "../../../bindings";
 

@@ -23,7 +23,6 @@
 	  <Compile Remove="Systems\BuildingDemandData\**" />
 	  <EmbeddedResource Remove="Systems\BuildingDemandData\**" />
 	  <None Remove="Systems\BuildingDemandData\**" />
-	  <Compile Remove="Systems\CommercialSystems\CommercialDemandData\CommercialUISystem.cs" />
 	  <Compile Remove="Systems\CommercialSystems\CommercialProductData\CommercialProductsUISystem.cs" />
 	  <Compile Remove="Systems\DemographicsData\DemographicsUISystem.cs" />
 	  <Compile Remove="Systems\DistrictData\DistrictDataUISystem.cs" />

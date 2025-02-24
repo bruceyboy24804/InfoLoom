@@ -397,11 +397,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 m_LastHouseholdDemand = m_HouseholdDemand.value;
                 m_LastBuildingDemand = m_BuildingDemand.value;
                 
-                
-                
                 UpdateResidentialDemandJob updateResidentialDemandJob = default(UpdateResidentialDemandJob);
-                /*updateResidentialDemandJob.m_ResidentialChunks = m_AllResidentialGroup.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle3);
-                updateResidentialDemandJob.m_HouseholdChunks = m_AllHouseholdGroup.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);*/
                 updateResidentialDemandJob.m_UnlockedZones = m_UnlockedZoneQuery.ToComponentDataArray<ZonePropertiesData>(Allocator.TempJob);
                 updateResidentialDemandJob.m_RenterType = SystemAPI.GetBufferTypeHandle<Renter>(isReadOnly: true);
                 updateResidentialDemandJob.m_PrefabType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
@@ -429,11 +425,13 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 
                 updateResidentialDemandJob.m_Results = m_Results;
                 UpdateResidentialDemandJob jobData = updateResidentialDemandJob;
-                IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, /*outJobHandle2, outJobHandle3,*/ deps)).Complete();
+                IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, deps)).Complete();
                 
+                // Dispose of temporary NativeArrays
+                updateResidentialDemandJob.m_UnlockedZones.Dispose();
+                updateResidentialDemandJob.m_DemandParameters.Dispose();
             }
             // Update UI
-           
         }
 
         private void ResetResults()

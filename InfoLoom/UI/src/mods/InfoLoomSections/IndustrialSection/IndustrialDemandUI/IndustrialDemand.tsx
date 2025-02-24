@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useState } from 'react';
-import $Panel from 'mods/panel';
 import {bindValue, useValue} from "cs2/api";
 import mod from "mod.json";
 import {DraggablePanelProps, PanelProps, Panel} from "cs2/ui";

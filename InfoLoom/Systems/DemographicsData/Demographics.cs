@@ -349,7 +349,7 @@ public partial class Demographics : SystemBase
 
 
 
-        Setting setting = Mod.setting;
+       
         
 
         ResetResults();

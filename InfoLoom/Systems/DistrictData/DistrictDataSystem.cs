@@ -204,13 +204,10 @@ namespace InfoLoomTwo.Systems.DistrictData
         private EntityQuery m_DistrictQuery;
 
         private NameSystem m_NameSystem;
-        // We now store the district entries in a NativeList. Before processing in the job,
-        // we move them to a NativeArray (job friendly), then copy back the results.
         private NativeList<DistrictEntry> m_Districts;
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
-        public bool ForceUpdate { get; private set; }
-        public void ForceUpdateOnce() => ForceUpdate = true;
+        
 
         protected override void OnCreate()
         {
@@ -267,9 +264,9 @@ namespace InfoLoomTwo.Systems.DistrictData
             if (!IsPanelVisible)
                 return;
 
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+            if (m_SimulationSystem.frameIndex % 256 != 0)
                 return;
-            ForceUpdate = false;
+            
 
             ResetDistrictEntries();
             BuildDistrictEntries();
@@ -314,7 +311,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                     m_Districts.Add(new DistrictEntry
                     {
                         district = districts[i],
-                        households = new NativeList<Entity>(32, Allocator.TempJob),
+                        households = new NativeList<Entity>(32, Allocator.Persistent),
                         residentCount = 0,
                         petCount = 0,
                         householdCount = 0,
@@ -372,11 +369,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        private void WriteProperty(IJsonWriter writer, string propertyName, Action writeValue)
-        {
-            writer.PropertyName(propertyName);
-            writeValue();
-        }
+        
 
         public void WriteDistricts(IJsonWriter writer)
         {
@@ -385,15 +378,24 @@ namespace InfoLoomTwo.Systems.DistrictData
             {
                 var district = m_Districts[i];
                 writer.TypeBegin("District");
-                WriteProperty(writer, "name", () => m_NameSystem.BindName(writer, district.district));
-                WriteProperty(writer, "householdCount", () => writer.Write(district.householdCount));
-                WriteProperty(writer, "maxHouseholds", () => writer.Write(district.maxHouseholds));
-                WriteProperty(writer, "residentCount", () => writer.Write(district.residentCount));
-                WriteProperty(writer, "petCount", () => writer.Write(district.petCount));
-                WriteProperty(writer, "wealthKey", () => writer.Write(district.wealthKey.ToString()));
-                WriteProperty(writer, "ageData", () => WriteAgeData(writer, district.ageData));
-                WriteProperty(writer, "educationData", () => WriteEducationData(writer, district.educationData));
-                WriteProperty(writer, "entity", () => writer.Write(district.district));
+                writer.PropertyName("name");
+                m_NameSystem.BindName(writer, district.district);
+                writer.PropertyName("residentCount");
+                writer.Write(district.residentCount);
+                writer.PropertyName("petCount");
+                writer.Write(district.petCount);
+                writer.PropertyName("householdCount");
+                writer.Write(district.householdCount);
+                writer.PropertyName("maxHouseholds");
+                writer.Write(district.maxHouseholds);
+                writer.PropertyName("wealthKey");
+                writer.Write(district.wealthKey.ToString());
+                writer.PropertyName("educationData");
+                WriteEducationData(writer, district.educationData);
+                writer.PropertyName("ageData");
+                WriteAgeData(writer, district.ageData);
+                writer.PropertyName("entity");
+                writer.Write(district.district);
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
@@ -402,23 +404,34 @@ namespace InfoLoomTwo.Systems.DistrictData
         public void WriteAgeData(IJsonWriter writer, AgeData ageData)
         {
             writer.TypeBegin("AgeData");
-            WriteProperty(writer, "children", () => writer.Write(ageData.children));
-            WriteProperty(writer, "teens", () => writer.Write(ageData.teens));
-            WriteProperty(writer, "adults", () => writer.Write(ageData.adults));
-            WriteProperty(writer, "elders", () => writer.Write(ageData.elders));
-            WriteProperty(writer, "total", () => writer.Write(ageData.children + ageData.teens + ageData.adults + ageData.elders));
+            writer.PropertyName("children");
+            writer.Write(ageData.children);
+            writer.PropertyName("teens");
+            writer.Write(ageData.teens);
+            writer.PropertyName("adults");
+            writer.Write(ageData.adults);
+            writer.PropertyName("elders");
+            writer.Write(ageData.elders);
+            writer.PropertyName("total");
+            writer.Write(ageData.children + ageData.teens + ageData.adults + ageData.elders);
             writer.TypeEnd();
         }
 
         public void WriteEducationData(IJsonWriter writer, EducationData educationData)
         {
             writer.TypeBegin("EducationData");
-            WriteProperty(writer, "uneducated", () => writer.Write(educationData.uneducated));
-            WriteProperty(writer, "poorlyEducated", () => writer.Write(educationData.poorlyEducated));
-            WriteProperty(writer, "educated", () => writer.Write(educationData.educated));
-            WriteProperty(writer, "wellEducated", () => writer.Write(educationData.wellEducated));
-            WriteProperty(writer, "highlyEducated", () => writer.Write(educationData.highlyEducated));
-            WriteProperty(writer, "total", () => writer.Write(educationData.uneducated + educationData.poorlyEducated + educationData.educated + educationData.wellEducated + educationData.highlyEducated));
+            writer.PropertyName("uneducated");
+            writer.Write(educationData.uneducated);
+            writer.PropertyName("poorlyEducated");
+            writer.Write(educationData.poorlyEducated);
+            writer.PropertyName("educated");
+            writer.Write(educationData.educated);
+            writer.PropertyName("wellEducated");
+            writer.Write(educationData.wellEducated);
+            writer.PropertyName("highlyEducated");
+            writer.Write(educationData.highlyEducated);
+            writer.PropertyName("total");
+            writer.Write(educationData.uneducated + educationData.poorlyEducated + educationData.educated + educationData.wellEducated + educationData.highlyEducated);
             writer.TypeEnd();
         }
     }

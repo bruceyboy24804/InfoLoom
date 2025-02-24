@@ -79,7 +79,7 @@ namespace InfoLoomTwo.Systems
         private IndustrialDemandSystem m_IndustrialDemandSystem;
         
         private CommercialSystem m_CommercialSystem;
-        private CommercialProductsSystem m_CommercialProductsSystem;
+       private CommercialProductsSystem m_CommercialProductsSystem;
         private Demographics m_Demographics;
         private DistrictDataSystem m_DistrictDataSystem;
         private IndustrialSystem m_IndustrialSystem;
@@ -541,7 +541,6 @@ namespace InfoLoomTwo.Systems
                     : ExtractExcludedResources(commercialSystem.m_ExcludedResources.value);
             }
         }
-        
         private void SetCommercialProductsVisibility(bool open)
         {
             _cPPVBinding.Update(open);

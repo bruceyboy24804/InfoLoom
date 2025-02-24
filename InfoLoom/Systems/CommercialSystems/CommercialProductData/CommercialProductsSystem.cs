@@ -33,7 +33,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 {
     public partial class CommercialProductsSystem : SystemBase
     {
-        Setting setting = Mod.setting;
+        //Setting setting = Mod.setting;
         public struct DemandData
         {
             public FixedString32Bytes ResourceName;
@@ -523,7 +523,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 updateCommercialDemandJob.m_ProduceCapacity = commercialCompanyDatas.m_ProduceCapacity;
                 updateCommercialDemandJob.m_TotalAvailables = commercialCompanyDatas.m_TotalAvailables;
                 updateCommercialDemandJob.m_ServiceCompanies = commercialCompanyDatas.m_ServiceCompanies;
-                updateCommercialDemandJob.TaxRateEffect = Mod.setting.TaxRateEffect;
+                //updateCommercialDemandJob.TaxRateEffect = Mod.setting.TaxRateEffect;
 
                 UpdateCommercialDemandJob jobData = updateCommercialDemandJob;
                 base.Dependency = IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, outJobHandle2, deps));

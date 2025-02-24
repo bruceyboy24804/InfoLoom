@@ -1,6 +1,4 @@
 import React, { useState, useCallback, FC } from 'react';
-
-import $Panel from 'mods/panel';
 import {Button, Dropdown, DropdownToggle, PanelProps, Panel} from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components//InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
