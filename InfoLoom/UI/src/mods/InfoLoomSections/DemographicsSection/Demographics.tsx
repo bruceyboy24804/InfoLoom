@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect, memo, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import styles from './Demographics.module.scss';
+import Chart from 'chart.js/auto';
 
 // Local or app-level imports
-import { bindValue, useValue } from 'cs2/api';
+import { useValue } from 'cs2/api';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, PanelProps, PanelTheme, Panel, Scrollable} from "cs2/ui";
+import {DraggablePanelProps, Panel, Scrollable} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
 
@@ -252,229 +253,391 @@ const StatisticsSummary = ({
 };
 
 /**
- * Redone DemographicsChart component for improved clarity and responsiveness
+ * Replace the custom canvas DemographicsChart with Chart.js implementation
  */
 const DemographicsChart = ({
-	StructureDetails,
-	groupingStrategy,
+  StructureDetails,
+  groupingStrategy,
 }: {
-	StructureDetails: populationAtAge[];
-	groupingStrategy: GroupingStrategy;
+  StructureDetails: populationAtAge[];
+  groupingStrategy: GroupingStrategy;
 }): JSX.Element => {
-	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: '' });
-	const segmentsRef = useRef<Array<{ x: number; y: number; width: number; height: number; datasetLabel: string; value: number }>>([]);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const chartRef = useRef<Chart | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-	// Reuse existing logic to build chart data
-	const buildChartData = useCallback((): { labels: string[]; datasets: { label: string; data: number[]; backgroundColor: string; }[] } => {
-		if (!StructureDetails.length) {
-			return { labels: [], datasets: [] };
-		}
+  // Define chart colors with clear names
+  const chartColors = {
+    work: '#624532',
+    elementary: '#7E9EAE',
+    highSchool: '#00C217',
+    college: '#005C4E',
+    university: '#2462FF',
+    other: '#A1A1A1',
+  };
 
-		let labels: string[] = [];
-		let datasets: { label: string; data: number[]; backgroundColor: string; }[] = [];
+  // Build chart data from StructureDetails based on groupingStrategy
+  const chartData = useMemo(() => {
+    if (!StructureDetails.length) {
+      return {
+        labels: [] as string[],
+        datasets: [] as {
+          label: string;
+          data: number[];
+          backgroundColor: string;
+        }[]
+      };
+    }
 
-		const chartColors = {
-			work: '#624532',
-			elementary: '#7E9EAE',
-			highSchool: '#00C217',
-			college: '#005C4E',
-			university: '#2462FF',
-			other: '#A1A1A1',
-		};
+    let labels: string[] = [];
+    let datasets: Array<{
+      label: string;
+      data: number[];
+      backgroundColor: string;
+    }> = [
+      { label: 'Work', data: [] as number[], backgroundColor: chartColors.work },
+      { label: 'Elementary', data: [] as number[], backgroundColor: chartColors.elementary },
+      { label: 'High School', data: [] as number[], backgroundColor: chartColors.highSchool },
+      { label: 'College', data: [] as number[], backgroundColor: chartColors.college },
+      { label: 'University', data: [] as number[], backgroundColor: chartColors.university },
+      { label: 'Other', data: [] as number[], backgroundColor: chartColors.other },
+    ];
 
-		if (groupingStrategy === 'none') {
-			// Generate detailed view from age 0 to 120, filling missing ages with zero values
-			const age_range = Array.from({ length: 121 }, (_, i) => i);
-			labels = age_range.map(age => String(age));
-			
-			// Helper function to sum values for a given attribute at a specific age
-			const get_value = (attr: keyof populationAtAge, age: number): number => {
-				return StructureDetails.filter(d => d.Age === age)
-					.reduce((sum, d) => sum + (d[attr] || 0), 0);
-			};
-			
-			datasets = [
-				{ label: 'Work', data: age_range.map(age => get_value('Work', age)), backgroundColor: chartColors.work },
-				{ label: 'Elementary', data: age_range.map(age => get_value('School1', age)), backgroundColor: chartColors.elementary },
-				{ label: 'High School', data: age_range.map(age => get_value('School2', age)), backgroundColor: chartColors.highSchool },
-				{ label: 'College', data: age_range.map(age => get_value('School3', age)), backgroundColor: chartColors.college },
-				{ label: 'University', data: age_range.map(age => get_value('School4', age)), backgroundColor: chartColors.university },
-				{ label: 'Other', data: age_range.map(age => get_value('Other', age)), backgroundColor: chartColors.other },
-			];
-		} else {
-			const step = groupingStrategy === 'fiveYear' ? 5 : 10;
-			const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; other: number; }[] = [];
-			for (let i = 0; i < 120; i += step) {
-				groups.push({
-					label: `${i}-${i + step}`,
-					work: 0,
-					elementary: 0,
-					highSchool: 0,
-					college: 0,
-					university: 0,
-					other: 0,
-				});
-			}
-			StructureDetails.forEach(d => {
-				if (d.Age > 120) return;
-				const idx = Math.floor(d.Age / step);
-				if (groups[idx]) {
-					groups[idx].work += d.Work;
-					groups[idx].elementary += d.School1;
-					groups[idx].highSchool += d.School2;
-					groups[idx].college += d.School3;
-					groups[idx].university += d.School4;
-					groups[idx].other += d.Other;
-				}
-			});
-			labels = groups.map(g => g.label);
-			datasets = [
-				{ label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
-				{ label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
-				{ label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
-				{ label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
-				{ label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
-				{ label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
-			];
-		}
-		return { labels, datasets };
-	}, [StructureDetails, groupingStrategy]);
+    if (groupingStrategy === 'none') {
+      // Generate detailed view from age 0 to 120
+      const age_range = Array.from({ length: 121 }, (_, i) => i);
+      labels = age_range.map(age => String(age));
+      
+      // Helper function to sum values for a given attribute at a specific age
+      const get_value = (attr: keyof populationAtAge, age: number): number => {
+        return StructureDetails.filter(d => d.Age === age)
+          .reduce((sum, d) => sum + (d[attr] || 0), 0);
+      };
+      
+      datasets = [
+        { 
+          label: 'Work', 
+          data: age_range.map(age => get_value('Work', age)), 
+          backgroundColor: chartColors.work 
+        },
+        { 
+          label: 'Elementary', 
+          data: age_range.map(age => get_value('School1', age)), 
+          backgroundColor: chartColors.elementary 
+        },
+        { 
+          label: 'High School', 
+          data: age_range.map(age => get_value('School2', age)), 
+          backgroundColor: chartColors.highSchool 
+        },
+        { 
+          label: 'College', 
+          data: age_range.map(age => get_value('School3', age)), 
+          backgroundColor: chartColors.college 
+        },
+        { 
+          label: 'University', 
+          data: age_range.map(age => get_value('School4', age)), 
+          backgroundColor: chartColors.university 
+        },
+        { 
+          label: 'Other', 
+          data: age_range.map(age => get_value('Other', age)), 
+          backgroundColor: chartColors.other 
+        },
+      ];
+    } else if (groupingStrategy === 'lifecycle') {
+      // Use the predefined lifecycle ranges
+      const lifecycleRanges = GROUP_STRATEGIES.find(s => s.value === 'lifecycle')?.ranges || [];
+      const groups = lifecycleRanges.map(range => ({
+        label: range.label,
+        work: 0,
+        elementary: 0,
+        highSchool: 0,
+        college: 0,
+        university: 0,
+        other: 0
+      }));
 
-	useEffect(() => {
-		const canvas = canvasRef.current;
-		if (!canvas) return;
-		const ctx = canvas.getContext('2d');
-		if (!ctx) return;
+      StructureDetails.forEach(d => {
+        if (d.Age > 120) return;
+        const idx = lifecycleRanges.findIndex(range => d.Age >= range.min && d.Age <= range.max);
+        if (idx !== -1) {
+          groups[idx].work += d.Work;
+          groups[idx].elementary += d.School1;
+          groups[idx].highSchool += d.School2;
+          groups[idx].college += d.School3;
+          groups[idx].university += d.School4;
+          groups[idx].other += d.Other;
+        }
+      });
 
-		const chartData = buildChartData();
-		const { labels, datasets } = chartData;
-		if (!labels.length || !datasets.length) return;
+      labels = groups.map(g => g.label);
+      datasets = [
+        { label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
+        { label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+        { label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+        { label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
+        { label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
+        { label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
+      ];
+    } else {
+      // Handle 5-year and 10-year grouping
+      const step = groupingStrategy === 'fiveYear' ? 5 : 10;
+      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; other: number; }[] = [];
+      for (let i = 0; i < 120; i += step) {
+        groups.push({
+          label: `${i}-${i + step}`,
+          work: 0,
+          elementary: 0,
+          highSchool: 0,
+          college: 0,
+          university: 0,
+          other: 0,
+        });
+      }
+      
+      StructureDetails.forEach(d => {
+        if (d.Age > 120) return;
+        const idx = Math.floor(d.Age / step);
+        if (groups[idx]) {
+          groups[idx].work += d.Work;
+          groups[idx].elementary += d.School1;
+          groups[idx].highSchool += d.School2;
+          groups[idx].college += d.School3;
+          groups[idx].university += d.School4;
+          groups[idx].other += d.Other;
+        }
+      });
+      
+      labels = groups.map(g => g.label);
+      datasets = [
+        { label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
+        { label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+        { label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+        { label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
+        { label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
+        { label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
+      ];
+    }
 
-			// Define drawing dimensions
-		const margin_left = 50;
-		const margin_top = 20;
-		const bar_height = 30;
-		const bar_gap = 15;
-		const canvas_width = canvas.width;
+    return {
+      labels,
+      datasets
+    };
+  }, [StructureDetails, groupingStrategy]);
 
-		// Adjust canvas height dynamically for detailed view
-		if (groupingStrategy === 'none') {
-			canvas.height = margin_top + labels.length * (bar_height + bar_gap);
-		} else {
-			canvas.height = 600; // fixed height for grouped views
-		}
+  // Initialize chart ONLY ONCE - based on TradeCost.tsx pattern
+  useEffect(() => {
+    if (!canvasRef.current || !containerRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+    
+    chartRef.current = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        indexAxis: 'y', // Horizontal bar chart
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Population Demographics by Age',
+            color: '#ffffff',
+            font: { size: 16 }
+          },
+          tooltip: {
+            mode: 'index', // Changed from 'nearest' to 'index' to show all categories
+            intersect: true, // Changed to false to trigger tooltip more easily
+            position: 'nearest',
+            caretSize: 5,
+            backgroundColor: 'var(--panelColorNormal)',
+            titleFont: { weight: 'bold' },
+            padding: 10,
+            // Improved tooltip content
+            callbacks: {
+              title: (tooltipItems) => {
+                const item = tooltipItems[0];
+                return `Age: ${item.label}`;
+              },
+              label: (context) => {
+                // Format numbers with commas for thousands
+                const formattedNumber = context.raw ? context.raw.toLocaleString() : '0';
+                return `${context.dataset.label}: ${formattedNumber}`;
+              },
+              footer: (tooltipItems) => {
+                let total = 0;
+                tooltipItems.forEach(item => {
+                  total += Number(item.raw) || 0;
+                });
+                return `Total: ${total.toLocaleString()}`;
+              }
+            }
+          },
+          legend: {
+            position: 'top',
+            labels: { color: '#ffffff', padding: 15 }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#ffffff' },
+            title: {
+              display: true,
+              text: 'Number of People',
+              color: '#ffffff'
+            }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: {
+              color: '#ffffff',
+              // Use autoSkip when in detailed view, disable for grouped views
+              autoSkip: groupingStrategy === 'none',
+              // Increase tick limit for grouped views
+              maxTicksLimit: groupingStrategy === 'none' ? 30 : 20,
+              // Add padding between labels for detailed view
+              padding: groupingStrategy === 'none' ? 8 : 2,
+            },
+            // Adjust the spacing between bars for detailed view
+            afterFit: function(scaleInstance) {
+              // Set different heights based on grouping
+              if (groupingStrategy === 'none') {
+                scaleInstance.height = Math.min(50000, scaleInstance.height);
+              } else if (groupingStrategy === 'lifecycle') {
+                // Make lifecycle bars taller (few categories)
+                scaleInstance.height = Math.min(400, scaleInstance.height);
+              } else {
+                // Make 5-year and 10-year bars taller
+                scaleInstance.height = Math.min(1000, scaleInstance.height);
+              }
+            },
+            title: {
+              display: true, 
+              text: 'Age',
+              color: '#ffffff'
+            },
+          }
+        },
+        datasets: {
+          bar: {
+            // Increased barThickness values across all views for better visibility
+            barThickness: groupingStrategy === 'none' ? 4 : 
+                         (groupingStrategy === 'lifecycle' ? 70 : 40),
+            // Increased barPercentage values for larger bars
+            barPercentage: groupingStrategy === 'none' ? 0.98 : 
+                          (groupingStrategy === 'lifecycle' ? 0.9 : 0.88),
+            // Increased categoryPercentage values for larger bars
+            categoryPercentage: groupingStrategy === 'none' ? 0.95 : 
+                               (groupingStrategy === 'lifecycle' ? 0.95 : 0.92),
+          }
+        },
+        animation: { duration: 0 } // Disable animations
+      }
+    });
+    
+    // Clean up on unmount
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array - initialize only once
 
-		const canvas_height = canvas.height;
+  // Update chart data when it changes (separate from initialization)
+  useEffect(() => {
+    if (!chartRef.current) return;
+    
+    // Only update data, don't recreate the entire chart
+    chartRef.current.data = chartData;
+    chartRef.current.update('none'); // Use 'none' mode to skip animations
+  }, [chartData]);
 
-		// Clear canvas
-		ctx.clearRect(0, 0, canvas_width, canvas_height);
+  // Handle resize events
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (!entries[0]) return;
+      
+      const { width, height } = entries[0].contentRect;
+      if (canvasRef.current) {
+        // Set exact dimensions like TradeCost.tsx does
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
+      
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
+    
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
-		// Compute total values for stacking per category
-		const totals = labels.map((_, i) =>
-			datasets.reduce((sum, ds) => sum + (ds.data[i] || 0), 0)
-		);
-		const max_total = Math.max(...totals);
+  // Fix the issue with bar size not increasing for grouped views
+  useEffect(() => {
+    // Update chart options or create a new chart when groupingStrategy changes
+    if (!chartRef.current) return;
+    
+    // Update chart options to ensure bar sizes are applied correctly
+    chartRef.current.options.datasets = {
+      bar: {
+        // Set barThickness based on current groupingStrategy
+        barThickness: groupingStrategy === 'none' ? 4 : 
+                     (groupingStrategy === 'lifecycle' ? 70 : 40),
+        barPercentage: groupingStrategy === 'none' ? 0.98 : 
+                      (groupingStrategy === 'lifecycle' ? 0.9 : 0.88),
+        categoryPercentage: groupingStrategy === 'none' ? 0.95 : 
+                           (groupingStrategy === 'lifecycle' ? 0.95 : 0.92),
+      }
+    };
 
-		// Calculate scale factor for horizontal bars
-		const scale = (canvas_width - margin_left - 20) / max_total;
+    // Also update scale configurations for different grouping strategies
+    if (chartRef.current.options.scales?.y) {
+      const yScale = chartRef.current.options.scales.y;
+      
+      // Set different heights based on current grouping
+      if (yScale.afterFit) {
+        yScale.afterFit = function(scaleInstance) {
+          if (groupingStrategy === 'none') {
+            scaleInstance.height = Math.min(2500, scaleInstance.height);
+          } else if (groupingStrategy === 'lifecycle') {
+            scaleInstance.height = Math.min(400, scaleInstance.height);
+          } else {
+            scaleInstance.height = Math.min(1000, scaleInstance.height);
+          }
+        };
+      }
 
-			// Add vertical grid lines
-		const gridSteps = 10;
-		ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-		ctx.lineWidth = 1;
-		for (let i = 0; i <= gridSteps; i++) {
-			const gridValue = (max_total / gridSteps) * i;
-			const xPos = margin_left + gridValue * scale;
-			ctx.beginPath();
-			ctx.moveTo(xPos, margin_top);
-			ctx.lineTo(xPos, canvas_height - 10);
-			ctx.stroke();
-			}
+      // Update tick configurations - Fix TypeScript error by using proper typing
+      if (yScale.ticks) {
+        // Use type assertion to access the properties safely
+        const ticks = yScale.ticks as any;
+        ticks.autoSkip = groupingStrategy === 'none';
+        ticks.maxTicksLimit = groupingStrategy === 'none' ? 30 : 20;
+        ticks.padding = groupingStrategy === 'none' ? 8 : 2;
+      }
+    }
+    
+    // Apply the updates
+    chartRef.current.update('none');
+  }, [groupingStrategy]);
 
-		// Draw each bar group
-		labels.forEach((label, i) => {
-			let x = margin_left;
-			const y = margin_top + i * (bar_height + bar_gap);
-
-			// Draw label text
-			ctx.fillStyle = '#ffffff';
-			ctx.font = '12px Arial';
-			ctx.textAlign = 'right';
-			ctx.fillText(label, margin_left - 10, y + bar_height / 2 + 4);
-
-			// Draw each dataset segment
-			datasets.forEach(ds => {
-				const value = ds.data[i] || 0;
-				const segment_width = value * scale;
-				ctx.fillStyle = ds.backgroundColor;
-				ctx.fillRect(x, y, segment_width, bar_height);
-				x += segment_width;
-			});
-		});
-
-		// New tooltip logic: determine bar group index based on mouseY
-		const handleMouseMove = (e: MouseEvent) => {
-			const rect = canvas.getBoundingClientRect();
-			const mouseX = e.clientX - rect.left;
-			const mouseY = e.clientY - rect.top;
-			const group_index = Math.floor((mouseY - margin_top) / (bar_height + bar_gap));
-			if (group_index < 0 || group_index >= labels.length) {
-				setTooltip(prev => ({ ...prev, visible: false }));
-				return;
-			}
-			const content_lines = [];
-			content_lines.push(`Age: ${labels[group_index]}`);
-			datasets.forEach(ds => {
-				content_lines.push(`${ds.label}: ${ds.data[group_index] || 0}`);
-			});
-			setTooltip({
-				visible: true,
-				x: mouseX,
-				y: mouseY,
-				content: content_lines.join(' | ')
-			});
-		};
-
-		const handleMouseLeave = () => {
-			setTooltip(prev => ({ ...prev, visible: false }));
-		};
-
-		canvas.addEventListener('mousemove', handleMouseMove);
-		canvas.addEventListener('mouseleave', handleMouseLeave);
-
-		// Cleanup event listeners
-		return () => {
-			canvas.removeEventListener('mousemove', handleMouseMove);
-			canvas.removeEventListener('mouseleave', handleMouseLeave);
-		};
-	}, [buildChartData, groupingStrategy]);
-
-	return (
-		<div className={styles.chartContainer}>
-			<div className={styles.chartWrapper} style={{ position: 'relative' }}>
-				<canvas ref={canvasRef} width={800} height={600} style={{ display: 'block' }} />
-				{tooltip.visible && (
-					<div style={{
-						position: 'absolute',
-						left: tooltip.x,
-						top: tooltip.y - 30,
-						background: 'rgba(0, 0, 0, 0.7)',
-						color: 'white',
-						padding: '4px 8px',
-						borderRadius: '4px',
-						pointerEvents: 'none',
-						fontSize: '12px'
-					}}>
-					{tooltip.content}
-					</div>
-				)}
-			</div>
-		</div>
-	);
+  return (
+    <div className={styles.chartContainer} ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
 };
 
-// Memoize the chart component to optimize rendering
+// Memoize the chart component
 const MemoizedDemographicsChart = memo(DemographicsChart);
 
 // === Main Demographics Component ===
