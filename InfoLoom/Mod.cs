@@ -11,6 +11,7 @@ using Game.UI.InGame;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
+using InfoLoomTwo.Systems.DemographicsData.Demographics;
 using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.ResidentialData;

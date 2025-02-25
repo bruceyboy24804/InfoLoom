@@ -80,7 +80,7 @@
 }
 
 .tooltipContent {
-  white-space: pre-line;
+  
   
   font-size: 15rem;
   line-height: 1.6;
@@ -120,7 +120,7 @@
 .boldText {
   margin: 0 0.25em;  // Adds spacing before and after
   font-weight: bold;
-  display: inline-block;
+  
 }
 .chartBar {
   display: flex;
@@ -128,9 +128,9 @@
   margin-bottom: 5rem;
 }
 
-.chartBarSegment {
+/*.chartBarSegment {
   transition: width 0.3s ease;
-}
+} */
 
 .chartLegendItem {
   display: flex;
@@ -144,7 +144,6 @@
   width: 1.2em;
   height: 1.2em;
   margin-right: 0.5em;
-  display: inline-block;
   border-top-left-radius: 4rem 4rem;
     border-top-right-radius: 4rem 4rem;
     border-bottom-left-radius: 4rem 4rem;
@@ -156,6 +155,6 @@
   align-items: center;
 }
 .multiline {
-    white-space: pre-line;
+    
     line-height: 1.5;
 }

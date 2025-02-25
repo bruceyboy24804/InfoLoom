@@ -14,7 +14,6 @@ using Unity.Mathematics;
 
 namespace InfoLoomTwo.Systems.TradeCostData
 {
-    
     public partial class TradeCostSystem : SystemBase
     {
         private EntityQuery m_Query;
@@ -24,8 +23,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private IndustrialDemandSystem m_IndustrialDemandSystem;
         private CountCompanyDataSystem m_CountCompanyDataSystem;
         private PrefabSystem m_PrefabSystem;
-        public List<TradeCostResource> m_Imports;
-        public List<TradeCostResource> m_Exports;
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
         public bool ForceUpdate { get; private set; }
@@ -33,169 +30,161 @@ namespace InfoLoomTwo.Systems.TradeCostData
         {
             ForceUpdate = true;
         }
+        private int m_TotalImports;
+        private int m_TotalExports;
+        public int TotalImports => m_TotalImports;
+        public int TotalExports => m_TotalExports;
+        
         protected override void OnCreate()
         {
-	        m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
+            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
             m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
             m_CountCompanyDataSystem = base.World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
             m_PrefabSystem = base.World.GetOrCreateSystemManaged<PrefabSystem>();
             m_ResourceQuery = GetEntityQuery(ComponentType.ReadOnly<ResourceData>(), ComponentType.ReadOnly<TaxableResourceData>(), ComponentType.ReadOnly<PrefabData>());
-            m_Imports = new List<TradeCostResource>(41);
-            m_Exports = new List<TradeCostResource>(41);
             m_Query = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[] { ComponentType.ReadOnly<TradeCost>() },
                 None = new ComponentType[] { ComponentType.ReadOnly<Game.Objects.OutsideConnection>() }
             });
             m_ResourceTradeCosts = new Dictionary<Resource, ResourceTradeCost>();
-            
         }
 
         protected override void OnUpdate()
-		{
-			if (!IsPanelVisible)
+        {
+            if (!ShouldUpdate())
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+
+            UpdateTradeCosts();
+            CalculateTotals();
+        }
+
+        private bool ShouldUpdate() => 
+            IsPanelVisible && (ForceUpdate || m_SimulationSystem.frameIndex % 256 == 0);
+
+        private void UpdateTradeCosts()
+        {
+            m_ResourceTradeCosts.Clear();
+            
+            NativeArray<int> production = m_CountCompanyDataSystem.GetProduction(out var deps);
+            NativeArray<int> industrialConsumption = m_IndustrialDemandSystem.GetConsumption(out var deps2);
+            NativeArray<int> commercialConsumption = m_CommercialDemandSystem.GetConsumption(out var deps3);
+            
+            JobHandle.CompleteAll(ref deps, ref deps2, ref deps3);
+
+            using var entities = m_Query.ToEntityArray(Allocator.Temp);
+            using var resourceEntities = m_ResourceQuery.ToEntityArray(Allocator.TempJob);
+            using var prefabData = m_ResourceQuery.ToComponentDataArray<PrefabData>(Allocator.TempJob);
+            
+            // Process trade costs and calculate averages
+            for (int entityIndex = 0; entityIndex < entities.Length; entityIndex++)
+            {
+                var entity = entities[entityIndex];
+                if (!EntityManager.HasBuffer<TradeCost>(entity))
+                    continue;
+
+                var tradeCostBuffer = EntityManager.GetBuffer<TradeCost>(entity);
+                for (int costIndex = 0; costIndex < tradeCostBuffer.Length; costIndex++)
+                {
+                    var tradeCost = tradeCostBuffer[costIndex];
+                    if (!m_ResourceTradeCosts.TryGetValue(tradeCost.m_Resource, out var resourceTradeCost))
+                    {
+                        resourceTradeCost = new ResourceTradeCost
+                        {
+                            Resource = tradeCost.m_Resource.ToString(),
+                            Count = 0,
+                            BuyCost = 0f,
+                            SellCost = 0f,
+                            ImportAmount = 0,
+                            ExportAmount = 0
+                        };
+                        m_ResourceTradeCosts[tradeCost.m_Resource] = resourceTradeCost;
+                    }
+
+                    resourceTradeCost.Count++;
+                    resourceTradeCost.BuyCost += tradeCost.m_BuyCost;
+                    resourceTradeCost.SellCost += tradeCost.m_SellCost;
+                }
+            }
+
+            // Calculate averages for buy/sell costs
+            var resourceKeys = m_ResourceTradeCosts.Keys.ToArray();
+            for (int i = 0; i < resourceKeys.Length; i++)
+            {
+                var resource = m_ResourceTradeCosts[resourceKeys[i]];
+                if (resource.Count > 0)
+                {
+                    resource.BuyCost = (float)Math.Round(resource.BuyCost / resource.Count, 2);
+                    resource.SellCost = (float)Math.Round(resource.SellCost / resource.Count, 2);
+                }
+            }
+
+            // Update import/export amounts
+            for (int i = 0; i < resourceEntities.Length; i++)
+            {
+                var prefab = m_PrefabSystem.GetPrefab<ResourcePrefab>(prefabData[i]);
+                var resource = EconomyUtils.GetResource(prefab.m_Resource);
+                var resourceIndex = EconomyUtils.GetResourceIndex(resource);
+
+                var (importAmount, exportAmount) = CalculateTradeAmounts(
+                    production[resourceIndex],
+                    industrialConsumption[resourceIndex],
+                    commercialConsumption[resourceIndex]);
+
+                if (!m_ResourceTradeCosts.TryGetValue(resource, out var resourceTradeCost))
+                {
+                    resourceTradeCost = new ResourceTradeCost
+                    {
+                        Resource = resource.ToString(),
+                        Count = 0,
+                        BuyCost = 0f,
+                        SellCost = 0f
+                    };
+                    m_ResourceTradeCosts[resource] = resourceTradeCost;
+                }
+
+                resourceTradeCost.ImportAmount = importAmount;
+                resourceTradeCost.ExportAmount = exportAmount;
+            }
+            
             ForceUpdate = false;
-		    m_ResourceTradeCosts.Clear();
+        }
 
-		    // Retrieve all entities matching the query
-		    NativeArray<Entity> entities = m_Query.ToEntityArray(Allocator.Temp);
-		    EntityManager entityManager = World.EntityManager;
+        private void CalculateTotals()
+        {
+            m_TotalImports = m_ResourceTradeCosts.Values.Sum(x => x.ImportAmount);
+            m_TotalExports = m_ResourceTradeCosts.Values.Sum(x => x.ExportAmount);
+        }
 
-		    for (int i = 0; i < entities.Length; i++)
-		    {
-		        var entity = entities[i];
-		        if (!entityManager.HasBuffer<TradeCost>(entity))
-		            continue;
+        private (int importAmount, int exportAmount) CalculateTradeAmounts(int production, int industrialDemand, int commercialDemand)
+        {
+            var totalDemand = industrialDemand + commercialDemand;
+            var satisfiedDemand = math.min(totalDemand, production);
+            var satisfiedIndustrial = math.min(industrialDemand, satisfiedDemand);
+            var unsatisfiedIndustrial = industrialDemand - satisfiedIndustrial;
+            var satisfiedCommercial = math.min(commercialDemand, satisfiedDemand - satisfiedIndustrial);
 
-		        DynamicBuffer<TradeCost> tradeCostBuffer = entityManager.GetBuffer<TradeCost>(entity);
+            var importAmount = RoundAndTruncateToFiveDigits(commercialDemand - satisfiedCommercial + unsatisfiedIndustrial);
+            var exportAmount = RoundAndTruncateToFiveDigits(production - satisfiedDemand);
 
-		        for (int j = 0; j < tradeCostBuffer.Length; j++)
-		        {
-		            var tradeCost = tradeCostBuffer[j];
-		            if (!m_ResourceTradeCosts.TryGetValue(tradeCost.m_Resource, out var resourceTradeCost))
-		            {
-		                resourceTradeCost = new ResourceTradeCost
-		                {
-		                    Resource = tradeCost.m_Resource.ToString(),
-		                    Count = 0,
-		                    BuyCost = 0f,
-		                    SellCost = 0f,
-		                };
-		            }
+            return (importAmount, exportAmount);
+        }
 
-		            resourceTradeCost.Count++;
-		            resourceTradeCost.BuyCost += tradeCost.m_BuyCost;
-		            resourceTradeCost.SellCost += tradeCost.m_SellCost;
-
-		            m_ResourceTradeCosts[tradeCost.m_Resource] = resourceTradeCost;
-		        }
-		    }
-
-		    entities.Dispose();
-
-		    UpdateCache();
-		    UpdateExportData();
-		    UpdateImportData();
-		}
-
+        private int RoundAndTruncateToFiveDigits(int value)
+        {
+            if (value >= 100000)
+            {
+                int digits = (int)Math.Floor(Math.Log10(value)) + 1;
+                int scale = (int)Math.Pow(10, digits - 5);
+                return ((value + scale / 2) / scale) * scale / 10;
+            }
+            return value;
+        }
 
         public IEnumerable<ResourceTradeCost> GetResourceTradeCosts()
         {
             return m_ResourceTradeCosts.Values;
         }
-        private void UpdateCache()
-		{
-			NativeArray<Entity> nativeArray = m_ResourceQuery.ToEntityArray(Allocator.TempJob);
-			NativeArray<PrefabData> nativeArray2 = m_ResourceQuery.ToComponentDataArray<PrefabData>(Allocator.TempJob);
-			JobHandle deps;
-			NativeArray<int> production = m_CountCompanyDataSystem.GetProduction(out deps);
-			JobHandle deps2;
-			NativeArray<int> consumption = m_IndustrialDemandSystem.GetConsumption(out deps2);
-			JobHandle deps3;
-			NativeArray<int> consumption2 = m_CommercialDemandSystem.GetConsumption(out deps3);
-			JobHandle.CompleteAll(ref deps, ref deps2, ref deps3);
-			m_Imports.Clear();
-			m_Exports.Clear();
-			try
-			{
-				for (int i = 0; i < nativeArray.Length; i++)
-		        {
-		            ResourcePrefab prefab = m_PrefabSystem.GetPrefab<ResourcePrefab>(nativeArray2[i]);
-		            int resourceIndex = EconomyUtils.GetResourceIndex(EconomyUtils.GetResource(prefab.m_Resource));
-		            int num = production[resourceIndex];
-		            int num2 = consumption[resourceIndex];
-		            int num3 = consumption2[resourceIndex];
-		            int num4 = math.min(num2 + num3, num);
-		            int num5 = math.min(num2, num4);
-		            int num6 = num2 - num5;
-		            int num7 = math.min(num3, num4 - num5);
-		            
-		            int amount = RoundAndTruncateToFiveDigits(num3 - num7 + num6);
-		            int amount2 = RoundAndTruncateToFiveDigits(num - num4);
-		            
-		            m_Imports.Add(new TradeCostResource(prefab.name, amount));
-		            m_Exports.Add(new TradeCostResource(prefab.name, amount2));
-		        }
-				
-			}
-			finally
-			{
-				nativeArray.Dispose();
-				nativeArray2.Dispose();
-			}
-		}
-        private int RoundAndTruncateToFiveDigits(int value)
-		{
-		    if (value >= 100000)
-		    {
-		        int digits = (int)Math.Floor(Math.Log10(value)) + 1;
-		        int scale = (int)Math.Pow(10, digits - 5);
-		        return ((value + scale / 2) / scale) * scale / 10;
-		    }
-		    return value;
-		}
-        private void UpdateImportData()
-		{
-			int num = 0;
-			int num2 = m_Imports.Count;
-			if (m_Imports.Count < num2)
-			{
-				num2 = m_Imports.Count;
-			}
-			for (int i = 0; i < num2; i++)
-			{
-				
-				num += m_Imports[i].Amount;
-			}
-			
-		}
-		private void UpdateExportData()
-		{
-			int num = 0;
-			int num2 = m_Exports.Count;
-			if (m_Exports.Count < num2)
-			{
-				num2 = m_Exports.Count;
-			}
-			for (int i = 0; i < num2; i++)
-			{
-				
-				num += m_Exports[i].Amount;
-			}
-			
-		}
-		public List<TradeCostResource> GetImports()
-        {
-            return m_Imports.ToList();
-        }
-
-		public  List<TradeCostResource> GetExports()
-		{
-			return m_Exports.ToList();
-		}
     }
 }

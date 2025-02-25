@@ -62,7 +62,6 @@
 .dropdownItem {
   padding: 4px 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
@@ -106,7 +105,6 @@
   align-items: center;
   padding: 6px 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: background-color 0.2s ease;
   font-size: 0.9em;
   min-height: 32px;
 

@@ -15,6 +15,7 @@ using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
+using InfoLoomTwo.Systems.DemographicsData.Demographics;
 using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
@@ -114,11 +115,7 @@ namespace InfoLoomTwo.Systems
         //ResidentialDemandDataUI
         public ValueBindingHelper<int[]> m_ResidentialBinding;
         //TradeCostsUI
-        private List<TradeCostResource> m_Imports = new List<TradeCostResource>();
-        private List<TradeCostResource> m_Exports = new List<TradeCostResource>();
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
-        private ValueBindingHelper<List<TradeCostResource>> m_ImportsBinding;
-        private ValueBindingHelper<List<TradeCostResource>> m_ExportsBinding;
         //WorkforceUI
         private ValueBindingHelper<WorkforcesInfo[]> m_WorkforcesBinder;
         //WorkplacesUI
@@ -261,8 +258,6 @@ namespace InfoLoomTwo.Systems
 
             //TradeCostsUI
             m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
-            m_ImportsBinding = CreateBinding("TradeCostsDataImports", new List<TradeCostResource>());
-            m_ExportsBinding = CreateBinding("TradeCostsDataExports", new List<TradeCostResource>());
 
             //WorkforceUI
             m_WorkforcesBinder = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
@@ -282,9 +277,6 @@ namespace InfoLoomTwo.Systems
 
                 //TradeCostsUI
                 m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
-                m_ImportsBinding = CreateBinding("TradeCostsDataImports", new List<TradeCostResource>());
-                m_ExportsBinding = CreateBinding("TradeCostsDataExports", new List<TradeCostResource>());
-
                 //WorkforceUI
                 m_WorkforcesBinder = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
 
@@ -462,18 +454,7 @@ namespace InfoLoomTwo.Systems
             if (_tCPVBinding.value && _uiUpdateState.Advance())
             {
                 var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
-                var tradeCosts = tradeCostSystem.GetResourceTradeCosts().ToList();
-                var topImports = tradeCostSystem.GetImports().ToList();
-                var topExports = tradeCostSystem.GetExports().ToList();
-                m_TradeCostsBinding.Value = tradeCosts;
-                m_ImportsBinding.Value = topImports;
-                m_ExportsBinding.Value = topExports;
-                UpdateImportData();
-                UpdateExportData();
-                
-                m_TradeCostSystem.IsPanelVisible = true;
-                m_TradeCostSystem.ForceUpdateOnce();
-                
+                m_TradeCostsBinding.Value = tradeCostSystem.GetResourceTradeCosts().ToList();
             }
         
             if (_wFPVBinding.value && _uiUpdateState.Advance())
@@ -662,21 +643,11 @@ namespace InfoLoomTwo.Systems
         {
             _tCPVBinding.Update(open);
             m_TradeCostSystem.IsPanelVisible = open;
-            
             if (open)
             {
-                
                 m_TradeCostSystem.ForceUpdateOnce();
                 var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
-                var tradeCosts = tradeCostSystem.GetResourceTradeCosts().ToList();
-                var topImports = tradeCostSystem.GetImports().ToList();
-                var topExports = tradeCostSystem.GetExports().ToList();
-                
-                m_TradeCostsBinding.Value = tradeCosts;
-                m_ImportsBinding.Value = topImports;
-                m_ExportsBinding.Value = topExports;
-                UpdateImportData();
-                UpdateExportData();
+                m_TradeCostsBinding.Value = tradeCostSystem.GetResourceTradeCosts().ToList();
             }
         }
         
@@ -737,7 +708,7 @@ namespace InfoLoomTwo.Systems
                 return new string[] { Resource.All.ToString() };
             }
             Resource[] resources = (Resource[])Enum.GetValues(typeof(Resource));
-            for (int i = 0; i < resources.Length; i++)
+            for (int i = 0; resources.Length > i; i++)
             {
                 Resource resource = resources[i];
                 if ((excludedResources & resource) != 0 &&
@@ -750,35 +721,7 @@ namespace InfoLoomTwo.Systems
 
             return excludedResourceNames.ToArray();
         }
-        private void UpdateImportData()
-        {
-            int num = 0;
-            int num2 = m_Imports.Count;
-            if (m_Imports.Count < num2)
-            {
-                num2 = m_Imports.Count;
-            }
-            for (int i = 0; i < num2; i++)
-            {
-                m_ImportsBinding.Value = m_Imports;
-                num += m_Imports[i].Amount;
-            }
-        }
-
-        private void UpdateExportData()
-        {
-            int num = 0;
-            int num2 = m_Exports.Count;
-            if (m_Exports.Count < num2)
-            {
-                num2 = m_Exports.Count;
-            }
-            for (int i = 0; i < num2; i++)
-            {
-                m_ExportsBinding.Value = m_Exports;
-                num += m_Exports[i].Amount;
-            }
-        }
+        
         
 
         

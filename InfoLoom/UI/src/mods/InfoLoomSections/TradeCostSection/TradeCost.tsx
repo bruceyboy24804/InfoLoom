@@ -20,9 +20,11 @@ import { getModule } from 'cs2/modding';
 import styles from './TradeCost.module.scss';
 import { ResourceIcon } from 'mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import { useValue } from 'cs2/api';
+import { bindValue, useValue } from 'cs2/api';
+import mod from 'mod.json';
 import Chart from 'chart.js/auto';
-import { TradeCostsDataImports, TradeCostsData, TradeCostsDataExports } from 'mods/bindings';
+import { ResourceTradeCost } from 'mods/domain/tradeCostData';
+import { TradeCostsData } from '../../bindings';
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
@@ -34,25 +36,6 @@ type SortOption =
   | 'profitMargin'
   | 'importAmount'
   | 'exportAmount';
-
-interface ResourceTradeCost {
-  Resource: string;
-  BuyCost: number;
-  SellCost: number;
-  Count: number;
-  ImportAmount: number;
-  ExportAmount: number;
-}
-
-interface ImportData {
-  Amount: number;
-}
-
-interface ExportData {
-  Amount: number;
-}
-
-interface TradeCostsProps extends DraggablePanelProps {}
 
 export type ShowColumnsType = {
   buyCost: boolean;
@@ -73,10 +56,11 @@ type ViewType = 'table' | 'graph';
 interface TradeCostsGraphProps {
   selectedResources: Set<string>;
 }
+
 const DataDivider: React.FC = () => (
-    <div style={{display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center'}}>
-        <div style={{borderBottom: '1px solid gray', width: '100%'}}></div>
-    </div>
+  <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
+    <div style={{ borderBottom: '1px solid gray', width: '100%' }}></div>
+  </div>
 );
 
 const calculateProfit = (data: ResourceTradeCost) => data.SellCost - data.BuyCost;
@@ -385,22 +369,12 @@ const MemoizedTradeCostsGraph = React.memo(TradeCostsGraph, (prevProps, nextProp
   );
 });
 
-const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }) => {
+const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...props }) => {
   const tradeCosts = useValue(TradeCostsData);
-  const imports = useValue(TradeCostsDataImports);
-  const exports = useValue(TradeCostsDataExports);
   const initialPos: Number2 = { x: 0.038, y: 0.15 };
-  const mergedTradeCosts = useMemo(() => {
-    return tradeCosts.map((tradeCost, index) => {
-      const importAmount = imports[index]?.Amount || 0;
-      const exportAmount = exports[index]?.Amount || 0;
-      return {
-        ...tradeCost,
-        ImportAmount: Number(importAmount.toFixed(5)),
-        ExportAmount: Number(exportAmount.toFixed(5)),
-      };
-    });
-  }, [tradeCosts, imports, exports]);
+  // Now that TradeCostsData already includes ImportAmount/ExportAmount,
+  // we directly assign it.
+  const mergedTradeCosts: ResourceTradeCost[] = tradeCosts || [];
   const [showColumns, setShowColumns] = useState<ShowColumnsType>({
     buyCost: true,
     sellCost: true,
@@ -459,16 +433,16 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }
     }
   }, [mergedTradeCosts, selectedResources]);
   const handleToggleResource = useCallback((resource: string) => {
-  setSelectedResources((prev) => {
-    const newSet = new Set(prev);
-    if (newSet.has(resource)) {
-      newSet.delete(resource);
-    } else {
-      newSet.add(resource);
-    }
-    return newSet;
-  });
-}, []);
+    setSelectedResources((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(resource)) {
+        newSet.delete(resource);
+      } else {
+        newSet.add(resource);
+      }
+      return newSet;
+    });
+  }, []);
   return (
     <Panel
       draggable={true}
@@ -503,30 +477,29 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }
                   <ResourceLine key={item.Resource} data={item} showColumns={showColumns} />
                 ))}
               </div>
-             
             </>
           ) : (
             <>
               <div className={styles.graphViewContainer}>
                 <div className={styles.resourceCheckboxes}>
-                  <Scrollable vertical={true} smooth={true} trackVisibility={"scrollable"} onOverflowY={() => false}>
-                  <div className={styles.checkboxHeader}>Select Resources:</div>
+                  <Scrollable vertical={true} smooth={true} trackVisibility="scrollable" onOverflowY={() => false}>
+                    <div className={styles.checkboxHeader}>Select Resources:</div>
                     {tradeCosts
-                        .sort((a, b) => a.Resource.localeCompare(b.Resource))
-                        .map((item) => (
-                            <div key={item.Resource} className={styles.checkboxItem}>
-                              <InfoCheckbox
-                                  label={
-                                    <div className={styles.checkboxLabel}>
-                                      <ResourceIcon resourceName={item.Resource}/>
-                                      <span>{formatWords(item.Resource, true)}</span>
-                                    </div>
-                                  }
-                                  isChecked={selectedResources.has(item.Resource)}
-                                  onToggle={() => handleToggleResource(item.Resource)}
-                              />
-                            </div>
-                        ))}
+                      .sort((a, b) => a.Resource.localeCompare(b.Resource))
+                      .map((item) => (
+                        <div key={item.Resource} className={styles.checkboxItem}>
+                          <InfoCheckbox
+                            label={
+                              <div className={styles.checkboxLabel}>
+                                <ResourceIcon resourceName={item.Resource} />
+                                <span>{formatWords(item.Resource, true)}</span>
+                              </div>
+                            }
+                            isChecked={selectedResources.has(item.Resource)}
+                            onToggle={() => handleToggleResource(item.Resource)}
+                          />
+                        </div>
+                      ))}
                   </Scrollable>
                 </div>
                 <div className={styles.graphArea}>
@@ -535,7 +508,7 @@ const $TradeCosts: FC<TradeCostsProps> = ({ onClose, initialPosition, ...props }
                       &larr; Back to Table
                     </Button>
                   </div>
-                  <MemoizedTradeCostsGraph selectedResources={selectedResources}/>
+                  <MemoizedTradeCostsGraph selectedResources={selectedResources} />
                 </div>
               </div>
             </>

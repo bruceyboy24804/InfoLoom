@@ -507,7 +507,7 @@ const DemographicsChart = ({
             afterFit: function(scaleInstance) {
               // Set different heights based on grouping
               if (groupingStrategy === 'none') {
-                scaleInstance.height = Math.min(50000, scaleInstance.height);
+                scaleInstance.height = Math.min(1000, scaleInstance.height);
               } else if (groupingStrategy === 'lifecycle') {
                 // Make lifecycle bars taller (few categories)
                 scaleInstance.height = Math.min(400, scaleInstance.height);
@@ -524,17 +524,35 @@ const DemographicsChart = ({
           }
         },
         datasets: {
-          bar: {
-            // Increased barThickness values across all views for better visibility
-            barThickness: groupingStrategy === 'none' ? 4 : 
-                         (groupingStrategy === 'lifecycle' ? 70 : 40),
-            // Increased barPercentage values for larger bars
-            barPercentage: groupingStrategy === 'none' ? 0.98 : 
-                          (groupingStrategy === 'lifecycle' ? 0.9 : 0.88),
-            // Increased categoryPercentage values for larger bars
-            categoryPercentage: groupingStrategy === 'none' ? 0.95 : 
-                               (groupingStrategy === 'lifecycle' ? 0.95 : 0.92),
-          }
+			bar: {
+				// Optimized barThickness for each view type
+				barThickness: 
+				  groupingStrategy === 'none' ? 8 : 
+				  groupingStrategy === 'fiveYear' ? 15 :
+				  groupingStrategy === 'tenYear' ? 25 : 
+				  80, // lifecycle
+				
+				// Optimized barPercentage for better spacing
+				barPercentage: 
+				  groupingStrategy === 'none' ? 0.98 : 
+				  groupingStrategy === 'fiveYear' ? 0.9 :
+				  groupingStrategy === 'tenYear' ? 0.85 : 
+				  0.8, // lifecycle
+				
+				// Optimized categoryPercentage for each view type
+				categoryPercentage: 
+				  groupingStrategy === 'none' ? 0.95 : 
+				  groupingStrategy === 'fiveYear' ? 0.85 :
+				  groupingStrategy === 'tenYear' ? 0.9 : 
+				  0.95, // lifecycle
+				
+				// Add maxBarThickness to prevent bars from becoming too large
+				maxBarThickness: 
+				  groupingStrategy === 'none' ? 5 : 
+				  groupingStrategy === 'fiveYear' ? 25 :
+				  groupingStrategy === 'tenYear' ? 35 : 
+				  120, // lifecycle
+			  }
         },
         animation: { duration: 0 } // Disable animations
       }
@@ -566,8 +584,8 @@ const DemographicsChart = ({
       if (!entries[0]) return;
       
       const { width, height } = entries[0].contentRect;
-      if (canvasRef.current) {
-        // Set exact dimensions like TradeCost.tsx does
+      if (canvasRef.current && width > 0 && height > 0) {
+        // Set exact dimensions only if valid values are provided
         canvasRef.current.width = width;
         canvasRef.current.height = height;
       }
@@ -588,15 +606,35 @@ const DemographicsChart = ({
     
     // Update chart options to ensure bar sizes are applied correctly
     chartRef.current.options.datasets = {
-      bar: {
-        // Set barThickness based on current groupingStrategy
-        barThickness: groupingStrategy === 'none' ? 4 : 
-                     (groupingStrategy === 'lifecycle' ? 70 : 40),
-        barPercentage: groupingStrategy === 'none' ? 0.98 : 
-                      (groupingStrategy === 'lifecycle' ? 0.9 : 0.88),
-        categoryPercentage: groupingStrategy === 'none' ? 0.95 : 
-                           (groupingStrategy === 'lifecycle' ? 0.95 : 0.92),
-      }
+		bar: {
+			// Optimized barThickness for each view type
+			barThickness: 
+			  groupingStrategy === 'none' ? 8 : 
+			  groupingStrategy === 'fiveYear' ? 15 :
+			  groupingStrategy === 'tenYear' ? 25 : 
+			  80, // lifecycle
+			
+			// Optimized barPercentage for better spacing
+			barPercentage: 
+			  groupingStrategy === 'none' ? 0.98 : 
+			  groupingStrategy === 'fiveYear' ? 0.9 :
+			  groupingStrategy === 'tenYear' ? 0.85 : 
+			  0.8, // lifecycle
+			
+			// Optimized categoryPercentage for each view type
+			categoryPercentage: 
+			  groupingStrategy === 'none' ? 0.95 : 
+			  groupingStrategy === 'fiveYear' ? 0.85 :
+			  groupingStrategy === 'tenYear' ? 0.9 : 
+			  0.95, // lifecycle
+			
+			// Add maxBarThickness to prevent bars from becoming too large
+			maxBarThickness: 
+			  groupingStrategy === 'none' ? 5 : 
+			  groupingStrategy === 'fiveYear' ? 25 :
+			  groupingStrategy === 'tenYear' ? 35 : 
+			  120, // lifecycle
+		  }
     };
 
     // Also update scale configurations for different grouping strategies
@@ -622,7 +660,8 @@ const DemographicsChart = ({
         const ticks = yScale.ticks as any;
         ticks.autoSkip = groupingStrategy === 'none';
         ticks.maxTicksLimit = groupingStrategy === 'none' ? 30 : 20;
-        ticks.padding = groupingStrategy === 'none' ? 8 : 2;
+        ticks.padding = groupingStrategy === 'none' ? 15 : 8;
+        ticks.lineHeight = groupingStrategy === 'none' ? 5 : 1;
       }
     }
     

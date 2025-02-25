@@ -18,15 +18,24 @@ using InfoLoomTwo.Extensions;
 using Unity.Burst;
 
 
-namespace InfoLoomTwo.Systems.DemographicsData
+namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 {
     // This System is based on PopulationInfoviewUISystem by CO
 
 public partial class Demographics : SystemBase
 {
+
     /// <summary>
     /// Holds info about population at Age
     /// </summary>
+    
+
+    
+
+
+
+
+
     [BurstCompile]
     private struct PopulationStructureJob : IJobChunk
     {
@@ -89,6 +98,7 @@ public partial class Demographics : SystemBase
         public NativeArray<int> m_Totals;
 
         public NativeArray<Domain.PopulationAtAgeInfo> m_Results;
+            public int day;
 
         
 
@@ -107,7 +117,6 @@ public partial class Demographics : SystemBase
             bool isStudent = chunk.Has(ref m_StudentType); // are there students in this chunk?
             bool isWorker = chunk.Has(ref m_WorkerType); // are there workers in this chunk?
             bool isHealthProblem = chunk.Has(ref m_HealthProblemType); // for checking dead cims
-            int day = TimeSystem.GetDay(m_SimulationFrame, m_TimeData);
             //Plugin.Log($"day {day} chunk: {entities.Length} entities, {citizens.Length} citizens, {isStudent} {students.Length} students, {isWorker} {workers.Length} workers");
 
             for (int i = 0; i < citizenArray.Length; i++)
@@ -289,14 +298,13 @@ public partial class Demographics : SystemBase
     public int m_AgeCap;
     // 240209 Set gameMode to avoid errors in the Editor
    
-
-    
-        public bool IsPanelVisible { get; set; }
-        public bool ForceUpdate { get; private set; }
-        public void ForceUpdateOnce()
-        {
-            ForceUpdate = true;
-        }
+    public bool IsPanelVisible { get; set; }
+    public bool ForceUpdate { get; private set; }
+    public void ForceUpdateOnce()
+    {
+        ForceUpdate = true;
+    }
+    //[Preserve]
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -319,12 +327,12 @@ public partial class Demographics : SystemBase
 
         
 
-        
+        // TEST
         
 
         // allocate memory for results
         m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-        m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TOD
+        m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent); // INFIXO: TODO
         
     }
 
@@ -338,18 +346,19 @@ public partial class Demographics : SystemBase
 
     protected override void OnUpdate()
     {
-
         if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
+            if (m_SimulationSystem.frameIndex % 256 != 44 && !ForceUpdate)
                 return;
             ForceUpdate = false;
+       
 
+        //Plugin.Log($"OnUpdate at frame {m_SimulationSystem.frameIndex}");
         
 
 
 
-       
+        Setting setting = Mod.setting;
         
 
         ResetResults();
@@ -368,7 +377,9 @@ public partial class Demographics : SystemBase
         structureJob.m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true);
         structureJob.m_SimulationFrame = m_SimulationSystem.frameIndex;
         structureJob.m_TimeData = m_TimeDataQuery.GetSingleton<TimeData>();
-        
+        structureJob.day = TimeSystem.GetDay(m_SimulationSystem.frameIndex, m_TimeDataQuery.GetSingleton<Game.Common.TimeData>());
+
+
         structureJob.m_Totals = m_Totals;
         structureJob.m_Results = m_Results;
         JobChunkExtensions.Schedule(structureJob, m_CitizenQuery, base.Dependency).Complete();
@@ -418,4 +429,3 @@ public partial class Demographics : SystemBase
     
 }
 }
-
