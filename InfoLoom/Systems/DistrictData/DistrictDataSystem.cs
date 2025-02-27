@@ -6,11 +6,13 @@ using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
+using Game.Companies;
 using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
 using Game.UI.InGame; // Uses shared definitions for AgeData and EducationData
+using Game.Zones;   // Added for zone-related components
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -21,9 +23,6 @@ using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.DistrictData
 {
-    // For the purposes of the job below, we assume that Citizen is a job-safe IComponentData,
-    // and that it has fields "age" (of type CitizenAge) and "educationLevel" (an int).
-    // We also assume AgeData and EducationData are immutable structs that expose read-only properties and are initialized via constructors.
     public partial class DistrictDataSystem : SystemBase
     {
         public struct DistrictEntry
@@ -37,6 +36,10 @@ namespace InfoLoomTwo.Systems.DistrictData
             public EducationData educationData;
             public HouseholdWealthKey wealthKey;
             public NativeList<Entity> households;
+            public int employeeCount;
+            public int maxEmployees;
+            public EmploymentData educationDataEmployees;
+            public EmploymentData educationDataWorkplaces;
         }
 
         // Job to count household data for each district.
@@ -118,8 +121,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        // New job to process AgeData and EducationData for each district.
-        // This job now uses ComponentLookup<T> for citizen data.
+        // Job to process AgeData and EducationData for each district.
         [BurstCompile]
         private struct ProcessDistrictDataJob : IJobParallelFor
         {
@@ -198,17 +200,172 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
+        // Job to process employee data for each district
+            private void ProcessEmployeeData()
+            {
+                // Reset employee data for all districts
+                for (int i = 0; i < m_Districts.Length; i++)
+                {
+                    var district = m_Districts[i];
+                    district.employeeCount = 0;
+                    district.maxEmployees = 0;
+                    district.educationDataEmployees = default(EmploymentData);
+                    district.educationDataWorkplaces = default(EmploymentData);
+                    m_Districts[i] = district;
+                }
+
+                NativeArray<Entity> buildings = m_DistrictEmployeeQuery.ToEntityArray(Allocator.TempJob);
+                NativeArray<CurrentDistrict> districts = m_DistrictEmployeeQuery.ToComponentDataArray<CurrentDistrict>(Allocator.TempJob);
+                NativeArray<PrefabRef> prefabs = m_DistrictEmployeeQuery.ToComponentDataArray<PrefabRef>(Allocator.TempJob);
+                
+                try
+                {
+                    for (int i = 0; i < buildings.Length; i++)
+                    {
+                        Entity building = buildings[i];
+                        Entity districtEntity = districts[i].m_District;
+                        Entity prefab = prefabs[i].m_Prefab;
+                        
+                        // Find the district in our list
+                        int districtIndex = -1;
+                        for (int d = 0; d < m_Districts.Length; d++)
+                        {
+                            if (m_Districts[d].district == districtEntity)
+                            {
+                                districtIndex = d;
+                                break;
+                            }
+                        }
+                        
+                        if (districtIndex == -1)
+                            continue;
+                            
+                        // Check if this building has employees
+                        if (HasEmployees(building, prefab))
+                        {
+                            AddEmployeesToDistrict(building, districtIndex);
+                        }
+                    }
+                }
+                finally
+                {
+                    buildings.Dispose();
+                    districts.Dispose();
+                    prefabs.Dispose();
+                }
+            }
+
+            // New method that mimics EmployeesSection.AddEmployees but updates our district data
+            private void AddEmployeesToDistrict(Entity entity, int districtIndex)
+            {
+                Entity prefab = EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab;
+                Entity employeeEntity = GetEmployeeEntity(entity);
+                Entity employeePrefab = EntityManager.GetComponentData<PrefabRef>(employeeEntity).m_Prefab;
+                
+                int buildingLevel = 1;
+                if (EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var spawnableData))
+                {
+                    buildingLevel = spawnableData.m_Level;
+                }
+                else if (EntityManager.TryGetComponent<PropertyRenter>(entity, out var propertyRenter) && 
+                        EntityManager.TryGetComponent<PrefabRef>(propertyRenter.m_Property, out var propertyPrefabRef) && 
+                        EntityManager.TryGetComponent<SpawnableBuildingData>(propertyPrefabRef.m_Prefab, out var propertySpawnableData))
+                {
+                    buildingLevel = propertySpawnableData.m_Level;
+                }
+                
+                if (EntityManager.TryGetBuffer<Employee>(employeeEntity, true, out var employees) && 
+                    EntityManager.TryGetComponent<WorkProvider>(employeeEntity, out var workProvider))
+                {
+                    var district = m_Districts[districtIndex];
+                    
+                    WorkplaceComplexity complexity = EntityManager.GetComponentData<WorkplaceData>(employeePrefab).m_Complexity;
+                    EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
+                        workProvider.m_MaxWorkers, buildingLevel, complexity);
+                    
+                    district.employeeCount += employees.Length;
+                    district.maxEmployees += workplacesData.total;
+                    district.educationDataWorkplaces += workplacesData;
+                    district.educationDataEmployees += EmploymentData.GetEmployeesData(
+                        employees, workplacesData.total - employees.Length);
+                    
+                    m_Districts[districtIndex] = district;
+                }
+            }
+
+            private bool HasEmployees(Entity entity, Entity prefab)
+            {
+                if (!EntityManager.TryGetBuffer<Renter>(entity, true, out var buffer) || 
+                    EntityManager.HasComponent<Game.Buildings.Park>(entity))
+                {
+                    if (EntityManager.HasComponent<Employee>(entity) && EntityManager.HasComponent<WorkProvider>(entity))
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+                
+                // Original has slightly different logic here
+                if (buffer.Length == 0 && EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var spawnableData))
+                {
+                    m_PrefabSystem.TryGetPrefab<ZonePrefab>(spawnableData.m_ZonePrefab, out var zonePrefab);
+                    if (zonePrefab != null)
+                    {
+                        // Notice this inverted logic matches exactly what the original does
+                        if (zonePrefab.m_AreaType != Game.Zones.AreaType.Commercial)
+                        {
+                            return zonePrefab.m_AreaType == Game.Zones.AreaType.Industrial;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+                
+                // Rest of the method is the same
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    Entity renter = buffer[i].m_Renter;
+                    if (EntityManager.HasComponent<CompanyData>(renter))
+                    {
+                        if (EntityManager.HasComponent<Employee>(renter))
+                        {
+                            return EntityManager.HasComponent<WorkProvider>(renter);
+                        }
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            private Entity GetEmployeeEntity(Entity entity)
+            {
+                if (!EntityManager.HasComponent<Game.Buildings.Park>(entity) && 
+                    EntityManager.TryGetBuffer<Renter>(entity, true, out var buffer))
+                {
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        Entity renter = buffer[i].m_Renter;
+                        if (EntityManager.HasComponent<CompanyData>(renter))
+                        {
+                            return renter;
+                        }
+                    }
+                }
+                return entity;
+            }
+
         // Normal Entity Queries.
         private EntityQuery m_DistrictBuildingQuery;
+        private EntityQuery m_DistrictEmployeeQuery;
         private EntityQuery m_HappinessParameterQuery;
         private EntityQuery m_DistrictQuery;
+        private PrefabSystem m_PrefabSystem;
 
         private NameSystem m_NameSystem;
         private NativeList<DistrictEntry> m_Districts;
         private SimulationSystem m_SimulationSystem;
         public bool IsPanelVisible { get; set; }
         
-
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -222,6 +379,26 @@ namespace InfoLoomTwo.Systems.DistrictData
                     typeof(PrefabRef),
                     typeof(Renter),
                     typeof(CurrentDistrict)
+                },
+                None = new ComponentType[]
+                {
+                    typeof(Temp),
+                    typeof(Deleted)
+                }
+            });
+
+            m_DistrictEmployeeQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[]
+                {
+                    typeof(Building),
+                    typeof(PrefabRef),
+                    typeof(CurrentDistrict)
+                },
+                Any = new ComponentType[]
+                {
+                    typeof(Renter),
+                    typeof(Employee)
                 },
                 None = new ComponentType[]
                 {
@@ -244,6 +421,8 @@ namespace InfoLoomTwo.Systems.DistrictData
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
             m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
+            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+
             RequireForUpdate<District>();
         }
 
@@ -267,7 +446,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             if (m_SimulationSystem.frameIndex % 256 != 0)
                 return;
             
-
             ResetDistrictEntries();
             BuildDistrictEntries();
 
@@ -288,6 +466,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             Dependency.Complete();
 
             ProcessWealthData();
+            ProcessEmployeeData();
         }
 
         // Clears and disposes existing district entries.
@@ -318,7 +497,11 @@ namespace InfoLoomTwo.Systems.DistrictData
                         maxHouseholds = 0,
                         ageData = new AgeData(0, 0, 0, 0),
                         educationData = new EducationData(0, 0, 0, 0, 0),
-                        wealthKey = default
+                        wealthKey = default(HouseholdWealthKey),
+                        employeeCount = 0,
+                        maxEmployees = 0,
+                        educationDataEmployees = default(EmploymentData),
+                        educationDataWorkplaces = default(EmploymentData)
                     });
                 }
             }
@@ -369,6 +552,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
+        // Process employee data using a job.
         
 
         public void WriteDistricts(IJsonWriter writer)
@@ -394,6 +578,17 @@ namespace InfoLoomTwo.Systems.DistrictData
                 WriteEducationData(writer, district.educationData);
                 writer.PropertyName("ageData");
                 WriteAgeData(writer, district.ageData);
+                
+                // Add employee data to JSON output
+                writer.PropertyName("employeeCount");
+                writer.Write(district.employeeCount);
+                writer.PropertyName("maxEmployees");
+                writer.Write(district.maxEmployees);
+                writer.PropertyName("educationDataEmployees");
+                WriteEmploymentData(writer, district.educationDataEmployees);
+                writer.PropertyName("educationDataWorkplaces");
+                WriteEmploymentData(writer, district.educationDataWorkplaces);
+                
                 writer.PropertyName("entity");
                 writer.Write(district.district);
                 writer.TypeEnd();
@@ -432,6 +627,25 @@ namespace InfoLoomTwo.Systems.DistrictData
             writer.Write(educationData.highlyEducated);
             writer.PropertyName("total");
             writer.Write(educationData.uneducated + educationData.poorlyEducated + educationData.educated + educationData.wellEducated + educationData.highlyEducated);
+            writer.TypeEnd();
+        }
+        public void WriteEmploymentData(IJsonWriter writer, EmploymentData employmentData)
+        {
+            writer.TypeBegin("EmploymentData");
+            writer.PropertyName("uneducated");
+            writer.Write(employmentData.uneducated);
+            writer.PropertyName("poorlyEducated");
+            writer.Write(employmentData.poorlyEducated);
+            writer.PropertyName("educated");
+            writer.Write(employmentData.educated);
+            writer.PropertyName("wellEducated");
+            writer.Write(employmentData.wellEducated);
+            writer.PropertyName("highlyEducated");
+            writer.Write(employmentData.highlyEducated);
+            writer.PropertyName("openPositions");
+            writer.Write(employmentData.openPositions);
+            writer.PropertyName("total");
+            writer.Write(employmentData.total);
             writer.TypeEnd();
         }
     }

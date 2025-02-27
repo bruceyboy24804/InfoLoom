@@ -452,8 +452,11 @@ const DemographicsChart = ({
             intersect: true, // Changed to false to trigger tooltip more easily
             position: 'nearest',
             caretSize: 5,
-            backgroundColor: 'var(--panelColorNormal)',
-            titleFont: { weight: 'bold' },
+            backgroundColor: '#171d2b',
+            titleFont: { weight: 'bold', size: 14, family: 'Overpass' }, // Set title font
+            bodyFont: { size: 12, family: 'Overpass' }, // Set body font
+            footerFont: { weight: 'bold', size: 12, family: 'Overpass' }, // Set footer font
+            
             padding: 10,
             // Improved tooltip content
             callbacks: {
@@ -477,14 +480,14 @@ const DemographicsChart = ({
           },
           legend: {
             position: 'top',
-            labels: { color: '#ffffff', padding: 15 }
+            labels: { color: '#ffffff', padding: 15, font: { size: 16, family: 'Overpass' } }
           }
         },
         scales: {
           x: {
             stacked: true,
             grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: '#ffffff' },
+            ticks: { color: '#ffffff', font:  { size: 12, family: 'Overpass' } },
             title: {
               display: true,
               text: 'Number of People',
@@ -502,6 +505,7 @@ const DemographicsChart = ({
               maxTicksLimit: groupingStrategy === 'none' ? 30 : 20,
               // Add padding between labels for detailed view
               padding: groupingStrategy === 'none' ? 8 : 2,
+              font:  { size: 12, family: 'Overpass' }
             },
             // Adjust the spacing between bars for detailed view
             afterFit: function(scaleInstance) {

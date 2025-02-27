@@ -1,7 +1,5 @@
 .panel {
   width: 700rem;
-  display: flex;
-  flex-direction: column;
 }
 
 .header {
@@ -35,27 +33,52 @@
 .headerRow {
   width: 100%;
   display: flex;
+  flex-direction: row;
   align-items: center;
   padding: 1rem 0;
 }
+.nameColumn {
+  width: 20%;
+  display: flex;
+  flex-direction: column;
+}
 .householdColumn {
-  flex: 0 0 20%;
+  margin-left: 10rem;
+  width: 15%;
+  display: flex;
+  flex-direction: row;
+  
+}
+.residentColumn {
+  margin-left: 25rem;
+  margin-right: -10rem;
+  width:  15%;
+  display: flex;
+  flex-direction: column;
+  
+}
+.petsColumn {
+  margin-left: -10rem;
+  width: 5%;
+}
+.averageWealthColumn {
+  margin-left: 30rem;
+  margin-right: -10rem;
+  width: 20%;
+  display: flex;
+  flex-direction: row;
+}
+.employeeColumn {
+  margin-left: 5rem;
+  width: 15%;
+  flex-direction: row;
   display: flex;
 }
-.column {
- 
-  flex: 0 0 20%;
-  text-align: center;
-}
 
-.nameColumn {
-  flex: 0 0 20%;
-  text-align: left;
-  padding-right: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
+
+
+
 
 .loadingText {
   text-align: center;
@@ -80,57 +103,55 @@
 }
 
 .tooltipContent {
-  
-  
-  font-size: 15rem;
-  line-height: 1.6;
-  color: white;
-  min-width: 300px;
-}
-.tooltipText {
-  margin: 0.01rem;
+  padding: 10px;
   color: #ffffff;
-  
+}
+
+.tooltipText {
+  margin-bottom: 1rem;
+  color: #ffffff;
+
   p {
-      margin: 0.01rem;
-      font-size: 13rem;
-      text-align: left;
-      display: flex;
-      flex-direction: row;
+    margin-bottom: 5rem;
+    font-size: 15rem;
+    text-align: left;
+    display: flex;
+    flex-direction: row;
   }
 }
+
 .chartSection {
   margin-bottom: 1rem;
   color: #ffffff;
-  
+
   p {
-      margin: 1rem;
-      font-size: 13rem;
-      text-align: left;
-      display: flex;
-      flex-direction: row;
+    margin: 1rem;
+    font-size: 13rem;
+    text-align: left;
+    display: flex;
+    flex-direction: row;
   }
 }
+
 .chartTitle {
-  font-size: 13rem;
   font-weight: bold;
-  margin-top: 5rem;
-  color: #ccc;
+  margin-bottom: 10px;
 }
+
 .boldText {
   margin: 0 0.25em;  // Adds spacing before and after
   font-weight: bold;
-  
-}
-.chartBar {
-  display: flex;
-  height:13rem;
-  margin-bottom: 5rem;
 }
 
-/*.chartBarSegment {
-  transition: width 0.3s ease;
-} */
+.chartBar {
+  display: flex;
+  height: 20px;
+  margin-bottom: 10px;
+}
+
+.chartBarSegment {
+  height: 100%;
+}
 
 .chartLegendItem {
   display: flex;
@@ -144,17 +165,132 @@
   width: 1.2em;
   height: 1.2em;
   margin-right: 0.5em;
-  border-top-left-radius: 4rem 4rem;
-    border-top-right-radius: 4rem 4rem;
-    border-bottom-left-radius: 4rem 4rem;
-    border-bottom-right-radius: 4rem 4rem;
+  border-radius: 4rem;
 }
 
 .legendLabel {
   display: flex;
   align-items: center;
 }
+
 .multiline {
-    
-    line-height: 1.5;
+  line-height: 1.5;
+}
+
+.occupancyRate {
+  margin-top: 6px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.statLabel {
+  font-size: 12px;
+  margin-right: 5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.statValue {
+  font-weight: bold;
+  font-size: 12px;
+}
+.chartLegend {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+}
+
+.employeeIndicator, .workplaceIndicator {
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+}
+
+.employeeIndicator {
+  background-color: #368A2E;
+}
+
+.workplaceIndicator {
+  border: 2px solid #368A2E;
+  background: transparent;
+}
+
+.educationRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.barContainer {
+  flex-grow: 1;
+  position: relative;
+  height: 20px;
+  margin: 0 10px;
+}
+
+.employeeBar {
+  position: absolute;
+  top: 5px;
+  height: 10px;
+  z-index: 2;
+}
+
+.workplaceBar {
+  position: absolute;
+  top: 2px;
+  height: 16px;
+  border: 2px solid;
+  border-radius: 2px;
+  background-color: transparent;
+  z-index: 1;
+}
+
+.valueLabel {
+  width: 80px;
+  text-align: right;
+  font-size: 13rem;
+}
+.mismatchBreakdown {
+  margin-left: 16px;
+  margin-bottom: 8px;
+}
+
+.mismatchSubRow {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  font-size: 13rem;
+}
+
+.mismatchSubLabel {
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+}
+
+.mismatchSubValue {
+  color: #ffffff;
 }
