@@ -270,7 +270,7 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                     className={styles.caseStudyBarSegment} 
                     style={{
                       width: `${(localWorkers / totalJobs) * 100}%`,
-                      backgroundColor: level.levelColor
+                      backgroundColor: '#808080'
                     }}
                     title={`Local ${level.levelName} workers: ${formatNumber(localWorkers)}`}
                   />

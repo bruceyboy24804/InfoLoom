@@ -8,7 +8,7 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
-- **Most of the credit goes to Infixo for making the original version of this mod, i just i just updated and made sure it worked properly and updated the UI.**
+- **Most of the credit goes to Infixo for making the original version of this mod, I just updated and made sure it worked properly and updated the UI.**
 - **Adds 9 new UI windows and a new settings option to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors, Commercial Data, Industrial and Office Data, Commercial Products, Industrial and office Data.**
 
 ###Currently:
@@ -90,6 +90,16 @@ NEW - summary statistics for each age group.
 - Workers: percentage vs. maximum workers, and total workers.
 - Tax: tax factor.
 
+### Districts 
+- shows District name
+- number of households
+- number of residents
+- number of pets
+- number of employees
+- employment data 
+- education data
+- district average wealth		
+
 ### Option in settings 
 - control the tax stength for commercial prodcuts when taxing indivial products.
 
@@ -112,15 +122,15 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.4.1" />
+	<ModVersion Value="1.5.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.2.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.4.1
-- fix a isssue that was causing performance issues and fps drops
-- more changes and additions will be coming soon Trade cost panel with more data to show</ChangeLog>
+	<ChangeLog>## Version 1.5.0
+- Added districts panel
+- changed how workforce and workplaces panel looks</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

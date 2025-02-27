@@ -1,5 +1,6 @@
 .panel {
   width: 800rem;
+  max-width: 95%; /* Prevent panel from extending beyond screen */
   display: flex;
   flex-direction: column; /* Ensure proper layout */
   background-color: var(--panelColorNormal);
@@ -10,82 +11,461 @@
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  height: 20rem;
+  height: 18rem; /* Reduced from 20rem */
   text-transform: none;
-  
 }
 
 .headerText {
   margin-left: -5rem;
-  font-size: 115%;
+  font-size: 110%; /* Reduced from 115% */
 }
 
 .tableHeader {
-  margin: 25rem 0;
+  margin: 20rem 0; /* Reduced from 25rem */
 }
 
-/* Row styling for each district */
-.DistrictRow {
-  width: 100%;
-  padding: 1rem 25rem;
+/* Table header row */
+.headerRow {
+  display: flex;
+  padding: 0.7rem;
+  font-weight: bold;
+  color: white;
+  border-bottom: 1rem solid #ffffff1a;
+  margin-bottom: 5rem;
+}
+
+/* Row styling for each workforce level */
+.workforceRow {
   display: flex;
   align-items: center;
-  box-sizing: border-box;
-}
-
-/* Column headers */
-.DistrictNameHeader {
-  flex: 0 0 50%;
-  padding-right: 1rem;
-  text-align: left;
-}
-
-.DistrictInfoHeader {
-  flex: 0 0 15%;
-  text-align: center;
-}
-
-.DistrictEntityHeader {
-  flex: 0 0 20%;
-  text-align: center;
-}
-
-/* Data columns */
-.DistrictName {
-  flex: 0 0 50%;
-  padding-right: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.DistrictInfo {
-  flex: 0 0 15%;
-  text-align: center;
-}
-
-.DistrictEntity {
-  flex: 0 0 20%;
-  text-align: center;
-}
-
-/* List container and list items */
-.list {
-  display: flex;
-  flex-direction: column;
+  padding: 0.7rem;
   width: 100%;
+  margin-bottom: 3rem;
 }
 
-.listItem {
-  padding: 1rem 25rem;
+/* Column styles */
+.educationCol {
   display: flex;
   align-items: center;
-  box-sizing: border-box;
-  border-bottom: 1px solid #ccc; /* Optional bottom border for separation */
+  width: 20%;
 }
 
-/* Optional: style for a loading message */
+.colorBox {
+  width: 12rem;
+  height: 12rem;
+  margin-right: 8rem;
+  border-radius: 2rem;
+}
+
+.dataCol {
+  width: 10%;
+  text-align: center;
+}
+
+/* Scrollable container */
+.scrollable {
+  max-height: 550rem;
+  overflow-y: auto;
+  width: 100%;
+  padding: 8rem;
+}
+
+/* Loading state */
 .loadingText {
   text-align: center;
   padding: 1rem;
+  color: white;
 }
+
+/* Summary section */
+.summarySection {
+  margin-bottom: 20rem;
+  padding-bottom: 12rem;
+  border-bottom: 1rem solid #ffffff1a;
+}
+
+.summaryTitle {
+  font-size: 14rem;
+  margin-bottom: 5rem;
+}
+
+.summaryGrid {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: 4rem;
+  flex: 1 0 22%;
+  min-width: 100rem;
+}
+
+.summaryValue {
+  font-size: 12rem;
+  font-weight: bold;
+}
+
+.summaryLabel {
+  font-size: 11rem;
+  opacity: 0.8;
+  margin-top: 2rem;
+}
+
+/* Section titles */
+.sectionTitle {
+  font-size: 14rem;
+  margin: 10rem 0 5rem;
+  font-weight: 500;
+}
+
+/* Bar chart styles */
+.barChartContainer {
+  margin: 6rem 0;
+}
+
+.barChart {
+  display: flex;
+  flex-direction: column;
+  margin: 8rem;
+}
+
+.barChartItem {
+  display: flex;
+  align-items: center;
+  margin: 8rem;
+  margin-bottom: 6rem;
+}
+
+.barLabel {
+  width: 100rem;
+  display: flex;
+  align-items: center;
+  margin: 4rem;
+  font-size: 12rem;
+}
+
+.barOuter {
+  flex-grow: 1;
+  height: 16rem;
+  background-color: #ffffff1a;
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.barInner {
+  height: 100%;
+  border-radius: 2rem;
+}
+
+.barValue {
+  width: 130rem;
+  text-align: right;
+  font-size: 12rem;
+  white-space: nowrap;
+}
+
+/* Employment status chart */
+.employmentStatusContainer {
+  margin: 12rem 0;
+}
+
+.employmentRow {
+  display: flex;
+  align-items: center;
+  margin: 8rem;
+  margin-bottom: 10rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.employmentLabel {
+  width: 130rem;
+  min-width: 130rem;
+  display: flex;
+  align-items: center;
+  margin: 4rem;
+  font-size: 12rem;
+}
+
+.employmentColor {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 2rem;
+}
+
+.stackedBarContainer {
+  flex-grow: 1;
+  flex-shrink: 1;
+  width: 0;
+  height: 15rem;
+  background-color: #ffffff1a;
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.stackedBar {
+  display: flex;
+  height: 100%;
+  max-width: 100%;
+}
+
+.stackedBarSegment {
+  height: 100%;
+  min-width: 0;
+}
+
+.stackedBarSegment:first-child {
+  border-radius: 2rem 0 0 2rem;
+}
+
+.stackedBarSegment:last-child {
+  border-radius: 0 2rem 2rem 0;
+}
+
+.stackedBarSegment:only-child {
+  border-radius: 2rem;
+}
+
+.employmentLegend {
+  width: 160rem;
+  min-width: 160rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  margin: 8rem; /* Updated from gap to margin */
+  font-size: 13rem;
+  margin-left: 8rem;
+}
+
+.legendColor {
+  margin-right: 8rem;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 2rem;
+}
+
+.stackedBarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8rem;
+  margin: 5rem 0 10rem;
+  padding: 5rem;
+  background-color: #ffffff0d;
+  border-radius: 3rem;
+  justify-content: center;
+  font-size: 11rem;
+}
+
+/* Call to action styles */
+.callToActionContainer {
+  margin: 10rem 0;
+  display: flex;
+  flex-direction: column;
+  margin: 8rem;
+}
+
+.callToAction {
+  display: flex;
+  align-items: center;
+  margin: 8rem;
+  padding: 8rem;
+  background-color: #ffdf001a;
+  border-left: 3rem solid #ffdf0099;
+  font-size: 12rem;
+}
+
+.actionIcon {
+  min-width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background-color: #ffdf00cc;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 8rem;
+}
+
+/* Total row highlighting */
+.totalRow {
+  font-weight: bold;
+  background-color: #ffffff0d;
+  border-radius: 3rem;
+  margin-top: 5rem;
+}
+
+/* Container for the whole component */
+.container {
+  padding: 12rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Visual representation of mismatches */
+.mismatchVisualContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 10rem;
+  margin: 12rem 0;
+  justify-content: space-between;
+}
+
+.mismatchCard {
+  flex: 1 0 30%;
+  min-width: 200rem;
+  background-color: #ffffff0d;
+  border-radius: 4rem;
+  padding: 10rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.mismatchTitle {
+  font-size: 13rem;
+  font-weight: 500;
+  margin-bottom: 5rem;
+}
+
+.mismatchTotal {
+  font-size: 18rem;
+  font-weight: bold;
+  margin-bottom: 3rem;
+}
+
+.mismatchDescription {
+  font-size: 11rem;
+  opacity: 0.7;
+  margin-bottom: 10rem;
+}
+
+.mismatchBreakdown {
+  display: flex;
+  flex-direction: column;
+  margin: 5rem;
+}
+
+.mismatchBreakdownItem {
+  display: flex;
+  align-items: center;
+  margin: 5rem;
+  font-size: 11rem;
+}
+
+.mismatchColor {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 2rem;
+}
+
+.mismatchLabel {
+  flex: 1;
+  margin-left: 8rem;
+}
+
+.mismatchCount {
+  font-weight: 500;
+}
+
+/* Case study styles */
+.caseStudyContainer {
+  margin: 20rem 0 10rem;
+  padding: 12rem;
+  background-color: #ffffff0d;
+  border-radius: 4rem;
+}
+
+.caseStudyTitle {
+  font-size: 14rem;
+  font-weight: 500;
+  margin-bottom: 10rem;
+}
+
+.caseStudyContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12rem;
+}
+
+.caseStudyStats {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10rem;
+}
+
+.caseStudyStatItem {
+  text-align: center;
+  min-width: 80rem;
+}
+
+.statValue {
+  font-size: 16rem;
+  font-weight: bold;
+}
+
+.statLabel {
+  font-size: 11rem;
+  opacity: 0.7;
+  margin-top: 3rem;
+}
+
+.caseStudyVisualization {
+  margin: 5rem 0;
+}
+
+.caseStudyBarContainer {
+  height: 20rem;
+  background-color: #ffffff1a;
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.caseStudyBar {
+  display: flex;
+  height: 100%;
+  max-width: 100%;
+}
+
+.caseStudyBarSegment {
+  height: 100%;
+  min-width: 0;
+}
+
+.caseStudyInsight {
+  padding: 8rem;
+  background-color: #00000033;
+  border-radius: 2rem;
+  font-size: 12rem;
+  font-style: italic;
+}
+
+/* Case study legend */
+.caseLegendContainer {
+  margin: 15rem 0 5rem;
+  padding: 8rem 12rem;
+  background-color: #00000033;
+  border-radius: 4rem;
+}
+
+.caseLegendTitle {
+  font-size: 13rem;
+  font-weight: 500;
+  margin-bottom: 8rem;
+}
+
+.caseLegendItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rem;
+  justify-content: center;
+}
+
+

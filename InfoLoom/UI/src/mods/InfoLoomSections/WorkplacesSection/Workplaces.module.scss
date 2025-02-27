@@ -127,7 +127,6 @@
 .barInner {
   height: 100%;
   border-radius: 2rem; /* Reduced from 3rem */
-  transition: width 0.3s ease;
 }
 
 .barValue {
@@ -244,7 +243,6 @@
 .stackedBarSegment {
   height: 100%;
   min-width: 0; /* Allow segments to shrink if needed */
-  transition: width 0.3s ease;
 }
 
 .stackedBarSegment:first-child {
@@ -470,6 +468,7 @@
   border-radius: 2rem;
   font-size: 12rem;
   font-style: italic;
+  font-family: 'Overpass';
 }
 
 /* Case study legend */
