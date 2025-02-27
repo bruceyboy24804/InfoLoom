@@ -1,7 +1,8 @@
 .panel {
-  width: 1000rem;
+  width: 800rem; /* Reduced from 1000rem */
+  max-width: 95%; /* Prevent panel from extending beyond screen */
   display: flex;
-  flex-direction: column; /* Ensure proper layout */
+  flex-direction: column;
   background-color: var(--panelColorNormal);
 }
 
@@ -10,82 +11,484 @@
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  height: 20rem;
+  height: 18rem; /* Reduced from 20rem */
   text-transform: none;
-  
 }
 
 .headerText {
   margin-left: -5rem;
-  font-size: 115%;
+  font-size: 110%; /* Reduced from 115% */
 }
 
 .tableHeader {
-  margin: 25rem 0;
-}
-
-/* Row styling for each district */
-.DistrictRow {
-  width: 100%;
-  padding: 1rem 25rem;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-/* Column headers */
-.DistrictNameHeader {
-  flex: 0 0 50%;
-  padding-right: 1rem;
-  text-align: left;
-}
-
-.DistrictInfoHeader {
-  flex: 0 0 15%;
-  text-align: center;
-}
-
-.DistrictEntityHeader {
-  flex: 0 0 20%;
-  text-align: center;
-}
-
-/* Data columns */
-.DistrictName {
-  flex: 0 0 50%;
-  padding-right: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.DistrictInfo {
-  flex: 0 0 15%;
-  text-align: center;
-}
-
-.DistrictEntity {
-  flex: 0 0 20%;
-  text-align: center;
-}
-
-/* List container and list items */
-.list {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.listItem {
-  padding: 1rem 25rem;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  border-bottom: 1px solid #ccc; /* Optional bottom border for separation */
+  margin: 20rem 0; /* Reduced from 25rem */
 }
 
 /* Optional: style for a loading message */
 .loadingText {
   text-align: center;
   padding: 1rem;
+}
+
+/* New styles for the Workplaces component */
+.container {
+  padding: 12rem; /* Reduced from 15rem */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.summarySection {
+  margin-bottom: 20rem; /* Reduced from 25rem */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12rem; /* Reduced from 15rem */
+}
+
+.summaryTitle {
+  font-size: 14rem; /* Reduced from 16rem */
+  margin-bottom: 5rem; /* Reduced from 6rem */
+}
+
+.summaryGrid {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: 4rem; /* Reduced from 5rem */
+  flex: 1 0 22%;
+  min-width: 100rem; /* Reduced from 120rem */
+}
+
+.summaryValue {
+  font-size: 12rem; /* Reduced from 13rem */
+  font-weight: bold;
+}
+
+.summaryLabel {
+  font-size: 11rem; /* Reduced from 12rem */
+  opacity: 0.8;
+  margin-top: 2rem; /* Reduced from 3rem */
+}
+
+.sectionTitle {
+  font-size: 14rem; /* Reduced from 15rem */
+  margin: 10rem 0 5rem; /* Reduced from 12rem 0 6rem */
+  font-weight: 500;
+}
+
+.barChartContainer {
+  margin: 6rem 0; /* Reduced from 8rem */
+}
+
+.scrollable {
+  max-height: 550rem; /* Reduced from 600rem */
+  overflow-y: auto;
+  width: 100%;
+}
+
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 8rem; /* Reduced from 10rem */
+}
+
+.barChartItem {
+  display: flex;
+  align-items: center;
+  gap: 8rem; /* Reduced from 10rem */
+  margin-bottom: 6rem; /* Reduced from 8rem */
+}
+
+.barLabel {
+  width: 100rem; /* Reduced from 120rem */
+  display: flex;
+  align-items: center;
+  gap: 4rem; /* Reduced from 5rem */
+  font-size: 12rem; /* Reduced from 14rem */
+}
+
+.colorBox {
+  width: 10rem; /* Reduced from 12rem */
+  height: 10rem; /* Reduced from 12rem */
+  border-radius: 2rem;
+}
+
+.barOuter {
+  flex-grow: 1;
+  height: 16rem; /* Reduced from 20rem */
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2rem; /* Reduced from 3rem */
+  overflow: hidden;
+}
+
+.barInner {
+  height: 100%;
+  border-radius: 2rem; /* Reduced from 3rem */
+  transition: width 0.3s ease;
+}
+
+.barValue {
+  width: 130rem; /* Reduced from 150rem */
+  text-align: right;
+  font-size: 12rem; /* Reduced from 14rem */
+  white-space: nowrap;
+}
+
+.educationChartContainer {
+  margin: 12rem 0 20rem; /* Reduced from 15rem 0 25rem */
+}
+
+.educationChart {
+  display: flex;
+  flex-direction: column;
+  gap: 10rem; /* Reduced from 12rem */
+}
+
+.educationRow {
+  display: flex;
+  align-items: center;
+  gap: 8rem; /* Reduced from 10rem */
+  margin-bottom: 6rem; /* Reduced from 8rem */
+}
+
+.educationLabel {
+  width: 130rem; /* Reduced from 150rem */
+  display: flex;
+  align-items: center;
+  gap: 4rem; /* Reduced from 5rem */
+  font-size: 12rem; /* Reduced from 14rem */
+}
+
+.educationColor {
+  width: 10rem; /* Reduced from 12rem */
+  height: 10rem; /* Reduced from 12rem */
+  border-radius: 2rem;
+}
+
+.educationBarContainer {
+  flex-grow: 1;
+  height: 15rem; /* Reduced from 18rem */
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2rem; /* Reduced from 3rem */
+  overflow: hidden;
+}
+
+.educationBar {
+  height: 100%;
+  border-radius: 2rem; /* Reduced from 3rem */
+}
+
+.educationStats {
+  width: 110rem; /* Reduced from 120rem */
+  text-align: right;
+  font-size: 12rem; /* Reduced from 14rem */
+}
+
+.educationValue {
+  margin-right: 4rem; /* Reduced from 5rem */
+  font-weight: bold;
+}
+
+.educationPercent {
+  opacity: 0.7;
+  font-size: 11rem; /* Reduced from 13rem */
+}
+
+.employmentStatusContainer {
+  margin: 12rem 0; /* Reduced from 15rem */
+}
+
+.employmentRow {
+  display: flex;
+  align-items: center;
+  gap: 8rem; /* Reduced from 10rem */
+  margin-bottom: 10rem; /* Reduced from 12rem */
+  width: 100%;
+  max-width: 100%;
+}
+
+.employmentLabel {
+  width: 130rem; /* Reduced from 150rem */
+  min-width: 130rem; /* Reduced from 150rem */
+  display: flex;
+  align-items: center;
+  gap: 4rem; /* Reduced from 5rem */
+  font-size: 12rem; /* Reduced from 14rem */
+}
+
+.employmentColor {
+  width: 10rem; /* Reduced from 12rem */
+  height: 10rem; /* Reduced from 12rem */
+  border-radius: 2rem;
+}
+
+.stackedBarContainer {
+  flex-grow: 1;
+  flex-shrink: 1;
+  width: 0; /* Critical for flex items to respect available space */
+  height: 15rem; /* Reduced from 18rem */
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2rem; /* Reduced from 3rem */
+  overflow: hidden;
+}
+
+.stackedBar {
+  display: flex;
+  height: 100%;
+  max-width: 100%; /* Ensure it doesn't overflow */
+}
+
+.stackedBarSegment {
+  height: 100%;
+  min-width: 0; /* Allow segments to shrink if needed */
+  transition: width 0.3s ease;
+}
+
+.stackedBarSegment:first-child {
+  border-radius: 2rem 0 0 2rem; /* Reduced from 3rem */
+}
+
+.stackedBarSegment:last-child {
+  border-radius: 0 2rem 2rem 0; /* Reduced from 3rem */
+}
+
+.stackedBarSegment:only-child {
+  border-radius: 2rem; /* Reduced from 3rem */
+}
+
+.employmentLegend {
+  width: 160rem; /* Reduced from 180rem */
+  min-width: 160rem; /* Reduced from 180rem */
+  display: flex;
+  justify-content: space-between;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8rem; /* Increased gap from 4rem to 8rem */
+  font-size: 13rem; /* Reduced from 12rem */
+  margin-left: 8rem; /* Added margin between name and its color */
+}
+
+.legendColor {
+  margin-right: 8rem;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 2rem;
+}
+
+.employmentLegendLabels {
+  display: flex;
+  justify-content: space-between;
+  width: 160rem; /* Reduced from 180rem */
+  margin-left: auto;
+  font-size: 11rem; /* Reduced from 12rem */
+  opacity: 0.7;
+  padding-right: 4rem; /* Reduced from 5rem */
+}
+
+/* New stacked bar legend styles */
+.stackedBarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rem;
+  margin: 5rem 0 10rem;
+  padding: 5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 3rem;
+  justify-content: center;
+  font-size: 11rem;
+}
+
+/* New styles for Workforce Mismatch Analysis */
+.callToActionContainer {
+  margin: 10rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
+}
+
+.callToAction {
+  display: flex;
+  align-items: center;
+  gap: 8rem;
+  padding: 8rem;
+  background-color: rgba(255, 223, 0, 0.1);
+  border-left: 3rem solid rgba(255, 223, 0, 0.6);
+  font-size: 12rem;
+}
+
+.actionIcon {
+  min-width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background-color: rgba(255, 223, 0, 0.8);
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 8rem; /* Added margin between icon and text */
+}
+
+.mismatchVisualContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rem;
+  margin: 12rem 0;
+  justify-content: space-between;
+}
+
+.mismatchCard {
+  flex: 1 0 30%;
+  min-width: 200rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4rem;
+  padding: 10rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.mismatchTitle {
+  font-size: 13rem;
+  font-weight: 500;
+  margin-bottom: 5rem;
+}
+
+.mismatchTotal {
+  font-size: 18rem;
+  font-weight: bold;
+  margin-bottom: 3rem;
+}
+
+.mismatchDescription {
+  font-size: 11rem;
+  opacity: 0.7;
+  margin-bottom: 10rem;
+}
+
+.mismatchBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+
+.mismatchBreakdownItem {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  font-size: 11rem;
+}
+
+.mismatchColor {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 2rem;
+}
+
+.mismatchLabel {
+  flex: 1;
+  margin-left: 8rem; /* Added margin-left for better spacing */
+}
+
+.mismatchCount {
+  font-weight: 500;
+}
+
+/* Case study styles */
+.caseStudyContainer {
+  margin: 20rem 0 10rem;
+  padding: 12rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4rem;
+}
+
+.caseStudyTitle {
+  font-size: 14rem;
+  font-weight: 500;
+  margin-bottom: 10rem;
+}
+
+.caseStudyContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12rem;
+}
+
+.caseStudyStats {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10rem;
+}
+
+.caseStudyStatItem {
+  text-align: center;
+  min-width: 80rem;
+}
+
+.statValue {
+  font-size: 16rem;
+  font-weight: bold;
+}
+
+.statLabel {
+  font-size: 11rem;
+  opacity: 0.7;
+  margin-top: 3rem;
+}
+
+.caseStudyVisualization {
+  margin: 5rem 0;
+}
+
+.caseStudyBarContainer {
+  height: 20rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.caseStudyBar {
+  display: flex;
+  height: 100%;
+  max-width: 100%;
+}
+
+.caseStudyBarSegment {
+  height: 100%;
+  min-width: 0;
+}
+
+.caseStudyInsight {
+  padding: 8rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2rem;
+  font-size: 12rem;
+  font-style: italic;
+}
+
+/* Case study legend */
+.caseLegendContainer {
+  margin: 15rem 0 5rem;
+  padding: 8rem 12rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4rem;
+}
+
+.caseLegendTitle {
+  font-size: 13rem;
+  font-weight: 500;
+  margin-bottom: 8rem;
+}
+
+.caseLegendItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rem;
+  justify-content: center;
 }
