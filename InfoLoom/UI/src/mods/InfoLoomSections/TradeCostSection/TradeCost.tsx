@@ -446,9 +446,8 @@ const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...pro
   return (
     <Panel
       draggable={true}
-      id="infoloom-trade-costs"
       onClose={onClose}
-      initialPosition={initialPosition || initialPos}
+      initialPosition={{ x: 0.50, y: 0.50 }}
       className={styles.panel}
       header={
         <div className={styles.header}>

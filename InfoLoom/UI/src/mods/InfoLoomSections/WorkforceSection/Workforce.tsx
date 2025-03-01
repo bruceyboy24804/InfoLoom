@@ -287,7 +287,7 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     <Panel 
       draggable={true}
       onClose={onClose}
-      initialPosition={initialPosition}
+      initialPosition={{ x: 0.71, y: 0.020 }}
       className={styles.panel}
       header={
         <div className={styles.header}>

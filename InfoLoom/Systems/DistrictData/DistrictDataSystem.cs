@@ -2,6 +2,7 @@ using System;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.UI.Binding;
+using Game;
 using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
@@ -23,7 +24,7 @@ using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.DistrictData
 {
-    public partial class DistrictDataSystem : SystemBase
+    public partial class DistrictDataSystem : GameSystemBase
     {
         public struct DistrictEntry
         {
@@ -436,15 +437,17 @@ namespace InfoLoomTwo.Systems.DistrictData
             if (m_Districts.IsCreated)
                 m_Districts.Dispose();
         }
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         // Refactored OnUpdate that splits functionality to helper methods.
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-
-            if (m_SimulationSystem.frameIndex % 256 != 0)
-                return;
+            
+            
             
             ResetDistrictEntries();
             BuildDistrictEntries();
@@ -648,5 +651,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             writer.Write(employmentData.total);
             writer.TypeEnd();
         }
+        
     }
 }

@@ -189,114 +189,7 @@ const formatEmployeesTooltip = (data: {
     ];
     
     // Calculate education mismatch statistics with detailed breakdown
-    const calculateEducationMismatch = () => {
-        // Initial values for each education level
-        const levels = {
-            highlyEducated: {
-                total: data.educationDataEmployees.highlyEducated,
-                workplaces: data.educationDataWorkplaces.highlyEducated,
-                inMatchingJobs: 0,
-                inLowerJobs: 0,
-                inWellEducated: 0,
-                inEducated: 0,
-                inPoorlyEducated: 0, 
-                inUneducated: 0
-            },
-            wellEducated: {
-                total: data.educationDataEmployees.wellEducated,
-                workplaces: data.educationDataWorkplaces.wellEducated,
-                inMatchingJobs: 0,
-                inLowerJobs: 0,
-                inEducated: 0,
-                inPoorlyEducated: 0,
-                inUneducated: 0
-            }
-        };
-
-        // Calculate how many are in matching jobs
-        levels.highlyEducated.inMatchingJobs = Math.min(
-            levels.highlyEducated.total, 
-            levels.highlyEducated.workplaces
-        );
-        
-        levels.wellEducated.inMatchingJobs = Math.min(
-            levels.wellEducated.total, 
-            levels.wellEducated.workplaces
-        );
-
-        // Calculate total in lower jobs
-        levels.highlyEducated.inLowerJobs = Math.max(0, 
-            levels.highlyEducated.total - levels.highlyEducated.inMatchingJobs
-        );
-        
-        levels.wellEducated.inLowerJobs = Math.max(0, 
-            levels.wellEducated.total - levels.wellEducated.inMatchingJobs
-        );
-
-        // Calculate breakdown of where highly educated are working
-        if (levels.highlyEducated.inLowerJobs > 0) {
-            let remaining = levels.highlyEducated.inLowerJobs;
-            
-            // Well educated jobs
-            let availableWellEducatedJobs = Math.max(0, 
-                levels.wellEducated.workplaces - levels.wellEducated.inMatchingJobs
-            );
-            levels.highlyEducated.inWellEducated = Math.min(remaining, availableWellEducatedJobs);
-            remaining -= levels.highlyEducated.inWellEducated;
-            
-            // Educated jobs
-            let availableEducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.educated - data.educationDataEmployees.educated
-            );
-            levels.highlyEducated.inEducated = Math.min(remaining, availableEducatedJobs);
-            remaining -= levels.highlyEducated.inEducated;
-            
-            // Poorly educated jobs
-            let availablePoorlyEducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.poorlyEducated - data.educationDataEmployees.poorlyEducated
-            );
-            levels.highlyEducated.inPoorlyEducated = Math.min(remaining, availablePoorlyEducatedJobs);
-            remaining -= levels.highlyEducated.inPoorlyEducated;
-            
-            // Uneducated jobs
-            let availableUneducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.uneducated - data.educationDataEmployees.uneducated
-            );
-            levels.highlyEducated.inUneducated = Math.min(remaining, availableUneducatedJobs);
-        }
-        
-        // Calculate breakdown of where well educated are working
-        if (levels.wellEducated.inLowerJobs > 0) {
-            let remaining = levels.wellEducated.inLowerJobs;
-            
-            // Account for highly educated working in educated jobs
-            let availableEducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.educated - data.educationDataEmployees.educated - levels.highlyEducated.inEducated
-            );
-            levels.wellEducated.inEducated = Math.min(remaining, availableEducatedJobs);
-            remaining -= levels.wellEducated.inEducated;
-            
-            // Poorly educated jobs
-            let availablePoorlyEducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.poorlyEducated - data.educationDataEmployees.poorlyEducated - levels.highlyEducated.inPoorlyEducated
-            );
-            levels.wellEducated.inPoorlyEducated = Math.min(remaining, availablePoorlyEducatedJobs);
-            remaining -= levels.wellEducated.inPoorlyEducated;
-            
-            // Uneducated jobs
-            let availableUneducatedJobs = Math.max(0, 
-                data.educationDataWorkplaces.uneducated - data.educationDataEmployees.uneducated - levels.highlyEducated.inUneducated
-            );
-            levels.wellEducated.inUneducated = Math.min(remaining, availableUneducatedJobs);
-        }
-        
-        return {
-            highlyEducated: levels.highlyEducated,
-            wellEducated: levels.wellEducated
-        };
-    };
     
-    const mismatchStats = calculateEducationMismatch();
 
     return (
         <div className={styles.tooltipContent}>
@@ -344,115 +237,7 @@ const formatEmployeesTooltip = (data: {
                         {formatNumber(openPositions)}
                     </span>
                 </div>
-            )}
-            
-            {/* Education Mismatch Section - Always show this section */}
-            <div className={styles.mismatchSection}>
-    <div className={styles.sectionTitle}>Education Level Mismatch</div>
-    
-    {/* Highly Educated mismatch */}
-    <div className={styles.mismatchRow}>
-        <span className={styles.mismatchLabel}>
-            <ColorIndicator color={educationColors.highlyEducated} />
-            Highly Educated in lower positions:
-        </span>
-        <span className={styles.mismatchValue}>
-            {formatNumber(mismatchStats.highlyEducated.inLowerJobs)}
-            {mismatchStats.highlyEducated.total > 0 && (
-                <span className={styles.mismatchPercentage}>
-                    {` (${Math.round(mismatchStats.highlyEducated.inLowerJobs / mismatchStats.highlyEducated.total * 100)}%)`}
-                </span>
-            )}
-        </span>
-    </div>
-    
-    {/* Always show the breakdown, just show zeros when none */}
-    <div className={styles.mismatchBreakdown}>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.wellEducated} />
-                In Well Educated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.highlyEducated.inWellEducated)}
-            </span>
-        </div>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.educated} />
-                In Educated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.highlyEducated.inEducated)}
-            </span>
-        </div>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.poorlyEducated} />
-                In Poorly Educated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.highlyEducated.inPoorlyEducated)}
-            </span>
-        </div>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.uneducated} />
-                In Uneducated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.highlyEducated.inUneducated)}
-            </span>
-        </div>
-    </div>
-    
-    {/* Well Educated mismatch */}
-    <div className={styles.mismatchRow}>
-        <span className={styles.mismatchLabel}>
-            <ColorIndicator color={educationColors.wellEducated} />
-            Well Educated in lower positions:
-        </span>
-        <span className={styles.mismatchValue}>
-            {formatNumber(mismatchStats.wellEducated.inLowerJobs)}
-            {mismatchStats.wellEducated.total > 0 && (
-                <span className={styles.mismatchPercentage}>
-                    {` (${Math.round(mismatchStats.wellEducated.inLowerJobs / mismatchStats.wellEducated.total * 100)}%)`}
-                </span>
-            )}
-        </span>
-    </div>
-    
-    {/* Always show the breakdown, just show zeros when none */}
-    <div className={styles.mismatchBreakdown}>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.educated} />
-                In Educated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.wellEducated.inEducated)}
-            </span>
-        </div>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.poorlyEducated} />
-                In Poorly Educated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.wellEducated.inPoorlyEducated)}
-            </span>
-        </div>
-        <div className={styles.mismatchSubRow}>
-            <span className={styles.mismatchSubLabel}>
-                <ColorIndicator color={educationColors.uneducated} />
-                In Uneducated positions:
-            </span>
-            <span className={styles.mismatchSubValue}>
-                {formatNumber(mismatchStats.wellEducated.inUneducated)}
-            </span>
-        </div>
-    </div>
-</div>
+            )}   
         </div>
     );
 }
@@ -539,10 +324,12 @@ const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, }) => {
         <Panel
             draggable
             onClose={onClose}
-            initialPosition={{ x: 0.038, y: 0.15 }}
+            initialPosition={{ x: 0.50, y: 0.50 }}
+
             className={styles.panel}
             header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
         >
+            <Scrollable trackVisibility="scrollable" className={styles.scrollable}>
             {districts.length === 0 ? (
                 <p className={styles.loadingText}>No Districts Found</p>
             ) : (
@@ -550,18 +337,19 @@ const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, }) => {
                     <TableHeader />
                     <DataDivider />
                     <div className={styles.scrollableContent}>
-                        <Scrollable smooth vertical trackVisibility="scrollable">
+                        
                             {districts.map((district) => (
                                 <DistrictLine
                                     key={district.entity.index}
                                     data={district}
                                 />
                             ))}
-                        </Scrollable>
+                       
                     </div>
                     <DataDivider />
                 </div>
             )}
+            </Scrollable>
         </Panel>
     );
 };

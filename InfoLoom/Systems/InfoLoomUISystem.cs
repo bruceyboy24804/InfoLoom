@@ -287,7 +287,7 @@ namespace InfoLoomTwo.Systems
         {
             
             
-            if (_bDPVBinding.value && _uiUpdateState.Advance())
+            if (_bDPVBinding.value )
             {
                 
                 m_uiBuildingDemand.Value = new int[]
@@ -302,7 +302,7 @@ namespace InfoLoomTwo.Systems
                 };
             }
         
-            if (_cDPVBinding.value && _uiUpdateState.Advance())
+            if (_cDPVBinding.value )
             {
                 var commercialSystem = base.World.GetOrCreateSystemManaged<CommercialSystem>();
                 m_CommercialBinding.Value = commercialSystem.m_Results.ToArray();
@@ -317,7 +317,7 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_cPPVBinding.value && _uiUpdateState.Advance())
+            if (_cPPVBinding.value )
             {
                 m_CommercialProductBinding.Value = CommercialProductsSystem.m_DemandData
                     .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
@@ -362,7 +362,7 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_dPVBinding.value && _uiUpdateState.Advance())
+            if (_dPVBinding.value )
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
@@ -373,14 +373,14 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_dDPVBinding.value && _uiUpdateState.Advance())
+            if (_dDPVBinding.value )
             {
                 m_uiDistricts.Update();
                 m_DistrictDataSystem.IsPanelVisible = true;
                
             }
         
-            if (_iDPVBinding.value && _uiUpdateState.Advance())
+            if (_iDPVBinding.value )
             {
                 var industrialSystem = base.World.GetOrCreateSystemManaged<IndustrialSystem>();
                 m_IndustrialBinding.Value = industrialSystem.m_Results.ToArray();
@@ -440,7 +440,7 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_rDPVBinding.value && _uiUpdateState.Advance())
+            if (_rDPVBinding.value)
             {
                 ResidentialSystem residentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();
                 m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
@@ -451,13 +451,13 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_tCPVBinding.value && _uiUpdateState.Advance())
+            if (_tCPVBinding.value )
             {
                 var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
                 m_TradeCostsBinding.Value = tradeCostSystem.GetResourceTradeCosts().ToList();
             }
         
-            if (_wFPVBinding.value && _uiUpdateState.Advance())
+            if (_wFPVBinding.value)
             {
                 var workforceSystem = base.World.GetOrCreateSystemManaged<WorkforceSystem>();
                 m_WorkforcesBinder.Value = workforceSystem.m_Results.ToArray();
@@ -467,7 +467,7 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_wPPVBinding.value && _uiUpdateState.Advance())
+            if (_wPPVBinding.value )
             {
                 var workplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
                 m_WorkplacesBinder.Value = workplacesSystem.m_Results.ToArray();

@@ -18,7 +18,7 @@ using InfoLoomTwo.Domain;
 
 namespace InfoLoomTwo.Systems.WorkplacesData
 {
-    public partial class WorkplacesSystem : SystemBase
+    public partial class WorkplacesSystem : GameSystemBase
     {
 
         private struct CalculateWorkplaceDataJob : IJobChunk
@@ -228,13 +228,15 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
 
 
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+            
             ForceUpdate = false;
 
             ResetResults();

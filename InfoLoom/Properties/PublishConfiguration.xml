@@ -4,12 +4,12 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds 9 new UI windows and a new settings option to the game" />
+	<ShortDescription Value="Adds 11 new UI windows that lets the user city statistics about their city" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
 - **Most of the credit goes to Infixo for making the original version of this mod, I just updated and made sure it worked properly and updated the UI.**
-- **Adds 9 new UI windows and a new settings option to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors, Commercial Data, Industrial and Office Data, Commercial Products, Industrial and office Data.**
+- **Adds 11 new UI windows and a new settings option to the game, which are Demographics,Workforce structure and Workplace distribution, Residential data, Demand factors, Commercial Data, Industrial and Office Data, Commercial Products, Industrial and office Data.**
 
 ###Currently:
 - Demographics
@@ -18,9 +18,10 @@
 - Residential data 
 - Commercial data
 - Industrial and Office data
-- Demand factors 
-- Resources consumption (Coming soon)
-- Pruction types ui
+- Demand factors
+- Production types ui (Commercial and Industrial)
+- Trade costs		
+- Districts		
 
 ### Demographics
 - Key information about current city demographics in one place.
@@ -92,7 +93,7 @@ NEW - summary statistics for each age group.
 
 ### Districts 
 - shows District name
-- number of households
+- number of households 
 - number of residents
 - number of pets
 - number of employees
@@ -101,10 +102,11 @@ NEW - summary statistics for each age group.
 - district average wealth		
 
 ### Option in settings 
-- control the tax stength for commercial prodcuts when taxing indivial products.
+- control the tax strength for commercial products when taxing individual products.
 
 ### Credit
 - Dava787: screenshot of the Workplace distribution UI
+- Nullpinter: Improved UI		
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/InfoLoom.png" />
@@ -130,7 +132,10 @@ NEW - summary statistics for each age group.
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>## Version 1.5.0
 - Added districts panel
-- changed how workforce and workplaces panel looks</ChangeLog>
+- changed how workforce and workplaces panel looks and function
+- Improved performance when no there are no active panels or when one panel is only active (when toggling a panel give it a few seconds to load the data)
+- Fixed some bugs
+- Better compatability with some mods</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

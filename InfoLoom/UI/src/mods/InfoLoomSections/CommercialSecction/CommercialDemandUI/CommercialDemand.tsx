@@ -159,7 +159,7 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
     <Panel
       draggable
       onClose={onClose}
-      initialPosition={initialPosition}
+      initialPosition={{ x: 0.20, y: 0.50 }} 
       className={styles.panel}
       header={
         <div className={styles.header}>

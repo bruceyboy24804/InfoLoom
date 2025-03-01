@@ -31,7 +31,7 @@ using Game.UI;
 
 namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 {
-    public partial class CommercialProductsSystem : SystemBase
+    public partial class CommercialProductsSystem : GameSystemBase
     {
         //Setting setting = Mod.setting;
         public struct DemandData
@@ -472,13 +472,15 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
 
 
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
              if (!IsPanelVisible)
                 return;
-             if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+            
              ForceUpdate = false;
             if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
             {

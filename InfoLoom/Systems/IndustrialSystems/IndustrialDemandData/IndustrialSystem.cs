@@ -27,7 +27,7 @@ using System.Collections.Generic;
 
 namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 {
-    public partial class IndustrialSystem : SystemBase
+    public partial class IndustrialSystem : GameSystemBase
     {
         [BurstCompile]
         private struct UpdateIndustrialDemandJob : IJob
@@ -1092,13 +1092,15 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 
         
 
-       
+       public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
              if (!IsPanelVisible)
                 return;
-             if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+             
              ForceUpdate = false;
             
             ResetResults();

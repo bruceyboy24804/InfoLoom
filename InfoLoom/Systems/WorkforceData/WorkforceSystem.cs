@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Colossal;
 using Colossal.Collections;
+using Game;
 using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
@@ -16,7 +17,7 @@ using InfoLoomTwo.Domain;
 
 namespace InfoLoomTwo.Systems.WorkforceData
 {
-    public partial class WorkforceSystem : SystemBase
+    public partial class WorkforceSystem : GameSystemBase
     {
         private struct CountEmploymentJob : IJobChunk
         {
@@ -227,7 +228,6 @@ namespace InfoLoomTwo.Systems.WorkforceData
                     // student=0, home=1 -> counts [ok, typical unemployed]
                     // student=1, home=0 -> counts [weird, student but no home?] BUGGED
                     // student=1, home=1 -> excluded [ok, typical student]
-                    // I should be showing homeless, because they may be leaving city soon...
                     // [Worker and Student] are exclusive - there are no entities that have both - so, this can be used at Query level
                     m_Results[educationLevel] = info;
                 }
@@ -319,8 +319,8 @@ namespace InfoLoomTwo.Systems.WorkforceData
         protected override void OnCreate()
         {
             base.OnCreate();
-            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>(); // TODO: use UIUpdateState eventually
-                                                                                          // main query
+            m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>(); 
+                                                                                          
             m_AllAdultGroup = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[1] { ComponentType.ReadOnly<Citizen>() },
@@ -400,14 +400,16 @@ namespace InfoLoomTwo.Systems.WorkforceData
         }
 
 
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         //[Preserve]
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+            
             ForceUpdate = false;
 
 

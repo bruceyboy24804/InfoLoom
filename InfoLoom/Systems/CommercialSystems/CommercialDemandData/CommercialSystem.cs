@@ -27,7 +27,7 @@ using System.Reflection;
 
 namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
 {
-    public partial class CommercialSystem : SystemBase
+    public partial class CommercialSystem : GameSystemBase
     {
         [BurstCompile]
         private struct UpdateCommercialDemandJob : IJob
@@ -528,14 +528,17 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
         }
 
         
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         //[Preserve]
         protected override void OnUpdate()
         {
            if (!IsPanelVisible)
                 return;
-           if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+           
+                
            ForceUpdate = false;
             
             ResetResults();

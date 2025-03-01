@@ -717,6 +717,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
       draggable
       onClose={onClose}
       className={styles.panel}
+      initialPosition={{x: 0.16, y: 0.15}}
       header={
         <div className={styles.header}>
           <span className={styles.headerText}>Demographics</span>

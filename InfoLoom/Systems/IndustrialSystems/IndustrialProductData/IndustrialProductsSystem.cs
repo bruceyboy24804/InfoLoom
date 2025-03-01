@@ -27,7 +27,7 @@ using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 {
-    public partial class IndustrialProductsSystem : SystemBase
+    public partial class IndustrialProductsSystem : GameSystemBase
     {
         public struct IndustrialDemandData
         {
@@ -831,13 +831,15 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 
 
 
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+            
             ForceUpdate = false;
             if (!m_DemandParameterQuery.IsEmptyIgnoreFilter && !m_EconomyParameterQuery.IsEmptyIgnoreFilter)
             {

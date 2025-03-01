@@ -65,7 +65,7 @@ namespace InfoLoomTwo
             {
                 log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
             }
-          
+           
 
             // Register custom update systems for UI updates
             
@@ -80,15 +80,8 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            
-            
-
-            
-            
-            
-           
         }
-
+        
         // Method that runs when the mod is disposed of
         public void OnDispose()
         {

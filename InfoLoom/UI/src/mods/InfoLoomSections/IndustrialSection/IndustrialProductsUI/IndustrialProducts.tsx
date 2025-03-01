@@ -358,7 +358,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
     <Panel
       draggable
       onClose={onClose}
-      initialPosition={{ x: 0, y: 0 }}     
+      initialPosition={{ x: 0.50, y: 0.50 }}
       className={styles.panel}
       header={<div className={styles.header}><span className={styles.headerText}>Industrial & Office Products</span></div>}
     >

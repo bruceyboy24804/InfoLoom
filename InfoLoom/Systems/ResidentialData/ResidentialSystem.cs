@@ -22,7 +22,7 @@ using UnityEngine;
 
 namespace InfoLoomTwo.Systems.ResidentialData
 {
-    public partial class ResidentialSystem : SystemBase
+    public partial class ResidentialSystem : GameSystemBase
     {
         [BurstCompile]
         private struct UpdateResidentialDemandJob : IJob
@@ -381,13 +381,15 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_LastBuildingDemand = default(int3);
         }
 
-       
+       public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 0 && !ForceUpdate)
-                return;
+            
             ForceUpdate = false;
             
             ResetResults();

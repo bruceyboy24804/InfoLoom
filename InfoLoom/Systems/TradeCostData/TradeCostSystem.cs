@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game;
 using Game.Companies;
 using Game.Economy;
 using Game.Objects;
@@ -14,7 +15,7 @@ using Unity.Mathematics;
 
 namespace InfoLoomTwo.Systems.TradeCostData
 {
-    public partial class TradeCostSystem : SystemBase
+    public partial class TradeCostSystem : GameSystemBase
     {
         private EntityQuery m_Query;
         private EntityQuery m_ResourceQuery;
@@ -50,7 +51,10 @@ namespace InfoLoomTwo.Systems.TradeCostData
             });
             m_ResourceTradeCosts = new Dictionary<Resource, ResourceTradeCost>();
         }
-
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
         protected override void OnUpdate()
         {
             if (!ShouldUpdate())
@@ -61,7 +65,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
         }
 
         private bool ShouldUpdate() => 
-            IsPanelVisible && (ForceUpdate || m_SimulationSystem.frameIndex % 256 == 0);
+            IsPanelVisible && (ForceUpdate);
 
         private void UpdateTradeCosts()
         {

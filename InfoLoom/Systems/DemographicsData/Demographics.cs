@@ -22,7 +22,7 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 {
     // This System is based on PopulationInfoviewUISystem by CO
 
-public partial class Demographics : SystemBase
+public partial class Demographics : GameSystemBase
 {
 
     /// <summary>
@@ -343,13 +343,15 @@ public partial class Demographics : SystemBase
         m_Results.Dispose();
         base.OnDestroy();
     }
-
+    public override int GetUpdateInterval(SystemUpdatePhase phase)
+        {
+            return 256;
+        }
     protected override void OnUpdate()
     {
         if (!IsPanelVisible)
                 return;
-            if (m_SimulationSystem.frameIndex % 256 != 44 && !ForceUpdate)
-                return;
+            
             ForceUpdate = false;
        
 

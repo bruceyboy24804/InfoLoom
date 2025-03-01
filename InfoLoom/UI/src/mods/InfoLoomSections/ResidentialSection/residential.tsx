@@ -201,7 +201,7 @@ const BuildingDemandSection = ({ data }: BuildingDemandSectionProps): JSX.Elemen
 
 const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Element => {
   const ilResidential = useValue(ResidentialData);
-  initialPosition = { x: 0.038, y: 0.15 };
+  
 
   const homelessThreshold =
     ilResidential.length > 13
@@ -212,7 +212,7 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
     <Panel
       draggable={true}
       onClose={onClose}
-      initialPosition={initialPosition}
+      initialPosition={{  x: 0.15, y: 0.020 }}
       className={styles.panel}
       header={
         <div className={styles.header}>
