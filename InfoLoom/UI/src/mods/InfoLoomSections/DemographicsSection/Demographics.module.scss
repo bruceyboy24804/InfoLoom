@@ -1,0 +1,138 @@
+.panel {
+  width: 850px;
+  background-color: var(--panelColorNormal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: absolute;
+  will-change: transform;
+  margin: 0;
+  height: 900rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 115%;
+  text-transform: none;
+}
+
+.container {
+  padding: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.toggleContainer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+}
+
+.chartContainer {
+  padding: 1rem;
+  height: calc(100vh - 250px);
+  min-height: 600px; // Reduced min-height from 1500px to 600px
+  overflow: visible; // changed from auto to allow chart overflow
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chartWrapper {
+  width: 100%;
+  position: relative;
+}
+
+.chartVisualization {
+  width: 800px; // Reduced width from 1500px to 800px
+  height: 600px; // Reduced height from 1800px to 600px
+  position: relative;
+  contain: paint layout style;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: transparent;
+
+  canvas {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    display: block !important; // Ensures valid display property
+    width: 100% !important; // Set canvas to fill container
+    height: 100% !important; // Set canvas to fill container
+  }
+}
+
+.statisticsContainer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.statisticsColumn {
+  width: 50%;
+  
+  &.left {
+    padding-right: 4rem;
+  }
+  
+  &.right {
+    padding-left: 4rem;
+  }
+}
+
+.alignedParagraph {
+  width: 100%;
+  padding: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-size: 14px;
+  font-family: Overpass;
+  font-weight: normal;
+
+  .label {
+    text-align: left;
+  }
+
+  .value {
+    text-align: right;
+  }
+}
+
+.spacer {
+  height: 1rem;
+}
+
+.groupingOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  margin: 0 1rem;
+
+  .label {
+    color: white;
+    margin-bottom: 0.3rem;
+    font-size: 14px;
+  }
+}
+
+.noData {
+  color: white;
+}

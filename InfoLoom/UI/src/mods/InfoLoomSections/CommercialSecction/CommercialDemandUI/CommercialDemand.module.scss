@@ -1,0 +1,21 @@
+.panel {
+    
+    display: flex;
+    flex-direction: column;
+    height: 331rem;
+    width: 400rem;
+    background-color: var(--panelColorNormal);
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 20rem;
+    text-transform: none;
+  }
+  .headerText {
+    margin-left: -5rem;
+    font-size: 115%;
+  }

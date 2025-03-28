@@ -1,0 +1,21 @@
+.panel {
+    //background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+    display: flex;
+    flex-direction: column;
+    height: 500rem; /* Ensure the panel occupies full height */
+    width: 230rem;
+    background-color: var(--panelColorNormal);
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 20rem;
+    text-transform: none;
+  }
+  .headerText {
+    margin-left: -5rem;
+    font-size: 115%;
+  }
