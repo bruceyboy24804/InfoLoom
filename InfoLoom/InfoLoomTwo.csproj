@@ -37,6 +37,7 @@
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <Compile Remove="Systems\DistrictData\EmployeesDataSystem.cs" />
+	  <None Include="UI\src\mods\bindings.ts" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
