@@ -1,11 +1,11 @@
 import React, { FC, useRef } from "react";
-import { Panel, Scrollable, DraggablePanelProps, Number2, Tooltip, BalloonTheme } from "cs2/ui";
-import { useValue } from "cs2/api";
+import { Panel, Scrollable, DraggablePanelProps, Number2, Tooltip, BalloonTheme, Icon } from "cs2/ui";
+import { useValue,  } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
-import { Name } from "cs2/bindings";
+import { Name, selectedInfo } from "cs2/bindings";
 import styles from "./Districts.module.scss";
 import { DistrictData$ } from "mods/bindings";
-import { District, AgeData, EducationData, EmploymentData} from "mods/domain/District";
+import { District, AgeData, EducationData, EmploymentData, LocalServiceBuilding, DistrictPolicy} from "mods/domain/District";
 
 const DataDivider: FC = () => (
     <div className={styles.dataDivider} />
@@ -153,7 +153,6 @@ const formatCombinedTooltip = (data: { ageData: AgeData; educationData: Educatio
         </div>
     );
 };
-// Add after the formatCombinedTooltip function
 
 const formatEmployeesTooltip = (data: { 
     educationDataEmployees: EmploymentData; 
@@ -188,9 +187,6 @@ const formatEmployeesTooltip = (data: {
         { label: 'Highly Educated', employees: data.educationDataEmployees.highlyEducated, workplaces: data.educationDataWorkplaces.highlyEducated, color: educationColors.highlyEducated }
     ];
     
-    // Calculate education mismatch statistics with detailed breakdown
-    
-
     return (
         <div className={styles.tooltipContent}>
             <div className={styles.chartTitle}>Employees by Education Level</div>
@@ -237,10 +233,83 @@ const formatEmployeesTooltip = (data: {
                         {formatNumber(openPositions)}
                     </span>
                 </div>
-            )}   
+            )}
+
+            {/* Add max employees information */}
+            <div className={styles.chartLegendItem}>
+                <span className={styles.legendLabel}><b>Max Employees:</b></span>
+                <span>{formatNumber(data.maxEmployees)}</span>
+            </div>
         </div>
     );
+};
+
+// Service Buildings Component
+interface ServiceBuildingsProps {
+    serviceBuildings: LocalServiceBuilding[];
 }
+
+const ServiceBuildingsComponent: FC<ServiceBuildingsProps> = ({ serviceBuildings }) => {
+    const { translate } = useLocalization();
+    
+    if (!serviceBuildings || serviceBuildings.length === 0) {
+        return <div className={styles.noServices}>N/A</div>;
+    }
+
+    return (
+        <div className={styles.serviceBuildings}>
+            {serviceBuildings.map((service, index) => (
+                <Tooltip 
+                    key={service.entity.index} 
+                    tooltip={getDisplayName(service.name, translate)}
+                >
+                    <div className={styles.serviceItem}>
+                        <img 
+                            src={service.serviceIcon}
+                            className={styles.serviceIcon}
+                            alt={getDisplayName(service.name, translate)}
+                        />
+                    </div>
+                </Tooltip>
+            ))}
+        </div>
+    );
+};
+interface PoliciesProps {
+    policies: DistrictPolicy[];
+}
+
+const PoliciesComponent: FC<PoliciesProps> = ({ policies }) => {
+    const { translate } = useLocalization();
+    
+    if (!policies || policies.length === 0) {
+        return <div className={styles.noServices}>N/A</div>;
+    }
+
+    return (
+        <div className={styles.policies}>
+            {policies.map((policy, index) => (
+                <Tooltip 
+                    key={policy.entity.index} 
+                    tooltip={getDisplayName(policy.name, translate)}
+                >
+                    <div className={styles.policyItem}>
+                        <img 
+                            src={policy.icon}
+                            className={styles.policyIcon}
+                            alt={getDisplayName(policy.name, translate)}
+                        />
+                    </div>
+                </Tooltip>
+            ))}
+        </div>
+    );
+};
+
+
+    
+    
+
     
 const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
     const { translate } = useLocalization();
@@ -249,23 +318,35 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
             <div className={styles.nameColumn}>
                 {getDisplayName(data.name, translate)}
             </div>
-                <div className={styles.householdColumn}>{formatNumber(data.householdCount)} / {formatNumber(data.maxHouseholds)}</div>
+            <Tooltip tooltip={'max households: ' + formatNumber(data.maxHouseholds)}>
+            <div className={styles.householdColumn}>
+                <div className={styles.householdCountText}>{formatNumber(data.householdCount)}</div>
+            </div>
+            </Tooltip>
             <Tooltip tooltip={formatCombinedTooltip({
                 ageData: data.ageData,
                 educationData: data.educationData
             })}>
                 <div className={styles.residentColumn}>{formatNumber(data.residentCount)}</div>
             </Tooltip>
-                <div className={styles.petsColumn}>{formatNumber(data.petCount)}</div>
-                <div className={styles.averageWealthColumn}>{data.wealthKey}</div>
+            <div className={styles.petsColumn}>{formatNumber(data.petCount)}</div>
+            <div className={styles.averageWealthColumn}>{data.wealthKey}</div>
             <Tooltip tooltip={formatEmployeesTooltip({
                 educationDataEmployees: data.educationDataEmployees,
                 educationDataWorkplaces: data.educationDataWorkplaces,
                 employeeCount: data.employeeCount,
-                maxEmployees: data.maxEmployees
+                maxEmployees: data.maxEmployees,
+                
             })}>
-                <div className={styles.employeeColumn}>{formatNumber(data.employeeCount)} / {formatNumber(data.maxEmployees)}</div>
+                <div className={styles.employeeColumn}>{formatNumber(data.employeeCount)}</div>
             </Tooltip>
+            <div className={styles.servicesColumn}>
+                <ServiceBuildingsComponent serviceBuildings={data.localServiceBuildings || []} />
+            </div>
+            <div className={styles.policiesColumn}>
+                <PoliciesComponent policies={data.policies || []} />
+            </div>
+            
         </div>
     );
 };
@@ -313,6 +394,12 @@ const TableHeader: FC = () => (
                 }>
                 <div className={styles.employeeColumn}><b>Employees</b></div>
             </Tooltip>
+            <Tooltip tooltip="Local service buildings assigned to this district">
+                <div className={styles.servicesColumn}><b>Services</b></div>
+            </Tooltip>
+            <Tooltip tooltip="District policies that affect how this district operates">
+                <div className={styles.policiesColumn}><b>Policies</b></div>
+            </Tooltip>
         </div>
     </div>
 );
@@ -325,7 +412,6 @@ const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, }) => {
             draggable
             onClose={onClose}
             initialPosition={{ x: 0.50, y: 0.50 }}
-
             className={styles.panel}
             header={<div className={styles.header}><span className={styles.headerText}>Districts</span></div>}
         >
@@ -337,14 +423,12 @@ const AllDistrictsPanel: FC<DraggablePanelProps> = ({ onClose, }) => {
                     <TableHeader />
                     <DataDivider />
                     <div className={styles.scrollableContent}>
-                        
-                            {districts.map((district) => (
-                                <DistrictLine
-                                    key={district.entity.index}
-                                    data={district}
-                                />
-                            ))}
-                       
+                        {districts.map((district) => (
+                            <DistrictLine
+                                key={district.entity.index}
+                                data={district}
+                            />
+                        ))}
                     </div>
                     <DataDivider />
                 </div>

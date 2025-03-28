@@ -1,5 +1,5 @@
 .panel {
-  width: 800rem;
+  width: 1100rem; // Increased width for better spacing
   max-width: 1200rem;
 }
 
@@ -22,7 +22,9 @@
   margin: 0 auto;
   padding: 0 25rem;
 }
-.row, .headerRow {
+
+.row,
+.headerRow {
   width: 100%;
   display: flex;
   align-items: center;
@@ -30,61 +32,139 @@
   padding: 1rem 25rem;
   min-width: min-content;
 }
+
 .headerRow {
   padding: 1rem 0;
 }
+
 .nameColumn {
-  flex: 3 1 0; // flex-grow: 3, flex-shrink: 1, flex-basis: 0
-  min-width: 120rem; // Minimum width to prevent squeezing
-  display: flex;
-  flex-direction: column;
-  margin-right: 15rem;
+  flex: 2 1 0; // Adjusted flex for better spacing
+  min-width: 150rem; // Increased minimum width
+  margin-right: 10rem;
+  text-align: center;
 }
+
 .householdColumn {
-  flex: 1.5 1 0; // flex-grow: 1.5, flex-shrink: 1, flex-basis: 0
-  display: flex;
-  flex-direction: row;
-  margin-left: 30rem;
+  flex: 1.5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
 }
+
 .residentColumn {
-  flex: 1.5 1 0; // flex-grow: 1.5, flex-shrink: 1, flex-basis: 0
-  display: flex;
-  flex-direction: column;
-  margin-left: 100rem;
+  flex: 1.5 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
+  text-align: right;
 }
+
 .petsColumn {
-  flex: 0.5 1 0; // flex-grow: 0.5, flex-shrink: 1, flex-basis: 0
-  min-width: 40rem;
-  margin-left: 50rem;
+  flex: 1 1 0; // Adjusted flex for balance
+  min-width: 80rem;
+  margin-left: 10rem;
+  text-align: right;
 }
 
 .averageWealthColumn {
-  flex: 2 1 0; // flex-grow: 2, flex-shrink: 1, flex-basis: 0
-  display: flex;
-  flex-direction: row;
-  margin-left: 30rem;
-  width: 30rem;
+  flex: 1.5 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
+  text-align: right;
 }
 
 .employeeColumn {
-  flex: 1.5 1 0; // flex-grow: 1.5, flex-shrink: 1, flex-basis: 0
+  flex: 1.5 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.servicesColumn {
+  flex: 1 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
   display: flex;
-  flex-direction: row;
-  margin-left: 50rem;
+  text-align: right;
+}
+.policiesColumn {
+  flex: 1 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
+  display: flex;
+  text-align: right;
+}
+.serviceBuildings {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 4rem;
+  text-align: right;
+}
+.policies {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 4rem;
+  text-align: right;
+}
+.serviceItem {
+  display: flex;
+  text-align: right;
+  justify-content: center;
+  width: 24rem;
+  height: 24rem;
+  padding: 2px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+.policyItem {
+  display: flex;
+  text-align: right;
+  justify-content: center;
+  width: 24rem;
+  height: 24rem;
+  padding: 2px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+.serviceIcon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.policyIcon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  
+}
+.noServices {
+  font-size: 15rem;
+  text-align: right;
 }
 
-
-
-
-
-
-.loadingText {
-  text-align: center;
-  padding: 20rem;
+.tooltipContent {
+  z-index: 10; // Ensure tooltips appear above other elements
+  max-width: 300rem; // Prevent tooltips from being too wide
+  word-wrap: break-word; // Ensure long text wraps properly
 }
 
-.scrollableContent {
-  padding: 1rem 0;
+.tooltipText {
+  margin-bottom: 1rem;
+  color: #ffffff;
+
+  p {
+    margin-bottom: 5rem;
+    font-size: 15rem;
+    text-align: left;
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+.scrollable {
+  max-height: 550rem;
+  overflow-y: auto;
+  width: 100%;
+  padding: 8rem;
 }
 
 .dataDivider {
@@ -99,28 +179,14 @@
     width: 100%;
   }
 }
-.scrollable {
-  max-height: 550rem;
-  overflow-y: auto;
-  width: 100%;
-  padding: 8rem;
-}
-.tooltipContent {
-  padding: 10rem;
-  color: #ffffff;
+
+.loadingText {
+  text-align: center;
+  padding: 20rem;
 }
 
-.tooltipText {
-  margin-bottom: 1rem;
-  color: #ffffff;
-
-  p {
-    margin-bottom: 5rem;
-    font-size: 15rem;
-    text-align: left;
-    display: flex;
-    flex-direction: row;
-  }
+.scrollableContent {
+  padding: 1rem 0;
 }
 
 .chartSection {
@@ -275,4 +341,7 @@
   width: 80rem;
   text-align: right;
   font-size: 13rem;
+}
+.householdCountText{
+  text-align: right;
 }

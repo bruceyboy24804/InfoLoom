@@ -4,7 +4,7 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="InfoLoom" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds 11 new UI windows that lets the user city statistics about their city" />
+	<ShortDescription Value="Adds 11 new UI windows that lets the user see their statistics about their city" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>## Info Loom
@@ -124,18 +124,17 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.5.0" />
+	<ModVersion Value="1.5.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.2.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.5.0
-- Added districts panel
-- changed how workforce and workplaces panel looks and function
-- Improved performance when no there are no active panels or when one panel is only active (when toggling a panel give it a few seconds to load the data)
-- Fixed some bugs
-- Better compatability with some mods</ChangeLog>
+	<ChangeLog>## Version 1.5.1
+- Compatability with Game version 1.2.5
+- Fixed Residential data showing incorrect data
+- Fixed citizens aged 0-20 showing incorrect categories in the Demographics UI
+s</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

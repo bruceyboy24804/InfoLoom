@@ -27,7 +27,7 @@ using System.Reflection;
 
 namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
 {
-    public partial class CommercialSystem : GameSystemBase
+    public partial class CommercialSystem : UISystemBase
     {
         [BurstCompile]
         private struct UpdateCommercialDemandJob : IJob
@@ -233,7 +233,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                     {
                         continue;
                     }
-                    Workplaces workplaces = WorkProviderSystem.CalculateNumberOfWorkplaces(20, complexity, 1);
+                    Workplaces workplaces = EconomyUtils.CalculateNumberOfWorkplaces(20, complexity, 1);
                     float num2 = 0f;
                     for (int m = 0; m < 5; m++)
                     {
@@ -581,7 +581,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                 updateCommercialDemandJob.m_BuildingDemands = m_BuildingDemands;
                 updateCommercialDemandJob.m_ProduceCapacity = commercialCompanyDatas.m_ProduceCapacity;
                 updateCommercialDemandJob.m_CurrentAvailables = commercialCompanyDatas.m_CurrentAvailables;
-                updateCommercialDemandJob.m_ResourceNeeds = m_CountHouseholdDataSystem.GetResourceNeeds();
+                updateCommercialDemandJob.m_ResourceNeeds = m_CountHouseholdDataSystem.GetResourceNeeds(out deps);
                 updateCommercialDemandJob.m_Consumptions = m_Consumption;
                 updateCommercialDemandJob.m_TotalAvailables = commercialCompanyDatas.m_CurrentAvailables;
                 updateCommercialDemandJob.m_TotalMaximums = commercialCompanyDatas.m_TotalAvailables;

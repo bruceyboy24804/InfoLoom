@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.UI.Binding;
@@ -8,7 +9,9 @@ using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Companies;
+using Game.Policies;
 using Game.Prefabs;
+using Game.SceneFlow;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
@@ -41,6 +44,10 @@ namespace InfoLoomTwo.Systems.DistrictData
             public int maxEmployees;
             public EmploymentData educationDataEmployees;
             public EmploymentData educationDataWorkplaces;
+            public NativeList<Entity> serviceBuildings;
+            public NativeList<Entity> servicePrefabs;
+            public NativeList<Entity> policies;
+            public int policyCount;
         }
 
         // Job to count household data for each district.
@@ -360,8 +367,14 @@ namespace InfoLoomTwo.Systems.DistrictData
         private EntityQuery m_DistrictEmployeeQuery;
         private EntityQuery m_HappinessParameterQuery;
         private EntityQuery m_DistrictQuery;
+        private EntityQuery m_ServiceDistrictBuildingQuery;
         private PrefabSystem m_PrefabSystem;
-
+        private ImageSystem m_ImageSystem;
+        private PrefabUISystem m_PrefabUISystem;
+        // Add after other field declarations
+        private PoliciesUISystem m_PoliciesUISystem;
+        private EntityQuery m_DistrictPoliciesQuery;
+        private SelectedInfoUISystem m_SelectedInfoUISystem;
         private NameSystem m_NameSystem;
         private NativeList<DistrictEntry> m_Districts;
         private SimulationSystem m_SimulationSystem;
@@ -408,6 +421,21 @@ namespace InfoLoomTwo.Systems.DistrictData
                 }
             });
 
+            m_ServiceDistrictBuildingQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[]
+                {
+                    typeof(Building),
+                    typeof(PrefabRef),
+                    typeof(ServiceDistrict)
+                },
+                None = new ComponentType[]
+                {
+                    typeof(Temp),
+                    typeof(Deleted)
+                }
+            });
+
             m_HappinessParameterQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[] { typeof(CitizenHappinessParameterData) }
@@ -418,11 +446,23 @@ namespace InfoLoomTwo.Systems.DistrictData
                 All = new ComponentType[] { typeof(District) },
                 None = new ComponentType[] { typeof(Temp) }
             });
-
+            m_DistrictPoliciesQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[] { ComponentType.ReadOnly<PolicyData>() },
+                Any = new ComponentType[]
+                {
+                    ComponentType.ReadOnly<DistrictOptionData>(),
+                    ComponentType.ReadOnly<DistrictModifierData>()
+                }
+            });
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
             m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
+            m_PoliciesUISystem = World.GetOrCreateSystemManaged<PoliciesUISystem>();
+            m_PrefabUISystem = World.GetOrCreateSystemManaged<PrefabUISystem>();
+
 
             RequireForUpdate<District>();
         }
@@ -433,21 +473,27 @@ namespace InfoLoomTwo.Systems.DistrictData
             {
                 if (m_Districts[i].households.IsCreated)
                     m_Districts[i].households.Dispose();
+                if (m_Districts[i].serviceBuildings.IsCreated)
+                    m_Districts[i].serviceBuildings.Dispose();
+                if (m_Districts[i].servicePrefabs.IsCreated)
+                    m_Districts[i].servicePrefabs.Dispose();
+                if (m_Districts[i].policies.IsCreated)
+                    m_Districts[i].policies.Dispose();
             }
             if (m_Districts.IsCreated)
                 m_Districts.Dispose();
         }
+        
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
             return 256;
         }
+        
         // Refactored OnUpdate that splits functionality to helper methods.
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            
-            
             
             ResetDistrictEntries();
             BuildDistrictEntries();
@@ -470,6 +516,8 @@ namespace InfoLoomTwo.Systems.DistrictData
 
             ProcessWealthData();
             ProcessEmployeeData();
+            ProcessServiceBuildings();
+            ProcessDistrictPolicies();
         }
 
         // Clears and disposes existing district entries.
@@ -479,6 +527,12 @@ namespace InfoLoomTwo.Systems.DistrictData
             {
                 if (m_Districts[i].households.IsCreated)
                     m_Districts[i].households.Dispose();
+                if (m_Districts[i].serviceBuildings.IsCreated)
+                    m_Districts[i].serviceBuildings.Dispose();
+                if (m_Districts[i].servicePrefabs.IsCreated)
+                    m_Districts[i].servicePrefabs.Dispose();
+                if (m_Districts[i].policies.IsCreated)
+                    m_Districts[i].policies.Dispose();
             }
             m_Districts.Clear();
         }
@@ -504,12 +558,16 @@ namespace InfoLoomTwo.Systems.DistrictData
                         employeeCount = 0,
                         maxEmployees = 0,
                         educationDataEmployees = default(EmploymentData),
-                        educationDataWorkplaces = default(EmploymentData)
+                        educationDataWorkplaces = default(EmploymentData),
+                        serviceBuildings = new NativeList<Entity>(16, Allocator.Persistent),
+                        servicePrefabs = new NativeList<Entity>(16, Allocator.Persistent),
+                        policies = new NativeList<Entity>(8, Allocator.Persistent),
+                        policyCount = 0
                     });
                 }
             }
         }
-
+        
         // Builds a NativeHashMap for fast lookup from district entity to index.
         private NativeHashMap<Entity, int> BuildDistrictMap()
         {
@@ -555,9 +613,130 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        // Process employee data using a job.
-        
+        // Process service buildings data
+        private void ProcessServiceBuildings()
+        {
+            // Clear existing service buildings data
+            for (int i = 0; i < m_Districts.Length; i++)
+            {
+                var district = m_Districts[i];
+                district.serviceBuildings.Clear();
+                district.servicePrefabs.Clear();
+                m_Districts[i] = district;
+            }
 
+            // Get required data
+            NativeArray<Entity> buildings = m_ServiceDistrictBuildingQuery.ToEntityArray(Allocator.TempJob);
+            NativeArray<PrefabRef> prefabs = m_ServiceDistrictBuildingQuery.ToComponentDataArray<PrefabRef>(Allocator.TempJob);
+            
+            try
+            {
+                for (int i = 0; i < buildings.Length; i++)
+                {
+                    Entity building = buildings[i];
+                    
+                    // Skip if the building doesn't have service districts
+                    if (!EntityManager.HasComponent<ServiceDistrict>(building))
+                        continue;
+                        
+                    DynamicBuffer<ServiceDistrict> serviceDistricts = 
+                        EntityManager.GetBuffer<ServiceDistrict>(building, true);
+                        
+                    for (int j = 0; j < serviceDistricts.Length; j++)
+                    {
+                        Entity districtEntity = serviceDistricts[j].m_District;
+                        
+                        // Find the district in our list
+                        int districtIndex = -1;
+                        for (int d = 0; d < m_Districts.Length; d++)
+                        {
+                            if (m_Districts[d].district == districtEntity)
+                            {
+                                districtIndex = d;
+                                break;
+                            }
+                        }
+                        
+                        if (districtIndex == -1)
+                            continue;
+                            
+                        // Add the service building to the district
+                        var district = m_Districts[districtIndex];
+                        district.serviceBuildings.Add(building);
+                        district.servicePrefabs.Add(prefabs[i].m_Prefab);
+                        m_Districts[districtIndex] = district;
+                    }
+                }
+            }
+            finally
+            {
+                buildings.Dispose();
+                prefabs.Dispose();
+            }
+        }
+        private void ProcessDistrictPolicies()
+        {
+            // Clear existing policy data
+            for (int i = 0; i < m_Districts.Length; i++)
+            {
+                var district = m_Districts[i];
+                district.policies.Clear();
+                district.policyCount = 0;
+                m_Districts[i] = district;
+            }
+            
+            // Get district policies query results
+            using var policyEntities = m_DistrictPoliciesQuery.ToEntityArray(Allocator.Temp);
+            
+            for (int i = 0; i < m_Districts.Length; i++)
+            {
+                Entity districtEntity = m_Districts[i].district;
+                
+                // Check if district has policies
+                if (!EntityManager.HasComponent<Policy>(districtEntity))
+                    continue;
+                    
+                // Get active policies for this district
+                DynamicBuffer<Policy> activePolicies = EntityManager.GetBuffer<Policy>(districtEntity, true);
+                if (activePolicies.Length == 0)
+                    continue;
+                    
+                // Process each active policy
+                for (int j = 0; j < activePolicies.Length; j++)
+                {
+                    Policy policy = activePolicies[j];
+                    
+                    // Skip inactive policies
+                    if ((policy.m_Flags & PolicyFlags.Active) == 0)
+                        continue;
+                        
+                    Entity policyEntity = policy.m_Policy;
+                    
+                    // Skip if not a district policy
+                    bool isDistrictPolicy = false;
+                    for (int k = 0; k < policyEntities.Length; k++)
+                    {
+                        if (policyEntities[k] == policyEntity)
+                        {
+                            isDistrictPolicy = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isDistrictPolicy)
+                        continue;
+                        
+                    // Add policy to the district
+                    var district = m_Districts[i];
+                    district.policies.Add(policyEntity);
+                    district.policyCount++;
+                    
+                    m_Districts[i] = district;
+                }
+            }
+        }
+        
+        
         public void WriteDistricts(IJsonWriter writer)
         {
             writer.ArrayBegin(m_Districts.Length);
@@ -582,7 +761,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                 writer.PropertyName("ageData");
                 WriteAgeData(writer, district.ageData);
                 
-                // Add employee data to JSON output
+                // Employee data
                 writer.PropertyName("employeeCount");
                 writer.Write(district.employeeCount);
                 writer.PropertyName("maxEmployees");
@@ -591,9 +770,17 @@ namespace InfoLoomTwo.Systems.DistrictData
                 WriteEmploymentData(writer, district.educationDataEmployees);
                 writer.PropertyName("educationDataWorkplaces");
                 WriteEmploymentData(writer, district.educationDataWorkplaces);
-                
+                writer.PropertyName("localServiceBuildings");
+                WriteServiceData(writer, district.serviceBuildings, district.servicePrefabs);
                 writer.PropertyName("entity");
                 writer.Write(district.district);
+                
+                
+                writer.PropertyName("policyCount");
+                writer.Write(district.policyCount);
+                writer.PropertyName("policies");
+                WritePolicyData(writer, district.policies);
+                
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
@@ -632,6 +819,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             writer.Write(educationData.uneducated + educationData.poorlyEducated + educationData.educated + educationData.wellEducated + educationData.highlyEducated);
             writer.TypeEnd();
         }
+
         public void WriteEmploymentData(IJsonWriter writer, EmploymentData employmentData)
         {
             writer.TypeBegin("EmploymentData");
@@ -650,6 +838,60 @@ namespace InfoLoomTwo.Systems.DistrictData
             writer.PropertyName("total");
             writer.Write(employmentData.total);
             writer.TypeEnd();
+        }
+        
+        private void WriteServiceData(IJsonWriter writer, NativeList<Entity> serviceBuildings, NativeList<Entity> servicePrefabs)
+        {
+            writer.ArrayBegin(serviceBuildings.Length);
+            for (int i = 0; i < serviceBuildings.Length; i++)
+            {
+                writer.TypeBegin("LocalServiceBuilding");
+                writer.PropertyName("name");
+                m_NameSystem.BindName(writer, serviceBuildings[i]);
+                writer.PropertyName("serviceIcon");
+                writer.Write(m_ImageSystem.GetGroupIcon(servicePrefabs[i]));
+                writer.PropertyName("entity");
+                writer.Write(serviceBuildings[i]);
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
+        }
+        private void WritePolicyData(IJsonWriter writer, NativeList<Entity> policies)
+        {
+            writer.ArrayBegin(policies.Length);
+            for (int i = 0; i < policies.Length; i++)
+            {
+                writer.TypeBegin("DistrictPolicy");
+                writer.PropertyName("name");
+                
+                // Try to get localized name from prefab
+                if (m_PrefabSystem.TryGetPrefab<PolicyPrefab>(policies[i], out var prefab))
+                {
+                    string policyName = prefab.name;
+                    string localizedName = policyName;
+                    
+                    // Get localized name if available
+                    if (GameManager.instance.localizationManager.activeDictionary.TryGetValue($"Policy.TITLE[{policyName}]", out var localizedValue))
+                    {
+                        localizedName = localizedValue;
+                    }
+                    
+                    writer.Write(localizedName);
+                }
+                else
+                {
+                    // Fallback to entity name
+                    m_NameSystem.BindName(writer, policies[i]);
+                }
+                
+                writer.PropertyName("icon");
+                // Use the same GetGroupIcon method as service buildings
+                writer.Write(m_ImageSystem.GetIconOrGroupIcon(policies[i]));
+                writer.PropertyName("entity");
+                writer.Write(policies[i]);
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
         }
         
     }

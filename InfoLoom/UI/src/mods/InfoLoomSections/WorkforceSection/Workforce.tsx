@@ -149,11 +149,6 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     if (totalUnderemployed > totalWorkforce * 0.05) {
       actions.push(`${formatNumber(totalUnderemployed)} workers are underemployed. Consider adding more suitable jobs for their education level.`);
     }
-    
-    if (totalHomeless > 100) {
-      actions.push(`${formatNumber(totalHomeless)} homeless citizens need affordable housing.`);
-    }
-    
     if (totalOutsideWorkforce > totalWorkforce * 0.2) {
       actions.push(`${formatNumber(totalOutsideWorkforce)} citizens are working outside of the city. Consider providing more jobs.`);
     }

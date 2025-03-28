@@ -515,7 +515,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 updateCommercialDemandJob.m_BuildingDemands = m_BuildingDemands;
                 updateCommercialDemandJob.m_ProduceCapacity = commercialCompanyDatas.m_ProduceCapacity;
                 updateCommercialDemandJob.m_CurrentAvailables = commercialCompanyDatas.m_CurrentAvailables;
-                updateCommercialDemandJob.m_ResourceNeeds = m_CountHouseholdDataSystem.GetResourceNeeds();
+                updateCommercialDemandJob.m_ResourceNeeds = m_CountHouseholdDataSystem.GetResourceNeeds(out deps);
                 updateCommercialDemandJob.m_FreeProperties = m_FreeProperties;
                 updateCommercialDemandJob.m_Propertyless = commercialCompanyDatas.m_ServicePropertyless;
                 updateCommercialDemandJob.m_Tourisms = SystemAPI.GetComponentLookup<Tourism>(isReadOnly: true);

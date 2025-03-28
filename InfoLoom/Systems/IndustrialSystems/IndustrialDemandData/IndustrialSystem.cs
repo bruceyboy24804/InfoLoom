@@ -27,7 +27,7 @@ using System.Collections.Generic;
 
 namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 {
-    public partial class IndustrialSystem : GameSystemBase
+    public partial class IndustrialSystem : UISystemBase
     {
         [BurstCompile]
         private struct UpdateIndustrialDemandJob : IJob
@@ -523,7 +523,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
                     }
                     float num24 = -1.8f + 2.5f * (((float)m_TotalCurrentWorkers[resourceIndex4] + 1f) / ((float)m_TotalMaxWorkers[resourceIndex4] + 1f));
                     EconomyUtils.GetProcessComplexity(m_IndustrialProcessDataChunks, m_WorkplaceDatas, iterator.resource, m_EntityType, m_ProcessType, out var complexity);
-                    Workplaces workplaces = WorkProviderSystem.CalculateNumberOfWorkplaces(20, complexity, 3);
+                    Workplaces workplaces = EconomyUtils.CalculateNumberOfWorkplaces(20, complexity, 3);
                     float num25 = 0f;
                     for (int num26 = 0; num26 < 5; num26++)
                     {

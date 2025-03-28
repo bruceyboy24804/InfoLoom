@@ -851,20 +851,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
                 m_LastOfficeBuildingDemand = m_OfficeBuildingDemand.value;
                 JobHandle deps;
                 CountCompanyDataSystem.IndustrialCompanyDatas industrialCompanyDatas = m_CountCompanyDataSystem.GetIndustrialCompanyDatas(out deps);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 UpdateIndustrialDemandJob updateIndustrialDemandJob = default(UpdateIndustrialDemandJob);
                 updateIndustrialDemandJob.m_FreePropertyChunks = m_FreeIndustrialQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
                 updateIndustrialDemandJob.m_StorageCompanyChunks = m_StorageCompanyQuery.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);

@@ -1,39 +1,44 @@
-using System;
 using System.Runtime.CompilerServices;
 using Colossal.Collections;
 using Colossal.Entities;
-using Colossal.UI.Binding;
-using Game;
+using Colossal.Serialization.Entities;
 using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
 using Game.City;
 using Game.Common;
-using Game.Companies;
+using Game.Debug;
 using Game.Prefabs;
-using Game.Simulation;
+using Game.Reflection;
 using Game.Tools;
+using Game.Triggers;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Scripting;
+using Game;
+using Game.Simulation;
+using Game.UI;
+using Colossal.UI.Binding;
 
-namespace InfoLoomTwo.Systems.ResidentialData
+namespace InfoLoom.Systems
 {
+    
     public partial class ResidentialSystem : GameSystemBase
     {
-        [BurstCompile]
+        //[BurstCompile]
         private struct UpdateResidentialDemandJob : IJob
         {
-            /*[ReadOnly]
+            [ReadOnly]
             public NativeList<ArchetypeChunk> m_ResidentialChunks;
 
             [ReadOnly]
-            public NativeList<ArchetypeChunk> m_HouseholdChunks;*/
+            public NativeList<ArchetypeChunk> m_HouseholdChunks;
 
-            
+            [DeallocateOnJobCompletion]
             [ReadOnly]
             public NativeArray<ZonePropertiesData> m_UnlockedZones;
 
@@ -64,13 +69,21 @@ namespace InfoLoomTwo.Systems.ResidentialData
             [ReadOnly]
             public NativeList<DemandParameterData> m_DemandParameters;
 
-
+            [ReadOnly]
+            public float m_UnemploymentRate;
 
             [ReadOnly]
             public NativeArray<int> m_StudyPositions;
 
             [ReadOnly]
             public NativeArray<int> m_TaxRates;
+
+            // Add homeless count values from CountHouseholdDataSystem
+            [ReadOnly]
+            public int m_HomelessHouseholdCount;
+
+            [ReadOnly]
+            public int m_TotalHouseholdCount;
 
             public Entity m_City;
 
@@ -84,24 +97,11 @@ namespace InfoLoomTwo.Systems.ResidentialData
 
             public NativeArray<int> m_HighDemandFactors;
 
-            //public NativeQueue<TriggerAction> m_TriggerQueue;
-
             public NativeArray<int> m_Results;
-
-
-            public CountHouseholdDataSystem.HouseholdData m_HouseholdCountData;
-
-            public CountResidentialPropertySystem.ResidentialPropertyData m_ResidentialPropertyData;
-
-            public Workplaces m_FreeWorkplaces;
-
-            public Workplaces m_TotalWorkplaces;
-
-            [ReadOnly]
-            public float m_UnemploymentRate;
-
+             
             public void Execute()
             {
+                DemandParameterData demandParameterData = m_DemandParameters[0];
                 bool3 c = default(bool3);
                 for (int i = 0; i < m_UnlockedZones.Length; i++)
                 {
@@ -122,181 +122,174 @@ namespace InfoLoomTwo.Systems.ResidentialData
                         }
                     }
                 }
-
-                int3 freeProperties = m_ResidentialPropertyData.m_FreeProperties;
-                int3 totalProperties = m_ResidentialPropertyData.m_TotalProperties;
-                DemandParameterData demandParameterData = m_DemandParameters[0];
-
-                int num2 = 0;
+                // free res properties
+                int3 @int = default(int3);
+                // total res properties
+                int3 int2 = default(int3);
+                int value = 0;
                 for (int j = 1; j <= 4; j++)
                 {
-                    num2 += m_StudyPositions[j];
+                    value += m_StudyPositions[j];
                 }
-
-                Population population = m_Populations[m_City];
-                int num4 = math.max(demandParameterData.m_MinimumHappiness, population.m_AverageHappiness);
-
-                float num5 = 0f;
-                for (int k = 0; k < 5; k++)
-                {
-                    num5 += (float)(-(TaxSystem.GetResidentialTaxRate(k, m_TaxRates) - 10));
-                }
-                num5 = demandParameterData.m_TaxEffect * (num5 / 5f);
-
-                float num6 = demandParameterData.m_HappinessEffect * (float)(num4 - demandParameterData.m_NeutralHappiness);
-                float x = (0f - demandParameterData.m_HomelessEffect) * (100f * (float)m_HouseholdCountData.m_HomelessHouseholdCount / (1f + (float)m_HouseholdCountData.m_MovedInHouseholdCount) - demandParameterData.m_NeutralHomelessness);
-                x = math.min(x, kMaxFactorEffect);
-
-                float num7 = demandParameterData.m_StudentEffect * math.clamp((float)num2 / 200f, 0f, 20f);
-                float num8 = demandParameterData.m_NeutralUnemployment - m_UnemploymentRate;
-
-                if (m_HouseholdCountData.m_MovingInHouseholdCount > kMaxMovingInHouseholdAmount)
-                {
-                    m_HouseholdDemand.value = 0;
-                }
-                else
-                {
-                    m_HouseholdDemand.value = math.min(200, (int)(num6 + x + num5 + num8 + num7));
-                }
-
-                int num9 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.x - freeProperties.x) / demandParameterData.m_FreeResidentialRequirement.x);
-                int num10 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.y - freeProperties.y) / demandParameterData.m_FreeResidentialRequirement.y);
-                int num11 = Mathf.RoundToInt(100 * (demandParameterData.m_FreeResidentialRequirement.z - freeProperties.z) / demandParameterData.m_FreeResidentialRequirement.z);
-
-                m_LowDemandFactors[7] = Mathf.RoundToInt(num6);
-                m_LowDemandFactors[5] = Mathf.RoundToInt(num8);
-                m_LowDemandFactors[11] = Mathf.RoundToInt(num5);
-                m_LowDemandFactors[13] = num9;
-
-                m_MediumDemandFactors[7] = Mathf.RoundToInt(num6);
-                m_MediumDemandFactors[5] = Mathf.RoundToInt(num8);
-                m_MediumDemandFactors[11] = Mathf.RoundToInt(num5);
-                m_MediumDemandFactors[12] = Mathf.RoundToInt(num7);
-                m_MediumDemandFactors[13] = num10;
-
-                m_HighDemandFactors[7] = Mathf.RoundToInt(num6);
-                m_HighDemandFactors[8] = Mathf.RoundToInt(x);
-                m_HighDemandFactors[5] = Mathf.RoundToInt(num8);
-                m_HighDemandFactors[11] = Mathf.RoundToInt(num5);
-                m_HighDemandFactors[12] = Mathf.RoundToInt(num7);
-                m_HighDemandFactors[13] = num11;
-
-                int num12 = ((m_LowDemandFactors[13] >= 0) ? (m_LowDemandFactors[7] + m_LowDemandFactors[11] + m_LowDemandFactors[5] + m_LowDemandFactors[13]) : 0);
-                int num13 = ((m_MediumDemandFactors[13] >= 0) ? (m_MediumDemandFactors[7] + m_MediumDemandFactors[11] + m_MediumDemandFactors[12] + m_MediumDemandFactors[5] + m_MediumDemandFactors[13]) : 0);
-                int num14 = ((m_HighDemandFactors[13] >= 0) ? (m_HighDemandFactors[7] + m_HighDemandFactors[8] + m_HighDemandFactors[11] + m_HighDemandFactors[12] + m_HighDemandFactors[5] + m_HighDemandFactors[13]) : 0);
-
-                m_BuildingDemand.value = new int3(
-                    math.clamp(m_HouseholdDemand.value / 2 + num9 + num12, 0, 100),
-                    math.clamp(m_HouseholdDemand.value / 2 + num10 + num13, 0, 100),
-                    math.clamp(m_HouseholdDemand.value / 2 + num11 + num14, 0, 100)
-                );
-                m_BuildingDemand.value = math.select(default(int3), m_BuildingDemand.value, c);
-
-
-
-                float3 freeReqFloat = (float3)demandParameterData.m_FreeResidentialRequirement;
-                float3 computedValue = new float3(
-                    math.max(5f, 0.01f * freeReqFloat.x * math.max(1f, freeReqFloat.x)),
-                    math.max(5f, 0.01f * freeReqFloat.y * math.max(1f, freeReqFloat.y)),
-                    math.max(5f, 0.01f * freeReqFloat.z * math.max(1f, freeReqFloat.z))
-                );
-                float average = math.csum(computedValue) / 3f;
-    
-
-                // InfoLoom: Store results instead of enqueueing trigger
-                m_Results[0] = totalProperties.x;
-                m_Results[1] = totalProperties.y;
-                m_Results[2] = totalProperties.z;
-                m_Results[3] = totalProperties.x - freeProperties.x;
-                m_Results[4] = totalProperties.y - freeProperties.y;
-                m_Results[5] = totalProperties.z - freeProperties.z;
                 
-                m_Results[6] =  Mathf.RoundToInt(10f * average);
-
+                int value2 = Mathf.RoundToInt(m_UnemploymentRate);
+                Population population = m_Populations[m_City];
+                int num2 = math.max(demandParameterData.m_MinimumHappiness, population.m_AverageHappiness);
+                
+                // Use homeless counts from CountHouseholdDataSystem instead of calculating them
+                int num3 = m_HomelessHouseholdCount; // homeless households
+                int num4 = m_TotalHouseholdCount;    // total households
+                
+                float num5 = 0f;
+                for (int k = 0; k <= 2; k++)
+                {
+                    num5 -= 3f * ((float)k + 1f) * ((float)TaxSystem.GetResidentialTaxRate(k, m_TaxRates) - 10f);
+                }
+                float taxRate = 10f - num5 / (3f * 6f);
+                float num6 = demandParameterData.m_HappinessEffect * (float)(num2 - demandParameterData.m_NeutralHappiness);
+                float num7 = (0f - demandParameterData.m_HomelessEffect) * (100f * (float)num3 / (1f + (float)num4) - demandParameterData.m_NeutralHomelessness);
+                float num8 = (0f - m_UnemploymentRate) * ((float)value2 - demandParameterData.m_NeutralUnemployment);
+                // value - study positions
+                float num9 = math.min(math.sqrt(2f * (float)value), -1f + math.min(2.5f, math.sqrt((float)value / 300f)) + 0.5f * (num6 + num8 + num7 + num5));
+                float y = num8 + num6 + num7 + num5;
+                m_HouseholdDemand.value = math.min(100, math.max(0, Mathf.RoundToInt(math.max(num9, y))));
+                m_Results[16] = Mathf.RoundToInt(math.max(num9, y)); // 220204 household demand
+                m_LowDemandFactors[7] = Mathf.RoundToInt(num6);
+                m_LowDemandFactors[8] = Mathf.RoundToInt(num7);
+                m_LowDemandFactors[6] = Mathf.RoundToInt(num8);
+                m_LowDemandFactors[11] = Mathf.RoundToInt(num5);
+                m_MediumDemandFactors[7] = Mathf.RoundToInt(num6); // Happiness
+                m_MediumDemandFactors[8] = Mathf.RoundToInt(num7); // Homelessness
+                m_MediumDemandFactors[6] = Mathf.RoundToInt(num8); // Unemployment
+                m_MediumDemandFactors[11] = Mathf.RoundToInt(num5); // Taxes
+                m_MediumDemandFactors[12] = Mathf.RoundToInt(num9); // Students
+                m_HighDemandFactors[7] = Mathf.RoundToInt(num6);
+                m_HighDemandFactors[8] = Mathf.RoundToInt(num7);
+                m_HighDemandFactors[6] = Mathf.RoundToInt(num8);
+                m_HighDemandFactors[11] = Mathf.RoundToInt(num5);
+                m_HighDemandFactors[12] = Mathf.RoundToInt(num9);
+                
+                // calculate empty buildings, loop through all ResidentialProperty, ex. Abandoned, Condemened, Destroyed, etc.
+                for (int l = 0; l < m_ResidentialChunks.Length; l++)
+                {
+                    ArchetypeChunk archetypeChunk2 = m_ResidentialChunks[l];
+                    NativeArray<PrefabRef> nativeArray = archetypeChunk2.GetNativeArray(ref m_PrefabType);
+                    BufferAccessor<Renter> bufferAccessor = archetypeChunk2.GetBufferAccessor(ref m_RenterType);
+                    // iterate through buildings
+                    for (int m = 0; m < nativeArray.Length; m++)
+                    {
+                        Entity prefab = nativeArray[m].m_Prefab;
+                        SpawnableBuildingData spawnableBuildingData = m_SpawnableDatas[prefab];
+                        ZonePropertiesData zonePropertiesData = m_ZonePropertyDatas[spawnableBuildingData.m_ZonePrefab];
+                        float num10 = zonePropertiesData.m_ResidentialProperties / zonePropertiesData.m_SpaceMultiplier;
+                        if (!m_BuildingPropertyDatas.HasComponent(prefab))
+                        {
+                            continue;
+                        }
+                        BuildingPropertyData buildingPropertyData = m_BuildingPropertyDatas[prefab];
+                        DynamicBuffer<Renter> dynamicBuffer = bufferAccessor[m];
+                        // occupied properties
+                        int num11 = 0;
+                        for (int n = 0; n < dynamicBuffer.Length; n++)
+                        {
+                            if (m_Households.HasComponent(dynamicBuffer[n].m_Renter))
+                            {
+                                num11++;
+                            }
+                        }
+                        if (!zonePropertiesData.m_ScaleResidentials)
+                        {
+                            // low density (not scalable, only 1 household per buildinng)
+                            int2.x++;
+                            @int.x += 1 - num11;
+                            m_Results[3] += num11; // low
+                        }
+                        else if (num10 < 1f)
+                        {
+                            // medium density, scaling < 1f
+                            int2.y += buildingPropertyData.m_ResidentialProperties;
+                            @int.y += buildingPropertyData.m_ResidentialProperties - num11;
+                            m_Results[4] += num11; // med
+                        }
+                        else
+                        {
+                            // high density, scaling >= 1f
+                            int2.z += buildingPropertyData.m_ResidentialProperties;
+                            @int.z += buildingPropertyData.m_ResidentialProperties - num11;
+                            m_Results[5] += num11; // high
+                        }
+                    }
+                }
+                int num12 = m_LowDemandFactors[7] + m_LowDemandFactors[8] + m_LowDemandFactors[6] + m_LowDemandFactors[11] + m_LowDemandFactors[12];
+                int num13 = m_MediumDemandFactors[7] + m_MediumDemandFactors[8] + m_MediumDemandFactors[6] + m_MediumDemandFactors[11] + m_MediumDemandFactors[12];
+                int num14 = m_HighDemandFactors[7] + m_HighDemandFactors[8] + m_HighDemandFactors[6] + m_HighDemandFactors[11] + m_HighDemandFactors[12];
+                // @float is needed free res properties (capped at min. 5)
+                float3 @float = new float3(
+                    math.max(5f, 0.01f * demandParameterData.m_FreeResidentialRequirement.x * math.max(1f, int2.x)), 
+                    math.max(5f, 0.01f * demandParameterData.m_FreeResidentialRequirement.y * math.max(1f, int2.y)), 
+                    math.max(5f, 0.01f * demandParameterData.m_FreeResidentialRequirement.z * math.max(1f, int2.z))
+                );
+                // actual demand: (needed - current) / needed => (1 - current/needed)
+                // if current > needed => demand = 0
+                // if current = 0 => demand = 100
+                // if current < needed => demand = 0..100
+                m_BuildingDemand.value = new int3((int)(100f * math.saturate((@float.x - (float)@int.x) / math.max(1f, @float.x))), (int)(100f * math.saturate((@float.y - (float)@int.y) / math.max(1f, @float.y))), (int)(100f * math.saturate((@float.z - (float)@int.z) / math.max(1f, @float.z))));
+                m_BuildingDemand.value = math.select(default(int3), m_BuildingDemand.value, c);
+                
+                // EmptyBuildings
+                // if sum of other factors is LOWER than raw building demand, then EmptyBuildings is 0
+                // if sum of other factors is HIGHER than raw building demand, then EmptyBuildings is a diff between them
+                // so, it says if CURRENT empty buildings are enough to satisfy existing demand, or MORE
+                // valuable info: how many empty buildings are needed to satisfy current demand
+                m_HighDemandFactors[13] = math.min(0, m_BuildingDemand.value.z - num14);
+                m_MediumDemandFactors[13] = math.min(0, m_BuildingDemand.value.y - num13);
+                m_LowDemandFactors[13] = math.min(0, m_BuildingDemand.value.x - num12);
+                
+                // InfoLoom
+                m_Results[0] = int2.x; // total residential properties, low
+                m_Results[1] = int2.y; // total residential properties, med
+                m_Results[2] = int2.z; // total residential properties, high
+                m_Results[6] = Mathf.RoundToInt(10f * (demandParameterData.m_FreeResidentialRequirement.x + 
+                                           demandParameterData.m_FreeResidentialRequirement.y + 
+                                           demandParameterData.m_FreeResidentialRequirement.z) / 3f);
                 m_Results[7] = population.m_AverageHappiness;
                 m_Results[8] = demandParameterData.m_NeutralHappiness;
-                m_Results[9] = (int)(m_UnemploymentRate * 100f);
+                m_Results[9] = (int)m_UnemploymentRate;
                 m_Results[10] = Mathf.RoundToInt(10f * demandParameterData.m_NeutralUnemployment);
-                m_Results[11] = m_HouseholdCountData.m_HomelessHouseholdCount;
-                m_Results[12] = m_HouseholdCountData.m_MovedInHouseholdCount;
+                m_Results[11] = num3; // homeless households
+                m_Results[12] = num4; // households
                 m_Results[13] = Mathf.RoundToInt(10f * demandParameterData.m_NeutralHomelessness);
-                m_Results[14] = num2;
-                m_Results[15] = Mathf.RoundToInt(10f * (10f - num5 / demandParameterData.m_TaxEffect));
-                m_Results[16] = m_HouseholdDemand.value;
-                m_Results[17] = Mathf.RoundToInt(100f * num7 / (num7 + math.max(0, num8)));
-
+                m_Results[14] = value;
+                m_Results[15] = Mathf.RoundToInt(10f * taxRate);
+                
+                // 240204 student ratio for new households, from HouseholdSpawnSystem
+                int fact6 = math.max(0, m_LowDemandFactors[6] + m_MediumDemandFactors[6] + m_HighDemandFactors[6]); // unemployment
+                int fact12 = math.max(0, m_LowDemandFactors[12] + m_MediumDemandFactors[12] + m_HighDemandFactors[12]); // students
+                m_Results[17] = fact12 == 0 ? 0 : Mathf.RoundToInt(100f * (float)fact12 / (float)(fact12 + fact6));
             }
-
         }
 
-        
-        
         private const string kGroup = "cityInfo";
 
-        public static readonly int kMaxFactorEffect = 15;
-
-        public static readonly int kMaxMovingInHouseholdAmount = 500;
-
         private SimulationSystem m_SimulationSystem;
-
         private TaxSystem m_TaxSystem;
-
-        private CountStudyPositionsSystem m_CountStudyPositionsSystem;
-
-        private CountWorkplacesSystem m_CountWorkplacesSystem;
-
         private CountHouseholdDataSystem m_CountHouseholdDataSystem;
-
-        private CountResidentialPropertySystem m_CountResidentialPropertySystem;
-
+        private CountStudyPositionsSystem m_CountStudyPositionsSystem;
         private CitySystem m_CitySystem;
-
-      
-
         private EntityQuery m_DemandParameterGroup;
-
         private EntityQuery m_AllHouseholdGroup;
-
         private EntityQuery m_AllResidentialGroup;
-
         private EntityQuery m_UnlockedZoneQuery;
-
         private NativeValue<int> m_HouseholdDemand;
-
         private NativeValue<int3> m_BuildingDemand;
-
-        //[EnumArray(typeof(DemandFactor))]
-        //[DebugWatchValue]
         private NativeArray<int> m_LowDemandFactors;
-
-        //[EnumArray(typeof(DemandFactor))]
-        //[DebugWatchValue]
         private NativeArray<int> m_MediumDemandFactors;
-
-        //[EnumArray(typeof(DemandFactor))]
-        //[DebugWatchValue]
         private NativeArray<int> m_HighDemandFactors;
-
-        //[DebugWatchDeps]
-        //private JobHandle m_WriteDependencies;
-
         private JobHandle m_ReadDependencies;
-
         private int m_LastHouseholdDemand;
-
         private int3 m_LastBuildingDemand;
-
-        
-
-        //[DebugWatchValue(color = "#27ae60")]
         public int householdDemand => m_LastHouseholdDemand;
-
-        //[DebugWatchValue(color = "#117a65")]
         public int3 buildingDemand => m_LastBuildingDemand;
-
-        // InfoLoom
-
-        
 
         public NativeArray<int> m_Results;
 
@@ -310,23 +303,13 @@ namespace InfoLoomTwo.Systems.ResidentialData
         // 14 - study positions
         // 15 - tax rate (weighted)
 
-        // 240209 Set gameMode to avoid errors in the Editor
-        
-
-        
+        public bool IsPanelVisible { get; set; }
 
         public void AddReader(JobHandle reader)
         {
             m_ReadDependencies = JobHandle.CombineDependencies(m_ReadDependencies, reader);
         }
-
-       
-        public bool IsPanelVisible { get; set; }
-        public bool ForceUpdate { get; private set; }
-        public void ForceUpdateOnce()
-        {
-            ForceUpdate = true;
-        }
+        
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -337,11 +320,8 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_UnlockedZoneQuery = GetEntityQuery(ComponentType.ReadOnly<ZoneData>(), ComponentType.ReadOnly<ZonePropertiesData>(), ComponentType.Exclude<Locked>());
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             m_TaxSystem = base.World.GetOrCreateSystemManaged<TaxSystem>();
-            m_CountWorkplacesSystem = base.World.GetOrCreateSystemManaged<CountWorkplacesSystem>();
             m_CountHouseholdDataSystem = base.World.GetOrCreateSystemManaged<CountHouseholdDataSystem>();
-            m_CountResidentialPropertySystem = base.World.GetOrCreateSystemManaged<CountResidentialPropertySystem>();
             m_CountStudyPositionsSystem = base.World.GetOrCreateSystemManaged<CountStudyPositionsSystem>();
-            //m_TriggerSystem = base.World.GetOrCreateSystemManaged<TriggerSystem>();
             m_HouseholdDemand = new NativeValue<int>(Allocator.Persistent);
             m_BuildingDemand = new NativeValue<int3>(Allocator.Persistent);
             m_LowDemandFactors = new NativeArray<int>(18, Allocator.Persistent);
@@ -351,13 +331,8 @@ namespace InfoLoomTwo.Systems.ResidentialData
             // InfoLoom
             SetDefaults(); // there is no serialization, so init just for safety
             m_Results = new NativeArray<int>(18, Allocator.Persistent);
-
-            
-
-            Mod.log.Info("ResidentialDemandUISystem created.");
         }
 
-        //[Preserve]
         protected override void OnDestroy()
         {
             m_HouseholdDemand.Dispose();
@@ -370,7 +345,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
             base.OnDestroy();
         }
 
-        public void SetDefaults() //Context context)
+        public void SetDefaults()
         {
             m_HouseholdDemand.value = 0;
             m_BuildingDemand.value = default(int3);
@@ -381,16 +356,15 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_LastBuildingDemand = default(int3);
         }
 
-       public override int GetUpdateInterval(SystemUpdatePhase phase)
+        public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
             return 256;
         }
+        
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
                 return;
-            
-            ForceUpdate = false;
             
             ResetResults();
 
@@ -398,8 +372,9 @@ namespace InfoLoomTwo.Systems.ResidentialData
             {
                 m_LastHouseholdDemand = m_HouseholdDemand.value;
                 m_LastBuildingDemand = m_BuildingDemand.value;
-                
                 UpdateResidentialDemandJob updateResidentialDemandJob = default(UpdateResidentialDemandJob);
+                updateResidentialDemandJob.m_ResidentialChunks = m_AllResidentialGroup.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
+                updateResidentialDemandJob.m_HouseholdChunks = m_AllHouseholdGroup.ToArchetypeChunkListAsync(base.World.UpdateAllocator.ToAllocator, out var outJobHandle2);
                 updateResidentialDemandJob.m_UnlockedZones = m_UnlockedZoneQuery.ToComponentDataArray<ZonePropertiesData>(Allocator.TempJob);
                 updateResidentialDemandJob.m_RenterType = SystemAPI.GetBufferTypeHandle<Renter>(isReadOnly: true);
                 updateResidentialDemandJob.m_PrefabType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
@@ -409,13 +384,14 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 updateResidentialDemandJob.m_Populations = SystemAPI.GetComponentLookup<Population>(isReadOnly: true);
                 updateResidentialDemandJob.m_SpawnableDatas = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
                 updateResidentialDemandJob.m_ZonePropertyDatas = SystemAPI.GetComponentLookup<ZonePropertiesData>(isReadOnly: true);
-                updateResidentialDemandJob.m_Populations = SystemAPI.GetComponentLookup<Population>(isReadOnly: true);
-                updateResidentialDemandJob.m_DemandParameters = m_DemandParameterGroup.ToComponentDataListAsync<DemandParameterData>(base.World.UpdateAllocator.ToAllocator, out var outJobHandle);
+                updateResidentialDemandJob.m_DemandParameters = m_DemandParameterGroup.ToComponentDataListAsync<DemandParameterData>(base.World.UpdateAllocator.ToAllocator, out var outJobHandle3);
+                updateResidentialDemandJob.m_UnemploymentRate = m_CountHouseholdDataSystem.UnemploymentRate;
+                
+                // Use the homelessness data from CountHouseholdDataSystem
+                updateResidentialDemandJob.m_HomelessHouseholdCount = m_CountHouseholdDataSystem.HomelessHouseholdCount;
+                updateResidentialDemandJob.m_TotalHouseholdCount = m_CountHouseholdDataSystem.MovedInHouseholdCount;
+                
                 updateResidentialDemandJob.m_StudyPositions = m_CountStudyPositionsSystem.GetStudyPositionsByEducation(out var deps);
-                updateResidentialDemandJob.m_FreeWorkplaces = m_CountWorkplacesSystem.GetFreeWorkplaces();
-                updateResidentialDemandJob.m_TotalWorkplaces = m_CountWorkplacesSystem.GetTotalWorkplaces();
-                updateResidentialDemandJob.m_HouseholdCountData = m_CountHouseholdDataSystem.GetHouseholdCountData();
-                updateResidentialDemandJob.m_ResidentialPropertyData = m_CountResidentialPropertySystem.GetResidentialPropertyData();
                 updateResidentialDemandJob.m_TaxRates = m_TaxSystem.GetTaxRates();
                 updateResidentialDemandJob.m_City = m_CitySystem.City;
                 updateResidentialDemandJob.m_HouseholdDemand = m_HouseholdDemand;
@@ -423,27 +399,15 @@ namespace InfoLoomTwo.Systems.ResidentialData
                 updateResidentialDemandJob.m_LowDemandFactors = m_LowDemandFactors;
                 updateResidentialDemandJob.m_MediumDemandFactors = m_MediumDemandFactors;
                 updateResidentialDemandJob.m_HighDemandFactors = m_HighDemandFactors;
-                updateResidentialDemandJob.m_UnemploymentRate = m_CountHouseholdDataSystem.UnemploymentRate;
-                
                 updateResidentialDemandJob.m_Results = m_Results;
-                UpdateResidentialDemandJob jobData = updateResidentialDemandJob;
-                IJobExtensions.Schedule(jobData, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, deps)).Complete();
                 
-                // Dispose of temporary NativeArrays
-                updateResidentialDemandJob.m_UnlockedZones.Dispose();
-                updateResidentialDemandJob.m_DemandParameters.Dispose();
+                IJobExtensions.Schedule(updateResidentialDemandJob, JobUtils.CombineDependencies(base.Dependency, m_ReadDependencies, outJobHandle, outJobHandle2, outJobHandle3, deps)).Complete();
             }
-            // Update UI
         }
 
         private void ResetResults()
         {
             m_Results.Fill<int>(0);
         }
-
     }
 }
-
-        
-  
-    

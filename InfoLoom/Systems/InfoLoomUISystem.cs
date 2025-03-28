@@ -10,6 +10,7 @@ using Game.Prefabs;
 using Game.Simulation;
 using Game.UI;
 using Game.UI.InGame;
+using InfoLoom.Systems;
 using InfoLoomTwo.Domain;
 using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
@@ -19,7 +20,6 @@ using InfoLoomTwo.Systems.DemographicsData.Demographics;
 using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
-using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.TradeCostData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
@@ -63,7 +63,7 @@ namespace InfoLoomTwo.Systems
         private const string TradeCostsData = "TradeCostsData";
         private const string TradeCostsDataImports = "TradeCostsDataImports";
         private const string TradeCostsDataExports = "TradeCostsDataExports";
-            private const string WorkforceData = "WorkforceData";
+        private const string WorkforceData = "WorkforceData";
         private const string WorkplacesData = "WorkplacesData";*/
         
         
@@ -80,7 +80,7 @@ namespace InfoLoomTwo.Systems
         private IndustrialDemandSystem m_IndustrialDemandSystem;
         
         private CommercialSystem m_CommercialSystem;
-       private CommercialProductsSystem m_CommercialProductsSystem;
+        private CommercialProductsSystem m_CommercialProductsSystem;
         private Demographics m_Demographics;
         private DistrictDataSystem m_DistrictDataSystem;
         private IndustrialSystem m_IndustrialSystem;
@@ -447,7 +447,7 @@ namespace InfoLoomTwo.Systems
                
                 
                 m_ResidentialSystem.IsPanelVisible = true;
-                m_ResidentialSystem.ForceUpdateOnce();
+               
                 
             }
         
@@ -633,7 +633,7 @@ namespace InfoLoomTwo.Systems
             if (open)
             {
                 
-                m_ResidentialSystem.ForceUpdateOnce();
+                
                 var residentialSystem = World.GetOrCreateSystemManaged<ResidentialSystem>();
                 m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
             }
