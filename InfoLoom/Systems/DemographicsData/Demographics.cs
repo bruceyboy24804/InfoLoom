@@ -130,15 +130,9 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
                         continue;
                     }
 
-                    // We'll get the homeless count from CountHouseholdDataSystem instead
-                    // Removing: 
-                    // if (m_HomelessHouseholds.HasComponent(household) || !m_PropertyRenters.HasComponent(household))
-                    // {
-                    //     m_Totals[9]++; // homeless
-                    // }
-
                     // Get age using the game's built-in methods
                     CitizenAge age = value.GetAge();
+                    // Use the game's built-in GetAgeInDays method instead of custom calculation
                     int ageInDays = (int)Math.Min(day - value.m_BirthDay, 120);
                     // Ensure ageInDays is non-negative and within the bounds of m_Results
                     if (ageInDays >= 0 && ageInDays < m_Results.Length)

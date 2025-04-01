@@ -235,10 +235,10 @@ namespace InfoLoomTwo.Extensions
 				return;
 			}
 
-			if (obj is Enum @enum)
-			{
-				writer.Write(Convert.ToInt32(@enum));
-				return;
+						if (obj is Enum @enum)
+				{
+					writer.Write(Convert.ToInt32(@enum));
+								return;
 			}
 
 			if (obj is Entity entity)
