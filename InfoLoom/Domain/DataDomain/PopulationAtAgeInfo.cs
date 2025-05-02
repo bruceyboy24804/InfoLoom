@@ -1,24 +1,25 @@
-namespace InfoLoomTwo.Domain
+using Unity.Collections;
+
+namespace InfoLoomTwo.Domain.DataDomain
 {
     public struct PopulationAtAgeInfo
     {
-        public int Age;
-        public int Total; // asserion: Total is a sum of the below parts
-        public int School1; // elementary school
-        public int School2; // high school
-        public int School3; // college
-        public int School4; // university
-        public int Work; // working
-        public int Other; // not working, not student
-        public int ChildCount;
-        public int AdultCount;
-        public int TeenCount;
-        public int ElderlyCount;
+        public int Age { get; set; }
+        public int Total { get; set; }
+        public int Work { get; set; }
+        public int School1 { get; set; }
+        public int School2 { get; set; }
+        public int School3 { get; set; }
+        public int School4 { get; set; }
+        public int Other { get; set; }
+        public int ChildCount { get; set; }
+        public int TeenCount { get; set; }
+        public int AdultCount { get; set; }
+        public int ElderlyCount { get; set; }
 
-
-        public PopulationAtAgeInfo(int _age)
+        public PopulationAtAgeInfo(int age)
         {
-            Age = _age;
+            Age = age;
             Total = 0;
             Work = 0;
             School1 = 0;

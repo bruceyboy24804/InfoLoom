@@ -1,0 +1,32 @@
+
+.subPanel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  background-color: transparent;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.iconLabelSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.labelRadioSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  font-size: 13px;
+  color: #fff;
+}

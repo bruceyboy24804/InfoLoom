@@ -220,6 +220,14 @@ namespace InfoLoom.Systems
                         }
                     }
                 }
+                m_Results[3] = math.min(m_Results[3], int2.x); // Clamp low occupied
+                m_Results[4] = math.min(m_Results[4], int2.y); // Clamp med occupied
+                m_Results[5] = math.min(m_Results[5], int2.z); // Clamp high occupied
+                
+                @int.x = int2.x - m_Results[3];
+                @int.y = int2.y - m_Results[4];
+                @int.z = int2.z - m_Results[5];
+                
                 int num12 = m_LowDemandFactors[7] + m_LowDemandFactors[8] + m_LowDemandFactors[6] + m_LowDemandFactors[11] + m_LowDemandFactors[12];
                 int num13 = m_MediumDemandFactors[7] + m_MediumDemandFactors[8] + m_MediumDemandFactors[6] + m_MediumDemandFactors[11] + m_MediumDemandFactors[12];
                 int num14 = m_HighDemandFactors[7] + m_HighDemandFactors[8] + m_HighDemandFactors[6] + m_HighDemandFactors[11] + m_HighDemandFactors[12];

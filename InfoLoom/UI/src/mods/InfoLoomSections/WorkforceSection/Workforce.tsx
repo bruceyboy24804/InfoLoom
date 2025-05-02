@@ -176,19 +176,39 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     const homelessRate = totalPeople > 0 ? (homeless / totalPeople) * 100 : 0;
     
     // Determine insights
-    let insight = "";
+    /*let insight: React.ReactNode = "";
     
     if (unemploymentRate > 15) {
-      insight = `High unemployment rate (${unemploymentRate.toFixed(0)}%) for ${level.levelName} workers. More jobs needed for this education level.`;
+      insight = (
+        <span className={styles.insightText}>
+          High unemployment rate ({unemploymentRate.toFixed(0)}%) for {level.levelName} workers. More jobs needed for this education level.
+        </span>
+      );
     } else if (underemploymentRate > 20) {
-      insight = `Many ${level.levelName} workers (${underemploymentRate.toFixed(0)}%) are underemployed. Add more suitable jobs for their skills.`;
+      insight = (
+        <span className={styles.insightText}>
+          Many {level.levelName} workers ({underemploymentRate.toFixed(0)}%) are underemployed. Add more suitable jobs for their skills.
+        </span>
+      );
     } else if (outside > totalPeople * 0.3) {
-      insight = `Large portion of ${level.levelName} citizens (${outsideRate.toFixed(0)}%) are outside the workforce. Consider policies to increase participation.`;
+      insight = (
+        <span className={styles.insightText}>
+          Large portion of {level.levelName} citizens ({outsideRate.toFixed(0)}%) are outside the workforce. Consider policies to increase participation.
+        </span>
+      );
     } else if (employmentRate > 75 && unemploymentRate < 5) {
-      insight = `Your ${level.levelName} workforce is well-balanced with good employment rates. Great job!`;
+      insight = (
+        <span className={styles.insightText}>
+          Your {level.levelName} workforce is well-balanced with good employment rates. Great job!
+        </span>
+      );
     } else {
-      insight = `Your ${level.levelName} workforce situation is reasonably stable.`;
-    }
+      insight = (
+        <span className={styles.insightText}>
+          Your {level.levelName} workforce situation is reasonably stable.
+        </span>
+      );
+    }*/
     
     return (
       <div className={styles.caseStudyContainer}>
@@ -269,9 +289,6 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                 )}
               </div>
             </div>
-          </div>
-          <div className={styles.caseStudyInsight}>
-            {insight}
           </div>
         </div>
       </div>

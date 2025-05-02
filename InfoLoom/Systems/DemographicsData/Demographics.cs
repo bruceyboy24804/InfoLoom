@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿﻿using System.Runtime.CompilerServices;
 using Colossal.UI.Binding;
 using Game.Agents;
 using Game.Citizens;
@@ -14,8 +14,10 @@ using System.Collections.Generic;
 using System;
 using Game.Buildings;
 using Game;
+using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Extensions;
 using Unity.Burst;
+using Purpose = Colossal.Serialization.Entities.Purpose;
 
 namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 {
@@ -66,7 +68,7 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 
             public NativeArray<int> m_Totals;
 
-            public NativeArray<Domain.PopulationAtAgeInfo> m_Results;
+            public NativeArray<PopulationAtAgeInfo> m_Results;
             public int day;
 
             // this job is based on AgingJob
@@ -130,15 +132,23 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
                         continue;
                     }
 
-                    // Get age using the game's built-in methods
-                    CitizenAge age = value.GetAge();
-                    // Use the game's built-in GetAgeInDays method instead of custom calculation
                     int ageInDays = (int)Math.Min(day - value.m_BirthDay, 120);
+                    CitizenAge age = CitizenAge.Adult; // Default value
+                    if (ageInDays < AgingSystem.GetTeenAgeLimitInDays())
+                        age = CitizenAge.Child;
+                    else if (ageInDays < AgingSystem.GetAdultAgeLimitInDays())
+                        age = CitizenAge.Teen;
+                    else if (ageInDays < AgingSystem.GetElderAgeLimitInDays())
+                        age = CitizenAge.Adult;
+                    else
+                        age = CitizenAge.Elderly;
+                    // Use the game's built-in GetAgeInDays method instead of custom calculation
+                   
                     // Ensure ageInDays is non-negative and within the bounds of m_Results
                     if (ageInDays >= 0 && ageInDays < m_Results.Length)
                     {
                         // Retrieve the struct from the array
-                        Domain.PopulationAtAgeInfo info = m_Results[ageInDays];
+                        PopulationAtAgeInfo info = m_Results[ageInDays];
 
                         // Modify the fields
                         info.Age = ageInDays;
@@ -240,7 +250,7 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
         // 8 - dead cims
         // 9 - homeless citizens (will now be set from CountHouseholdDataSystem)
 
-        public NativeArray<Domain.PopulationAtAgeInfo> m_Results; // final results, will be filled via jobs and then written as output
+        public NativeArray<PopulationAtAgeInfo> m_Results; // final results, will be filled via jobs and then written as output
 
         public int m_AgeCap;
         
@@ -269,7 +279,7 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 
             // allocate memory for results
             m_Totals = new NativeArray<int>(10, Allocator.Persistent);
-            m_Results = new NativeArray<Domain.PopulationAtAgeInfo>(120, Allocator.Persistent);
+            m_Results = new NativeArray<PopulationAtAgeInfo>(120, Allocator.Persistent);
         }
 
         protected override void OnDestroy()
@@ -316,6 +326,13 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
 
             // Get homeless count from CountHouseholdDataSystem instead of calculating in the job
             m_Totals[9] = m_CountHouseholdDataSystem.HomelessCitizenCount;
+            UpdateStrategy(GroupingStrategy.None);
+        }
+
+        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
+        {
+            base.OnGameLoadingComplete(purpose, mode);
+            UpdateStrategy(GroupingStrategy.None);
         }
 
         private void ResetResults()
@@ -326,8 +343,154 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
             }
             for (int i = 0; i < m_Results.Length; i++)
             {
-                m_Results[i] = new Domain.PopulationAtAgeInfo(i);
+                m_Results[i] = new PopulationAtAgeInfo(i);
             }
         }
+        public class PopulationGroupData
+        {
+            public string Label { get; set; }
+            public int StartAge { get; set; }
+            public int EndAge { get; set; }
+            public int Total { get; set; }
+            public int ChildCount { get; set; }
+            public int TeenCount { get; set; }
+            public int AdultCount { get; set; }
+            public int ElderlyCount { get; set; }
+            public int School1 { get; set; }
+            public int School2 { get; set; }
+            public int School3 { get; set; }
+            public int School4 { get; set; }
+            public int Work { get; set; }
+            public int Other { get; set; }
+        }
+
+        public List<PopulationGroupData> GetPopulationByAgeGroups(GroupingStrategy strategy)
+        {
+            List<PopulationGroupData> groups = new List<PopulationGroupData>();
+            int maxAge = (int)m_Totals[6]; // Use the oldest citizen age as boundary
+            maxAge = Math.Min(maxAge, m_Results.Length - 1); // Ensure we don't go beyond array bounds
+            
+            switch (strategy)
+            {
+                case GroupingStrategy.None:
+                    // Return each individual age as its own group
+                    for (int i = 0; i <= maxAge; i++)
+                    {
+                        var ageInfo = m_Results[i];
+                        if (ageInfo.Total > 0)
+                        {
+                            groups.Add(new PopulationGroupData
+                            {
+                                Label = i.ToString(),
+                                StartAge = i,
+                                EndAge = i,
+                                Total = ageInfo.Total,
+                                ChildCount = ageInfo.ChildCount,
+                                TeenCount = ageInfo.TeenCount,
+                                AdultCount = ageInfo.AdultCount,
+                                ElderlyCount = ageInfo.ElderlyCount,
+                                School1 = ageInfo.School1,
+                                School2 = ageInfo.School2,
+                                School3 = ageInfo.School3,
+                                School4 = ageInfo.School4,
+                                Work = ageInfo.Work,
+                                Other = ageInfo.Other
+                            });
+                        }
+                    }
+                    break;
+
+                case GroupingStrategy.FiveYear:
+                    // Group in 5-year intervals (0-4, 5-9, etc.)
+                    for (int i = 0; i <= maxAge; i += 5)
+                    {
+                        int endAge = Math.Min(i + 4, maxAge);
+                        var group = CreateAgeGroup(i, endAge, $"{i}-{endAge}");
+                        groups.Add(group);
+                    }
+                    break;
+
+                case GroupingStrategy.TenYear:
+                    // Group in 10-year intervals (0-9, 10-19, etc.)
+                    for (int i = 0; i <= maxAge; i += 10)
+                    {
+                        int endAge = Math.Min(i + 9, maxAge);
+                        var group = CreateAgeGroup(i, endAge, $"{i}-{endAge}");
+                        groups.Add(group);
+                    }
+                    break;
+
+                case GroupingStrategy.LifeCycle:
+                    // Group by life stages using game's age limits
+                    int childLimit = AgingSystem.GetTeenAgeLimitInDays() - 1;
+                    int teenLimit = AgingSystem.GetAdultAgeLimitInDays() - 1;
+                    int adultLimit = AgingSystem.GetElderAgeLimitInDays() - 1;
+                    
+                    groups.Add(CreateAgeGroup(0, childLimit, "Children"));
+                    groups.Add(CreateAgeGroup(childLimit + 1, teenLimit, "Teens"));
+                    groups.Add(CreateAgeGroup(teenLimit + 1, adultLimit, "Adults"));
+                    groups.Add(CreateAgeGroup(adultLimit + 1, maxAge, "Elderly"));
+                    break;
+            }
+            
+            return groups;
+        }
+
+        private PopulationGroupData CreateAgeGroup(int startAge, int endAge, string label)
+        {
+            var group = new PopulationGroupData
+            {
+                Label = label,
+                StartAge = startAge,
+                EndAge = endAge,
+                Total = 0,
+                ChildCount = 0,
+                TeenCount = 0,
+                AdultCount = 0,
+                ElderlyCount = 0,
+                School1 = 0,
+                School2 = 0,
+                School3 = 0,
+                School4 = 0,
+                Work = 0,
+                Other = 0
+            };
+
+            // Sum the values for all ages in the range
+            for (int age = startAge; age <= endAge && age < m_Results.Length; age++)
+            {
+                var ageInfo = m_Results[age];
+                group.Total += ageInfo.Total;
+                group.ChildCount += ageInfo.ChildCount;
+                group.TeenCount += ageInfo.TeenCount;
+                group.AdultCount += ageInfo.AdultCount;
+                group.ElderlyCount += ageInfo.ElderlyCount;
+                group.School1 += ageInfo.School1;
+                group.School2 += ageInfo.School2;
+                group.School3 += ageInfo.School3;
+                group.School4 += ageInfo.School4;
+                group.Work += ageInfo.Work;
+                group.Other += ageInfo.Other;
+            }
+            
+            return group;
+        }
+        public void UpdateStrategy(GroupingStrategy strategy)
+        {
+            try 
+            {
+                GetPopulationByAgeGroups(strategy);
+            }
+            catch (Exception ex)
+            {
+                Mod.log.Error($"Error updating strategy: {ex.Message}");
+            };
+            
+        }
+        public class GroupStrategyInfo
+        {
+            public string Label { get; set; }
+            public GroupingStrategy Strategy { get; set; }
+        }
     }
-}
+}    

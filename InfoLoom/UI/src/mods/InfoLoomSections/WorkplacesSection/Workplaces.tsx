@@ -218,7 +218,7 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     const vacancyRate = totalJobs > 0 ? (openJobs / totalJobs) * 100 : 0;
     
     // Determine insights
-    let insight = "";
+    /*let insight = "";
     
     if (vacancyRate > 15) {
       insight = `High vacancy rate (${vacancyRate.toFixed(0)}%). You need more ${level.levelName} workers.`;
@@ -230,7 +230,7 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
       insight = `Your ${level.levelName} job market is well-balanced. Good job!`;
     } else {
       insight = `Your ${level.levelName} job market is functioning adequately.`;
-    }
+    }*/
     
     return (
       <div className={styles.caseStudyContainer}>
@@ -307,9 +307,6 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                 )}
               </div>
             </div>
-          </div>
-          <div className={styles.caseStudyInsight}>
-            {insight}
           </div>
         </div>
       </div>

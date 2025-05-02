@@ -12,6 +12,7 @@ using Game.UI;
 using Game.UI.InGame;
 using InfoLoom.Systems;
 using InfoLoomTwo.Domain;
+using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
@@ -47,6 +48,7 @@ namespace InfoLoomTwo.Systems
         private const string TradeCostsOpen = "TradeCostsOpen";
         private const string WorkforceOpen = "WorkforceOpen";
         private const string WorkplacesOpen = "WorkplacesOpen";
+        
         
         /*private const string BuildingDemandData = "BuildingDemandData";
         private const string CommercialData = "CommercialData";
@@ -100,9 +102,14 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<Domain.CommercialProductsData[]> m_CommercialProductBinding;
         //DemographicsUI
         private GetterValueBinding<int> m_OldCitizenBinding;
-        private ValueBindingHelper<Domain.PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
+        private ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
         private ValueBindingHelper<int[]> m_TotalsBinding;
-        //DistrictDataUI
+        private ValueBinding<bool> m_DemoStatsToggledOnBinding;
+        private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
+        private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
+        private ValueBindingHelper<List<Demographics.PopulationGroupData>> m_GroupedPopulationBinding;  
+        private ValueBindingHelper<Demographics.GroupStrategyInfo[]> m_GroupStrategiesBinding;
+//DistrictDataUI
         private RawValueBinding m_uiDistricts;
         private RawValueBinding m_uiResidents;
         private RawValueBinding m_uiEmployees;
@@ -134,14 +141,6 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _tCPVBinding;
         private ValueBinding<bool> _wFPVBinding;
         private ValueBinding<bool> _wPPVBinding;
-        
-        
-        
-
-        
-
-        
-
         
         public override GameMode gameMode => GameMode.Game;
 
@@ -236,8 +235,15 @@ namespace InfoLoomTwo.Systems
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 return demographics.m_Totals[6];
-            });        
-
+            });
+            m_DemoStatsToggledOnBinding = new ValueBinding<bool>(ModID, "DemoStatsToggledOn", false);
+             AddBinding(m_DemoStatsToggledOnBinding);
+             AddBinding(new TriggerBinding<bool>(ModID, "DemoStatsToggledOn", SetDemoStatsVisibility));
+             m_DemoAgeGroupingToggledOnBinding = new ValueBinding<bool>(ModID, "DemoAgeGroupingToggledOn", false);
+             AddBinding(m_DemoAgeGroupingToggledOnBinding);
+             AddBinding(new TriggerBinding<bool>(ModID, "DemoAgeGroupingToggledOn", SetDemoAgeGroupingVisibility));
+             m_DemoGroupingStrategyBinding = CreateBinding("DemoGroupingStrategy", "SetDemoGroupingStrategy",  GroupingStrategy.None);
+            
             //DistrictDataUI
             // First binding: Basic district information
             AddBinding(m_uiDistricts = new RawValueBinding("InfoLoomTwo", "DistrictData", m_DistrictDataSystem.WriteDistricts));
@@ -362,15 +368,28 @@ namespace InfoLoomTwo.Systems
                 
             }
         
-            if (_dPVBinding.value )
+            if (_dPVBinding.value)
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-                m_TotalsBinding.Value = demographics.m_Totals.ToArray();
-                m_OldCitizenBinding.Update();
+                
+                // Get current grouping strategy
+                GroupingStrategy currentStrategy = m_DemoGroupingStrategyBinding.Value;
+                
+                // Update the grouped population data binding
+                m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy);
+                
+                m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
+                m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
+                
+                if (m_DemoStatsToggledOnBinding.value)
+                {
+                    m_TotalsBinding.Value = demographics.m_Totals.ToArray();
+                    m_OldCitizenBinding.Update();
+                }
+                
                 m_Demographics.IsPanelVisible = true;
                 m_Demographics.ForceUpdateOnce();
-                
             }
         
             if (_dDPVBinding.value )
@@ -557,13 +576,16 @@ namespace InfoLoomTwo.Systems
             
             if (open)
             {
+                var demographics = World.GetExistingSystemManaged<Demographics>();
+                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
+                 m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
+                if (m_DemoStatsToggledOnBinding.value)
+                {
+                    m_TotalsBinding.Value = m_Demographics.m_Totals.ToArray();
+                    m_OldCitizenBinding.Update();
+                }
                 
                 m_Demographics.ForceUpdateOnce();
-                
-                var demographics = World.GetExistingSystemManaged<Demographics>();
-                m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-                m_TotalsBinding.Value = demographics.m_Totals.ToArray();
-                m_OldCitizenBinding.Update();
             }
         }
         
@@ -678,6 +700,21 @@ namespace InfoLoomTwo.Systems
                 m_WorkplacesBinder.Value = workplacesSystem.m_Results.ToArray();
             }
         }
+        private void SetDemoStatsVisibility(bool on)
+        {
+            m_DemoStatsToggledOnBinding.Update(on);
+            if (on)
+            {
+                if (m_DemoStatsToggledOnBinding.value)
+                {
+                    m_TotalsBinding.Value = m_Demographics.m_Totals.ToArray();
+                    m_OldCitizenBinding.Update();
+                }
+            }
+        }
+        private void SetDemoAgeGroupingVisibility(bool on) {m_DemoAgeGroupingToggledOnBinding.Update(on);}
+       
+            
         private string[] ExtractExcludedResources(Resource excludedResources)
         {
             List<string> excludedResourceNames = new List<string>();
@@ -721,10 +758,23 @@ namespace InfoLoomTwo.Systems
 
             return excludedResourceNames.ToArray();
         }
-        
-        
+        private void SetDemoGroupingStrategy(GroupingStrategy strategy)
+        {
+            m_DemoGroupingStrategyBinding.Value = strategy;
+            
+            // Apply the selected strategy in the Demographics system
+            var demographics = World.GetExistingSystemManaged<Demographics>();
+            demographics.UpdateStrategy(strategy);
+            
+            // Update UI with grouped data (needs a new binding)
+            UpdateGroupedDemographicsData(strategy);
+        }
+        private void UpdateGroupedDemographicsData(GroupingStrategy strategy)
+        {
+            var demographics = World.GetExistingSystemManaged<Demographics>();
+            m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy);
+        }
 
         
     }
 }
-

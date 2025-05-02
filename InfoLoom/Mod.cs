@@ -9,9 +9,9 @@ using InfoLoomTwo.Systems;
 using System.Linq;
 using Game.UI.InGame;
 using InfoLoom.Systems;
+using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
-using InfoLoomTwo.Systems.DemographicsData;
 using InfoLoomTwo.Systems.DemographicsData.Demographics;
 using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
@@ -33,6 +33,7 @@ namespace InfoLoomTwo
      
         public static ExecutableAsset modAsset { get; private set; }    
         internal ILog Log { get; private set; }
+        public static string ID => "InfoLoomTwo";
 
         // Static logger instance with custom logger name and settings
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
@@ -44,6 +45,9 @@ namespace InfoLoomTwo
             // Log entry for debugging purposes
             log.Info(nameof(OnLoad));
             Instance = this;
+#if DEBUG
+            log.effectivenessLevel = Level.Debug;
+#endif
             //Try to fetch the mod asset from the mod manager
             setting = new Setting(this);
             if (setting == null)
@@ -79,6 +83,7 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CommercialCompanyDebugSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
         }
         

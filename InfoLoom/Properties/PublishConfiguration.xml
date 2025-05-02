@@ -124,16 +124,14 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.6.0" />
+	<ModVersion Value="1.6.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.2.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.6.0
-- Now uses vanilla values for homeless and moved in (residential panel)
-- Ability to see active services in the district panel for each district
-- Ability to see active policies in the district panel for each district
+	<ChangeLog>## Version 1.6.1
+- Fixed a bug where sometimes the occupied buildings in the Residential data tab would show as a higher number than total properties resulting in empty properties number being in negatives.
 </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// <copyright file="EnumReader.cs" company="Yenyang's Mods. MIT License">
+// Copyright (c) Yenyang's Mods. MIT License. All rights reserved.
+// </copyright>
 
 namespace InfoLoomTwo.Extensions
 {

@@ -1,16 +1,28 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
 import styles from './Demographics.module.scss';
 import Chart from 'chart.js/auto';
 
 // Local or app-level imports
-import { useValue } from 'cs2/api';
-import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, Panel, Scrollable} from "cs2/ui";
+import {useValue} from 'cs2/api';
+import {InfoCheckbox} from 'mods/components/InfoCheckbox/InfoCheckbox';
+import {DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable,} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
-import {DemographicsDataDetails, DemographicsDataTotals, DemographicsDataOldestCitizen} from "../../bindings";
+import {GroupingStrategy} from "../../domain/GroupingStrategy";
+import {
+  DemoAgeGroupingToggledOn,
+  DemographicsDataDetails,
+  DemographicsDataOldestCitizen,
+  DemographicsDataTotals,
+  DemoStatsToggledOn,
+  SetDemoStatsToggledOn,
+  DemoGroupingStrategy,
+  SetDemoGroupingStrategy
+} from "../../bindings";
+import {InfoRadioButton} from "../../components/InfoRadioButton/InfoRadioButton";
+import {getModule} from "cs2/modding";
 
-// ==== Bindings (connect to your mod's data) ====
 
+const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
 
 interface AlignedParagraphProps {
@@ -18,7 +30,6 @@ interface AlignedParagraphProps {
   right: number;
 }
 
-type GroupingStrategy = 'none' | 'fiveYear' | 'tenYear' | 'lifecycle';
 type ChartOrientation = 'horizontal'; // we only have horizontal
 
 interface AgeRange {
@@ -104,22 +115,22 @@ function generateRanges(step: number): AgeRange[] {
 const GROUP_STRATEGIES: GroupingOption[] = [
   {
     label: 'Detailed View',
-    value: 'none',
+    value: GroupingStrategy.None,
     ranges: [],
   },
   {
     label: '5-Year Groups',
-    value: 'fiveYear',
+    value: GroupingStrategy.FiveYear,
     ranges: generateRanges(5),
   },
   {
     label: '10-Year Groups',
-    value: 'tenYear',
+    value: GroupingStrategy.TenYear,
     ranges: generateRanges(10),
   },
   {
     label: 'Lifecycle Groups',
-    value: 'lifecycle',
+    value: GroupingStrategy.LifeCycle,
     ranges: [
       { label: 'Child', min: 0, max: 20 },
       { label: 'Teen', min: 21, max: 35 },
@@ -185,7 +196,7 @@ const AlignedParagraph = ({ left, right }: AlignedParagraphProps): JSX.Element =
 /**
  * Checkbox UI for selecting a grouping strategy.
  */
-const GroupingOptions = ({
+/*const GroupingOptions = ({
   groupingStrategy,
   setGroupingStrategy,
   totalEntries,
@@ -194,17 +205,17 @@ const GroupingOptions = ({
     <div className={styles.groupingOptions}>
       <div className={styles.label}>Age Grouping</div>
       {GROUP_STRATEGIES.map((strategy) => (
-        <InfoCheckbox
+        <InfoRadioButton
           key={strategy.value}
           label={strategy.label}
-          isChecked={groupingStrategy === strategy.value}
-          onToggle={() => setGroupingStrategy(strategy.value)}
+          isSelected={groupingStrategy === strategy.value}
+          onSelect={() => setGroupingStrategy(strategy.value)}
           count={strategy.ranges.length || totalEntries}
         />
       ))}
     </div>
   );
-};
+};*/
 
 /**
  * Displays high-level statistics (Population, Tourists, etc.).
@@ -255,10 +266,11 @@ const StatisticsSummary = ({
 /**
  * Replace the custom canvas DemographicsChart with Chart.js implementation
  */
-const DemographicsChart = ({
+const DemographicsChart = memo(({
+
   StructureDetails,
   groupingStrategy,
-}: {
+                                }: {
   StructureDetails: populationAtAge[];
   groupingStrategy: GroupingStrategy;
 }): JSX.Element => {
@@ -303,7 +315,7 @@ const DemographicsChart = ({
       { label: 'Other', data: [] as number[], backgroundColor: chartColors.other },
     ];
 
-    if (groupingStrategy === 'none') {
+    if (groupingStrategy === GroupingStrategy.None) {
       // Generate detailed view from age 0 to 120
       const age_range = Array.from({ length: 121 }, (_, i) => i);
       labels = age_range.map(age => String(age));
@@ -346,9 +358,9 @@ const DemographicsChart = ({
           backgroundColor: chartColors.other 
         },
       ];
-    } else if (groupingStrategy === 'lifecycle') {
+    } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
       // Use the predefined lifecycle ranges
-      const lifecycleRanges = GROUP_STRATEGIES.find(s => s.value === 'lifecycle')?.ranges || [];
+      const lifecycleRanges = GROUP_STRATEGIES.find(s => s.value === GroupingStrategy.LifeCycle)?.ranges || [];
       const groups = lifecycleRanges.map(range => ({
         label: range.label,
         work: 0,
@@ -383,7 +395,7 @@ const DemographicsChart = ({
       ];
     } else {
       // Handle 5-year and 10-year grouping
-      const step = groupingStrategy === 'fiveYear' ? 5 : 10;
+      const step = groupingStrategy === GroupingStrategy.FiveYear ? 5 : 10;
       const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; other: number; }[] = [];
       for (let i = 0; i < 120; i += step) {
         groups.push({
@@ -500,19 +512,19 @@ const DemographicsChart = ({
             ticks: {
               color: '#ffffff',
               // Use autoSkip when in detailed view, disable for grouped views
-              autoSkip: groupingStrategy === 'none',
+              autoSkip: groupingStrategy === GroupingStrategy.None,
               // Increase tick limit for grouped views
-              maxTicksLimit: groupingStrategy === 'none' ? 30 : 20,
+              maxTicksLimit: groupingStrategy === GroupingStrategy.None ? 30 : 20,
               // Add padding between labels for detailed view
-              padding: groupingStrategy === 'none' ? 8 : 2,
+              padding: groupingStrategy === GroupingStrategy.None ? 8 : 2,
               font:  { size: 12, family: 'Overpass' }
             },
             // Adjust the spacing between bars for detailed view
             afterFit: function(scaleInstance) {
               // Set different heights based on grouping
-              if (groupingStrategy === 'none') {
+              if (groupingStrategy === GroupingStrategy.None) {
                 scaleInstance.height = Math.min(1000, scaleInstance.height);
-              } else if (groupingStrategy === 'lifecycle') {
+              } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
                 // Make lifecycle bars taller (few categories)
                 scaleInstance.height = Math.min(400, scaleInstance.height);
               } else {
@@ -531,30 +543,30 @@ const DemographicsChart = ({
 			bar: {
 				// Optimized barThickness for each view type
 				barThickness: 
-				  groupingStrategy === 'none' ? 8 : 
-				  groupingStrategy === 'fiveYear' ? 15 :
-				  groupingStrategy === 'tenYear' ? 25 : 
+				  groupingStrategy === GroupingStrategy.None ? 8 :
+				  groupingStrategy === GroupingStrategy.FiveYear ? 15 :
+				  groupingStrategy === GroupingStrategy.TenYear ? 25 :
 				  80, // lifecycle
 				
 				// Optimized barPercentage for better spacing
 				barPercentage: 
-				  groupingStrategy === 'none' ? 0.98 : 
-				  groupingStrategy === 'fiveYear' ? 0.9 :
-				  groupingStrategy === 'tenYear' ? 0.85 : 
+				  groupingStrategy === GroupingStrategy.None ? 0.98 :
+				  groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
+				  groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
 				  0.8, // lifecycle
 				
 				// Optimized categoryPercentage for each view type
 				categoryPercentage: 
-				  groupingStrategy === 'none' ? 0.95 : 
-				  groupingStrategy === 'fiveYear' ? 0.85 :
-				  groupingStrategy === 'tenYear' ? 0.9 : 
+				  groupingStrategy === GroupingStrategy.None ? 0.95 :
+				  groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
+				  groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
 				  0.95, // lifecycle
 				
 				// Add maxBarThickness to prevent bars from becoming too large
 				maxBarThickness: 
-				  groupingStrategy === 'none' ? 5 : 
-				  groupingStrategy === 'fiveYear' ? 25 :
-				  groupingStrategy === 'tenYear' ? 35 : 
+				  groupingStrategy === GroupingStrategy.None ? 5 :
+				  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
+				  groupingStrategy === GroupingStrategy.TenYear ? 35 :
 				  120, // lifecycle
 			  }
         },
@@ -613,30 +625,30 @@ const DemographicsChart = ({
 		bar: {
 			// Optimized barThickness for each view type
 			barThickness: 
-			  groupingStrategy === 'none' ? 8 : 
-			  groupingStrategy === 'fiveYear' ? 15 :
-			  groupingStrategy === 'tenYear' ? 25 : 
+			  groupingStrategy === GroupingStrategy.None ? 8 :
+			  groupingStrategy === GroupingStrategy.FiveYear ? 15 :
+			  groupingStrategy === GroupingStrategy.TenYear ? 25 :
 			  80, // lifecycle
 			
 			// Optimized barPercentage for better spacing
 			barPercentage: 
-			  groupingStrategy === 'none' ? 0.98 : 
-			  groupingStrategy === 'fiveYear' ? 0.9 :
-			  groupingStrategy === 'tenYear' ? 0.85 : 
+			  groupingStrategy === GroupingStrategy.None ? 0.98 :
+			  groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
+			  groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
 			  0.8, // lifecycle
 			
 			// Optimized categoryPercentage for each view type
 			categoryPercentage: 
-			  groupingStrategy === 'none' ? 0.95 : 
-			  groupingStrategy === 'fiveYear' ? 0.85 :
-			  groupingStrategy === 'tenYear' ? 0.9 : 
+			  groupingStrategy === GroupingStrategy.None ? 0.95 :
+			  groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
+			  groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
 			  0.95, // lifecycle
 			
 			// Add maxBarThickness to prevent bars from becoming too large
 			maxBarThickness: 
-			  groupingStrategy === 'none' ? 5 : 
-			  groupingStrategy === 'fiveYear' ? 25 :
-			  groupingStrategy === 'tenYear' ? 35 : 
+			  groupingStrategy === GroupingStrategy.None ? 5 :
+			  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
+			  groupingStrategy === GroupingStrategy.TenYear ? 35 :
 			  120, // lifecycle
 		  }
     };
@@ -648,9 +660,9 @@ const DemographicsChart = ({
       // Set different heights based on current grouping
       if (yScale.afterFit) {
         yScale.afterFit = function(scaleInstance) {
-          if (groupingStrategy === 'none') {
+          if (groupingStrategy === GroupingStrategy.None) {
             scaleInstance.height = Math.min(2500, scaleInstance.height);
-          } else if (groupingStrategy === 'lifecycle') {
+          } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
             scaleInstance.height = Math.min(400, scaleInstance.height);
           } else {
             scaleInstance.height = Math.min(1000, scaleInstance.height);
@@ -662,10 +674,10 @@ const DemographicsChart = ({
       if (yScale.ticks) {
         // Use type assertion to access the properties safely
         const ticks = yScale.ticks as any;
-        ticks.autoSkip = groupingStrategy === 'none';
-        ticks.maxTicksLimit = groupingStrategy === 'none' ? 30 : 20;
-        ticks.padding = groupingStrategy === 'none' ? 15 : 8;
-        ticks.lineHeight = groupingStrategy === 'none' ? 5 : 1;
+        ticks.autoSkip = groupingStrategy === GroupingStrategy.None;
+        ticks.maxTicksLimit = groupingStrategy === GroupingStrategy.None ? 30 : 20;
+        ticks.padding = groupingStrategy === GroupingStrategy.None ? 15 : 8;
+        ticks.lineHeight = groupingStrategy === GroupingStrategy.None ? 5 : 1;
       }
     }
     
@@ -678,96 +690,83 @@ const DemographicsChart = ({
       <canvas ref={canvasRef} />
     </div>
   );
-};
+});
 
-// Memoize the chart component
-const MemoizedDemographicsChart = memo(DemographicsChart);
+
 
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
-  // Toggles with batch updates
-  const [displayState, setDisplayState] = useState({
-    showStatistics: true,
-    showAgeGrouping: true
-  });
-  const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>('none');
-
-  // Data from ECS / mod
+  const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>(GroupingStrategy.None);
   const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
+  const demoStatsToggledOn = useValue(DemoStatsToggledOn);
+  const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
+  const demoGroupingStrategy = useValue(DemoGroupingStrategy);
 
-  // Handlers with useCallback to maintain reference stability
-  const handleToggleStatistics = useCallback(() => {
-    setDisplayState(prev => ({
-      ...prev,
-      showStatistics: !prev.showStatistics
-    }));
-  }, []);
-
-  const handleToggleAgeGrouping = useCallback(() => {
-    setDisplayState(prev => ({
-      ...prev,
-      showAgeGrouping: !prev.showAgeGrouping
-    }));
-  }, []);
 
   return (
-    <Panel
-      draggable
-      onClose={onClose}
-      className={styles.panel}
-      initialPosition={{x: 0.16, y: 0.15}}
-      header={
-        <div className={styles.header}>
-          <span className={styles.headerText}>Demographics</span>
-        </div>
-      }
-    >
-      <div className={styles.container}>
-        {/* Toggle checkboxes */}
-        <div className={styles.toggleContainer}>
-          <InfoCheckbox
-            label="Show Statistics"
-            isChecked={displayState.showStatistics}
-            onToggle={handleToggleStatistics}
-          />
-          <InfoCheckbox
-            label="Show Age Grouping"
-            isChecked={displayState.showAgeGrouping}
-            onToggle={handleToggleAgeGrouping}
-          />
-        </div>
+      <Panel
+          draggable
+          onClose={onClose}
+          className={styles.panel}
+          initialPosition={{x: 0.16, y: 0.15}}
+          header={
+            <div className={styles.header}>
+              <span className={styles.headerText}>Demographics</span>
+            </div>
+          }
+      >
+        <div className={styles.container}>
+          <div className={styles.toggleContainer}>
+            <InfoCheckbox
+                label="Show Statistics"
+                isChecked={demoStatsToggledOn}
+                onToggle={SetDemoStatsToggledOn}
 
-        {/* Statistics Summary */}
-        {displayState.showStatistics && (
-          <StatisticsSummary
-            StructureTotals={demographicsDataStructureTotals}
-            OldestCitizen={demographicsDataOldestCitizen}
-          />
-        )}
-
-        {/* Age Grouping Options */}
-        {displayState.showAgeGrouping && (
-          <GroupingOptions
-            groupingStrategy={groupingStrategy}
-            setGroupingStrategy={setGroupingStrategy}
-            totalEntries={demographicsDataStructureDetails?.length || 0} // Ensure defined value
-          />
-        )}
-
-        {/* Chart Section */}
-        <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
-          <div className={styles.chartContainer}>
-            <MemoizedDemographicsChart
-              StructureDetails={demographicsDataStructureDetails}
-              groupingStrategy={groupingStrategy}
             />
+            <Dropdown
+                theme={DropdownStyle}
+                content={
+                  <div className={styles.dropdownContent}>
+                    {GROUP_STRATEGIES.map((strategy) => (
+                        <div key={strategy.value} className={styles.dropdownItem}>
+                          <InfoRadioButton
+                              label={strategy.label}
+                              isChecked={demoGroupingStrategy}
+                              onToggle={SetDemoGroupingStrategy}
+                              count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
+                          />
+                        </div>
+                    ))}
+                  </div>
+                }
+            >
+              <DropdownToggle style={{ marginRight: '5rem' }}>
+                Age Grouping Options
+              </DropdownToggle>
+            </Dropdown>
           </div>
-        </Scrollable>
-      </div>
-    </Panel>
+
+          {demoStatsToggledOn && (
+              <StatisticsSummary
+                  StructureTotals={demographicsDataStructureTotals}
+                  OldestCitizen={demographicsDataOldestCitizen}
+              />
+          )}
+
+          <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
+            <div className={styles.chartContainer}>
+              <DemographicsChart
+                  StructureDetails={demographicsDataStructureDetails}
+                  groupingStrategy={groupingStrategy}
+              />
+            </div>
+          </Scrollable>
+        </div>
+      </Panel>
   );
 };
 
+// Single memoized export
 export default memo(Demographics);

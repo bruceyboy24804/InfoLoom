@@ -2,8 +2,8 @@ $borderColorNormal: rgba(254,254,254,0.5);
 $borderColorFocused: rgba(254, 254, 254, 0.6);
 
 .checkboxContainer {
-    width: 18rem;
-    height: 18rem;
+    width: 20rem;
+    height: 20rem;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -48,6 +48,6 @@ $borderColorFocused: rgba(254, 254, 254, 0.6);
 }
 
 .checkmarkIcon {
-    width: 1em;
-    height: 1em;
+    width: 15rem;
+    height: 15rem;
 }

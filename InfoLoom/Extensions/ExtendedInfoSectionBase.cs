@@ -1,20 +1,18 @@
-﻿
+﻿// <copyright file="ExtendedInfoSectionBase.cs" company="Yenyang's Mods. MIT License">
+// Copyright (c) Yenyang's Mods. MIT License. All rights reserved.
+// </copyright>
 
 namespace InfoLoomTwo.Extensions
 {
     using System;
     using Colossal.UI.Binding;
     using Game.UI.InGame;
-    using InfoLoomTwo.Extensions;
-    using InfoLoomTwo.Systems;
-    using InfoLoomTwo;
 
     public abstract partial class ExtendedInfoSectionBase : InfoSectionBase
     {
-        private const string ModID = "InfoLoomTwo";
-        public ValueBindingHelper<T> CreateBinding<T>(string key, T initialValue, Action<int> onPropertySelected)
+        public ValueBindingHelper<T> CreateBinding<T>(string key, T initialValue)
         {
-            var helper = new ValueBindingHelper<T>(new(ModID, key, initialValue, new GenericUIWriter<T>()));
+            var helper = new ValueBindingHelper<T>(new(Mod.ID, key, initialValue, new GenericUIWriter<T>()));
 
             AddBinding(helper.Binding);
 
@@ -23,8 +21,8 @@ namespace InfoLoomTwo.Extensions
 
         public ValueBindingHelper<T> CreateBinding<T>(string key, string setterKey, T initialValue, Action<T> updateCallBack = null)
         {
-            var helper = new ValueBindingHelper<T>(new(ModID, key, initialValue, new GenericUIWriter<T>()), updateCallBack);
-            var trigger = new TriggerBinding<T>(ModID, setterKey, helper.UpdateCallback, new GenericUIReader<T>());
+            var helper = new ValueBindingHelper<T>(new(Mod.ID, key, initialValue, new GenericUIWriter<T>()), updateCallBack);
+            var trigger = new TriggerBinding<T>(Mod.ID, setterKey, helper.UpdateCallback, new GenericUIReader<T>());
 
             AddBinding(helper.Binding);
             AddBinding(trigger);
@@ -34,7 +32,7 @@ namespace InfoLoomTwo.Extensions
 
         public GetterValueBinding<T> CreateBinding<T>(string key, Func<T> getterFunc)
         {
-            var binding = new GetterValueBinding<T>(ModID, key, getterFunc, new GenericUIWriter<T>());
+            var binding = new GetterValueBinding<T>(Mod.ID, key, getterFunc, new GenericUIWriter<T>());
 
             AddBinding(binding);
 
@@ -43,7 +41,7 @@ namespace InfoLoomTwo.Extensions
 
         public TriggerBinding CreateTrigger(string key, Action action)
         {
-            var binding = new TriggerBinding(ModID, key, action);
+            var binding = new TriggerBinding(Mod.ID, key, action);
 
             AddBinding(binding);
 
@@ -52,7 +50,7 @@ namespace InfoLoomTwo.Extensions
 
         public TriggerBinding<T1> CreateTrigger<T1>(string key, Action<T1> action)
         {
-            var binding = new TriggerBinding<T1>(ModID, key, action, new GenericUIReader<T1>());
+            var binding = new TriggerBinding<T1>(Mod.ID, key, action, new GenericUIReader<T1>());
 
             AddBinding(binding);
 
@@ -61,7 +59,7 @@ namespace InfoLoomTwo.Extensions
 
         public TriggerBinding<T1, T2> CreateTrigger<T1, T2>(string key, Action<T1, T2> action)
         {
-            var binding = new TriggerBinding<T1, T2>(ModID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>());
+            var binding = new TriggerBinding<T1, T2>(Mod.ID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>());
 
             AddBinding(binding);
 
@@ -70,7 +68,7 @@ namespace InfoLoomTwo.Extensions
 
         public TriggerBinding<T1, T2, T3> CreateTrigger<T1, T2, T3>(string key, Action<T1, T2, T3> action)
         {
-            var binding = new TriggerBinding<T1, T2, T3>(ModID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>(), new GenericUIReader<T3>());
+            var binding = new TriggerBinding<T1, T2, T3>(Mod.ID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>(), new GenericUIReader<T3>());
 
             AddBinding(binding);
 
@@ -79,7 +77,7 @@ namespace InfoLoomTwo.Extensions
 
         public TriggerBinding<T1, T2, T3, T4> CreateTrigger<T1, T2, T3, T4>(string key, Action<T1, T2, T3, T4> action)
         {
-            var binding = new TriggerBinding<T1, T2, T3, T4>(ModID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>(), new GenericUIReader<T3>(), new GenericUIReader<T4>());
+            var binding = new TriggerBinding<T1, T2, T3, T4>(Mod.ID, key, action, new GenericUIReader<T1>(), new GenericUIReader<T2>(), new GenericUIReader<T3>(), new GenericUIReader<T4>());
 
             AddBinding(binding);
 

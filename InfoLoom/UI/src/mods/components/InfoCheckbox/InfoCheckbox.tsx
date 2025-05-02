@@ -3,6 +3,7 @@ import { CSSProperties } from "react";
 import { Checkbox } from "../CheckBox/Checkbox";
 import styles from "./InfoCheckbox.module.scss";
 
+
 interface InfoCheckboxProps {
     //image: string;
     label: string | JSX.Element;
@@ -11,6 +12,7 @@ interface InfoCheckboxProps {
     onToggle: (newVal: boolean) => void;
     className?: string;
     style?: CSSProperties;
+
 }
 
 export const InfoCheckbox = ({label, count, isChecked, onToggle, className, style }: InfoCheckboxProps) => {

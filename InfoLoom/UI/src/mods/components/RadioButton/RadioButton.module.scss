@@ -1,0 +1,54 @@
+// RadioButton.module.scss
+$borderColorNormal: rgba(254,254,254,0.5);
+$borderColorFocused: rgba(254, 254, 254, 0.6);
+
+.radioContainer {
+  width: 18rem;
+  height: 18rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border-top-color: $borderColorNormal;
+  border-left-color: $borderColorNormal;
+  border-right-color: $borderColorNormal;
+  border-bottom-color: $borderColorNormal;
+  margin-left: 6rem;
+  padding-top: var(--gap3);
+  padding-right: var(--gap3);
+  padding-bottom: var(--gap3);
+  padding-left: var(--gap3);
+  border-top-style: solid;
+  border-left-style: solid;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-top-width: var(--stroke2);
+  border-left-width: var(--stroke2);
+  border-bottom-width: var(--stroke2);
+  border-right-width: var(--stroke2);
+  transition-property: background-color;
+  transition-duration: 0.15s;
+  transition-delay: 0s;
+  transition-timing-function: ease;
+  border-top-left-radius: 50% 50%;
+  border-top-right-radius: 50% 50%;
+  border-bottom-left-radius: 50% 50%;
+  border-bottom-right-radius: 50% 50%;
+}
+
+.radioContainer:hover {
+  background-color: rgb(254, 254, 254, 0.2)
+}
+
+.radioContainer:active {
+  border-top-color: $borderColorFocused;
+  border-left-color: $borderColorFocused;
+  border-bottom-color: $borderColorFocused;
+  border-right-color: $borderColorFocused;
+  background-color: rgb(254, 254, 254, 0.3)
+}
+
+.dotIcon {
+  width: 9rem;
+  height: 9rem;
+}
