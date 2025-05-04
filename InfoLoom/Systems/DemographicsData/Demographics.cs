@@ -362,6 +362,10 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
             public int School4 { get; set; }
             public int Work { get; set; }
             public int Other { get; set; }
+
+            public PopulationGroupData()
+            {
+            }
         }
 
         public List<PopulationGroupData> GetPopulationByAgeGroups(GroupingStrategy strategy)

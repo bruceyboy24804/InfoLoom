@@ -8,6 +8,7 @@ import {ResourceTradeCost} from "./domain/tradeCostData";
 import {workforceInfo} from "./domain/workforceInfo";
 import {workplacesInfo} from "./domain/WorkplacesInfo";
 import {GroupingStrategy} from "./domain/GroupingStrategy";
+import { PopulationGroupData } from "./domain/PopulationGroupData";
 
 
 
@@ -56,7 +57,7 @@ export const DemographicsOpen = bindValue<boolean>(mod.id, DEMOGRAPHICS_OPEN, fa
 export const DemoStatsToggledOn = bindValue<boolean>(mod.id, "DemoStatsToggledOn", false);
 export const DemoAgeGroupingToggledOn = bindValue<boolean>(mod.id, "DemoAgeGroupingToggledOn", false);
 export const DemoGroupingStrategy = bindValue<GroupingStrategy>(mod.id, "DemoGroupingStrategy", GroupingStrategy.None);
-
+export const PopulationGroupDatas$ = bindValue<PopulationGroupData[]>(mod.id, "PopulationGroupDatas");
 
 
 export const DistrictDataOpen = bindValue<boolean>(mod.id, DISTRICT_DATA_OPEN, false);
@@ -103,7 +104,10 @@ export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
 
-export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", strategy);
+export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => {
+     trigger(mod.id, "SetDemoGroupingStrategy", strategy);
+     console.log(strategy);
+};
 export const SetDemoGroupingStrategyNone = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.None);
 export const SetDemoGroupingStrategyFiveYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.FiveYear);
 export const SetDemoGroupingStrategyTenYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.TenYear);

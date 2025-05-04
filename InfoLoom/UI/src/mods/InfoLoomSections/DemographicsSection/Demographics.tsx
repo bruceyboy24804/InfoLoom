@@ -727,13 +727,14 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
             />
             <Dropdown
                 theme={DropdownStyle}
-                content={
+                content={  
                   <div className={styles.dropdownContent}>
                     {GROUP_STRATEGIES.map((strategy) => (
                         <div key={strategy.value} className={styles.dropdownItem}>
                           <InfoRadioButton
                               label={strategy.label}
-                              isChecked={demoGroupingStrategy}
+                              isChecked={demoGroupingStrategy == strategy.value}
+                              groupingStrategy={strategy.value}
                               onToggle={SetDemoGroupingStrategy}
                               count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
                           />

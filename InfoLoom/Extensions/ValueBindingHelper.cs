@@ -9,27 +9,48 @@ namespace InfoLoomTwo.Extensions
 
     public class ValueBindingHelper<T>
     {
-        private readonly Action<T> _updateCallBack;
+        private readonly Action<T>? _updateCallBack;
+        private T? valueToUpdate;
+        private bool dirty;
 
-        public ValueBinding<T> Binding { get; }
+        public ValueBinding<T?> Binding { get; }
 
-        public T Value { get => Binding.value; set => Binding.Update(value); }
+        public T? Value
+        {
+            get => dirty ? valueToUpdate : Binding.value;
+            set
+            {
+                dirty = true;
+                valueToUpdate = value;
+            }
+        }
 
-        public ValueBindingHelper(ValueBinding<T> binding, Action<T> updateCallBack = null)
+        public ValueBindingHelper(ValueBinding<T?> binding, Action<T>? updateCallBack = null)
         {
             Binding = binding;
             _updateCallBack = updateCallBack;
         }
 
+        public void ForceUpdate()
+        {
+            if (dirty)
+            {
+                Binding.Update(valueToUpdate);
+
+                dirty = false;
+            }
+        }
+
         public void UpdateCallback(T value)
         {
-            Binding.Update(value);
+            Value = value;
+
             _updateCallBack?.Invoke(value);
         }
 
-        public static implicit operator T(ValueBindingHelper<T> helper)
+        public static implicit operator T?(ValueBindingHelper<T> helper)
         {
-            return helper.Binding.value;
+            return helper.Value;
         }
     }
 }

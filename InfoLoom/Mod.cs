@@ -32,7 +32,6 @@ namespace InfoLoomTwo
         public static Mod Instance { get; private set; }
      
         public static ExecutableAsset modAsset { get; private set; }    
-        internal ILog Log { get; private set; }
         public static string ID => "InfoLoomTwo";
 
         // Static logger instance with custom logger name and settings
@@ -52,7 +51,7 @@ namespace InfoLoomTwo
             setting = new Setting(this);
             if (setting == null)
             {
-                Log.Error("Failed to initialize settings.");
+                log.Error("Failed to initialize settings.");
                 return;
             }
             setting.RegisterInOptionsUI();

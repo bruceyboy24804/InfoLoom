@@ -7,6 +7,9 @@ namespace InfoLoomTwo.Extensions
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
+    using Colossal.Reflection;
     using Colossal.UI.Binding;
     using Unity.Entities;
     using UnityEngine;
@@ -20,18 +23,18 @@ namespace InfoLoomTwo.Extensions
 
         private static void WriteObject(IJsonWriter writer, Type type, object obj)
         {
-            var properties = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
 
             writer.TypeBegin(type.FullName);
 
-            foreach (var propertyInfo in properties)
+            foreach (var propertyInfo in properties.Where(x => !x.HasAttribute<WriterIgnoreAttribute>()))
             {
                 writer.PropertyName(propertyInfo.Name);
                 WriteGeneric(writer, propertyInfo.GetValue(obj));
             }
 
-            foreach (var fieldInfo in fields)
+            foreach (var fieldInfo in fields.Where(x => !x.HasAttribute<WriterIgnoreAttribute>()))
             {
                 writer.PropertyName(fieldInfo.Name);
                 WriteGeneric(writer, fieldInfo.GetValue(obj));
@@ -40,7 +43,7 @@ namespace InfoLoomTwo.Extensions
             writer.TypeEnd();
         }
 
-        private static void WriteGeneric(IJsonWriter writer, object obj)
+        private static void WriteGeneric(IJsonWriter writer, object? obj)
         {
             if (obj == null)
             {
@@ -135,11 +138,17 @@ namespace InfoLoomTwo.Extensions
             writer.ArrayEnd();
         }
 
-        private static void WriteEnumerable(IJsonWriter writer, object obj)
+        private static void WriteEnumerable(IJsonWriter writer, object? obj)
         {
+            if (obj is not IEnumerable enumerable)
+            {
+                writer.WriteEmptyArray();
+                return;
+            }
+
             var list = new List<object>();
 
-            foreach (var item in obj as IEnumerable)
+            foreach (var item in enumerable)
             {
                 list.Add(item);
             }
@@ -154,4 +163,6 @@ namespace InfoLoomTwo.Extensions
             writer.ArrayEnd();
         }
     }
+
+    public class WriterIgnoreAttribute : Attribute { }
 }

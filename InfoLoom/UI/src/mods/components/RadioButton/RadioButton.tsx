@@ -3,14 +3,15 @@ import styles from "./RadioButton.module.scss";
 import {GroupingStrategy} from "../../domain/GroupingStrategy";
 
 interface RadioButtonProps {
-    isChecked: GroupingStrategy;
+    groupingStrategy: GroupingStrategy;
+    isChecked: boolean;
     onValueChange: (newVal: GroupingStrategy) => void;
 }
 
-export const RadioButton = ({ isChecked, onValueChange }: RadioButtonProps) => {
+export const RadioButton = ({groupingStrategy, isChecked, onValueChange }: RadioButtonProps) => {
     const dotSrc = "Media/Glyphs/Circle.svg";
     return (
-        <div className={styles.radioContainer} onClick={() => onValueChange(isChecked)}>
+        <div className={styles.radioContainer} onClick={() => onValueChange(groupingStrategy)}>
             {isChecked && <Icon
                 src={dotSrc}
                 className={styles.dotIcon}
