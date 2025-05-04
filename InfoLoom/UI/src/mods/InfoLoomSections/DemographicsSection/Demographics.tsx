@@ -5,7 +5,7 @@ import Chart from 'chart.js/auto';
 // Local or app-level imports
 import {useValue} from 'cs2/api';
 import {InfoCheckbox} from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable,} from "cs2/ui";
+import {DraggablePanelProps, Dropdown, DropdownItem, DropdownToggle, Panel, Scrollable,} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {GroupingStrategy} from "../../domain/GroupingStrategy";
 import {
@@ -704,6 +704,44 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
   const demoGroupingStrategy = useValue(DemoGroupingStrategy);
 
+  function GetSelectedGroupStrategy() 
+  {
+    for (let i=0; i<GROUP_STRATEGIES.length; i++) 
+    {
+      if (GROUP_STRATEGIES[i].value == demoGroupingStrategy) 
+      {
+        let strategy = GROUP_STRATEGIES[i];
+        return (
+          <DropdownItem value={strategy} className={styles.dropdownItem} selected={demoGroupingStrategy == strategy.value} onChange={() =>  SetDemoGroupingStrategy(strategy.value)}>
+              <div key={strategy.value} className={styles.dropdownItem}>
+              <InfoRadioButton
+                  label={strategy.label}
+                  isChecked={demoGroupingStrategy == strategy.value}
+                  groupingStrategy={strategy.value}
+                  onToggle={SetDemoGroupingStrategy}
+                  count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
+              />
+            </div>
+          </DropdownItem>
+        );
+      }
+    }
+
+    let strategy = GROUP_STRATEGIES[0];
+    return (
+      <DropdownItem value={strategy} className={styles.dropdownItem} selected={demoGroupingStrategy == strategy.value} onChange={() =>  SetDemoGroupingStrategy(strategy.value)}>
+          <div key={strategy.value} className={styles.dropdownItem}>
+          <InfoRadioButton
+              label={strategy.label}
+              isChecked={demoGroupingStrategy == strategy.value}
+              groupingStrategy={strategy.value}
+              onToggle={SetDemoGroupingStrategy}
+              count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
+          />
+        </div>
+      </DropdownItem>
+    );
+  }
 
   return (
       <Panel
@@ -725,28 +763,34 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                 onToggle={SetDemoStatsToggledOn}
 
             />
-            <Dropdown
-                theme={DropdownStyle}
-                content={  
-                  <div className={styles.dropdownContent}>
-                    {GROUP_STRATEGIES.map((strategy) => (
-                        <div key={strategy.value} className={styles.dropdownItem}>
-                          <InfoRadioButton
-                              label={strategy.label}
-                              isChecked={demoGroupingStrategy == strategy.value}
-                              groupingStrategy={strategy.value}
-                              onToggle={SetDemoGroupingStrategy}
-                              count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
-                          />
-                        </div>
-                    ))}
-                  </div>
-                }
-            >
-              <DropdownToggle style={{ marginRight: '5rem' }}>
-                Age Grouping Options
-              </DropdownToggle>
-            </Dropdown>
+            <div>
+              Age Grouping Options
+              <Dropdown
+                  theme={DropdownStyle}
+                  
+                  content={  
+                    <div className={styles.dropdownContent}>
+                      {GROUP_STRATEGIES.map((strategy) => (
+                        <DropdownItem value={strategy} className={styles.dropdownItem} selected={demoGroupingStrategy == strategy.value} onChange={() =>  SetDemoGroupingStrategy(strategy.value)}>
+                          <div key={strategy.value} className={styles.dropdownItem}>
+                            <InfoRadioButton
+                                label={strategy.label}
+                                isChecked={demoGroupingStrategy == strategy.value}
+                                groupingStrategy={strategy.value}
+                                onToggle={SetDemoGroupingStrategy}
+                                count={strategy.ranges.length || demographicsDataStructureDetails?.length || 0}
+                            />
+                          </div>
+                        </DropdownItem>
+                      ))}
+                    </div>
+                  }
+              >
+                <DropdownToggle style={{ marginRight: '5rem' }}>
+                  {GetSelectedGroupStrategy()}
+                </DropdownToggle>
+              </Dropdown>
+            </div>
           </div>
 
           {demoStatsToggledOn && (

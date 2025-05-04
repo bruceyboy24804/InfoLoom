@@ -104,10 +104,7 @@ export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
 
-export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => {
-     trigger(mod.id, "SetDemoGroupingStrategy", strategy);
-     console.log(strategy);
-};
+export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", strategy);
 export const SetDemoGroupingStrategyNone = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.None);
 export const SetDemoGroupingStrategyFiveYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.FiveYear);
 export const SetDemoGroupingStrategyTenYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.TenYear);
