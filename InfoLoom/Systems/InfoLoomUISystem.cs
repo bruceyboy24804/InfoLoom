@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Colossal.Logging;
 using Colossal.UI.Binding;
 using Game;
 using Game.Economy;
@@ -14,6 +15,7 @@ using InfoLoom.Systems;
 using InfoLoomTwo.Domain;
 using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Extensions;
+using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
@@ -24,9 +26,7 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 using InfoLoomTwo.Systems.TradeCostData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
-
-
-
+using Unity.Entities;
 
 
 namespace InfoLoomTwo.Systems
@@ -48,6 +48,7 @@ namespace InfoLoomTwo.Systems
         private const string TradeCostsOpen = "TradeCostsOpen";
         private const string WorkforceOpen = "WorkforceOpen";
         private const string WorkplacesOpen = "WorkplacesOpen";
+        private const string CommercialCompanyDebugOpen = "CommercialCompanyDebugOpen";
         
         
         /*private const string BuildingDemandData = "BuildingDemandData";
@@ -83,6 +84,8 @@ namespace InfoLoomTwo.Systems
         
         private CommercialSystem m_CommercialSystem;
         private CommercialProductsSystem m_CommercialProductsSystem;
+        private CommercialCompanyDataSystem m_CommercialCompanyDataSystem;
+        
         private Demographics m_Demographics;
         private DistrictDataSystem m_DistrictDataSystem;
         private IndustrialSystem m_IndustrialSystem;
@@ -100,6 +103,10 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<int[]> m_CommercialBinding;
         //CommercialProductsDataUI
         private ValueBindingHelper<Domain.CommercialProductsData[]> m_CommercialProductBinding;
+        //CommercialCompanyDebugDataUI
+        private ValueBindingHelper<CommercialCompanyDTO[]> m_uiDebugData;
+        private ValueBinding<bool> _cCDPVBinding;
+        
         //DemographicsUI
         private GetterValueBinding<int> m_OldCitizenBinding;
         private ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
@@ -107,7 +114,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> m_DemoStatsToggledOnBinding;
         private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
         private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
-        private ValueBindingHelper<List<Demographics.PopulationGroupData>> m_GroupedPopulationBinding;  
+        private ValueBindingHelper<Demographics.PopulationGroupData[]> m_GroupedPopulationBinding;  
         private ValueBindingHelper<Demographics.GroupStrategyInfo[]> m_GroupStrategiesBinding;
 //DistrictDataUI
         private RawValueBinding m_uiDistricts;
@@ -142,19 +149,22 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _wFPVBinding;
         private ValueBinding<bool> _wPPVBinding;
         
+
+        private ILog m_Log;
+        
         public override GameMode gameMode => GameMode.Game;
 
         protected override void OnCreate()
         {    
             base.OnCreate();
+            m_Log = Mod.log;
             _uiUpdateState = UIUpdateState.Create(World, 256);
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_ResidentialDemandSystem = base.World.GetOrCreateSystemManaged<ResidentialDemandSystem>();
             m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
             m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
-            
-            
+            m_CommercialCompanyDataSystem = base.World.GetOrCreateSystemManaged<CommercialCompanyDataSystem>();
             m_DistrictDataSystem = base.World.GetOrCreateSystemManaged<DistrictDataSystem>();
             m_CommercialSystem = base.World.GetOrCreateSystemManaged<CommercialSystem>();
             m_CommercialProductsSystem = base.World.GetOrCreateSystemManaged<CommercialProductsSystem>();
@@ -227,7 +237,14 @@ namespace InfoLoomTwo.Systems
 
             //CommercialProductsDataUI
             m_CommercialProductBinding = CreateBinding("CommercialProductsData", Array.Empty<CommercialProductsData>());
-
+            //CommercialCompanyDebugDataUI
+             // You need to create this binding for the Commercial Company Debug panel visibility
+            _cCDPVBinding = new ValueBinding<bool>(ModID, CommercialCompanyDebugOpen, false);
+             AddBinding(_cCDPVBinding);
+             AddBinding(new TriggerBinding<bool>(ModID, CommercialCompanyDebugOpen, SetCommercialCompanyDebugVisibility));
+             
+             m_uiDebugData = CreateBinding("CommercialCompanyDebugData", Array.Empty<CommercialCompanyDTO>());
+    
             //DemographicsUI
             m_PopulationAtAgeInfoBinding = CreateBinding("DemographicsDataDetails", new PopulationAtAgeInfo[0]);
             m_TotalsBinding = CreateBinding("DemographicsDataTotals", new int[10]);
@@ -243,6 +260,8 @@ namespace InfoLoomTwo.Systems
              AddBinding(m_DemoAgeGroupingToggledOnBinding);
              AddBinding(new TriggerBinding<bool>(ModID, "DemoAgeGroupingToggledOn", SetDemoAgeGroupingVisibility));
              m_DemoGroupingStrategyBinding = CreateBinding("DemoGroupingStrategy", "SetDemoGroupingStrategy",  GroupingStrategy.None);
+            m_GroupedPopulationBinding = CreateBinding("PopulationGroupDatas", new Demographics.PopulationGroupData[0]);
+
             
             //DistrictDataUI
             // First binding: Basic district information
@@ -291,8 +310,6 @@ namespace InfoLoomTwo.Systems
         }
         protected override void OnUpdate()
         {
-            
-            
             if (_bDPVBinding.value )
             {
                 
@@ -307,7 +324,7 @@ namespace InfoLoomTwo.Systems
                     m_IndustrialDemandSystem.officeBuildingDemand
                 };
             }
-        
+
             if (_cDPVBinding.value )
             {
                 var commercialSystem = base.World.GetOrCreateSystemManaged<CommercialSystem>();
@@ -322,7 +339,7 @@ namespace InfoLoomTwo.Systems
                 m_CommercialSystem.ForceUpdateOnce();
                 
             }
-        
+
             if (_cPPVBinding.value )
             {
                 m_CommercialProductBinding.Value = CommercialProductsSystem.m_DemandData
@@ -367,29 +384,42 @@ namespace InfoLoomTwo.Systems
                 m_CommercialProductsSystem.ForceUpdateOnce();
                 
             }
-        
+            if (_cCDPVBinding.value)
+            {
+                // Update CommercialData
+                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialData.Companies.ToArray();
+                m_CommercialCompanyDataSystem.IsPanelVisible = true;
+            }
+            //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} 2.");
             if (_dPVBinding.value)
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
+
                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-                
+
                 // Get current grouping strategy
+
                 GroupingStrategy currentStrategy = m_DemoGroupingStrategyBinding.Value;
-                
+
                 // Update the grouped population data binding
-                m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy);
+
+                //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} getting population by age group");
+                m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy).ToArray();
                 
                 m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
                 m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
                 
                 if (m_DemoStatsToggledOnBinding.value)
                 {
+                    //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} totals binding");
                     m_TotalsBinding.Value = demographics.m_Totals.ToArray();
                     m_OldCitizenBinding.Update();
                 }
                 
                 m_Demographics.IsPanelVisible = true;
                 m_Demographics.ForceUpdateOnce();
+
+                //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} demographics finished");
             }
         
             if (_dDPVBinding.value )
@@ -713,7 +743,16 @@ namespace InfoLoomTwo.Systems
             }
         }
         private void SetDemoAgeGroupingVisibility(bool on) {m_DemoAgeGroupingToggledOnBinding.Update(on);}
-       
+        private void SetCommercialCompanyDebugVisibility(bool open)
+        {
+            _cCDPVBinding.Update(open);
+            m_CommercialCompanyDataSystem.IsPanelVisible = open;
+
+            if (open)
+            {
+                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialData.Companies.ToArray();
+            }
+        }
             
         private string[] ExtractExcludedResources(Resource excludedResources)
         {
@@ -772,7 +811,7 @@ namespace InfoLoomTwo.Systems
         private void UpdateGroupedDemographicsData(GroupingStrategy strategy)
         {
             var demographics = World.GetExistingSystemManaged<Demographics>();
-            m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy);
+            m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy).ToArray();
         }
 
         

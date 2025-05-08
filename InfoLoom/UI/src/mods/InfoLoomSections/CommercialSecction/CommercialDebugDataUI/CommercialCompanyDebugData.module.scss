@@ -1,0 +1,170 @@
+.panel {
+  width: 1100rem;
+  max-width: 1200rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: 5rem;
+  font-size: 115%;
+}
+
+.tableHeader {
+  max-width: 1200rem;
+  margin: 0 auto;
+  padding: 0 25rem;
+}
+
+.row,
+.headerRow {
+   width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 1rem 25rem;
+  min-width: min-content;
+}
+
+.headerRow {
+  padding: 1rem 0;
+}
+
+.nameColumn {
+  flex: 1rem; // Adjusted flex for better spacing
+  min-width: 150rem; // Increased minimum width
+  margin-right: 10rem;
+  text-align: center;
+}
+
+.serviceColumn {
+  flex: 5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.employeeColumn {
+  flex: 1.5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.vehicleColumn {
+  flex: 1.5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.resourcesColumn {
+  flex: 1.5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.efficiencyColumn {
+  flex: 1.5 1 0;
+  min-width: 120rem; // Ensure enough space for numbers
+  margin-left: 10rem;
+  text-align: right;
+}
+
+.scrollable {
+  max-height: 550rem;
+  overflow-y: auto;
+  width: 100%;
+  padding: 8rem;
+}
+
+.dataDivider {
+  display: flex;
+  height: 4rem;
+  flex-direction: column;
+  justify-content: center;
+
+  &::after {
+    content: '';
+    border-bottom: 1rem solid gray;
+    width: 100%;
+  }
+}
+
+.loadingText {
+  text-align: center;
+  padding: 20rem;
+}
+
+.scrollableContent {
+  padding: 1rem 0;
+}
+
+.tooltipContent {
+  z-index: 10;
+  max-width: 300rem;
+  word-wrap: break-word;
+}
+
+.tooltipText {
+  margin-bottom: 1rem;
+  color: #ffffff;
+
+  p {
+    margin-bottom: 5rem;
+    font-size: 15rem;
+    text-align: left;
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+.factorRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5rem;
+}
+
+.factorName {
+  flex: 2;
+  text-align: left;
+}
+
+.factorValue {
+  flex: 1;
+  text-align: right;
+}
+
+.factorResult {
+  flex: 1;
+  text-align: right;
+  font-weight: bold;
+}
+
+.positive {
+  color: #4CAF50;
+}
+
+.negative {
+  color: #F44336;
+}
+
+.neutral {
+  color: #FFFFFF;
+}
+.virtualListContainer {
+  height: 500px;
+  width: 100%;
+  overflow: hidden;
+}
+.employeeCountText{
+  text-align: right;
+}

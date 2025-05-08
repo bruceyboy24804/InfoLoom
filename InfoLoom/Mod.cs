@@ -83,7 +83,7 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CommercialCompanyDebugSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
         }
         

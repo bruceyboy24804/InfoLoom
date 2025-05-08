@@ -14,7 +14,9 @@ import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemand
 import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
 import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
 import Districts from "mods/InfoLoomSections/DistrictSection/Districts";
+import CommercialCompanyDebugDataPanel from "mods/InfoLoomSections/CommercialSecction/CommercialDebugDataUI/CommercialCompanyDebugData";
 import * as bindings from "mods/bindings";
+
 
 interface SectionConfig {
   component: JSX.Element;
@@ -58,6 +60,11 @@ const sections: Record<string, SectionConfig> = {
     openState: () => useValue(bindings.CommercialProductsOpen),
     toggle: bindings.SetCommercialProductsOpen
   },
+    CommercialCompanyDebugData: {
+        component: <CommercialCompanyDebugDataPanel />,
+        openState: () => useValue(bindings.CommercialCompanyDebugOpen),
+        toggle: bindings.SetCommercialCompanyDebugOpen
+    },
   Industrial: {
     component: <Industrial />,
     openState: () => useValue(bindings.IndustrialDemandOpen),

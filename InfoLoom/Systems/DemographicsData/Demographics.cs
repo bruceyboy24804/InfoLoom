@@ -1,4 +1,4 @@
-﻿﻿using System.Runtime.CompilerServices;
+﻿﻿﻿using System.Runtime.CompilerServices;
 using Colossal.UI.Binding;
 using Game.Agents;
 using Game.Citizens;
@@ -156,8 +156,35 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
                         if (ageInDays <= 20)
                         {
                             info.ChildCount++; // Count in child demographic
-                            info.School1++;    // All are in elementary school
-                            m_Totals[4]++;     // Increment total students count
+                            
+                            // Allow assignment to School2 instead of forcing all to School1
+                            // Students will be assigned based on their actual assigned school level
+                            // which will be determined by the game mechanics
+                            if (isStudent && chunk.Has(ref m_StudentType))
+                            {
+                                for (int j = 0; j < studentArray.Length; j++)
+                                {
+                                    // Find matching entity in student array
+                                    if (entities[i].Index == entities[j].Index)
+                                    {
+                                        byte level = studentArray[j].m_Level;
+                                        switch (level)
+                                        {
+                                            case 1: info.School1++; break;
+                                            case 2: info.School2++; break;
+                                            default: info.School1++; break; // Default to School1 if unexpected level
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // If not a student or student data not accessible, default to School1
+                                info.School1++;
+                            }
+                            
+                            m_Totals[4]++; // Increment total students count
                             
                             // Don't process any other categories for this age range
                             if (ageInDays > m_Totals[6])
@@ -362,6 +389,10 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
             public int School4 { get; set; }
             public int Work { get; set; }
             public int Other { get; set; }
+
+            public PopulationGroupData()
+            {
+            }
         }
 
         public List<PopulationGroupData> GetPopulationByAgeGroups(GroupingStrategy strategy)
@@ -483,7 +514,7 @@ namespace InfoLoomTwo.Systems.DemographicsData.Demographics
             }
             catch (Exception ex)
             {
-                Mod.log.Error($"Error updating strategy: {ex.Message}");
+                //Mod.log.Error($"Error updating strategy: {ex.Message}");
             };
             
         }

@@ -39,6 +39,7 @@
 	  <Compile Remove="Systems\DistrictData\EmployeesDataSystem.cs" />
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <None Include="UI\src\mods\bindings.ts" />
+	  <None Include="UI\src\mods\bindings.ts" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -91,6 +92,10 @@
 		</Reference>
 		<Reference Include="Colossal.Localization">
 			<Private>False</Private>
+		</Reference>
+		<Reference Include="mscorlib">
+		  <Private>False</Private>
+		  <HintPath>$(ManagedPath)\mscorlib.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

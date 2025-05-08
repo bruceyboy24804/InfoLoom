@@ -8,6 +8,8 @@ import {ResourceTradeCost} from "./domain/tradeCostData";
 import {workforceInfo} from "./domain/workforceInfo";
 import {workplacesInfo} from "./domain/WorkplacesInfo";
 import {GroupingStrategy} from "./domain/GroupingStrategy";
+import { PopulationGroupData } from "./domain/PopulationGroupData";
+import { CommercialDatas, EfficiencyFactorInfo, CommercialCompanyDebug } from "./domain/CommercialCompanyDebugData";
 
 
 
@@ -23,6 +25,7 @@ const RESIDENTIAL_DEMAND_OPEN = "ResidentialDemandOpen";
 const TRADE_COSTS_OPEN = "TradeCostsOpen";
 const WORKFORCE_OPEN = "WorkforceOpen";
 const WORKPLACES_OPEN = "WorkplacesOpen";
+const COMMERCIAL_COMPANY_DEBUG_OPEN = "CommercialCompanyDebugOpen";
 export const BUILDING_DEMAND_DATA = "BuildingDemandData";
 export const COMMERCIAL_DATA = "CommercialData";
 export const COMMERCIAL_DATA_EX_RES = "CommercialDataExRes";
@@ -52,11 +55,12 @@ export const InfoLoomMenuOpen = bindValue<boolean>(mod.id, INFO_LOOM_MENU_OPEN, 
 export const BuildingDemandOpen = bindValue<boolean>(mod.id, BUILDING_DEMAND_OPEN, false);
 export const CommercialDemandOpen = bindValue<boolean>(mod.id, COMMERCIAL_DEMAND_OPEN, false);
 export const CommercialProductsOpen = bindValue<boolean>(mod.id, COMMERCIAL_PRODUCTS_OPEN, false);
+export const CommercialCompanyDebugOpen = bindValue<boolean>(mod.id, COMMERCIAL_COMPANY_DEBUG_OPEN, false);
 export const DemographicsOpen = bindValue<boolean>(mod.id, DEMOGRAPHICS_OPEN, false);
 export const DemoStatsToggledOn = bindValue<boolean>(mod.id, "DemoStatsToggledOn", false);
 export const DemoAgeGroupingToggledOn = bindValue<boolean>(mod.id, "DemoAgeGroupingToggledOn", false);
 export const DemoGroupingStrategy = bindValue<GroupingStrategy>(mod.id, "DemoGroupingStrategy", GroupingStrategy.None);
-
+export const PopulationGroupDatas$ = bindValue<PopulationGroupData[]>(mod.id, "PopulationGroupDatas");
 
 
 export const DistrictDataOpen = bindValue<boolean>(mod.id, DISTRICT_DATA_OPEN, false);
@@ -72,6 +76,7 @@ export const WorkplacesOpen = bindValue<boolean>(mod.id, WORKPLACES_OPEN, false)
 export const CommercialData = bindValue<number[]>(mod.id, "CommercialData", []);
 export const CommercialDataExRes = bindValue<string[]>(mod.id, "CommercialDataExRes", []);
 export const CommercialProductsData = bindValue<CommercialProductData[]>(mod.id, "CommercialProductsData", []);
+export const CommercialCompanyDebugData = bindValue<CommercialCompanyDebug[]>(mod.id, "CommercialCompanyDebugData");
 export const BuildingDemandData  = bindValue<number[]>(mod.id, "BuildingDemandData", []);
 export const DemographicsDataDetails = bindValue<populationAtAge[]>(mod.id, "DemographicsDataDetails", []);
 export const DemographicsDataTotals = bindValue<number[]>(mod.id, "DemographicsDataTotals", []);
@@ -92,9 +97,9 @@ export const SetInfoLoomMenuOpen = (open: boolean) => trigger(mod.id, INFO_LOOM_
 export const SetBuildingDemandOpen = (open: boolean) => trigger(mod.id, BUILDING_DEMAND_OPEN, open);
 export const SetCommercialDemandOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_DEMAND_OPEN, open);
 export const SetCommercialProductsOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_PRODUCTS_OPEN, open);
+export const SetCommercialCompanyDebugOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_COMPANY_DEBUG_OPEN, open);
 export const SetDemographicsOpen = (open: boolean) => trigger(mod.id, DEMOGRAPHICS_OPEN, open);
 export const SetDemoStatsToggledOn = (on: boolean) => trigger(mod.id, "DemoStatsToggledOn", on);
-export const SetDemoAgeGroupingToggledOn = (on: boolean) => trigger(mod.id, "DemoAgeGroupingToggledOn", on);
 export const SetDistrictDataOpen = (open: boolean) => trigger(mod.id, DISTRICT_DATA_OPEN, open);
 export const SetIndustrialDemandOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_DEMAND_OPEN, open);
 export const SetIndustrialProductsOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_PRODUCTS_OPEN, open);
@@ -102,15 +107,4 @@ export const SetResidentialDemandOpen = (open: boolean) => trigger(mod.id, RESID
 export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_OPEN, open);
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
-
 export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", strategy);
-export const SetDemoGroupingStrategyNone = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.None);
-export const SetDemoGroupingStrategyFiveYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.FiveYear);
-export const SetDemoGroupingStrategyTenYear = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.TenYear);
-export const SetDemoGroupingStrategyLifeCycle = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", GroupingStrategy.LifeCycle);
-
-
-
-
-
-
