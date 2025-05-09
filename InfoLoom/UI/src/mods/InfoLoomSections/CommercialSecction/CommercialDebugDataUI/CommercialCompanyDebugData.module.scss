@@ -22,8 +22,16 @@
   margin: 0 auto;
   padding: 0 25rem;
 }
+.row {
+  width: 100%;
+  height: 30rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 1rem 25rem;
+  min-width: min-content;
+}
 
-.row,
 .headerRow {
    width: 100%;
   display: flex;
@@ -39,9 +47,9 @@
 
 .nameColumn {
   flex: 1rem; // Adjusted flex for better spacing
-  min-width: 150rem; // Increased minimum width
+  min-width: 200rem; // Increased minimum width
   margin-right: 10rem;
-  text-align: center;
+  text-align: left;
 }
 
 .serviceColumn {
@@ -52,24 +60,26 @@
 }
 
 .employeeColumn {
-  flex: 1.5 1 0;
+  //flex: 1.5 1 0;
+  
   min-width: 120rem; // Ensure enough space for numbers
   margin-left: 10rem;
-  text-align: right;
+  text-align: center;
 }
 
 .vehicleColumn {
-  flex: 1.5 1 0;
+  //flex: 1.5 1 0;
+ 
   min-width: 120rem; // Ensure enough space for numbers
   margin-left: 10rem;
-  text-align: right;
+  text-align: center;
 }
 
 .resourcesColumn {
   flex: 1.5 1 0;
-  min-width: 120rem; // Ensure enough space for numbers
+  min-width: 200rem; // Ensure enough space for numbers
   margin-left: 10rem;
-  text-align: right;
+  text-align: center;
 }
 
 .efficiencyColumn {
@@ -78,7 +88,12 @@
   margin-left: 10rem;
   text-align: right;
 }
-
+.locationColumn {
+  flex: 1.5 1 0;
+  min-width: 120rem;
+  margin-left: 10rem;
+  text-align: center;
+}
 .scrollable {
   max-height: 550rem;
   overflow-y: auto;
@@ -161,10 +176,19 @@
   color: #FFFFFF;
 }
 .virtualListContainer {
-  height: 500px;
+  height: 500rem;
   width: 100%;
-  overflow: hidden;
+
 }
-.employeeCountText{
-  text-align: right;
+.magnifierIcon {
+  width: 30rem;
+  height: 30rem;
+  border-top-left-radius:  var(--panelRadiusInner);
+  border-top-right-radius: var(--panelRadiusInner);
+  border-bottom-left-radius: var(--panelRadiusInner);
+  border-bottom-right-radius: var(--panelRadiusInner);
+  backdrop-filter: var(--panelBlur);
+  &:hover {
+    background-color: var(--hoverColorBright);
+  }
 }

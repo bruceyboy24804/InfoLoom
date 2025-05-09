@@ -1,11 +1,14 @@
 import React, { FC, ReactElement } from 'react';
-import { useValue } from 'cs2/api';
-import { Tooltip, Panel, DraggablePanelProps } from 'cs2/ui';
+import { useValue, trigger } from 'cs2/api';
+import {Tooltip, Panel, DraggablePanelProps, Button, FloatingButton} from 'cs2/ui';
 import { formatWords, formatNumber, formatpercentage } from 'mods/InfoLoomSections/utils/formatText';
 import { EfficiencyFactorInfo, CommercialCompanyDebug, CommercialDatas } from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
 import { CommercialCompanyDebugData } from "mods/bindings";
 import {getModule} from "cs2/modding";
+import {Entity, useCssLength} from 'cs2/utils';
+import mod from "mod.json";
+
 
 // Import VirtualList components
 type SizeProvider = {getRenderedRange: () => ({offset: number, size: number, startIndex: number, endIndex: number}), getTotalSize: () => number};
@@ -30,24 +33,12 @@ const useUniformSizeProvider: (height: number, visible: number, extents: number)
 const DataDivider: FC = () => (
     <div className={styles.dataDivider} />
 );
-
-interface CommercialCompany {
-    EntityId: string; // This will be the entity ID
-    CompanyName: string;
-    ServiceAvailable: number;
-    MaxService: number;
-    TotalEmployees: number;
-    MaxWorkers: number;
-    VehicleCount: number;
-    VehicleCapacity: number;
-    Resources: string;
-    ResourceAmount: number;
-    TotalEfficiency: number;
-    Factors: EfficiencyFactorInfo[];
-}
+const focusEntity = (e: Entity) => {
+    trigger("camera", "focusEntity", e);
+};
 
 interface EfficiencyTooltipProps {
-    company: CommercialCompany;
+    company: CommercialCompanyDebug;
 }
 
 const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
@@ -116,13 +107,15 @@ const ServiceTooltip: FC<ServiceTooltipProps> = ({ serviceAvailable, maxService 
 };
 
 interface CompanyRowProps {
-    company: CommercialCompany;
+    company: CommercialCompanyDebug;
 }
 
 
 const CompanyRow: FC<CompanyRowProps> = ({ company }) => {
     const totalEfficiency = company.TotalEfficiency;
-    
+    const handleNavigate = () => {
+        trigger(mod.id, "GoTo", company.EntityId); // Call C# method
+    };
     // Calculate service usage (inverted from availability)
     const serviceUsagePercentage = company.MaxService > 0 ?
         1 - (company.ServiceAvailable / company.MaxService) : 0;
@@ -149,11 +142,13 @@ const CompanyRow: FC<CompanyRowProps> = ({ company }) => {
             </Tooltip>
 
             <div className={styles.employeeColumn}>
-               <div className={styles.employeeCountText}>{formatNumber(company.TotalEmployees)}/{formatNumber(company.MaxWorkers)} </div>
+              
+                {`${formatNumber(company.TotalEmployees)}/${formatNumber(company.MaxWorkers)}`}
+              
             </div>
-
+            
             <div className={styles.vehicleColumn}>
-                {formatNumber(company.VehicleCount)}/{formatNumber(company.VehicleCapacity)}
+              {`${formatNumber(company.VehicleCount)}/${formatNumber(company.VehicleCapacity)}`}
             </div>
 
             <Tooltip tooltip={
@@ -174,6 +169,13 @@ const CompanyRow: FC<CompanyRowProps> = ({ company }) => {
                     {totalEfficiency}
                 </div>
             </Tooltip>
+            <div className={styles.locationColumn}>
+                <Button
+                    src={"Media/Game/Icons/MapMarker.svg"}
+                    onSelect={() => focusEntity(company.EntityId)}
+                    className={styles.magnifierIcon}
+                />
+            </div>
         </div>
     );
 };
@@ -198,6 +200,9 @@ const TableHeader: FC = () => {
                 <Tooltip tooltip="Overall efficiency based on multiple factors">
                     <div className={styles.efficiencyColumn}><b>Efficiency</b></div>
                 </Tooltip>
+                <Tooltip tooltip="Location of the commercial company">
+                    <div className={styles.locationColumn}><b>Location</b></div>
+                </Tooltip>
             </div>
         </div>
     );
@@ -206,22 +211,20 @@ const TableHeader: FC = () => {
 const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) => {
     const companiesData = useValue(CommercialCompanyDebugData);
 
-    const convertedCompanies: CommercialCompany[] = companiesData?.map(company => ({
-        ...company,
-        EntityId: company.EntityId.toString() // Convert Entity to string
-    })) || [];
+
     
     // Configure the size provider for the virtual list - 60px row height, 10 visible items, 5 buffer items
-    const sizeProvider = useUniformSizeProvider(60, 10, 5);
-    
+// Update the sizeProvider to be aware of the total items
+    const sizeProvider = useUniformSizeProvider(30, companiesData.length, 5);
+
     const renderItem: RenderItemFn = (itemIndex, indexInRange) => {
-        if (itemIndex < 0 || itemIndex >= convertedCompanies.length) {
+        if (itemIndex < 0 || itemIndex >= companiesData.length) {
             return null;
         }
         return (
             <CompanyRow
                 key={itemIndex}
-                company={convertedCompanies[itemIndex]}
+                company={companiesData[itemIndex]}
             />
         );
     };
@@ -234,7 +237,7 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
             className={styles.panel}
             header={<div className={styles.header}><span className={styles.headerText}>Commercial Companies</span></div>}
         >
-            {!convertedCompanies.length ? (
+            {!companiesData.length ? (
                 <p className={styles.loadingText}>No Commercial Companies Found</p>
             ) : (
                 <div>
@@ -245,7 +248,7 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                             direction="vertical"
                             sizeProvider={sizeProvider}
                             renderItem={renderItem}
-                            style={{height: '500px'}}
+                            style={{ height: '500rem' }}
                             smooth
                         />
                     </div>

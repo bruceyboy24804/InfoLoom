@@ -8,6 +8,7 @@ using Game;
 using Game.Economy;
 using Game.Input;
 using Game.Prefabs;
+using Game.Rendering;
 using Game.Simulation;
 using Game.UI;
 using Game.UI.InGame;
@@ -85,7 +86,7 @@ namespace InfoLoomTwo.Systems
         private CommercialSystem m_CommercialSystem;
         private CommercialProductsSystem m_CommercialProductsSystem;
         private CommercialCompanyDataSystem m_CommercialCompanyDataSystem;
-        
+        private CameraUpdateSystem m_CameraUpdateSystem;
         private Demographics m_Demographics;
         private DistrictDataSystem m_DistrictDataSystem;
         private IndustrialSystem m_IndustrialSystem;
@@ -106,7 +107,7 @@ namespace InfoLoomTwo.Systems
         //CommercialCompanyDebugDataUI
         private ValueBindingHelper<CommercialCompanyDTO[]> m_uiDebugData;
         private ValueBinding<bool> _cCDPVBinding;
-        
+        private ValueBinding<Entity> m_CameraBinding;
         //DemographicsUI
         private GetterValueBinding<int> m_OldCitizenBinding;
         private ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
@@ -175,7 +176,7 @@ namespace InfoLoomTwo.Systems
             m_TradeCostSystem = base.World.GetOrCreateSystemManaged<TradeCostSystem>();
             m_WorkforceSystem = base.World.GetOrCreateSystemManaged<WorkforceSystem>();
             m_WorkplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
-            
+            m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             
             
             
@@ -242,9 +243,10 @@ namespace InfoLoomTwo.Systems
             _cCDPVBinding = new ValueBinding<bool>(ModID, CommercialCompanyDebugOpen, false);
              AddBinding(_cCDPVBinding);
              AddBinding(new TriggerBinding<bool>(ModID, CommercialCompanyDebugOpen, SetCommercialCompanyDebugVisibility));
-             
              m_uiDebugData = CreateBinding("CommercialCompanyDebugData", Array.Empty<CommercialCompanyDTO>());
-    
+             AddBinding(new TriggerBinding<Entity>(ModID, "GoTo", NavigateTo));
+
+             
             //DemographicsUI
             m_PopulationAtAgeInfoBinding = CreateBinding("DemographicsDataDetails", new PopulationAtAgeInfo[0]);
             m_TotalsBinding = CreateBinding("DemographicsDataTotals", new int[10]);
@@ -813,7 +815,15 @@ namespace InfoLoomTwo.Systems
             var demographics = World.GetExistingSystemManaged<Demographics>();
             m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy).ToArray();
         }
-
+        public void NavigateTo(Entity entity)
+        {
+            if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
+            {
+                m_CameraUpdateSystem.orbitCameraController.followedEntity = entity;
+                m_CameraUpdateSystem.orbitCameraController.TryMatchPosition(m_CameraUpdateSystem.activeCameraController);
+               m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
+            }
+        }
         
     }
 }

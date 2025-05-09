@@ -33,8 +33,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public int VehicleCapacity;
         public string Resources;
         public int ResourceAmount;
-        public int Efficiency;
-        public List<EfficiencyFactorInfo> EfficiencyFactors;
     }
 
     public struct EfficiencyData
@@ -165,7 +163,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
         private EfficiencyData CalculateEfficiency(Entity entity)
         {
-            // Original implementation
             var factors = new List<EfficiencyFactorInfo>();
 
             if (!EntityManager.HasComponent<Efficiency>(entity))
@@ -184,8 +181,9 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             {
                 float cumulativeEffect = 100f;
 
-                foreach (var item in array)
+                for (int i = 0; i < array.Length; i++)
                 {
+                    var item = array[i];
                     float efficiency = math.max(0f, item.m_Efficiency);
                     cumulativeEffect *= efficiency;
 
@@ -200,8 +198,9 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             }
             else
             {
-                foreach (var item in array)
+                for (int i = 0; i < array.Length; i++)
                 {
+                    var item = array[i];
                     if (math.max(0f, item.m_Efficiency) == 0f)
                     {
                         factors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
@@ -243,62 +242,63 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
         private void UpdateCommercialStats()
         {
-            // Original implementation with minor changes to use local dictionaries
-            using var entities = m_CommercialCompanyQuery.ToEntityArray(Allocator.Temp);
-            using var serviceAvailables = m_CommercialCompanyQuery.ToComponentDataArray<ServiceAvailable>(Allocator.Temp);
-            using var companyDatas = m_CommercialCompanyQuery.ToComponentDataArray<Game.Companies.CompanyData>(Allocator.Temp);
-            using var workProviders = m_CommercialCompanyQuery.ToComponentDataArray<WorkProvider>(Allocator.Temp);
-            using var maxServices = m_CommercialCompanyDataQuery.ToComponentDataArray<ServiceCompanyData>(Allocator.Temp);
+            var entities = m_CommercialCompanyQuery.ToEntityArray(Allocator.TempJob);
 
             for (int i = 0; i < entities.Length; i++)
             {
                 var entity = entities[i];
-                var serviceAvailable = serviceAvailables[i];
-                var maxServiceData = maxServices[i];
-                var companyData = companyDatas[i];
-                var workProvider = workProviders[i];
+                var prefab = EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab;
 
-                string brandName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand);
+                var serviceAvailable = EntityManager.GetComponentData<ServiceAvailable>(entity);
+                var serviceCompanyData = EntityManager.GetComponentData<ServiceCompanyData>(prefab);
+                var companyData = EntityManager.GetComponentData<Game.Companies.CompanyData>(entity);
+                var workProvider = EntityManager.GetComponentData<WorkProvider>(entity);
 
                 var employeeCount = EntityManager.TryGetBuffer<Employee>(entity, true, out var employeeBuffer)
                     ? employeeBuffer.Length
                     : 0;
 
                 var maxDeliveryTrucks = 0;
-                if (EntityManager.TryGetComponent<PrefabRef>(entity, out var prefabRef) &&
-                    EntityManager.HasComponent<CommercialCompanyData>(prefabRef.m_Prefab))
+                if (EntityManager.HasComponent<CommercialCompanyData>(prefab))
                 {
-                    var commercialData = EntityManager.GetComponentData<TransportCompanyData>(prefabRef.m_Prefab);
-                    maxDeliveryTrucks = commercialData.m_MaxTransports;
+                    maxDeliveryTrucks = EntityManager
+                        .GetComponentData<TransportCompanyData>(prefab)
+                        .m_MaxTransports;
                 }
 
                 var activeVehicles = EntityManager.HasComponent<OwnedVehicle>(entity)
                     ? CountActiveVehicles(entity)
                     : 0;
 
-                EntityManager.TryGetBuffer<Resources>(entity, true, out var resourceBuffer);
-                string resourceType = resourceBuffer.Length > 0 ? resourceBuffer[0].m_Resource.ToString() : "None";
-                int resourceAmount = resourceBuffer.Length > 0 ? resourceBuffer[0].m_Amount : 0;
+                string resourceType = "None";
+                int resourceAmount = 0;
+                if (EntityManager.TryGetBuffer<Resources>(entity, true, out var resourceBuffer) &&
+                    resourceBuffer.Length > 0)
+                {
+                    resourceType = resourceBuffer[0].m_Resource.ToString();
+                    resourceAmount = resourceBuffer[0].m_Amount;
+                }
 
                 var efficiencyData = CalculateEfficiency(entity);
-                m_EfficiencyDict[entity] = efficiencyData;
 
                 m_StatsDict[entity] = new CommercialStats
                 {
                     companyEntity = entity,
-                    CompanyName = brandName,
+                    CompanyName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand),
                     ServiceAvailable = serviceAvailable.m_ServiceAvailable,
-                    MaxService = maxServiceData.m_MaxService,
+                    MaxService = serviceCompanyData.m_MaxService,
                     TotalEmployees = employeeCount,
                     MaxWorkers = workProvider.m_MaxWorkers,
                     VehicleCount = activeVehicles,
                     VehicleCapacity = maxDeliveryTrucks,
                     Resources = resourceType,
-                    ResourceAmount = resourceAmount,
-                    Efficiency = efficiencyData.TotalEfficiency,
-                    EfficiencyFactors = efficiencyData.Factors
+                    ResourceAmount = resourceAmount
                 };
+
+                m_EfficiencyDict[entity] = efficiencyData;
             }
+
+            entities.Dispose();
         }
 
         private void ConvertToArrayFormat()
@@ -308,13 +308,15 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
             // Get keys as an array for indexed access
             Entity[] entities = m_StatsDict.Keys.ToArray();
+            Entity[] efficiencyEntities = m_EfficiencyDict.Keys.ToArray();
             
             // Use standard for loop with index
             for (int i = 0; i < entities.Length; i++)
             {
                 Entity entity = entities[i];
+                Entity efficiencyEntity = efficiencyEntities[i];
                 var stats = m_StatsDict[entity];
-                var effData = m_EfficiencyDict[entity];
+                var effData = m_EfficiencyDict[efficiencyEntity];
 
                 companies.Add(new CommercialCompanyDTO
                 {
