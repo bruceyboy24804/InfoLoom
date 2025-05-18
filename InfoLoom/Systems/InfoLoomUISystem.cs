@@ -20,7 +20,7 @@ using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
-using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
+//using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
 using InfoLoomTwo.Systems.TradeCostData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
@@ -100,7 +100,7 @@ namespace InfoLoomTwo.Systems
         private TradeCostSystem m_TradeCostSystem;
         private WorkforceSystem m_WorkforceSystem;
         private WorkplacesSystem m_WorkplacesSystem;
-        private ResidentialHouseholdSystem m_ResidentialHouseholdSystem;
+        //private ResidentialHouseholdSystem m_ResidentialHouseholdSystem;
         
         //Bindings
         //BuildingDemandUI
@@ -139,14 +139,14 @@ namespace InfoLoomTwo.Systems
         //ResidentialDemandDataUI
         public ValueBindingHelper<int[]> m_ResidentialBinding;
         //ResidentialHousingDebugDataUI
-        private ValueBinding<bool> m_ResidentialHouseholdDebugBinding;
+        /*private ValueBinding<bool> m_ResidentialHouseholdDebugBinding;
         private ValueBindingHelper<ResidentialHouseholdSystem.ResidentialDataInformation[]> m_ResidentialDataInformationBinding;
         private ValueBindingHelper<int> CurrentPage;
 		private ValueBindingHelper<int> MaxPages;
         private ValueBindingHelper<string[]> m_RoadNamesBinding;
         private ValueBindingHelper<ResidentialHouseholdSystem.ResidentialDataInformation[]> m_FilteredResidentialDataBinding;
         private string m_SelectedRoad = "";
-        private int m_ItemsPerPage = 15; // Match the value in ResidentialHouseholdSystem
+        private int m_ItemsPerPage = 15;*/
 
         //TradeCostsUI
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
@@ -201,7 +201,7 @@ namespace InfoLoomTwo.Systems
             m_WorkplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
             m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             m_IndustrialCompanySystem = World.GetOrCreateSystemManaged<IndustrialCompanySystem>();
-            m_ResidentialHouseholdSystem = World.GetOrCreateSystemManaged<ResidentialHouseholdSystem>();
+            //m_ResidentialHouseholdSystem = World.GetOrCreateSystemManaged<ResidentialHouseholdSystem>();
             
             
             //InfoLoomMenu
@@ -334,7 +334,7 @@ namespace InfoLoomTwo.Systems
             //ResidentialDemandDataUI
             m_ResidentialBinding = CreateBinding("ResidentialData", new int[18]);
             //ResidentialHousingDebugDataUI
-            m_ResidentialHouseholdDebugBinding = new ValueBinding<bool>(ModID, ResidentialDataDebugOpen, false);
+            /*m_ResidentialHouseholdDebugBinding = new ValueBinding<bool>(ModID, ResidentialDataDebugOpen, false);
             AddBinding(m_ResidentialHouseholdDebugBinding);
             AddBinding(new TriggerBinding<bool>(ModID, ResidentialDataDebugOpen, SetResidentialHouseholdVisibility));
             m_ResidentialDataInformationBinding = CreateBinding("ResidentialDataDebug", Array.Empty<ResidentialHouseholdSystem.ResidentialDataInformation>());
@@ -345,7 +345,7 @@ namespace InfoLoomTwo.Systems
             m_RoadNamesBinding = CreateBinding("RoadNames", Array.Empty<string>());
             m_FilteredResidentialDataBinding = CreateBinding("FilteredResidentialData", Array.Empty<ResidentialHouseholdSystem.ResidentialDataInformation>());
             AddBinding(new TriggerBinding<string>(ModID, "SelectRoad", FilterResidentialHouseholdsByRoad));
-            AddBinding(new TriggerBinding<bool>(ModID, "ClearRoadFilter", ClearRoadFilter));
+            AddBinding(new TriggerBinding<bool>(ModID, "ClearRoadFilter", ClearRoadFilter));*/
             
             //TradeCostsUI
             m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
@@ -555,7 +555,7 @@ namespace InfoLoomTwo.Systems
                 
             }
             
-            if (m_ResidentialHouseholdDebugBinding.value)
+            /*if (m_ResidentialHouseholdDebugBinding.value)
             { 
                 m_ResidentialHouseholdSystem.IsPanelVisible = true;
                m_ResidentialDataInformationBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
@@ -565,7 +565,7 @@ namespace InfoLoomTwo.Systems
 
                 // Initialize filtered data with all residences
                 m_FilteredResidentialDataBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
-            }
+            }*/
             if (_rDPVBinding.value)
             {
                 ResidentialSystem residentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();
@@ -576,12 +576,12 @@ namespace InfoLoomTwo.Systems
                
                 
             }
-            if (_rDPVBinding.value)
+            /*if (_rDPVBinding.value)
             {
                 m_ResidentialDataInformationBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
                 m_ResidentialHouseholdSystem.IsPanelVisible = true;
                 
-            }
+            }*/
         
             if (_tCPVBinding.value )
             {
@@ -789,7 +789,7 @@ namespace InfoLoomTwo.Systems
                 m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
             }
         }
-        private void SetResidentialHouseholdVisibility(bool open)
+        /*private void SetResidentialHouseholdVisibility(bool open)
         {
             m_ResidentialHouseholdDebugBinding.Update(open);
             m_ResidentialHouseholdSystem.IsPanelVisible = open;
@@ -852,7 +852,7 @@ namespace InfoLoomTwo.Systems
                 // Refresh data without filter
                 UpdateResidentialData();
             }
-        }
+        }*/
         private void SetTradeCostsVisibility(bool open)
         {
             _tCPVBinding.Update(open);
@@ -993,20 +993,20 @@ namespace InfoLoomTwo.Systems
                m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
             }
         }
-        private void SetDiscoverPage(int page)
-{
-    CurrentPage.Value = Math.Max(1, Math.Min(page, MaxPages.Value));
-    
-    if (m_ResidentialHouseholdDebugBinding.value)
-    {
-        // This crucial line was missing - need to refresh data when page changes
-        UpdateResidentialData();
-    }
-}
+        /*private void SetDiscoverPage(int page)
+        {
+            CurrentPage.Value = Math.Max(1, Math.Min(page, MaxPages.Value));
+            
+            if (m_ResidentialHouseholdDebugBinding.value)
+            {
+                // This crucial line was missing - need to refresh data when page changes
+                UpdateResidentialData();
+            }
+        }
 
-private void SetDiscoverMaxPages(int maxPages)
-{
-    MaxPages.Value = maxPages;
-}
+        private void SetDiscoverMaxPages(int maxPages)
+        {
+            MaxPages.Value = maxPages;
+        }*/
     }
 }

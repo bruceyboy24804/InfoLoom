@@ -18,11 +18,11 @@ const sections: Record<string, SectionConfig> = {
     openState: () => useValue(bindings.ResidentialDemandOpen),
     toggle: bindings.SetResidentialDemandOpen
   },
-  "Households": {
+  /*"Households": {
     component: <ResidentialHousehold/>,
     openState: () => useValue(bindings.ResidentialDataDebugOpen),
     toggle: bindings.SetResidentialDataDebugOpen
-  },
+  },*/
 };
 export function ResidentialMenuButton(): JSX.Element {
   const residentialMenuOpen = useValue(bindings.ResidentialMenuOpen);

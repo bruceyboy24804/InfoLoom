@@ -42,6 +42,12 @@
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <None Include="UI\src\mods\bindings.ts" />
+	  <Compile Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
+	  <EmbeddedResource Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
+	  <None Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
+	  <Compile Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
+	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
+	  <None Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />

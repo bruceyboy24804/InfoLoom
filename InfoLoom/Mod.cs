@@ -19,9 +19,9 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
-using InfoLoomTwo.Systems.ResidentialData;
+/*using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
-using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;
+using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;*/
 using InfoLoomTwo.Systems.TradeCostData;
 using Unity.Entities;
 
@@ -91,7 +91,7 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<ResidentialHouseholdSystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAt<ResidentialHouseholdSystem>(SystemUpdatePhase.GameSimulation);
 
 
         }
