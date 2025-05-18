@@ -1,27 +1,26 @@
 import React, { useCallback } from "react";
 import { useValue } from "cs2/api";
-import { Button, FloatingButton, Tooltip } from "cs2/ui";
+import { Button, FloatingButton, Tooltip, Icon } from "cs2/ui";
 import icon from "images/infoloom.svg";
 import styles from "./InfoLoomMenu.module.scss";
 import Demographics from "mods/InfoLoomSections/DemographicsSection/Demographics";
 import Workforce from "mods/InfoLoomSections/WorkforceSection/Workforce";
 import Workplaces from "mods/InfoLoomSections/WorkplacesSection/Workplaces";
-import Residential from "mods/InfoLoomSections/ResidentialSection/residential";
 import Demand from "mods/InfoLoomSections/DemandSection/Demand";
-import Commercial from "mods/InfoLoomSections/CommercialSecction/CommercialDemandUI/CommercialDemand";
-import CommercialProducts from "mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts";
-import Industrial from "mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand";
-import IndustrialProducts from "mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts";
 import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
-import Districts from "mods/InfoLoomSections/DistrictSection/Districts";
-import CommercialCompanyDebugDataPanel from "mods/InfoLoomSections/CommercialSecction/CommercialDebugDataUI/CommercialCompanyDebugData";
 import * as bindings from "mods/bindings";
+import { CommercialMenuButton } from "mods/InfoLoomMenu/CommercialMenu/CommercialMenu";
+import IndustrialMenuButton from "./IndustrialMenu/IndustrialMenu";
+import DistrictMenuButton from "./DistrictMenu/DistrictMenu";
+import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
+import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 
 
 interface SectionConfig {
   component: JSX.Element;
   openState: () => boolean;
   toggle: (state: boolean) => void;
+  src?: string;
 }
 
 const sections: Record<string, SectionConfig> = {
@@ -40,50 +39,41 @@ const sections: Record<string, SectionConfig> = {
     openState: () => useValue(bindings.WorkplacesOpen),
     toggle: bindings.SetWorkplacesOpen
   },
-  Residential: {
-    component: <Residential />,
-    openState: () => useValue(bindings.ResidentialDemandOpen),
-    toggle: bindings.SetResidentialDemandOpen
+  "Residential Menu": {
+    component: < ResidentialMenuButton />,
+    openState: () => useValue(bindings.ResidentialMenuOpen),
+    toggle: bindings.SetResidentialMenuOpen,
+    src: "Media/Glyphs/FilledArrowRight.svg"
+
   },
   Demand: {
     component: <Demand />,
     openState: () => useValue(bindings.BuildingDemandOpen),
     toggle: bindings.SetBuildingDemandOpen
   },
-  Commercial: {
-    component: <Commercial />,
-    openState: () => useValue(bindings.CommercialDemandOpen),
-    toggle: bindings.SetCommercialDemandOpen
-  },
-  "Commercial Products": {
-    component: <CommercialProducts />,
-    openState: () => useValue(bindings.CommercialProductsOpen),
-    toggle: bindings.SetCommercialProductsOpen
-  },
-    CommercialCompanyDebugData: {
-        component: <CommercialCompanyDebugDataPanel />,
-        openState: () => useValue(bindings.CommercialCompanyDebugOpen),
-        toggle: bindings.SetCommercialCompanyDebugOpen
-    },
-  Industrial: {
-    component: <Industrial />,
-    openState: () => useValue(bindings.IndustrialDemandOpen),
-    toggle: bindings.SetIndustrialDemandOpen
-  },
-  "Industrial Products": {
-    component: <IndustrialProducts />,
-    openState: () => useValue(bindings.IndustrialProductsOpen),
-    toggle: bindings.SetIndustrialProductsOpen
+  "Industrial Menu": {
+    component: <IndustrialMenuButton/>,
+    openState: () => useValue(bindings.IndustrialMenuOpen),
+    toggle: bindings.SetIndustrialMenuOpen,
+    src: "Media/Glyphs/FilledArrowRight.svg"
+
   },
   "Trade Cost": {
     component: <TradeCost />,
     openState: () => useValue(bindings.TradeCostsOpen),
     toggle: bindings.SetTradeCostsOpen
   },
-  Districts: {
-    component: <Districts />,
-    openState: () => useValue(bindings.DistrictDataOpen),
-    toggle: bindings.SetDistrictDataOpen
+  "District Menu": {
+    component: < DistrictMenuButton/>,
+    openState: () => useValue(bindings.DistrictMenuOpen),
+    toggle: bindings.SetDistrictMenuOpen,
+    src: "Media/Glyphs/FilledArrowRight.svg"
+  },
+  "Commercial Menu" : {
+    component: <CommercialMenuButton />,
+    openState: () => useValue(bindings.CommercialMenuOpen),
+    toggle: bindings.SetCommercialMenuOpen,
+    src: "Media/Glyphs/FilledArrowRight.svg"
   }
 };
 
@@ -114,18 +104,23 @@ function InfoLoomButton(): JSX.Element {
           </header>
           <div className={styles.buttonRow}>
             {Object.keys(sections).map(name => (
-              <Button
-                key={name}
-                variant="flat"
-                aria-label={name}
-                aria-expanded={sectionStates[name]}
-                className={`${styles.InfoLoomButton} ${
-                  sectionStates[name] ? styles.buttonSelected : ""
-                }`}
-                onClick={() => toggleSection(name)}
-              >
-                {name}
-              </Button>
+                <Button
+                    key={name}
+                    variant="flat"
+                    aria-label={name}
+                    aria-expanded={sectionStates[name]}
+                    className={`${styles.InfoLoomButton} ${
+                        sectionStates[name] ? styles.buttonSelected : ""
+                    }`}
+                    onClick={() => toggleSection(name)}
+                >
+                  <div className={styles.buttonContent}>
+                    <span>{name}</span>
+                    {sections[name].src !== undefined &&
+                        <Icon tinted src={sections[name].src as string} className={styles.buttonIcon} />
+                    }
+                  </div>
+                </Button>
             ))}
           </div>
         </div>

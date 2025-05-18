@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { bindValue, useValue } from "cs2/api";
 import { DraggablePanelProps, Panel, PanelProps } from "cs2/ui";
-import styles from "./Residential.module.scss";
-import { ResidentialData } from "mods/bindings";
+import styles from "./residential.module.scss";
+import { ResidentialData } from "../../../bindings";
 
 
 interface RowWithTwoColumnsProps {

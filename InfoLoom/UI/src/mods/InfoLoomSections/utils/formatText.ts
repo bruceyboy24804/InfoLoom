@@ -15,6 +15,13 @@ export function formatWords(text: string, forceUpper: boolean = false): string {
 export const formatNumber = (number: number): string => {
     return new Intl.NumberFormat().format(number);
 };
-export const formatpercentage = (number: number): string => {
+export const formatPercentage1 = (number: number): string => {
     return new Intl.NumberFormat(undefined, { style: 'percent', minimumFractionDigits: 0 }).format(number);
+}
+export const formatPercentage2 = (number: number): string => {
+    // If numbers are already percentages (like 100 for 100%), divide by 100 first
+    return new Intl.NumberFormat(undefined, {
+        style: 'percent',
+        minimumFractionDigits: 0
+    }).format(number / 100);
 }

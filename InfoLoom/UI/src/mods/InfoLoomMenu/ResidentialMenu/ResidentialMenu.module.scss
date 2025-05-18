@@ -1,11 +1,8 @@
-@use '../base.scss' as _base;
+
 
 .panel {
   width: 200rem;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  margin-top: var(--gap8);
   background-color: var(--panelColorNormal);
   backdrop-filter: var(--panelBlur);
   border-top-left-radius:  var(--panelRadiusInner);
@@ -17,7 +14,9 @@
   overflow: hidden;
   animation: scale-up-center-alternate 0.25s ease 0s 1 alternate none;
   position: absolute;
-  top: 40rem;
+  left: 200rem !important;
+  top: 267rem;
+
 }
 
 .header {
@@ -82,19 +81,4 @@
   100% {
     transform: scale(1);
   }
-}
-.buttonContent {
-  display: flex;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  justify-content: center; /* Center the text */
-}
-
-.buttonIcon {
-  position: absolute;
-  right: 0;
-  margin-left: 8px;
-    width: 15rem;
-    height: 15rem;
 }

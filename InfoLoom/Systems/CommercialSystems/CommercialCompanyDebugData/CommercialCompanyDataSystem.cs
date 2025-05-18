@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Colossal.Entities;
 using Colossal.Logging;
+using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Common;
@@ -19,43 +20,30 @@ using DeliveryTruck = Game.Vehicles.DeliveryTruck;
 
 namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 {
-    
-
-    public struct CommercialStats
+       public readonly struct EfficiencyFactorInfo : IJsonWritable
     {
-        public Entity companyEntity;
-        public string CompanyName;
-        public int ServiceAvailable;
-        public int MaxService;
-        public int TotalEmployees;
-        public int MaxWorkers;
-        public int VehicleCount;
-        public int VehicleCapacity;
-        public string Resources;
-        public int ResourceAmount;
-    }
-
-    public struct EfficiencyData
-    {
-        public int TotalEfficiency;
-        public List<EfficiencyFactorInfo> Factors;
-    }
-    public struct EfficiencyFactorInfo
-    {
-        private Game.Buildings.EfficiencyFactor factor;
-        private int value;
-        private int result;
+        public readonly Game.Buildings.EfficiencyFactor Factor;
+        public readonly int Value;
+        public readonly int Result;
 
         public EfficiencyFactorInfo(Game.Buildings.EfficiencyFactor factor, int value, int result)
         {
-            this.factor = factor;
-            this.value = value;
-            this.result = result;
+            Factor = factor;
+            Value = value;
+            Result = result;
         }
 
-        public Game.Buildings.EfficiencyFactor Factor => factor;
-        public int Value => value;
-        public int Result => result;
+        public void Write(IJsonWriter writer)
+        {
+            writer.TypeBegin(typeof(EfficiencyFactorInfo).FullName);
+            writer.PropertyName("factor");
+            writer.Write(Enum.GetName(typeof(Game.Buildings.EfficiencyFactor), Factor));
+            writer.PropertyName("value");
+            writer.Write(Value);
+            writer.PropertyName("result");
+            writer.Write(Result);
+            writer.TypeEnd();
+        }
     }
 
     // Company DTO for UI consumption
@@ -72,7 +60,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public string Resources;
         public int ResourceAmount;
         public int TotalEfficiency;
-        public List<EfficiencyFactorInfo> Factors;
+        public EfficiencyFactorInfo[] Factors;
     }
 
     // Modified CommercialData to use array
@@ -84,16 +72,11 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
     public partial class CommercialCompanyDataSystem : GameSystemBase
     {
         private NameSystem m_NameSystem;
+        private ImageSystem m_ImageSystem;
         private EntityQuery m_CommercialCompanyQuery;
         private EntityQuery m_CommercialCompanyDataQuery;
         private EntityQuery m_EfficiencyQuery;
         private ILog m_Log;
-        
-        // Internal tracking dictionaries (keep these for easier data manipulation)
-        private Dictionary<Entity, CommercialStats> m_StatsDict;
-        private Dictionary<Entity, EfficiencyData> m_EfficiencyDict;
-        
-        // Public array-based data structure for UI
         public CommercialData m_CommercialData;
         public bool IsPanelVisible;
 
@@ -101,10 +84,9 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         {
             base.OnCreate();
             m_Log = Mod.log;
-            m_StatsDict = new Dictionary<Entity, CommercialStats>();
-            m_EfficiencyDict = new Dictionary<Entity, EfficiencyData>();
             m_CommercialData = new CommercialData { Companies = Array.Empty<CommercialCompanyDTO>() };
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
+            m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
 
             // Original query setup remains the same
             m_CommercialCompanyQuery = GetEntityQuery(new EntityQueryDesc
@@ -161,49 +143,55 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             return activeVehicles;
         }
 
-        private EfficiencyData CalculateEfficiency(Entity entity)
+        private (int efficiency, EfficiencyFactorInfo[] factors) CalculateEfficiency(Entity entity)
         {
-            var factors = new List<EfficiencyFactorInfo>();
+            Entity targetEntity = EntityManager.TryGetComponent<PropertyRenter>(entity, out var renter)
+                ? renter.m_Property
+                : entity;
 
-            if (!EntityManager.HasComponent<Efficiency>(entity))
-                return new EfficiencyData { TotalEfficiency = 100, Factors = factors };
+            if (!EntityManager.HasComponent<Efficiency>(targetEntity))
+            {
+                return (100, Array.Empty<EfficiencyFactorInfo>());
+            }
 
-            var buffer = EntityManager.GetBuffer<Efficiency>(entity, true);
-            using var array = buffer.ToNativeArray(Allocator.Temp);
-            array.Sort();
+            var buffer = EntityManager.GetBuffer<Efficiency>(targetEntity, true);
+            if (buffer.Length == 0)
+            {
+                return (100, Array.Empty<EfficiencyFactorInfo>());
+            }
 
-            if (array.Length == 0)
-                return new EfficiencyData { TotalEfficiency = 100, Factors = factors };
+            using var sortedEfficiencies = buffer.ToNativeArray(Allocator.Temp);
+            sortedEfficiencies.Sort();
 
-            int totalEfficiency = (int)math.round(100f * BuildingUtils.GetEfficiency(buffer));
+            var tempFactors = new List<EfficiencyFactorInfo>();
+            var totalEfficiency = (int)math.round(100f * BuildingUtils.GetEfficiency(buffer));
 
             if (totalEfficiency > 0)
             {
                 float cumulativeEffect = 100f;
-
-                for (int i = 0; i < array.Length; i++)
+                for (int i = 0; i < sortedEfficiencies.Length; i++)
                 {
-                    var item = array[i];
+                    var item = sortedEfficiencies[i];
                     float efficiency = math.max(0f, item.m_Efficiency);
                     cumulativeEffect *= efficiency;
 
                     int percentageChange = math.max(-99, (int)math.round(100f * efficiency) - 100);
-                    int cumulativeResult = math.max(1, (int)math.round(cumulativeEffect));
+                    int result = math.max(1, (int)math.round(cumulativeEffect));
 
                     if (percentageChange != 0)
                     {
-                        factors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, cumulativeResult));
+                        tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, result));
                     }
                 }
             }
             else
             {
-                for (int i = 0; i < array.Length; i++)
+                for (int i =0; i < sortedEfficiencies.Length; i++)
                 {
-                    var item = array[i];
+                    var item = sortedEfficiencies[i];
                     if (math.max(0f, item.m_Efficiency) == 0f)
                     {
-                        factors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
+                        tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
                         if ((int)item.m_Factor <= 3)
                         {
                             break;
@@ -212,11 +200,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 }
             }
 
-            return new EfficiencyData
-            {
-                TotalEfficiency = totalEfficiency,
-                Factors = factors
-            };
+            return (totalEfficiency, tempFactors.ToArray());
         }
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
@@ -229,20 +213,13 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         {
             if (!IsPanelVisible)
                 return;
-                
-            m_StatsDict.Clear();
-            m_EfficiencyDict.Clear();
-            
-            // Collect data into dictionaries first (original logic)
             UpdateCommercialStats();
-            
-            // Then convert to array format for UI consumption
-            ConvertToArrayFormat();
         }
 
         private void UpdateCommercialStats()
         {
-            var entities = m_CommercialCompanyQuery.ToEntityArray(Allocator.TempJob);
+            var entities = m_CommercialCompanyQuery.ToEntityArray(Allocator.Temp);
+            var companies = new List<CommercialCompanyDTO>(entities.Length);
 
             for (int i = 0; i < entities.Length; i++)
             {
@@ -278,12 +255,13 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     resourceType = resourceBuffer[0].m_Resource.ToString();
                     resourceAmount = resourceBuffer[0].m_Amount;
                 }
+                var (efficiency, factors) = CalculateEfficiency(entity);
 
-                var efficiencyData = CalculateEfficiency(entity);
+                
 
-                m_StatsDict[entity] = new CommercialStats
+                companies.Add(new CommercialCompanyDTO
                 {
-                    companyEntity = entity,
+                    EntityId = entity,
                     CompanyName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand),
                     ServiceAvailable = serviceAvailable.m_ServiceAvailable,
                     MaxService = serviceCompanyData.m_MaxService,
@@ -292,50 +270,13 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     VehicleCount = activeVehicles,
                     VehicleCapacity = maxDeliveryTrucks,
                     Resources = resourceType,
-                    ResourceAmount = resourceAmount
-                };
-
-                m_EfficiencyDict[entity] = efficiencyData;
-            }
-
-            entities.Dispose();
-        }
-
-        private void ConvertToArrayFormat()
-        {
-            // Convert dictionary data to array for UI
-            var companies = new List<CommercialCompanyDTO>();
-
-            // Get keys as an array for indexed access
-            Entity[] entities = m_StatsDict.Keys.ToArray();
-            Entity[] efficiencyEntities = m_EfficiencyDict.Keys.ToArray();
-            
-            // Use standard for loop with index
-            for (int i = 0; i < entities.Length; i++)
-            {
-                Entity entity = entities[i];
-                Entity efficiencyEntity = efficiencyEntities[i];
-                var stats = m_StatsDict[entity];
-                var effData = m_EfficiencyDict[efficiencyEntity];
-
-                companies.Add(new CommercialCompanyDTO
-                {
-                    EntityId = entity,
-                    CompanyName = stats.CompanyName,
-                    ServiceAvailable = stats.ServiceAvailable,
-                    MaxService = stats.MaxService,
-                    TotalEmployees = stats.TotalEmployees,
-                    MaxWorkers = stats.MaxWorkers,
-                    VehicleCount = stats.VehicleCount,
-                    VehicleCapacity = stats.VehicleCapacity,
-                    Resources = stats.Resources,
-                    ResourceAmount = stats.ResourceAmount,
-                    TotalEfficiency = effData.TotalEfficiency,
-                    Factors = effData.Factors
+                    ResourceAmount = resourceAmount,
+                    TotalEfficiency = efficiency,
+                    Factors = factors,
                 });
             }
 
-            // Update the public data structure
+            entities.Dispose();
             m_CommercialData = new CommercialData { Companies = companies.ToArray() };
         }
     }

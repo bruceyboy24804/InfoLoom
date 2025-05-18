@@ -5,7 +5,7 @@ import Chart from 'chart.js/auto';
 // Local or app-level imports
 import {useValue} from 'cs2/api';
 import {InfoCheckbox} from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, Dropdown, DropdownItem, DropdownToggle, FOCUS_DISABLED, Panel, Scrollable,} from "cs2/ui";
+import {DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable, DropdownItem} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {GroupingStrategy} from "../../domain/GroupingStrategy";
 import {
@@ -13,10 +13,10 @@ import {
   DemographicsDataDetails,
   DemographicsDataOldestCitizen,
   DemographicsDataTotals,
-  DemoGroupingStrategy,
   DemoStatsToggledOn,
-  SetDemoGroupingStrategy,
-  SetDemoStatsToggledOn
+  SetDemoStatsToggledOn,
+  DemoGroupingStrategy,
+  SetDemoGroupingStrategy
 } from "../../bindings";
 import {InfoRadioButton} from "../../components/InfoRadioButton/InfoRadioButton";
 import {getModule} from "cs2/modding";
@@ -703,15 +703,27 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const demoStatsToggledOn = useValue(DemoStatsToggledOn);
   const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
   const demoGroupingStrategy = useValue(DemoGroupingStrategy);
-
-  // Function to render the selected strategy name
-  function renderSelectedGroupStrategy() {
-    const selectedStrategy = GROUP_STRATEGIES.find(
-        strategy => strategy.value === demoGroupingStrategy
-    ) || GROUP_STRATEGIES[0];
-
-    return selectedStrategy.label;
-  }
+const groupingOptions = GROUP_STRATEGIES.map((strategy) => (
+  <DropdownItem
+    key={strategy.value}
+    value={strategy.value}
+    closeOnSelect={true}
+    onChange={() => SetDemoGroupingStrategy(strategy.value)}
+    className={DropdownStyle.dropdownItem}
+    selected={demoGroupingStrategy === strategy.value}
+  >
+    <div className={styles.dropdownItem}>
+      <span>{strategy.label}</span>
+      <span className={styles.itemCount}>
+        ({strategy.ranges.length || demographicsDataStructureDetails?.length || 0})
+      </span>
+    </div>
+  </DropdownItem>
+));
+const renderSelectedGrouping = () => {
+  const selected = GROUP_STRATEGIES.find(strategy => strategy.value === demoGroupingStrategy);
+  return selected ? selected.label : 'Age Grouping Options';
+};
 
   return (
       <Panel
@@ -733,38 +745,14 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                 onToggle={SetDemoStatsToggledOn}
 
             />
-            <div>
-              Age Grouping Options
-              <Dropdown
-                  theme={DropdownStyle}
-                  focusKey={FOCUS_DISABLED}
-                  content={
-                    <div className={styles.dropdownContent}>
-                      {GROUP_STRATEGIES.map((strategy) => (
-                          <DropdownItem
-                              key={strategy.value}
-                              value={strategy}
-                              className={styles.dropdownItem}
-                              selected={demoGroupingStrategy === strategy.value}
-                              onChange={() => SetDemoGroupingStrategy(strategy.value)}
-                              closeOnSelect={true}
-                          >
-                            <div className={styles.dropdownName}>
-                              {strategy.label}
-                              <span className={styles.count}>
-                ({strategy.ranges.length || demographicsDataStructureDetails?.length || 0})
-              </span>
-                            </div>
-                          </DropdownItem>
-                      ))}
-                    </div>
-                  }
-              >
-                <DropdownToggle style={{ marginRight: '5rem' }}>
-                  <div className={styles.dropdownName}>{renderSelectedGroupStrategy()}</div>
-                </DropdownToggle>
-              </Dropdown>
-            </div>
+            <Dropdown
+            theme={DropdownStyle}
+            content={groupingOptions}
+          >
+            <DropdownToggle disabled={false}>
+              <div className={styles.dropdownName}>{renderSelectedGrouping()}</div>
+            </DropdownToggle>
+          </Dropdown>
           </div>
 
           {demoStatsToggledOn && (
@@ -778,7 +766,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
             <div className={styles.chartContainer}>
               <DemographicsChart
                   StructureDetails={demographicsDataStructureDetails}
-                  groupingStrategy={demoGroupingStrategy}
+                  groupingStrategy={groupingStrategy}
               />
             </div>
           </Scrollable>

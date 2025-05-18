@@ -3,11 +3,14 @@ import InfoLoomMenu from 'mods/InfoLoomMenu/InfoLoomMenu';
 import 'intl';
 import 'intl/locale-data/jsonp/en-US';
 import {Chart} from 'chart.js';
+import { VanillaComponentResolver } from './mods/VanillaComponents/VanillaComponents';
 
 
 
 const register: ModRegistrar = moduleRegistry => {
+  VanillaComponentResolver.setRegistry(moduleRegistry);
   moduleRegistry.append('GameTopLeft', InfoLoomMenu);
+
 };
 
 const oldResize = Chart.prototype['resize'];

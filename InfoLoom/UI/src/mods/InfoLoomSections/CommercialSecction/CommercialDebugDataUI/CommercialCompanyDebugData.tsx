@@ -1,8 +1,13 @@
 import React, { FC, ReactElement } from 'react';
 import { useValue, trigger } from 'cs2/api';
 import {Tooltip, Panel, DraggablePanelProps, Button, FloatingButton} from 'cs2/ui';
-import { formatWords, formatNumber, formatpercentage } from 'mods/InfoLoomSections/utils/formatText';
-import { EfficiencyFactorInfo, CommercialCompanyDebug, CommercialDatas } from '../../../domain/CommercialCompanyDebugData';
+import {
+    formatWords,
+    formatNumber,
+    formatPercentage2,
+    formatPercentage1
+} from 'mods/InfoLoomSections/utils/formatText';
+import { CommercialCompanyDebug} from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
 import { CommercialCompanyDebugData } from "mods/bindings";
 import {getModule} from "cs2/modding";
@@ -45,23 +50,17 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
     return (
         <div className={styles.tooltipContent}>
             <div className={styles.tooltipText}>
-                <p><strong>Total Efficiency: {company.TotalEfficiency}</strong></p>
                 <p>Factors affecting efficiency:</p>
-                {company.Factors && company.Factors.map((factor: EfficiencyFactorInfo, index: number) => (
+                {company.Factors && company.Factors.map((factor, index) => (
                     <div key={index} className={styles.factorRow}>
-                        <span className={styles.factorName}>{factor.factor}</span>
-                        <span className={
-                            factor.value > 0
-                                ? styles.positive
-                                : factor.value < 0
-                                    ? styles.negative
-                                    : styles.neutral
+                        <span className={styles.factorName}>{formatWords(factor.factor.toString())} </span>                        <span className={
+                            factor.value > 0 ? styles.positive :
+                                factor.value < 0 ? styles.negative :
+                                    styles.neutral
                         }>
-                          {factor.value > 0 ? '+' : ''}{factor.value}
-                        </span>
-                        <span className={styles.factorResult}>
-                          {factor.result}
-                        </span>
+                {factor.value > 0 ? '+' : ''}{formatPercentage2(factor.value)}
+            </span>
+                        <span className={styles.factorResult}>{formatPercentage2(factor.result)}</span>
                     </div>
                 ))}
             </div>
@@ -98,7 +97,7 @@ const ServiceTooltip: FC<ServiceTooltipProps> = ({ serviceAvailable, maxService 
     return (
         <div className={styles.tooltipContent}>
             <div className={styles.tooltipText}>
-                <p><strong>Service Usage: {formatpercentage(serviceUsagePercentage)}</strong></p>
+                <p><strong>Service Usage: {formatPercentage1(serviceUsagePercentage)}</strong></p>
                 <p>Available: {formatNumber(serviceAvailable)}</p>
                 <p>Maximum: {formatNumber(maxService)}</p>
             </div>
@@ -119,10 +118,10 @@ const CompanyRow: FC<CompanyRowProps> = ({ company }) => {
     // Calculate service usage (inverted from availability)
     const serviceUsagePercentage = company.MaxService > 0 ?
         1 - (company.ServiceAvailable / company.MaxService) : 0;
-    const serviceUsage = formatpercentage(serviceUsagePercentage);
+    const serviceUsage = formatPercentage1(serviceUsagePercentage);
     
     const employeeRatio = company.MaxWorkers > 0 ?
-        formatpercentage(company.TotalEmployees / company.MaxWorkers) : "N/A";
+        formatPercentage1(company.TotalEmployees / company.MaxWorkers) : "N/A";
 
     return (
         <div className={styles.row}>
@@ -166,11 +165,12 @@ const CompanyRow: FC<CompanyRowProps> = ({ company }) => {
                 <EfficiencyTooltip company={company} />
             }>
                 <div className={styles.efficiencyColumn}>
-                    {totalEfficiency}
+                    {formatPercentage2(totalEfficiency)}
                 </div>
             </Tooltip>
             <div className={styles.locationColumn}>
                 <Button
+                    variant={"icon"}
                     src={"Media/Game/Icons/MapMarker.svg"}
                     onSelect={() => focusEntity(company.EntityId)}
                     className={styles.magnifierIcon}

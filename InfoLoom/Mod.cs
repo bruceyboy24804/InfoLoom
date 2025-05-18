@@ -14,11 +14,16 @@ using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData.Demographics;
 using InfoLoomTwo.Systems.DistrictData;
+using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
+using InfoLoomTwo.Systems.ResidentialData;
+using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
+using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;
 using InfoLoomTwo.Systems.TradeCostData;
+using Unity.Entities;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -85,6 +90,10 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<ResidentialHouseholdSystem>(SystemUpdatePhase.GameSimulation);
+
+
         }
         
         // Method that runs when the mod is disposed of

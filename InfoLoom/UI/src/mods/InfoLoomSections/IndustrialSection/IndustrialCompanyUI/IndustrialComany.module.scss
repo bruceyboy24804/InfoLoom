@@ -1,5 +1,5 @@
 .panel {
-  width: 1100rem;
+  width: 1200rem;
   max-width: 1200rem;
 }
 
@@ -33,7 +33,7 @@
 }
 
 .headerRow {
-   width: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   box-sizing: border-box;
@@ -46,14 +46,16 @@
 }
 
 .nameColumn {
+  display: flex;
   flex: 1rem; // Adjusted flex for better spacing
-  min-width: 200rem; // Increased minimum width
+  min-width: 300rem; // Increased minimum width
   margin-right: 10rem;
   text-align: left;
 }
 
-.serviceColumn {
+.processingColumn {
   flex: 5 1 0;
+  display: flex;
   min-width: 120rem; // Ensure enough space for numbers
   margin-left: 10rem;
   text-align: right;
@@ -61,7 +63,7 @@
 
 .employeeColumn {
   //flex: 1.5 1 0;
-  
+
   min-width: 120rem; // Ensure enough space for numbers
   margin-left: 10rem;
   text-align: center;
@@ -69,7 +71,7 @@
 
 .vehicleColumn {
   //flex: 1.5 1 0;
- 
+
   min-width: 120rem; // Ensure enough space for numbers
   margin-left: 10rem;
   text-align: center;
@@ -77,7 +79,7 @@
 
 .resourcesColumn {
   flex: 1.5 1 0;
-  min-width: 200rem; // Ensure enough space for numbers
+  min-width: 100rem; // Ensure enough space for numbers
   margin-left: 10rem;
   text-align: center;
 }
@@ -85,13 +87,13 @@
 .efficiencyColumn {
   flex: 1.5 1 0;
   min-width: 120rem; // Ensure enough space for numbers
-  margin-left: 10rem;
+  margin-left: 80rem;
   text-align: right;
 }
 .locationColumn {
   flex: 1.5 1 0;
-  min-width: 120rem;
-  margin-left: 10rem;
+  min-width: 100rem;
+  margin-left: 50rem;
   text-align: center;
 }
 .scrollable {
@@ -150,17 +152,21 @@
 
 .factorName {
   display: flex;
-  width: 200rem;
+  width: 220rem;
   flex: 2;
   text-align: left;
 }
 
 .factorValue {
+  width:50rem;
+    display: flex;
   flex: 1;
   text-align: right;
 }
 
 .factorResult {
+  width: 50rem;
+  display: flex;
   margin-left: 10rem;
   flex: 1;
   text-align: right;
@@ -184,6 +190,15 @@
 
 }
 .magnifierIcon {
+  width: 30rem;
+  height: 30rem;
+  border-top-left-radius:  var(--panelRadiusInner);
+  border-top-right-radius: var(--panelRadiusInner);
+  border-bottom-left-radius: var(--panelRadiusInner);
+  border-bottom-right-radius: var(--panelRadiusInner);
+
+}
+.iconImage {
   width: 30rem;
   height: 30rem;
   border-top-left-radius:  var(--panelRadiusInner);

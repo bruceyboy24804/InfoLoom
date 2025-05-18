@@ -9,11 +9,16 @@ import {workforceInfo} from "./domain/workforceInfo";
 import {workplacesInfo} from "./domain/WorkplacesInfo";
 import {GroupingStrategy} from "./domain/GroupingStrategy";
 import { PopulationGroupData } from "./domain/PopulationGroupData";
-import { CommercialDatas, EfficiencyFactorInfo, CommercialCompanyDebug } from "./domain/CommercialCompanyDebugData";
-
+import { CommercialCompanyDebug } from "./domain/CommercialCompanyDebugData";
+import {IndustrialCompanyDebug} from "./domain/IndustrialCompanyDebugData";
+import {ResidentialHouseholdData} from './domain/ResidentialHouseholdData';
 
 
 const INFO_LOOM_MENU_OPEN = "InfoLoomMenuOpen";
+const COMMERCIAL_MENU_OPEN = "CommercialMenuOpen";
+const INDUSTRIAL_MENU_OPEN = "IndustrialMenuOpen";
+const DISTRICT_MENU_OPEN = "DistrictMenuOpen";
+const RESIDENTIAL_MENU_OPEN = "ResidentialMenuOpen";
 const BUILDING_DEMAND_OPEN = "BuildingDemandOpen";
 const COMMERCIAL_DEMAND_OPEN = "CommercialDemandOpen";
 const COMMERCIAL_PRODUCTS_OPEN = "CommercialProductsOpen";
@@ -26,6 +31,8 @@ const TRADE_COSTS_OPEN = "TradeCostsOpen";
 const WORKFORCE_OPEN = "WorkforceOpen";
 const WORKPLACES_OPEN = "WorkplacesOpen";
 const COMMERCIAL_COMPANY_DEBUG_OPEN = "CommercialCompanyDebugOpen";
+const INDUSTRIAL_COMPANY_DEBUG_OPEN = "IndustrialCompanyDebugOpen";
+const RESIDENTIAL_DATA_DEBUG_OPEN = "ResidentialDataDebugOpen";
 export const BUILDING_DEMAND_DATA = "BuildingDemandData";
 export const COMMERCIAL_DATA = "CommercialData";
 export const COMMERCIAL_DATA_EX_RES = "CommercialDataExRes";
@@ -52,17 +59,19 @@ export const WORKFORCE_DATA = "WorkforceData";
 export const WORKPLACES_DATA = "WorkplacesData";
 
 export const InfoLoomMenuOpen = bindValue<boolean>(mod.id, INFO_LOOM_MENU_OPEN, false);
+export const CommercialMenuOpen = bindValue<boolean>(mod.id, COMMERCIAL_MENU_OPEN, false);
+export const IndustrialMenuOpen = bindValue<boolean>(mod.id, INDUSTRIAL_MENU_OPEN, false);
+export const DistrictMenuOpen = bindValue<boolean>(mod.id, DISTRICT_MENU_OPEN, false);
+export const ResidentialMenuOpen = bindValue<boolean>(mod.id, RESIDENTIAL_MENU_OPEN, false);
 export const BuildingDemandOpen = bindValue<boolean>(mod.id, BUILDING_DEMAND_OPEN, false);
 export const CommercialDemandOpen = bindValue<boolean>(mod.id, COMMERCIAL_DEMAND_OPEN, false);
 export const CommercialProductsOpen = bindValue<boolean>(mod.id, COMMERCIAL_PRODUCTS_OPEN, false);
 export const CommercialCompanyDebugOpen = bindValue<boolean>(mod.id, COMMERCIAL_COMPANY_DEBUG_OPEN, false);
+export const IndustrialCompanyDebugOpen = bindValue<boolean>(mod.id, INDUSTRIAL_COMPANY_DEBUG_OPEN, false);
 export const DemographicsOpen = bindValue<boolean>(mod.id, DEMOGRAPHICS_OPEN, false);
 export const DemoStatsToggledOn = bindValue<boolean>(mod.id, "DemoStatsToggledOn", false);
 export const DemoAgeGroupingToggledOn = bindValue<boolean>(mod.id, "DemoAgeGroupingToggledOn", false);
 export const DemoGroupingStrategy = bindValue<GroupingStrategy>(mod.id, "DemoGroupingStrategy", GroupingStrategy.None);
-export const PopulationGroupDatas$ = bindValue<PopulationGroupData[]>(mod.id, "PopulationGroupDatas");
-
-
 export const DistrictDataOpen = bindValue<boolean>(mod.id, DISTRICT_DATA_OPEN, false);
 export const IndustrialDemandOpen = bindValue<boolean>(mod.id, INDUSTRIAL_DEMAND_OPEN, false);
 export const IndustrialProductsOpen = bindValue<boolean>(mod.id, INDUSTRIAL_PRODUCTS_OPEN, false);
@@ -85,6 +94,7 @@ export const DistrictData$ = bindValue<District[]>("InfoLoomTwo", "DistrictData"
 export const IndustrialData = bindValue<number[]>(mod.id, "IndustrialData", []);
 export const IndustrialDataExRes = bindValue<string[]>(mod.id, "IndustrialDataExRes", []);
 export const IndustrialProductsData = bindValue<industrialProductData[]>(mod.id, "IndustrialProductsData", []);
+export const IndustrialCompanyDebugData = bindValue<IndustrialCompanyDebug[]>(mod.id, "IndustrialCompanyDebugData", []);
 export const ResidentialData = bindValue<number[]>(mod.id, "ResidentialData", []);
 export const TradeCostsData = bindValue<ResourceTradeCost[]>(mod.id, "TradeCostsData", []);
 export const WorkforceData = bindValue<workforceInfo[]>(mod.id, "WorkforceData", []);
@@ -94,6 +104,10 @@ export const WorkplacesData = bindValue<workplacesInfo[]>(mod.id, "WorkplacesDat
 
 
 export const SetInfoLoomMenuOpen = (open: boolean) => trigger(mod.id, INFO_LOOM_MENU_OPEN, open);
+export const SetCommercialMenuOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_MENU_OPEN, open);
+export const SetIndustrialMenuOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_MENU_OPEN, open);
+export const SetDistrictMenuOpen = (open: boolean) => trigger(mod.id, DISTRICT_MENU_OPEN, open);
+export const SetResidentialMenuOpen = (open: boolean) => trigger(mod.id, RESIDENTIAL_MENU_OPEN, open);
 export const SetBuildingDemandOpen = (open: boolean) => trigger(mod.id, BUILDING_DEMAND_OPEN, open);
 export const SetCommercialDemandOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_DEMAND_OPEN, open);
 export const SetCommercialProductsOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_PRODUCTS_OPEN, open);
@@ -103,8 +117,25 @@ export const SetDemoStatsToggledOn = (on: boolean) => trigger(mod.id, "DemoStats
 export const SetDistrictDataOpen = (open: boolean) => trigger(mod.id, DISTRICT_DATA_OPEN, open);
 export const SetIndustrialDemandOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_DEMAND_OPEN, open);
 export const SetIndustrialProductsOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_PRODUCTS_OPEN, open);
+export const SetIndustrialCompanyDebugOpen = (open: boolean) => trigger(mod.id, INDUSTRIAL_COMPANY_DEBUG_OPEN, open);
 export const SetResidentialDemandOpen = (open: boolean) => trigger(mod.id, RESIDENTIAL_DEMAND_OPEN, open);
 export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_OPEN, open);
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
 export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", strategy);
+
+
+// ResidentialHousehold bindings
+export const ResidentialDataDebugOpen = bindValue<boolean>(mod.id, RESIDENTIAL_DATA_DEBUG_OPEN, false);
+export const SetResidentialDataDebugOpen = (open: boolean) => trigger(mod.id, RESIDENTIAL_DATA_DEBUG_OPEN, open);
+export const ResidentialDataDebug = bindValue<ResidentialHouseholdData[]>(mod.id, "ResidentialDataDebug", []);
+export const DiscoverCurrentPage$ = bindValue<number>(mod.id, "Discover.CurrentPage", 1);
+export const DiscoverMaxPages$ = bindValue<number>(mod.id, "Discover.MaxPages", 1);
+export const RoadNames = bindValue<string[]>(mod.id, "RoadNames", []);
+export const FilteredResidentialData = bindValue<ResidentialHouseholdData[]>(mod.id, "FilteredResidentialData", []);
+
+// ResidentialHousehold trigger functions
+export const setDiscoverPage = (page: number) => trigger(mod.id, "Discover.SetPage", page);
+export const setDiscoverMaxPages = (maxPages: number) => trigger(mod.id, "Discover.SetMaxPages", maxPages);
+export const selectRoad = (roadName: string) => trigger(mod.id, "SelectRoad", roadName);
+export const clearRoadFilter = () => trigger(mod.id, "ClearRoadFilter", true);
