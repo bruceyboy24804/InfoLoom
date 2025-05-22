@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useValue } from 'cs2/api';
-import { DraggablePanelProps, Panel, Scrollable } from "cs2/ui";
+import { DraggablePanelProps, Panel, Scrollable, Tooltip } from "cs2/ui";
 import styles from "./Workforce.module.scss";
 import { workforceInfo } from "../../domain/workforceInfo";
 import { WorkforceData } from "../../bindings";
@@ -29,22 +29,33 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     );
   }
 
-  // Education level colors
-  const educationColors = {
-    uneducated: '#808080',
-    poorlyEducated: '#B09868',
-    educated: '#368A2E',
-    wellEducated: '#B981C0',
-    highlyEducated: '#5796D1',
+  // Central color definitions for consistent theming
+  const colors = {
+    // Education level colors
+    education: {
+      uneducated: '#808080',
+      poorlyEducated: '#B09868',
+      educated: '#368A2E',
+      wellEducated: '#B981C0',
+      highlyEducated: '#5796D1',
+    },
+    // Workforce status colors
+    status: {
+      employed: '#4CAF50', // Green
+      unemployed: '#F44336', // Red
+      underemployed: '#FFC107', // Yellow/amber
+      outside: '#9E9E9E', // Gray
+      homeless: '#673AB7', // Purple
+    }
   };
 
   // Configure our data for display
   const workforceLevels = [
-    { levelColor: educationColors.uneducated, levelName: 'Uneducated', levelValues: ilWorkforce[0] },
-    { levelColor: educationColors.poorlyEducated, levelName: 'Poorly Educated', levelValues: ilWorkforce[1] },
-    { levelColor: educationColors.educated, levelName: 'Educated', levelValues: ilWorkforce[2] },
-    { levelColor: educationColors.wellEducated, levelName: 'Well Educated', levelValues: ilWorkforce[3] },
-    { levelColor: educationColors.highlyEducated, levelName: 'Highly Educated', levelValues: ilWorkforce[4] },
+    { levelColor: colors.education.uneducated, levelName: 'Uneducated', levelValues: ilWorkforce[0] },
+    { levelColor: colors.education.poorlyEducated, levelName: 'Poorly Educated', levelValues: ilWorkforce[1] },
+    { levelColor: colors.education.educated, levelName: 'Educated', levelValues: ilWorkforce[2] },
+    { levelColor: colors.education.wellEducated, levelName: 'Well Educated', levelValues: ilWorkforce[3] },
+    { levelColor: colors.education.highlyEducated, levelName: 'Highly Educated', levelValues: ilWorkforce[4] },
   ];
   
   // Total workforce values
@@ -85,14 +96,23 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
       },
       underemployedWorkers: {
         total: totalUnderemployed,
-        breakdown: [] as {level: string, count: number, color: string}[]
+        breakdown: [] as {level: string, count: number, color: string, levelTotal: number, rate: number, idealJobType: string, jobTakingDetails: {levelName: string, count: number}[]}[]
       },
       homelessWorkers: {
         total: totalHomeless,
         breakdown: [] as {level: string, count: number, color: string}[]
+      },
+      outsideWorkers: {
+        total: totalOutsideWorkforce,
+        breakdown: [] as {level: string, count: number, color: string}[]
       }
     };
-    
+
+    // Store information about which jobs underemployed people are currently working in
+    // This is a simplified model based on available data
+    // Key structure: "SourceEducation_TargetJob" -> count
+    const underemploymentDistribution: Record<string, number> = {};
+
     // Calculate breakdown of unemployment, underemployment, and homelessness by education level
     workforceLevels.forEach(level => {
       // Unemployment breakdown
@@ -110,11 +130,87 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
       
       // Underemployment breakdown
       const underemployed = level.levelValues.Under || 0;
+      const levelTotal = level.levelValues.Total || 0;
+      const underemploymentRate = levelTotal > 0 ? (underemployed / levelTotal) * 100 : 0;
+
+      // Map education level to ideal job type
+      let idealJobType = "Higher education jobs";
+      let jobTakingDetails: {levelName: string, count: number}[] = [];
+
+      // Calculate detailed distribution of underemployed workers into different job categories
+      // This is an approximation based on available data
+      if (level.levelName === 'Highly Educated') {
+        idealJobType = "Not applicable"; // They're at the top already
+
+        // Distribution of Highly Educated workers in lower-level jobs
+        // Assuming most (60%) work in Well Educated jobs, 30% in Educated jobs, 10% in Poorly Educated
+        const wellEducatedJobsCount = Math.round(underemployed * 0.6);
+        const educatedJobsCount = Math.round(underemployed * 0.3);
+        const poorlyEducatedJobsCount = Math.round(underemployed * 0.1);
+
+        jobTakingDetails = [
+          { levelName: 'Well Educated', count: wellEducatedJobsCount },
+          { levelName: 'Educated', count: educatedJobsCount },
+          { levelName: 'Poorly Educated', count: poorlyEducatedJobsCount }
+        ];
+
+        // Store for analysis if needed elsewhere
+        underemploymentDistribution["Highly Educated_Well Educated"] = wellEducatedJobsCount;
+        underemploymentDistribution["Highly Educated_Educated"] = educatedJobsCount;
+        underemploymentDistribution["Highly Educated_Poorly Educated"] = poorlyEducatedJobsCount;
+      }
+      else if (level.levelName === 'Well Educated') {
+        idealJobType = "Highly Educated jobs";
+
+        // Distribution of Well Educated workers in lower-level jobs
+        // Assuming most (70%) work in Educated jobs, 30% in Poorly Educated jobs
+        const educatedJobsCount = Math.round(underemployed * 0.7);
+        const poorlyEducatedJobsCount = Math.round(underemployed * 0.3);
+
+        jobTakingDetails = [
+          { levelName: 'Educated', count: educatedJobsCount },
+          { levelName: 'Poorly Educated', count: poorlyEducatedJobsCount }
+        ];
+
+        // Store for analysis
+        underemploymentDistribution["Well Educated_Educated"] = educatedJobsCount;
+        underemploymentDistribution["Well Educated_Poorly Educated"] = poorlyEducatedJobsCount;
+      }
+      else if (level.levelName === 'Educated') {
+        idealJobType = "Well Educated jobs";
+
+        // All Educated underemployed workers assumed to work in Poorly Educated jobs
+        jobTakingDetails = [
+          { levelName: 'Poorly Educated', count: underemployed }
+        ];
+
+        // Store for analysis
+        underemploymentDistribution["Educated_Poorly Educated"] = underemployed;
+      }
+      else if (level.levelName === 'Poorly Educated') {
+        idealJobType = "Educated jobs";
+
+        // All Poorly Educated underemployed workers assumed to work in Uneducated jobs
+        jobTakingDetails = [
+          { levelName: 'Uneducated', count: underemployed }
+        ];
+
+        // Store for analysis
+        underemploymentDistribution["Poorly Educated_Uneducated"] = underemployed;
+      }
+      else {
+        idealJobType = "Not applicable"; // For Uneducated
+      }
+
       if (underemployed > 0) {
         mismatchData.underemployedWorkers.breakdown.push({
           level: level.levelName,
           count: underemployed,
-          color: level.levelColor
+          color: level.levelColor,
+          levelTotal: levelTotal,
+          rate: underemploymentRate,
+          idealJobType: idealJobType,
+          jobTakingDetails: jobTakingDetails
         });
       }
       
@@ -127,173 +223,22 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
           color: level.levelColor
         });
       }
+
+      // Outside workforce breakdown
+      const outside = level.levelValues.Outside || 0;
+      if (outside > 0) {
+        mismatchData.outsideWorkers.breakdown.push({
+          level: level.levelName,
+          count: outside,
+          color: level.levelColor
+        });
+      }
     });
     
     return mismatchData;
   };
   
   const mismatchData = calculateWorkforceMismatch();
-  
-  // Calls to action based on workforce data
-  const getCallToAction = () => {
-    const actions = [];
-    
-    const unemploymentRate = totalWorkforce > 0 ? (totalUnemployed / totalWorkforce) * 100 : 0;
-    
-    if (unemploymentRate > 10) {
-      actions.push(`High unemployment rate (${unemploymentRate.toFixed(1)}%). Consider adding more workplaces.`);
-    } else if (unemploymentRate > 5) {
-      actions.push(`Moderate unemployment rate (${unemploymentRate.toFixed(1)}%). Your city could use more jobs.`);
-    }
-    
-    if (totalUnderemployed > totalWorkforce * 0.05) {
-      actions.push(`${formatNumber(totalUnderemployed)} workers are underemployed. Consider adding more suitable jobs for their education level.`);
-    }
-    if (totalOutsideWorkforce > totalWorkforce * 0.2) {
-      actions.push(`${formatNumber(totalOutsideWorkforce)} citizens are working outside of the city. Consider providing more jobs.`);
-    }
-    
-    return actions;
-  };
-  
-  const callToActions = getCallToAction();
-  
-  // Education level case study component
-  const EducationLevelCaseStudy = ({ levelIndex, title }: { levelIndex: number, title: string }) => {
-    const level = workforceLevels[levelIndex];
-    const totalPeople = level.levelValues.Total || 0;
-    const working = level.levelValues.Worker || 0;
-    const unemployed = level.levelValues.Unemployed || 0;
-    const underemployed = level.levelValues.Under || 0;
-    const outside = level.levelValues.Outside || 0;
-    const homeless = level.levelValues.Homeless || 0;
-    
-    // Calculate rates
-    const employmentRate = totalPeople > 0 ? (working / totalPeople) * 100 : 0;
-    const unemploymentRate = totalPeople > 0 ? (unemployed / totalPeople) * 100 : 0;
-    const underemploymentRate = totalPeople > 0 ? (underemployed / totalPeople) * 100 : 0;
-    const outsideRate = totalPeople > 0 ? (outside / totalPeople) * 100 : 0;
-    const homelessRate = totalPeople > 0 ? (homeless / totalPeople) * 100 : 0;
-    
-    // Determine insights
-    /*let insight: React.ReactNode = "";
-    
-    if (unemploymentRate > 15) {
-      insight = (
-        <span className={styles.insightText}>
-          High unemployment rate ({unemploymentRate.toFixed(0)}%) for {level.levelName} workers. More jobs needed for this education level.
-        </span>
-      );
-    } else if (underemploymentRate > 20) {
-      insight = (
-        <span className={styles.insightText}>
-          Many {level.levelName} workers ({underemploymentRate.toFixed(0)}%) are underemployed. Add more suitable jobs for their skills.
-        </span>
-      );
-    } else if (outside > totalPeople * 0.3) {
-      insight = (
-        <span className={styles.insightText}>
-          Large portion of {level.levelName} citizens ({outsideRate.toFixed(0)}%) are outside the workforce. Consider policies to increase participation.
-        </span>
-      );
-    } else if (employmentRate > 75 && unemploymentRate < 5) {
-      insight = (
-        <span className={styles.insightText}>
-          Your {level.levelName} workforce is well-balanced with good employment rates. Great job!
-        </span>
-      );
-    } else {
-      insight = (
-        <span className={styles.insightText}>
-          Your {level.levelName} workforce situation is reasonably stable.
-        </span>
-      );
-    }*/
-    
-    return (
-      <div className={styles.caseStudyContainer}>
-        <div className={styles.caseStudyTitle}>
-          {title}
-        </div>
-        <div className={styles.caseStudyContent}>
-          <div className={styles.caseStudyStats}>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(totalPeople)}</div>
-              <div className={styles.statLabel}>Total</div>
-            </div>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(working)}</div>
-              <div className={styles.statLabel}>Working</div>
-            </div>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(unemployed)}</div>
-              <div className={styles.statLabel}>Unemployed</div>
-            </div>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(underemployed)}</div>
-              <div className={styles.statLabel}>Underemployed</div>
-            </div>
-          </div>
-          <div className={styles.caseStudyVisualization}>
-            <div className={styles.caseStudyBarContainer}>
-              <div className={styles.caseStudyBar}>
-                {working > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(working / totalPeople) * 100}%`,
-                      backgroundColor: '#4CAF50' // Green for employed
-                    }}
-                    title={`Employed ${level.levelName} workers: ${formatNumber(working)}`}
-                  />
-                )}
-                {unemployed > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(unemployed / totalPeople) * 100}%`,
-                      backgroundColor: '#F44336' // Red for unemployed
-                    }}
-                    title={`Unemployed ${level.levelName} workers: ${formatNumber(unemployed)}`}
-                  />
-                )}
-                {underemployed > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(underemployed / totalPeople) * 100}%`,
-                      backgroundColor: '#FFC107' // Yellow for underemployed
-                    }}
-                    title={`Underemployed ${level.levelName} workers: ${formatNumber(underemployed)}`}
-                  />
-                )}
-                {outside > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(outside / totalPeople) * 100}%`,
-                      backgroundColor: '#9E9E9E' // Grey for outside workforce
-                    }}
-                    title={`${level.levelName} outside workforce: ${formatNumber(outside)}`}
-                  />
-                )}
-                {homeless > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(homeless / totalPeople) * 100}%`,
-                      backgroundColor: '#673AB7' // Purple for homeless
-                    }}
-                    title={`Homeless ${level.levelName} citizens: ${formatNumber(homeless)}`}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Panel 
@@ -309,6 +254,62 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     >
       <Scrollable className={styles.scrollable}>
         <div className={styles.container}>
+          {/* Detailed Data Table - Moved to top */}
+          <div className={styles.sectionTitle}>Detailed Workforce Data</div>
+          <div>
+            {/* Table Headers */}
+            <div className={styles.headerRow}>
+              <div className={styles.educationCol}>Education</div>
+              <div className={styles.dataCol}>Total</div>
+              <div className={styles.dataCol}>%</div>
+              <div className={styles.dataCol}>Worker</div>
+              <div className={styles.dataCol}>Unemployed</div>
+              <div className={styles.dataCol}>%</div>
+              <div className={styles.dataCol}>Under</div>
+              <div className={styles.dataCol}>Outside</div>
+              <div className={styles.dataCol}>Homeless</div>
+            </div>
+
+            {/* Workforce Levels Rows */}
+            {[...workforceLevels,
+              { levelColor: undefined, levelName: 'TOTAL', levelValues: ilWorkforce[5] }
+            ].map((level, index) => {
+              const rowClassName = level.levelName === 'TOTAL' ?
+                `${styles.workforceRow} ${styles.totalRow}` :
+                styles.workforceRow;
+
+              const percent = totalWorkforce > 0 && typeof level.levelValues.Total === 'number'
+                ? `${((100 * level.levelValues.Total) / totalWorkforce).toFixed(1)}%`
+                : '';
+
+              const unemployment = level.levelValues.Total > 0
+                ? `${((100 * level.levelValues.Unemployed) / level.levelValues.Total).toFixed(1)}%`
+                : '';
+
+              return (
+                <div key={index} className={rowClassName}>
+                  <div className={styles.educationCol}>
+                    {level.levelColor && (
+                      <div
+                        className={styles.colorBox}
+                        style={{ backgroundColor: level.levelColor }}
+                      />
+                    )}
+                    <div>{level.levelName}</div>
+                  </div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Total)}</div>
+                  <div className={styles.dataCol}>{percent}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Worker)}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Unemployed)}</div>
+                  <div className={styles.dataCol}>{unemployment}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Under)}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Outside)}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Homeless)}</div>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Summary Section */}
           <div className={styles.summarySection}>
             <div className={styles.summaryTitle}>Workforce Summary</div>
@@ -337,192 +338,175 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
           {/* Workforce Mismatch Analysis */}
           <div className={styles.sectionTitle}>Workforce Status Analysis</div>
           
-          {/* Calls to Action */}
-          {callToActions.length > 0 && (
-            <div className={styles.callToActionContainer}>
-              {callToActions.map((action, index) => (
-                <div key={index} className={styles.callToAction}>
-                  <div className={styles.actionIcon}>!</div>
-                  <div>{action}</div>
+          {/* Unemployment table */}
+          {totalUnemployed > 0 && (
+            <div>
+              <div className={styles.tableSectionTitle}>Unemployment Breakdown</div>
+              <div className={styles.tableDescription}>Citizens looking for work: {formatNumber(totalUnemployed)}</div>
+              <div>
+                <div className={styles.headerRow}>
+                  <div className={styles.educationCol}>Education Level</div>
+                  <div className={styles.dataCol}>Unemployed</div>
+                  <div className={styles.dataCol}>% of Level</div>
+                  <div className={styles.dataCol}>% of Total Unemployed</div>
                 </div>
-              ))}
+                {mismatchData.unemployedByEducation.breakdown.map((item, idx) => (
+                  <div key={idx} className={styles.workforceRow}>
+                    <div className={styles.educationCol}>
+                      <div className={styles.colorBox} style={{ backgroundColor: item.color }}></div>
+                      {item.level}
+                    </div>
+                    <div className={styles.dataCol}>{formatNumber(item.count)}</div>
+                    <div className={styles.dataCol}>{item.rate.toFixed(1)}%</div>
+                    <div className={styles.dataCol}>{getPercentage(item.count, totalUnemployed)}</div>
+                  </div>
+                ))}
+                <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+                  <div className={styles.educationCol}>TOTAL</div>
+                  <div className={styles.dataCol}>{formatNumber(totalUnemployed)}</div>
+                  <div className={styles.dataCol}>-</div>
+                  <div className={styles.dataCol}>100%</div>
+                </div>
+              </div>
             </div>
           )}
-          
-          {/* Visual representation of mismatches */}
-          <div className={styles.mismatchVisualContainer}>
-            {totalUnemployed > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Unemployment</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(totalUnemployed)}
+
+          {/* Underemployment table */}
+          {totalUnderemployed > 0 && (
+            <div>
+              <div className={styles.tableSectionTitle}>Underemployment Breakdown</div>
+              <div className={styles.tableDescription}>Workers in jobs below their education level: {formatNumber(totalUnderemployed)}</div>
+              <div>
+                <div className={styles.headerRow}>
+                  <div className={styles.educationCol}>Education Level</div>
+                  <div className={styles.dataCol}>Underemployed</div>
+                  <div className={styles.dataCol}>% of Level</div>
+                  <div className={styles.dataCol}>Ideal Jobs</div>
+                  <div className={styles.dataCol}>Working In</div>
                 </div>
-                <div className={styles.mismatchDescription}>
-                  Citizens looking for work
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {mismatchData.unemployedByEducation.breakdown.map((item, idx) => (
-                    <div key={idx} className={styles.mismatchBreakdownItem}>
-                      <div 
-                        className={styles.mismatchColor}
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={styles.mismatchLabel}>{item.level}:</span>
-                      <span className={styles.mismatchCount}>
-                        {formatNumber(item.count)} ({item.rate.toFixed(0)}%)
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {totalUnderemployed > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Underemployed</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(totalUnderemployed)}
-                </div>
-                <div className={styles.mismatchDescription}>
-                  Workers in jobs below their education
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {mismatchData.underemployedWorkers.breakdown.map((item, idx) => (
-                    <div key={idx} className={styles.mismatchBreakdownItem}>
-                      <div 
-                        className={styles.mismatchColor}
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={styles.mismatchLabel}>{item.level}:</span>
-                      <span className={styles.mismatchCount}>{formatNumber(item.count)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {totalOutsideWorkforce > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Outside Workforce</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(totalOutsideWorkforce)}
-                </div>
-                <div className={styles.mismatchDescription}>
-                  Citizens woking outside of the city
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {workforceLevels.map((level, idx) => {
-                    const outsideCount = level.levelValues.Outside || 0;
-                    if (outsideCount > 0) {
-                      return (
-                        <div key={idx} className={styles.mismatchBreakdownItem}>
-                          <div 
-                            className={styles.mismatchColor}
-                            style={{ backgroundColor: level.levelColor }}
-                          />
-                          <span className={styles.mismatchLabel}>{level.levelName}:</span>
-                          <span className={styles.mismatchCount}>{formatNumber(outsideCount)}</span>
-                        </div>
-                      );
+                {mismatchData.underemployedWorkers.breakdown.map((item, idx) => {
+                  // Find the workers with the education level matching the ideal job type
+                  let idealWorkersCount = 0;
+                  if (item.idealJobType !== "Not applicable") {
+                    // Map ideal job type back to education level
+                    const targetEducationLevel = item.idealJobType.replace(" jobs", "");
+                    // Find this education level in the workforceLevels array
+                    const targetLevel = workforceLevels.find(wl => wl.levelName === targetEducationLevel);
+                    if (targetLevel) {
+                      idealWorkersCount = targetLevel.levelValues.Total || 0;
                     }
-                    return null;
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Education Level Analysis - Using the reusable component */}
-          <div className={styles.sectionTitle}>Education Level Analysis</div>
-          
-          <EducationLevelCaseStudy levelIndex={0} title="Uneducated Citizens" />
-          <EducationLevelCaseStudy levelIndex={1} title="Poorly Educated Citizens" />
-          <EducationLevelCaseStudy levelIndex={2} title="Educated Citizens" />
-          <EducationLevelCaseStudy levelIndex={3} title="Well Educated Citizens" />
-          <EducationLevelCaseStudy levelIndex={4} title="Highly Educated Citizens" />
-          
-          {/* Legend for case studies */}
-          <div className={styles.caseLegendContainer}>
-            <div className={styles.caseLegendTitle}>Legend</div>
-            <div className={styles.caseLegendItems}>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#4CAF50' }}></div>
-                <span>Employed</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#F44336' }}></div>
-                <span>Unemployed</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#FFC107' }}></div>
-                <span>Underemployed</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#9E9E9E' }}></div>
-                <span>Outside Workforce</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#673AB7' }}></div>
-                <span>Homeless</span>
-              </div>
-            </div>
-          </div>
+                  }
 
-          {/* Detailed Data Table */}
-          <div className={styles.sectionTitle}>Detailed Workforce Data</div>
-          <div>
-            {/* Table Headers */}
-            <div className={styles.headerRow}>
-              <div className={styles.educationCol}>Education</div>
-              <div className={styles.dataCol}>Total</div>
-              <div className={styles.dataCol}>%</div>
-              <div className={styles.dataCol}>Worker</div>
-              <div className={styles.dataCol}>Unemployed</div>
-              <div className={styles.dataCol}>%</div>
-              <div className={styles.dataCol}>Under</div>
-              <div className={styles.dataCol}>Outside</div>
-              <div className={styles.dataCol}>Homeless</div>
-            </div>
+                  // Create tooltip content showing detailed job distribution
+                  const tooltipContent = (
+                    <div className={styles.tooltipContent}>
+                      <div className={styles.tooltipTitle}>Job Distribution</div>
+                      {item.jobTakingDetails.map((detail, detailIdx) => (
+                        <div key={detailIdx} className={styles.tooltipRow}>
+                          <span>{detail.levelName}:</span>
+                          <span>{formatNumber(detail.count)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
 
-            {/* Workforce Levels Rows */}
-            {[...workforceLevels, 
-              { levelColor: undefined, levelName: 'TOTAL', levelValues: ilWorkforce[5] }
-            ].map((level, index) => {
-              const rowClassName = level.levelName === 'TOTAL' ? 
-                `${styles.workforceRow} ${styles.totalRow}` : 
-                styles.workforceRow;
-                
-              const percent = totalWorkforce > 0 && typeof level.levelValues.Total === 'number'
-                ? `${((100 * level.levelValues.Total) / totalWorkforce).toFixed(1)}%`
-                : '';
-                
-              const unemployment = level.levelValues.Total > 0
-                ? `${((100 * level.levelValues.Unemployed) / level.levelValues.Total).toFixed(1)}%`
-                : '';
-                
-              return (
-                <div key={index} className={rowClassName}>
-                  <div className={styles.educationCol}>
-                    {level.levelColor && (
-                      <div 
-                        className={styles.colorBox} 
-                        style={{ backgroundColor: level.levelColor }} 
-                      />
-                    )}
-                    <div>{level.levelName}</div>
+                  return (
+                  <div key={idx} className={styles.workforceRow}>
+                    <div className={styles.educationCol}>
+                      <div className={styles.colorBox} style={{ backgroundColor: item.color }}></div>
+                      {item.level}
+                    </div>
+                    <div className={styles.dataCol}>{formatNumber(item.count)}</div>
+                    <div className={styles.dataCol}>{item.rate.toFixed(1)}%</div>
+                    <div className={styles.dataCol}>
+                      {item.idealJobType !== "Not applicable" ? (
+                        <Tooltip tooltip={`Total ${item.idealJobType}: ${formatNumber(idealWorkersCount)}`}>
+                          <div className={styles.tooltipTrigger}>{item.idealJobType}</div>
+                        </Tooltip>
+                      ) : "N/A"}
+                    </div>
+                    <div className={styles.dataCol}>
+                      <Tooltip tooltip={tooltipContent}>
+                        <div className={styles.tooltipTrigger}>
+                          {item.jobTakingDetails.length > 0 ?
+                            `${item.jobTakingDetails[0].levelName} + ${item.jobTakingDetails.length > 1 ? 
+                              (item.jobTakingDetails.length - 1) : 0} more` :
+                            "N/A"}
+                        </div>
+                      </Tooltip>
+                    </div>
                   </div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Total)}</div>
-                  <div className={styles.dataCol}>{percent}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Worker)}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Unemployed)}</div>
-                  <div className={styles.dataCol}>{unemployment}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Under)}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Outside)}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Homeless)}</div>
+                )})}
+                <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+                  <div className={styles.educationCol}>TOTAL</div>
+                  <div className={styles.dataCol}>{formatNumber(totalUnderemployed)}</div>
+                  <div className={styles.dataCol}>-</div>
+                  <div className={styles.dataCol}>-</div>
+                  <div className={styles.dataCol}>-</div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Outside Workforce table */}
+          {totalOutsideWorkforce > 0 && (
+            <div>
+              <div className={styles.tableSectionTitle}>Outside Workforce Breakdown</div>
+              <div className={styles.tableDescription}>Citizens working outside the city: {formatNumber(totalOutsideWorkforce)}</div>
+              <div>
+                <div className={styles.headerRow}>
+                  <div className={styles.educationCol}>Education Level</div>
+                  <div className={styles.dataCol}>Outside Workers</div>
+                  <div className={styles.dataCol}>% of Total Outside</div>
+                </div>
+                {mismatchData.outsideWorkers.breakdown.map((item, idx) => (
+                  <div key={idx} className={styles.workforceRow}>
+                    <div className={styles.educationCol}>
+                      <div className={styles.colorBox} style={{ backgroundColor: item.color }}></div>
+                      {item.level}
+                    </div>
+                    <div className={styles.dataCol}>{formatNumber(item.count)}</div>
+                    <div className={styles.dataCol}>{getPercentage(item.count, totalOutsideWorkforce)}</div>
+                  </div>
+                ))}
+                <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+                  <div className={styles.educationCol}>TOTAL</div>
+                  <div className={styles.dataCol}>{formatNumber(totalOutsideWorkforce)}</div>
+                  <div className={styles.dataCol}>100%</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Homeless Workers table */}
+          {totalHomeless > 0 && (
+            <div>
+              <div className={styles.tableSectionTitle}>Homeless Citizens Breakdown</div>
+              <div className={styles.tableDescription}>Homeless citizens: {formatNumber(totalHomeless)}</div>
+              <div>
+                <div className={styles.headerRow}>
+                  <div className={styles.educationCol}>Education Level</div>
+                  <div className={styles.dataCol}>Homeless</div>
+                  <div className={styles.dataCol}>% of Total Homeless</div>
+                </div>
+                {mismatchData.homelessWorkers.breakdown.map((item, idx) => (
+                  <div key={idx} className={styles.workforceRow}>
+                    <div className={styles.educationCol}>
+                      <div className={styles.colorBox} style={{ backgroundColor: item.color }}></div>
+                      {item.level}
+                    </div>
+                    <div className={styles.dataCol}>{formatNumber(item.count)}</div>
+                    <div className={styles.dataCol}>{getPercentage(item.count, totalHomeless)}</div>
+                  </div>
+                ))}
+                <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+                  <div className={styles.educationCol}>TOTAL</div>
+                  <div className={styles.dataCol}>{formatNumber(totalHomeless)}</div>
+                  <div className={styles.dataCol}>100%</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Scrollable>
     </Panel>
@@ -530,3 +514,4 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
 };
 
 export default Workforce;
+

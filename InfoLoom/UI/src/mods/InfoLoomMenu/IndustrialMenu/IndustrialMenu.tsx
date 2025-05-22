@@ -1,4 +1,3 @@
-
 import {useValue} from "cs2/api";
 import * as bindings from "../../bindings";
 import React, {useCallback} from "react";
@@ -29,8 +28,8 @@ const sections: Record<string, SectionConfig> = {
         openState: () => useValue(bindings.IndustrialCompanyDebugOpen),
         toggle: bindings.SetIndustrialCompanyDebugOpen
     }
-
 };
+
 export function IndustrialMenuButton(): JSX.Element {
     const industrialMenuOpen = useValue(bindings.IndustrialMenuOpen);
     const sectionStates = Object.fromEntries(
@@ -41,8 +40,10 @@ export function IndustrialMenuButton(): JSX.Element {
         (name: string) => sections[name]?.toggle(!sectionStates[name]),
         [sectionStates]
     );
+    
     return (
         <div>
+            {/* Only show the menu panel when industrialMenuOpen is true */}
             {industrialMenuOpen && (
                 <div className={styles.panel}>
                     <div className={styles.buttonRow}>
@@ -64,14 +65,21 @@ export function IndustrialMenuButton(): JSX.Element {
                 </div>
             )}
 
+            {/* Always render sections based on their own open state, regardless of menu state */}
             {Object.entries(sections).map(([name, { component }]) =>
-                    sectionStates[name] && (
-                        <div key={name}>
-                            {React.cloneElement(component, {
-                                onClose: () => toggleSection(name)
-                            })}
-                        </div>
-                    )
+                sectionStates[name] && (
+                    <div key={name}>
+                        {React.cloneElement(component, {
+                            onClose: (e?: React.SyntheticEvent) => {
+                                // Stop event propagation to prevent cascading close actions
+                                if (e && typeof e.stopPropagation === 'function') {
+                                    e.stopPropagation();
+                                }
+                                toggleSection(name);
+                            }
+                        })}
+                    </div>
+                )
             )}
         </div>
     );

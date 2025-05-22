@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useValue } from "cs2/api";
 import { Button, FloatingButton, Tooltip, Icon } from "cs2/ui";
 import icon from "images/infoloom.svg";
@@ -15,84 +15,136 @@ import DistrictMenuButton from "./DistrictMenu/DistrictMenu";
 import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 
-
-interface SectionConfig {
+interface SectionItem {
   component: JSX.Element;
-  openState: () => boolean;
+  isOpen: boolean;
   toggle: (state: boolean) => void;
   src?: string;
 }
 
-const sections: Record<string, SectionConfig> = {
-  Demographics: {
-    component: <Demographics />,
-    openState: () => useValue(bindings.DemographicsOpen),
-    toggle: bindings.SetDemographicsOpen
-  },
-  Workforce: {
-    component: <Workforce />,
-    openState: () => useValue(bindings.WorkforceOpen),
-    toggle: bindings.SetWorkforceOpen
-  },
-  Workplaces: {
-    component: <Workplaces />,
-    openState: () => useValue(bindings.WorkplacesOpen),
-    toggle: bindings.SetWorkplacesOpen
-  },
-  "Residential Menu": {
-    component: < ResidentialMenuButton />,
-    openState: () => useValue(bindings.ResidentialMenuOpen),
-    toggle: bindings.SetResidentialMenuOpen,
-    src: "Media/Glyphs/FilledArrowRight.svg"
-
-  },
-  Demand: {
-    component: <Demand />,
-    openState: () => useValue(bindings.BuildingDemandOpen),
-    toggle: bindings.SetBuildingDemandOpen
-  },
-  "Industrial Menu": {
-    component: <IndustrialMenuButton/>,
-    openState: () => useValue(bindings.IndustrialMenuOpen),
-    toggle: bindings.SetIndustrialMenuOpen,
-    src: "Media/Glyphs/FilledArrowRight.svg"
-
-  },
-  "Trade Cost": {
-    component: <TradeCost />,
-    openState: () => useValue(bindings.TradeCostsOpen),
-    toggle: bindings.SetTradeCostsOpen
-  },
-  "District Menu": {
-    component: < DistrictMenuButton/>,
-    openState: () => useValue(bindings.DistrictMenuOpen),
-    toggle: bindings.SetDistrictMenuOpen,
-    src: "Media/Glyphs/FilledArrowRight.svg"
-  },
-  "Commercial Menu" : {
-    component: <CommercialMenuButton />,
-    openState: () => useValue(bindings.CommercialMenuOpen),
-    toggle: bindings.SetCommercialMenuOpen,
-    src: "Media/Glyphs/FilledArrowRight.svg"
-  }
-};
+type SectionsType = Record<string, SectionItem>;
 
 function InfoLoomButton(): JSX.Element {
+  // Move all hook calls to the component level instead of inside functions
   const infoLoomMenuOpen = useValue(bindings.InfoLoomMenuOpen);
-  const sectionStates = Object.fromEntries(
-    Object.entries(sections).map(([name, config]) => [name, config.openState()])
-  );
+  const demographicsOpen = useValue(bindings.DemographicsOpen);
+  const workforceOpen = useValue(bindings.WorkforceOpen);
+  const workplacesOpen = useValue(bindings.WorkplacesOpen);
+  const residentialMenuOpen = useValue(bindings.ResidentialMenuOpen);
+  const buildingDemandOpen = useValue(bindings.BuildingDemandOpen);
+  const industrialMenuOpen = useValue(bindings.IndustrialMenuOpen);
+  const tradeCostsOpen = useValue(bindings.TradeCostsOpen);
+  const districtMenuOpen = useValue(bindings.DistrictMenuOpen);
+  const commercialMenuOpen = useValue(bindings.CommercialMenuOpen);
+  const residentialDemandOpen = useValue(bindings.ResidentialDemandOpen);
+
+  // Define sections with memoization to prevent recreation on each render
+  const sections = useMemo<SectionsType>(() => ({
+    Demographics: {
+      component: <Demographics />,
+      isOpen: demographicsOpen,
+      toggle: bindings.SetDemographicsOpen
+    },
+    Workforce: {
+      component: <Workforce />,
+      isOpen: workforceOpen,
+      toggle: bindings.SetWorkforceOpen
+    },
+    Workplaces: {
+      component: <Workplaces />,
+      isOpen: workplacesOpen,
+      toggle: bindings.SetWorkplacesOpen
+    },
+    "Residential Menu": {
+      component: <ResidentialMenuButton />,
+      isOpen: residentialMenuOpen,
+      toggle: bindings.SetResidentialMenuOpen,
+      src: "Media/Glyphs/FilledArrowRight.svg"
+    },
+    Demand: {
+      component: <Demand />,
+      isOpen: buildingDemandOpen,
+      toggle: bindings.SetBuildingDemandOpen
+    },
+    "Industrial Menu": {
+      component: <IndustrialMenuButton/>,
+      isOpen: industrialMenuOpen,
+      toggle: bindings.SetIndustrialMenuOpen,
+      src: "Media/Glyphs/FilledArrowRight.svg"
+    },
+    "Trade Cost": {
+      component: <TradeCost />,
+      isOpen: tradeCostsOpen,
+      toggle: bindings.SetTradeCostsOpen
+    },
+    "District Menu": {
+      component: <DistrictMenuButton/>,
+      isOpen: districtMenuOpen,
+      toggle: bindings.SetDistrictMenuOpen,
+      src: "Media/Glyphs/FilledArrowRight.svg"
+    },
+    "Commercial Menu" : {
+      component: <CommercialMenuButton />,
+      isOpen: commercialMenuOpen,
+      toggle: bindings.SetCommercialMenuOpen,
+      src: "Media/Glyphs/FilledArrowRight.svg"
+    }
+  }), [demographicsOpen, workforceOpen, workplacesOpen, residentialMenuOpen,
+       buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, districtMenuOpen, commercialMenuOpen]);
 
   const toggleSection = useCallback(
-    (name: string) => sections[name]?.toggle(!sectionStates[name]),
-    [sectionStates]
+    (name: string) => {
+      const section = sections[name];
+      if (section) {
+        section.toggle(!section.isOpen);
+      }
+    },
+    [sections]
   );
+
+  const handleInfoLoomToggle = useCallback(() => {
+    const isClosing = infoLoomMenuOpen;
+
+    // First set the main menu state
+    bindings.SetInfoLoomMenuOpen(!infoLoomMenuOpen);
+
+    // If we're closing the main menu, only close the menu buttons
+    // but do NOT close any child sections/components
+    if (isClosing) {
+      const menuSectionsToClose = [
+        "Residential Menu",
+        "Industrial Menu",
+        "District Menu",
+        "Commercial Menu"
+      ];
+
+      // Only close the menu sections UIs, but explicitly preserve all child component states
+      menuSectionsToClose.forEach(sectionName => {
+        const section = sections[sectionName];
+        if (section && section.isOpen) {
+          // Instead of directly closing via toggle, we'll manually handle state closing
+          // This ensures that child components don't close when their parent menu closes
+
+          if (sectionName === "Residential Menu") {
+            // Close only the residential menu UI, not its child components
+            bindings.SetResidentialMenuOpen(false);
+          } else if (sectionName === "Industrial Menu") {
+            bindings.SetIndustrialMenuOpen(false);
+          } else if (sectionName === "District Menu") {
+            bindings.SetDistrictMenuOpen(false);
+          } else if (sectionName === "Commercial Menu") {
+            bindings.SetCommercialMenuOpen(false);
+          }
+        }
+      });
+    }
+  }, [infoLoomMenuOpen, sections]);
 
   return (
     <div>
       <Tooltip tooltip="Info Loom">
         <FloatingButton
-          onClick={() => bindings.SetInfoLoomMenuOpen(!infoLoomMenuOpen)}
+          onClick={handleInfoLoomToggle}
           src={icon}
         />
       </Tooltip>
@@ -108,9 +160,9 @@ function InfoLoomButton(): JSX.Element {
                     key={name}
                     variant="flat"
                     aria-label={name}
-                    aria-expanded={sectionStates[name]}
+                    aria-expanded={sections[name].isOpen}
                     className={`${styles.InfoLoomButton} ${
-                        sectionStates[name] ? styles.buttonSelected : ""
+                        sections[name].isOpen ? styles.buttonSelected : ""
                     }`}
                     onClick={() => toggleSection(name)}
                 >
@@ -126,15 +178,34 @@ function InfoLoomButton(): JSX.Element {
         </div>
       )}
 
-      {Object.entries(sections).map(([name, { component }]) =>
-        sectionStates[name] && (
+      {/* Render non-menu sections based on their own open state */}
+      {Object.entries(sections).map(([name, section]) => {
+        // Skip menu type sections from this regular rendering
+        if (['Residential Menu', 'Industrial Menu', 'District Menu', 'Commercial Menu'].includes(name)) {
+          return null;
+        }
+
+        return section.isOpen && (
           <div key={name}>
-            {React.cloneElement(component, {
-              onClose: () => toggleSection(name)
+            {React.cloneElement(section.component, {
+              onClose: (e?: React.SyntheticEvent) => {
+                // Stop event propagation to prevent closing cascades
+                if (e && typeof e.stopPropagation === 'function') {
+                  e.stopPropagation();
+                }
+                toggleSection(name);
+              }
             })}
           </div>
-        )
-      )}
+        );
+      })}
+
+      {/* Always render these components regardless of the menu state */}
+      {/* This ensures the panels remain visible even when the main InfoLoom menu is closed */}
+      <ResidentialMenuButton />
+      <IndustrialMenuButton />
+      <DistrictMenuButton />
+      <CommercialMenuButton />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Entity } from 'cs2/utils';
 import { EfficiencyFactorInfo } from './EfficiencyFactorInfo';
+import {Resource} from 'cs2/bindings';
 /**
  * Represents a commercial company's data displayed in the debug panel
  */
@@ -17,4 +18,13 @@ export interface CommercialCompanyDebug {
     ResourceAmount: number;
     TotalEfficiency: number;
     Factors: EfficiencyFactorInfo[];
+
+    Profitability: number;
+    LastTotalWorth: number;
+    TotalWages: number;
+    ProductionPerDay: number;
+    EfficiencyValue: number;
+    Concentration: number;
+    OutputResourceName: string;
 }
+

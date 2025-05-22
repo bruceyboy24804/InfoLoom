@@ -40,24 +40,44 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     );
   }
 
-  // Education level colors
-  const educationColors = {
-    uneducated: '#808080',
-    poorlyEducated: '#B09868',
-    educated: '#368A2E',
-    wellEducated: '#B981C0',
-    highlyEducated: '#5796D1',
+  // Central color definitions for consistent theming
+  const colors = {
+    // Education level colors
+    education: {
+      uneducated: '#808080',
+      poorlyEducated: '#B09868',
+      educated: '#368A2E',
+      wellEducated: '#B981C0',
+      highlyEducated: '#5796D1',
+    },
+    // Sector colors
+    sector: {
+      service: '#4287f5',
+      commercial: '#f5d142',
+      leisure: '#f542a7',
+      extractor: '#8c42f5',
+      industrial: '#f55142',
+      office: '#42f5b3',
+    },
+    // Status colors
+    status: {
+      local: '#4CAF50', // Green
+      commuter: '#9E9E9E', // Gray
+      vacant: '#F44336', // Red
+      overqualified: '#B981C0', // Purple
+    }
   };
 
   // Configure our data for display
   const workforceLevels = [
-    { levelColor: educationColors.uneducated, levelName: 'Uneducated', levelValues: ilWorkplaces[0] },
-    { levelColor: educationColors.poorlyEducated, levelName: 'Poorly Educated', levelValues: ilWorkplaces[1] },
-    { levelColor: educationColors.educated, levelName: 'Educated', levelValues: ilWorkplaces[2] },
-    { levelColor: educationColors.wellEducated, levelName: 'Well Educated', levelValues: ilWorkplaces[3] },
-    { levelColor: educationColors.highlyEducated, levelName: 'Highly Educated', levelValues: ilWorkplaces[4] },
+    { levelColor: colors.education.uneducated, levelName: 'Uneducated', levelValues: ilWorkplaces[0] },
+    { levelColor: colors.education.poorlyEducated, levelName: 'Poorly Educated', levelValues: ilWorkplaces[1] },
+    { levelColor: colors.education.educated, levelName: 'Educated', levelValues: ilWorkplaces[2] },
+    { levelColor: colors.education.wellEducated, levelName: 'Well Educated', levelValues: ilWorkplaces[3] },
+    { levelColor: colors.education.highlyEducated, levelName: 'Highly Educated', levelValues: ilWorkplaces[4] },
   ];
   
+  // Total values
   const totalWorkplaces = Number(ilWorkplaces[5]?.Total) || 0;
   const totalEmployees = workforceLevels.reduce((sum, level) => sum + (level.levelValues.Employee || 0), 0);
   const totalCommuters = workforceLevels.reduce((sum, level) => sum + (level.levelValues.Commuter || 0), 0);
@@ -65,12 +85,12 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   
   // Calculate workplace distribution by sector
   const sectors: Sector[] = [
-    { name: 'City Services', key: 'Service', color: '#4287f5' },
-    { name: 'Sales', key: 'Commercial', color: '#f5d142' },
-    { name: 'Leisure', key: 'Leisure', color: '#f542a7' },
-    { name: 'Extractor', key: 'Extractor', color: '#8c42f5' },
-    { name: 'Industrial', key: 'Industrial', color: '#f55142' },
-    { name: 'Office', key: 'Office', color: '#42f5b3' },
+    { name: 'City Services', key: 'Service', color: colors.sector.service },
+    { name: 'Sales', key: 'Commercial', color: colors.sector.commercial },
+    { name: 'Leisure', key: 'Leisure', color: colors.sector.leisure },
+    { name: 'Extractor', key: 'Extractor', color: colors.sector.extractor },
+    { name: 'Industrial', key: 'Industrial', color: colors.sector.industrial },
+    { name: 'Office', key: 'Office', color: colors.sector.office },
   ];
   
   const sectorTotals = sectors.map(sector => {
@@ -87,7 +107,39 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     };
   });
 
-  // Format number with commas - make it more compact by abbreviating large numbers
+  // Calculate distribution of workforce by sector and education level
+  const sectorEducationDistribution = sectors.map(sector => {
+    const educationBreakdown = workforceLevels.map(level => {
+      const key = sector.key;
+      return {
+        educationLevel: level.levelName,
+        count: level.levelValues[key] || 0,
+        color: level.levelColor
+      };
+    });
+
+    return {
+      ...sector,
+      educationBreakdown
+    };
+  });
+
+  // Calculate vacancy rates by education level
+  const vacancyRates = workforceLevels.map(level => {
+    const total = level.levelValues.Total || 0;
+    const open = level.levelValues.Open || 0;
+    const rate = total > 0 ? (open / total) * 100 : 0;
+
+    return {
+      level: level.levelName,
+      color: level.levelColor,
+      total,
+      open,
+      rate
+    };
+  });
+
+  // Format number for display - abbreviate large numbers
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
@@ -99,220 +151,9 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   
   // Calculate percentage
   const getPercentage = (value: number, total: number) => {
-    return total > 0 ? `${((value / total) * 100).toFixed(0)}%` : '0%'; // Removed decimal for compactness
+    return total > 0 ? `${((value / total) * 100).toFixed(1)}%` : '0%';
   };
   
-  // Get numeric percentage for styling
-  const getNumericPercentage = (value: number, total: number) => {
-    return total > 0 ? (value / total) * 100 : 0;
-  };
-  
-  // Calculate data for education mismatch analysis
-  const calculateEducationMismatch = () => {
-    // Track workers in jobs requiring different education levels
-    const mismatchData = {
-      overqualifiedWorkers: {
-        total: 0,
-        breakdown: [] as {level: string, count: number, color: string}[]
-      },
-      underqualifiedWorkers: {
-        total: 0,
-        breakdown: [] as {level: string, count: number, color: string}[]
-      },
-      unmatchedJobs: {
-        total: 0,
-        breakdown: [] as {level: string, count: number, color: string}[]
-      },
-      commutersByLevel: [] as {level: string, count: number, color: string}[]
-    };
-
-    // Education levels in order from lowest to highest
-    const educationOrder = ['Uneducated', 'Poorly Educated', 'Educated', 'Well Educated', 'Highly Educated'];
-
-    // Calculate estimated overqualified workers (workers in jobs below their qualification)
-    let remainingWorkers = [...workforceLevels];
-    
-    // First, fill jobs with appropriately qualified workers
-    workforceLevels.forEach((level, index) => {
-      const availableWorkers = level.levelValues.Employee || 0;
-      const requiredJobs = level.levelValues.Total || 0;
-      const perfectMatch = Math.min(availableWorkers, requiredJobs);
-      
-      // If there are more workers than jobs at this level, they might be overqualified for lower jobs
-      if (availableWorkers > requiredJobs) {
-        const surplus = availableWorkers - requiredJobs;
-        mismatchData.overqualifiedWorkers.total += surplus;
-        mismatchData.overqualifiedWorkers.breakdown.push({
-          level: level.levelName,
-          count: surplus,
-          color: level.levelColor
-        });
-      }
-      
-      // If there are more jobs than workers at this level, they might be filled by overqualified workers
-      // or need workers from outside (commuters)
-      if (requiredJobs > availableWorkers) {
-        const deficit = requiredJobs - availableWorkers;
-        mismatchData.unmatchedJobs.total += deficit;
-        mismatchData.unmatchedJobs.breakdown.push({
-          level: level.levelName,
-          count: deficit,
-          color: level.levelColor
-        });
-      }
-
-      // Track commuters by education level
-      const commuters = level.levelValues.Commuter || 0;
-      if (commuters > 0) {
-        mismatchData.commutersByLevel.push({
-          level: level.levelName,
-          count: commuters,
-          color: level.levelColor
-        });
-      }
-    });
-
-    return mismatchData;
-  };
-  
-  const mismatchData = calculateEducationMismatch();
-
-  // Calls to action based on mismatch data
-  const getCallToAction = () => {
-    const actions = [];
-
-    if (mismatchData.overqualifiedWorkers.total > 0) {
-      actions.push(`You have ${formatNumber(mismatchData.overqualifiedWorkers.total)} overqualified workers. Consider adding more higher education jobs.`);
-    }
-    
-    if (mismatchData.unmatchedJobs.total > totalCommuters) {
-      actions.push(`You need ${formatNumber(mismatchData.unmatchedJobs.total - totalCommuters)} more workers to fill open positions.`);
-    }
-    
-    if (totalCommuters > 500) {
-      actions.push(`${formatNumber(totalCommuters)} commuters are filling your job needs. Build more residential areas to house them.`);
-    }
-    
-    return actions;
-  };
-  
-  const callToActions = getCallToAction();
-
-  // Case study generator component for education levels
-  const EducationLevelCaseStudy = ({ levelIndex, title }: { levelIndex: number, title: string }) => {
-    const level = workforceLevels[levelIndex];
-    const totalJobs = level.levelValues.Total || 0;
-    const localWorkers = level.levelValues.Employee || 0;
-    const commuterWorkers = level.levelValues.Commuter || 0;
-    const openJobs = level.levelValues.Open || 0;
-    
-    // For overqualified calculation, we need to check if there are workers with higher education
-    // working in this level's jobs
-    const isOverqualifiedPresent = totalJobs > localWorkers && commuterWorkers > 0;
-    const overqualifiedInJobs = isOverqualifiedPresent ? 
-      Math.min(totalJobs - localWorkers, commuterWorkers) : 0;
-    
-    // Calculate general balance metrics
-    const localFillRate = totalJobs > 0 ? (localWorkers / totalJobs) * 100 : 0;
-    const commuterRate = totalJobs > 0 ? (commuterWorkers / totalJobs) * 100 : 0;
-    const vacancyRate = totalJobs > 0 ? (openJobs / totalJobs) * 100 : 0;
-    
-    // Determine insights
-    /*let insight = "";
-    
-    if (vacancyRate > 15) {
-      insight = `High vacancy rate (${vacancyRate.toFixed(0)}%). You need more ${level.levelName} workers.`;
-    } else if (localFillRate < 60 && commuterRate > 20) {
-      insight = `You rely heavily on commuters for ${level.levelName} jobs. Consider building more appropriate housing.`;
-    } else if (overqualifiedInJobs > totalJobs * 0.2) {
-      insight = `Many overqualified workers are filling ${level.levelName} positions. Consider adding more higher-level jobs.`;
-    } else if (localFillRate > 80 && commuterRate < 10 && vacancyRate < 10) {
-      insight = `Your ${level.levelName} job market is well-balanced. Good job!`;
-    } else {
-      insight = `Your ${level.levelName} job market is functioning adequately.`;
-    }*/
-    
-    return (
-      <div className={styles.caseStudyContainer}>
-        <div className={styles.caseStudyTitle}>
-          {title}
-        </div>
-        <div className={styles.caseStudyContent}>
-          <div className={styles.caseStudyStats}>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(totalJobs)}</div>
-              <div className={styles.statLabel}>Total Jobs</div>
-            </div>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(localWorkers)}</div>
-              <div className={styles.statLabel}>Local Workers</div>
-            </div>
-            {overqualifiedInJobs > 0 && (
-              <div className={styles.caseStudyStatItem}>
-                <div className={styles.statValue}>{formatNumber(overqualifiedInJobs)}</div>
-                <div className={styles.statLabel}>Overqualified</div>
-              </div>
-            )}
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(commuterWorkers)}</div>
-              <div className={styles.statLabel}>Commuters</div>
-            </div>
-            <div className={styles.caseStudyStatItem}>
-              <div className={styles.statValue}>{formatNumber(openJobs)}</div>
-              <div className={styles.statLabel}>Open Jobs</div>
-            </div>
-          </div>
-          <div className={styles.caseStudyVisualization}>
-            <div className={styles.caseStudyBarContainer}>
-              <div className={styles.caseStudyBar}>
-                {localWorkers > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(localWorkers / totalJobs) * 100}%`,
-                      backgroundColor: '#808080'
-                    }}
-                    title={`Local ${level.levelName} workers: ${formatNumber(localWorkers)}`}
-                  />
-                )}
-                {overqualifiedInJobs > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(overqualifiedInJobs / totalJobs) * 100}%`,
-                      backgroundColor: '#B981C0' // Distinct color for overqualified
-                    }}
-                    title={`Overqualified workers: ${formatNumber(overqualifiedInJobs)}`}
-                  />
-                )}
-                {commuterWorkers - overqualifiedInJobs > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${((commuterWorkers - overqualifiedInJobs) / totalJobs) * 100}%`,
-                      backgroundColor: '#999999'
-                    }}
-                    title={`Commuters: ${formatNumber(commuterWorkers - overqualifiedInJobs)}`}
-                  />
-                )}
-                {openJobs > 0 && (
-                  <div 
-                    className={styles.caseStudyBarSegment} 
-                    style={{
-                      width: `${(openJobs / totalJobs) * 100}%`,
-                      backgroundColor: '#ff5555'
-                    }}
-                    title={`Open positions: ${formatNumber(openJobs)}`}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Panel 
       draggable={true}
@@ -327,154 +168,134 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
     >
       <Scrollable className={styles.scrollable}>
         <div className={styles.container}>
-          {/* Summary Section - More compact */}
-          <div className={styles.summarySection}>
-            <div className={styles.summaryTitle}>Workplace Summary</div>
-            <div className={styles.summaryGrid}>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{formatNumber(totalWorkplaces)}</div>
-                <div className={styles.summaryLabel}>Workplaces</div>
+          {/* Detailed Data Table */}
+          <div className={styles.sectionTitle}>Detailed Workplace Data</div>
+          <div>
+            {/* Table Headers */}
+            <div className={styles.headerRow}>
+              <div className={styles.educationCol}>Education Level</div>
+              <div className={styles.dataCol}>Total</div>
+              <div className={styles.dataCol}>%</div>
+              <div className={styles.dataCol}>Local</div>
+              <div className={styles.dataCol}>Commuter</div>
+              <div className={styles.dataCol}>Open</div>
+            </div>
+
+            {/* Workplace Levels Rows */}
+            {[...workforceLevels,
+              { levelColor: undefined, levelName: 'TOTAL', levelValues: ilWorkplaces[5] }
+            ].map((level, index) => {
+              const rowClassName = level.levelName === 'TOTAL' ?
+                `${styles.workforceRow} ${styles.totalRow}` :
+                styles.workforceRow;
+
+              const percent = totalWorkplaces > 0 && typeof level.levelValues.Total === 'number'
+                ? `${((100 * level.levelValues.Total) / totalWorkplaces).toFixed(1)}%`
+                : '';
+
+              return (
+                <div key={index} className={rowClassName}>
+                  <div className={styles.educationCol}>
+                    {level.levelColor && (
+                      <div
+                        className={styles.colorBox}
+                        style={{ backgroundColor: level.levelColor }}
+                      />
+                    )}
+                    <div>{level.levelName}</div>
+                  </div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Total || 0)}</div>
+                  <div className={styles.dataCol}>{percent}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Employee || 0)}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Commuter || 0)}</div>
+                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Open || 0)}</div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Vacancy Analysis Table */}
+          <div className={styles.sectionTitle}>Vacancy Analysis</div>
+          <div>
+            {/* Table Headers */}
+            <div className={styles.headerRow}>
+              <div className={styles.educationCol}>Education Level</div>
+              <div className={styles.dataCol}>Open Positions</div>
+              <div className={styles.dataCol}>Total Positions</div>
+              <div className={styles.dataCol}>Vacancy Rate</div>
+            </div>
+
+            {/* Vacancy Rows */}
+            {vacancyRates.map((item, index) => (
+              <div key={index} className={styles.workforceRow}>
+                <div className={styles.educationCol}>
+                  <div
+                    className={styles.colorBox}
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div>{item.level}</div>
+                </div>
+                <div className={styles.dataCol}>{formatNumber(item.open)}</div>
+                <div className={styles.dataCol}>{formatNumber(item.total)}</div>
+                <div className={styles.dataCol}>{`${item.rate.toFixed(1)}%`}</div>
               </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{formatNumber(totalEmployees)}</div>
-                <div className={styles.summaryLabel}>Local</div>
-              </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{formatNumber(totalCommuters)}</div>
-                <div className={styles.summaryLabel}>Commuters</div>
-              </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{formatNumber(totalOpen)}</div>
-                <div className={styles.summaryLabel}>Open</div>
+            ))}
+            {/* Total row for vacancies */}
+            <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+              <div className={styles.educationCol}>TOTAL</div>
+              <div className={styles.dataCol}>{formatNumber(totalOpen)}</div>
+              <div className={styles.dataCol}>{formatNumber(totalWorkplaces)}</div>
+              <div className={styles.dataCol}>
+                {totalWorkplaces > 0 ? `${((totalOpen / totalWorkplaces) * 100).toFixed(1)}%` : '0%'}
               </div>
             </div>
           </div>
-          
-          {/* Workforce Skills Mismatch */}
-          <div className={styles.sectionTitle}>Workforce Skills Mismatch</div>
-          
-          {/* Calls to Action */}
-          {callToActions.length > 0 && (
-            <div className={styles.callToActionContainer}>
-              {callToActions.map((action, index) => (
-                <div key={index} className={styles.callToAction}>
-                  <div className={styles.actionIcon}>!</div>
-                  <div>{action}</div>
-                </div>
-              ))}
+
+          {/* Commuter Analysis Table */}
+          <div className={styles.sectionTitle}>Commuter Analysis</div>
+          <div>
+            {/* Table Headers */}
+            <div className={styles.headerRow}>
+              <div className={styles.educationCol}>Education Level</div>
+              <div className={styles.dataCol}>Local Workers</div>
+              <div className={styles.dataCol}>Commuters</div>
+              <div className={styles.dataCol}>Commuter %</div>
+              <div className={styles.dataCol}>Total Workers</div>
             </div>
-          )}
-          
-          {/* Visual representation of mismatches */}
-          <div className={styles.mismatchVisualContainer}>
-            {mismatchData.overqualifiedWorkers.breakdown.length > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Overqualified Workers</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(mismatchData.overqualifiedWorkers.total)}
+
+            {/* Commuter Analysis Rows */}
+            {workforceLevels.map((level, index) => {
+              const localWorkers = level.levelValues.Employee || 0;
+              const commuters = level.levelValues.Commuter || 0;
+              const totalWorkers = localWorkers + commuters;
+              const commuterPercent = totalWorkers > 0 ? (commuters / totalWorkers) * 100 : 0;
+
+              return (
+                <div key={index} className={styles.workforceRow}>
+                  <div className={styles.educationCol}>
+                    <div
+                      className={styles.colorBox}
+                      style={{ backgroundColor: level.levelColor }}
+                    />
+                    <div>{level.levelName}</div>
+                  </div>
+                  <div className={styles.dataCol}>{formatNumber(localWorkers)}</div>
+                  <div className={styles.dataCol}>{formatNumber(commuters)}</div>
+                  <div className={styles.dataCol}>{`${commuterPercent.toFixed(1)}%`}</div>
+                  <div className={styles.dataCol}>{formatNumber(totalWorkers)}</div>
                 </div>
-                <div className={styles.mismatchDescription}>
-                  Workers in jobs below their education level
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {mismatchData.overqualifiedWorkers.breakdown.map((item, idx) => (
-                    <div key={idx} className={styles.mismatchBreakdownItem}>
-                      <div 
-                        className={styles.mismatchColor}
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={styles.mismatchLabel}>{item.level}:</span>
-                      <span className={styles.mismatchCount}>{formatNumber(item.count)}</span>
-                    </div>
-                  ))}
-                </div>
+              );
+            })}
+            {/* Total row for commuter analysis */}
+            <div className={`${styles.workforceRow} ${styles.totalRow}`}>
+              <div className={styles.educationCol}>TOTAL</div>
+              <div className={styles.dataCol}>{formatNumber(totalEmployees)}</div>
+              <div className={styles.dataCol}>{formatNumber(totalCommuters)}</div>
+              <div className={styles.dataCol}>
+                {totalEmployees + totalCommuters > 0 ?
+                  `${((totalCommuters / (totalEmployees + totalCommuters)) * 100).toFixed(1)}%` : '0%'}
               </div>
-            )}
-            
-            {totalCommuters > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Commuters</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(totalCommuters)}
-                </div>
-                <div className={styles.mismatchDescription}>
-                  Workers coming from outside your city
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {mismatchData.commutersByLevel.map((item, idx) => (
-                    <div key={idx} className={styles.mismatchBreakdownItem}>
-                      <div 
-                        className={styles.mismatchColor}
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={styles.mismatchLabel}>{item.level}:</span>
-                      <span className={styles.mismatchCount}>{formatNumber(item.count)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {totalOpen > 0 && (
-              <div className={styles.mismatchCard}>
-                <div className={styles.mismatchTitle}>Unfilled Positions</div>
-                <div className={styles.mismatchTotal}>
-                  {formatNumber(totalOpen)}
-                </div>
-                <div className={styles.mismatchDescription}>
-                  Open jobs that need workers
-                </div>
-                <div className={styles.mismatchBreakdown}>
-                  {workforceLevels.map((level, idx) => {
-                    const openJobs = level.levelValues.Open || 0;
-                    if (openJobs > 0) {
-                      return (
-                        <div key={idx} className={styles.mismatchBreakdownItem}>
-                          <div 
-                            className={styles.mismatchColor}
-                            style={{ backgroundColor: level.levelColor }}
-                          />
-                          <span className={styles.mismatchLabel}>{level.levelName}:</span>
-                          <span className={styles.mismatchCount}>{formatNumber(openJobs)}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Education Jobs Analysis - Using the reusable component */}
-          <div className={styles.sectionTitle}>Education Level Jobs Analysis</div>
-          
-          <EducationLevelCaseStudy levelIndex={0} title="Uneducated Jobs" />
-          <EducationLevelCaseStudy levelIndex={1} title="Poorly Educated Jobs" />
-          <EducationLevelCaseStudy levelIndex={2} title="Educated Jobs" />
-          <EducationLevelCaseStudy levelIndex={3} title="Well Educated Jobs" />
-          <EducationLevelCaseStudy levelIndex={4} title="Highly Educated Jobs" />
-          
-          {/* Legend for case studies */}
-          <div className={styles.caseLegendContainer}>
-            <div className={styles.caseLegendTitle}>Legend</div>
-            <div className={styles.caseLegendItems}>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#808080' }}></div>
-                <span>Local Workers</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#B981C0' }}></div>
-                <span>Overqualified</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#999999' }}></div>
-                <span>Commuters</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: '#ff5555' }}></div>
-                <span>Open Jobs</span>
-              </div>
+              <div className={styles.dataCol}>{formatNumber(totalEmployees + totalCommuters)}</div>
             </div>
           </div>
         </div>
@@ -484,3 +305,4 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
 };
 
 export default Workplaces;
+

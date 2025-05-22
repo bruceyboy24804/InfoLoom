@@ -182,7 +182,7 @@ namespace InfoLoomTwo.Systems
         {    
             base.OnCreate();
             m_Log = Mod.log;
-            _uiUpdateState = UIUpdateState.Create(World, 256);
+            _uiUpdateState = UIUpdateState.Create(World, 512);
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_ResidentialDemandSystem = base.World.GetOrCreateSystemManaged<ResidentialDemandSystem>();
@@ -452,9 +452,19 @@ namespace InfoLoomTwo.Systems
             }
             if (_cCDPVBinding.value)
             {
-                // Update CommercialData
-                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialData.Companies.ToArray();
                 m_CommercialCompanyDataSystem.IsPanelVisible = true;
+                if (_uiUpdateState.Advance())
+                {
+                    m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs.ToArray();
+                }
+            }
+            if (_iCDVBinding.value)
+            {
+                m_IndustrialCompanySystem.IsPanelVisible = true;
+                if (_uiUpdateState.Advance())
+                {
+                    m_uiDebugData2.Value = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs.ToArray();
+                }
             }
             //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} 2.");
             if (_dPVBinding.value)
@@ -912,7 +922,7 @@ namespace InfoLoomTwo.Systems
 
             if (open)
             {
-                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialData.Companies.ToArray();
+                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs.ToArray();
             }
         }
         private void SetIndustrialCompanyDebugVisibility(bool open)

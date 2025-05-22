@@ -1,4 +1,3 @@
-
 import {useValue} from "cs2/api";
 import * as bindings from "../../bindings";
 import React, {useCallback} from "react";
@@ -53,14 +52,21 @@ export function DistrictMenuButton(): JSX.Element {
                 </div>
             )}
 
+            {/* Always render sections based on their own open state, regardless of menu state */}
             {Object.entries(sections).map(([name, { component }]) =>
-                    sectionStates[name] && (
-                        <div key={name}>
-                            {React.cloneElement(component, {
-                                onClose: () => toggleSection(name)
-                            })}
-                        </div>
-                    )
+                sectionStates[name] && (
+                    <div key={name}>
+                        {React.cloneElement(component, {
+                            onClose: (e?: React.SyntheticEvent) => {
+                                // Stop event propagation to prevent closing cascades
+                                if (e && typeof e.stopPropagation === 'function') {
+                                    e.stopPropagation();
+                                }
+                                toggleSection(name);
+                            }
+                        })}
+                    </div>
+                )
             )}
         </div>
     );

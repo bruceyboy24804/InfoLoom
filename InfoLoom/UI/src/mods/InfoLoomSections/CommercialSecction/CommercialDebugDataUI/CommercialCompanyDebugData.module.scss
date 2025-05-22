@@ -1,6 +1,6 @@
 .panel {
-  width: 1100rem;
-  max-width: 1200rem;
+  width: 1200rem; // Slightly increased panel width to accommodate all columns
+  max-width: 1300rem;
 }
 
 .header {
@@ -46,53 +46,51 @@
 }
 
 .nameColumn {
-  flex: 1rem; // Adjusted flex for better spacing
-  min-width: 200rem; // Increased minimum width
-  margin-right: 10rem;
+  display: flex;
+  min-width: 200rem;
+  margin-right: 5rem;
   text-align: left;
 }
 
 .serviceColumn {
-  flex: 5 1 0;
-  min-width: 120rem; // Ensure enough space for numbers
-  margin-left: 10rem;
-  text-align: right;
+  min-width: 100rem;
+  margin-left: 30rem;
+  text-align: center;
 }
 
 .employeeColumn {
-  //flex: 1.5 1 0;
-  
-  min-width: 120rem; // Ensure enough space for numbers
-  margin-left: 10rem;
+  min-width: 100rem;
+  margin-left: 30rem;
   text-align: center;
 }
 
 .vehicleColumn {
-  //flex: 1.5 1 0;
- 
-  min-width: 120rem; // Ensure enough space for numbers
-  margin-left: 10rem;
+  min-width: 100rem;
+  margin-left: 30rem;
   text-align: center;
 }
 
 .resourcesColumn {
-  flex: 1.5 1 0;
-  min-width: 200rem; // Ensure enough space for numbers
-  margin-left: 10rem;
+  min-width: 120rem;
+  margin-left: 30rem;
   text-align: center;
 }
 
 .efficiencyColumn {
-  flex: 1.5 1 0;
-  min-width: 120rem; // Ensure enough space for numbers
-  margin-left: 10rem;
+  min-width: 90rem;
+  margin-left: 30rem;
+  text-align: center;
+}
+
+.profitabilityColumn {
+  min-width: 60rem;
+  margin-left: 30rem;
   text-align: right;
 }
+
 .locationColumn {
-  flex: 1.5 1 0;
-  min-width: 120rem;
-  margin-left: 10rem;
-  text-align: center;
+  min-width: 60rem;
+  margin-left: 50rem;
 }
 .scrollable {
   max-height: 550rem;
@@ -190,5 +188,7 @@
   border-top-right-radius: var(--panelRadiusInner);
   border-bottom-left-radius: var(--panelRadiusInner);
   border-bottom-right-radius: var(--panelRadiusInner);
+  margin-left: 50rem;
 
 }
+

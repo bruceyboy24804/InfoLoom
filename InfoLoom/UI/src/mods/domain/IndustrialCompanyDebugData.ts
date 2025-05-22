@@ -20,4 +20,13 @@ export interface IndustrialCompanyDebug {
     ProcessResources: ProcessResourceInfo[];
     TotalEfficiency: number;
     Factors: EfficiencyFactorInfo[];
+
+    Profitability: number;
+    LastTotalWorth: number;
+    TotalWages: number;
+    ProductionPerDay: number;
+    EfficiencyValue: number;
+    Concentration: number;
+    OutputResourceName: string;
+    IsExtractor: boolean;
 }

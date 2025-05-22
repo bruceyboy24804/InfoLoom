@@ -1,41 +1,54 @@
-
 import {useValue} from "cs2/api";
 import * as bindings from "../../bindings";
-import React, {useCallback} from "react";
+import React, {useCallback, useMemo} from "react";
 import {Button, Panel} from "cs2/ui";
 import styles from "../ResidentialMenu/ResidentialMenu.module.scss";
 import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
 import ResidentialHousehold from '../../InfoLoomSections/ResidentialSection/ResidentialHouseholdUI/ResidentialHousehold';
 
-interface SectionConfig {
+// Define types for section configuration
+interface SectionItem {
   component: JSX.Element;
-  openState: () => boolean;
+  isOpen: boolean;
   toggle: (state: boolean) => void;
 }
-const sections: Record<string, SectionConfig> = {
-  "Demand": {
-    component: < Residential/>,
-    openState: () => useValue(bindings.ResidentialDemandOpen),
-    toggle: bindings.SetResidentialDemandOpen
-  },
-  /*"Households": {
-    component: <ResidentialHousehold/>,
-    openState: () => useValue(bindings.ResidentialDataDebugOpen),
-    toggle: bindings.SetResidentialDataDebugOpen
-  },*/
-};
-export function ResidentialMenuButton(): JSX.Element {
+
+type SectionsType = Record<string, SectionItem>;
+
+export const ResidentialMenuButton = (): JSX.Element => {
   const residentialMenuOpen = useValue(bindings.ResidentialMenuOpen);
-  const sectionStates = Object.fromEntries(
-    Object.entries(sections).map(([name, config]) => [name, config.openState()])
-  );
+  const residentialDemandOpen = useValue(bindings.ResidentialDemandOpen);
+  // Uncomment if you need this state in the future
+  // const residentialDataDebugOpen = useValue(bindings.ResidentialDataDebugOpen);
+
+  // Define sections with memoization to prevent recreation on each render
+  const sections = useMemo<SectionsType>(() => ({
+    "Demand": {
+      component: <Residential/>,
+      isOpen: residentialDemandOpen,
+      toggle: bindings.SetResidentialDemandOpen
+    },
+    /*"Households": {
+      component: <ResidentialHousehold/>,
+      isOpen: residentialDataDebugOpen,
+      toggle: bindings.SetResidentialDataDebugOpen
+    },*/
+  }), [residentialDemandOpen]); // Add residentialDataDebugOpen to dependencies when uncommented
 
   const toggleSection = useCallback(
-    (name: string) => sections[name]?.toggle(!sectionStates[name]),
-    [sectionStates]
+    (name: string) => {
+      const section = sections[name];
+      if (section) {
+        section.toggle(!section.isOpen);
+      }
+    },
+    [sections]
   );
+
+  // Separate rendering of the menu and sections
   return (
-    <div>
+    <>
+      {/* Menu buttons - only render when menu is open */}
       {residentialMenuOpen && (
         <div className={styles.panel}>
           <div className={styles.buttonRow}>
@@ -44,9 +57,9 @@ export function ResidentialMenuButton(): JSX.Element {
                 key={name}
                 variant="flat"
                 aria-label={name}
-                aria-expanded={sectionStates[name]}
+                aria-expanded={sections[name].isOpen}
                 className={`${styles.InfoLoomButton} ${
-                  sectionStates[name] ? styles.buttonSelected : ""
+                  sections[name].isOpen ? styles.buttonSelected : ""
                 }`}
                 onClick={() => toggleSection(name)}
               >
@@ -57,17 +70,25 @@ export function ResidentialMenuButton(): JSX.Element {
         </div>
       )}
 
-      {Object.entries(sections).map(([name, { component }]) =>
-          sectionStates[name] && (
-            <div key={name}>
-              {React.cloneElement(component, {
-                onClose: () => toggleSection(name)
-              })}
-            </div>
-          )
+      {/* Always render sections based on their own open state, completely independent of menu state */}
+      {Object.entries(sections).map(([name, section]) =>
+        section.isOpen && (
+          <div key={name}>
+            {React.cloneElement(section.component, {
+              onClose: (e?: React.SyntheticEvent) => {
+                // Stop event propagation to prevent closing cascades
+                if (e && typeof e.stopPropagation === 'function') {
+                  e.stopPropagation();
+                }
+                toggleSection(name);
+              }
+            })}
+          </div>
+        )
       )}
-    </div>
+    </>
   );
 }
 
 export default ResidentialMenuButton;
+

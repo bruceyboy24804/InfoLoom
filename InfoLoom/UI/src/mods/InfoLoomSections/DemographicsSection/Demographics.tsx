@@ -766,7 +766,7 @@ const renderSelectedGrouping = () => {
             <div className={styles.chartContainer}>
               <DemographicsChart
                   StructureDetails={demographicsDataStructureDetails}
-                  groupingStrategy={groupingStrategy}
+                  groupingStrategy={demoGroupingStrategy}
               />
             </div>
           </Scrollable>
