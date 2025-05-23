@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Colossal.Entities;
 using Colossal.Logging;
+using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
@@ -24,6 +25,21 @@ using DeliveryTruck = Game.Vehicles.DeliveryTruck;
 
 namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 {
+    public struct ResourceInfo
+    {
+        
+        public string ResourceName;
+        public int Amount;
+        public string Icon;
+
+        public ResourceInfo(Resource resourceType, string resourceName, int amount, string icon)
+        {
+            ResourceName = resourceName;
+            Amount = amount;
+            Icon = icon;
+        }
+    }
+
     public struct CommercialCompanyDTO
     {
         public Entity EntityId;
@@ -34,7 +50,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public int MaxWorkers;
         public int VehicleCount;
         public int VehicleCapacity;
-        public string Resources;
         public int ResourceAmount;
         public int TotalEfficiency;
         public EfficiencyFactorInfo[] Factors;
@@ -45,6 +60,9 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public float EfficiencyValue;
         public float Concentration;
         public string OutputResourceName;
+        public string ResourceIcon; // For backward compatibility
+        public string ResourceName; // For backward compatibility
+        public ResourceInfo[] Resources; // New field to hold all resources
     }
 
     public struct EfficiencyFactorInfo
@@ -61,12 +79,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         }
     }
 
-    public struct ProcessResourceInfo
-    {
-        public string ResourceName;
-        public int Amount;
-        public bool IsOutput;
-    }
+    
 
     public partial class CommercialCompanyDataSystem : GameSystemBase
     {
@@ -106,6 +119,24 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 return;
 
             UpdateCommercialStats();
+        }
+
+        protected override void OnGameLoaded(Context serializationContext)
+        {
+            base.OnGameLoaded(serializationContext);
+        }
+
+        private string GetResourceIconPath(Resource resource)
+        {
+            // Special case for Money resource
+            if (resource == Resource.Money)
+            {
+                return "Media/Game/Icons/Money.svg"; // Adjust this path based on the actual game's money icon path
+            }
+            
+            Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
+            string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
+            return icon;
         }
 
         private void UpdateCommercialStats()
@@ -177,6 +208,8 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     float efficiencyValue = 1f;
                     float concentration = 0f;
                     string outputResourceName = "";
+                    string resourceIcon = "";
+                    var resources = new List<ResourceInfo>();
                     
                     // Get max service data
                     if (prefab != Entity.Null && serviceCompanyDataLookup.HasComponent(prefab))
@@ -197,13 +230,19 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     if (prefab != Entity.Null && transportCompanyDataLookup.HasComponent(prefab))
                         maxDeliveryTrucks = transportCompanyDataLookup[prefab].m_MaxTransports;
 
-                    // Get resources
-                    if (resourcesBufferLookup.HasBuffer(entity) && resourcesBufferLookup[entity].Length > 0)
+                    
+                    if (EntityManager.TryGetBuffer<Resources>(entity, true, out var resourceBuffer) && resourceBuffer.Length > 0)
                     {
-                        var resourceBuffer = resourcesBufferLookup[entity];
-                        resourceType = EconomyUtils.GetName(resourceBuffer[0].m_Resource);
-                        resourceAmount = resourceBuffer[0].m_Amount;
-                        outputResourceName = GetFormattedResourceName(resourceBuffer[0].m_Resource);
+                        for (int r = 0; r < resourceBuffer.Length; r++)
+                        {
+                            var resource = resourceBuffer[r];
+                            resources.Add(new ResourceInfo(
+                                resource.m_Resource,
+                                GetFormattedResourceName(resource.m_Resource),
+                                resource.m_Amount,
+                                GetResourceIconPath(resource.m_Resource)
+                            ));
+                        }
                     }
 
                     // Get profitability
@@ -261,7 +300,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                         MaxWorkers = workProvider.m_MaxWorkers,
                         VehicleCount = activeVehicles,
                         VehicleCapacity = maxDeliveryTrucks,
-                        Resources = resourceType,
                         ResourceAmount = resourceAmount,
                         TotalEfficiency = efficiency,
                         Factors = factors,
@@ -271,7 +309,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                         ProductionPerDay = productionPerDay,
                         EfficiencyValue = efficiencyValue * 100f,
                         Concentration = concentration,
-                        OutputResourceName = outputResourceName
+                        OutputResourceName = outputResourceName,
+                        ResourceIcon = resourceIcon, // Set resource icon
+                        ResourceName = resourceType,
+                        Resources = resources.ToArray() // Set resources
                     };
                     
                     companies.Add(companyDTO);

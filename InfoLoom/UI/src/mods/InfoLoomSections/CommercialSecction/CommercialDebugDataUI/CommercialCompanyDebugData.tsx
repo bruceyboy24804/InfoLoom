@@ -1,21 +1,19 @@
 import React, { FC, ReactElement } from 'react';
 import { useValue, trigger } from 'cs2/api';
-import {Tooltip, Panel, DraggablePanelProps, Button, FloatingButton} from 'cs2/ui';
+import { Tooltip, Panel, DraggablePanelProps, Button, FloatingButton, Icon } from 'cs2/ui';
 import {
   formatWords,
   formatNumber,
   formatPercentage2,
   formatPercentage1
 } from 'mods/InfoLoomSections/utils/formatText';
-import { CommercialCompanyDebug} from '../../../domain/CommercialCompanyDebugData';
+import { CommercialCompanyDebug, ResourceInfo} from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
 import { CommercialCompanyDebugData} from "mods/bindings";
 import {getModule} from "cs2/modding";
 import {Entity, useCssLength} from 'cs2/utils';
 import mod from "mod.json";
-import {Resource} from "cs2/bindings"
 import {EfficiencyFactorEnum} from "mods/domain/EfficiencyFactorInfo";
-import { ResourceIcon } from '../../IndustrialSection/IndustrialCompanyUI/resourceIcons';
 
 
 // Import VirtualList components
@@ -117,16 +115,25 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
 };
 
 interface ResourcesToolTipProps {
-  resources: CommercialCompanyDebug;
-  amount: number;
+  resources: ResourceInfo[];
 }
 
-const ResourcesToolTip: FC<ResourcesToolTipProps> = ({ resources, amount }) => {
+const ResourcesToolTip: FC<ResourcesToolTipProps> = ({ resources }) => {
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
-        <p><strong>Resources: {resources.Resources}</strong></p>
-        <p>Amount: {amount}</p>
+        <p><strong>Resources</strong></p>
+        {resources && resources.length > 0 ? (
+          resources.map((resource, index) => (
+            <div key={index} className={styles.resourceItem}>
+              <p cohinline="cohinline">
+                {resource.ResourceName}: {resource.Amount}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p>No resources</p>
+        )}
       </div>
     </div>
   );
@@ -162,12 +169,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
         <p><strong>Financial Information</strong></p>
-        <p>Total Worth: {formatNumber(company.LastTotalWorth)}</p>
+        <p>Last Total Worth: {formatNumber(company.LastTotalWorth)}</p>
         <p>Total Wages: {formatNumber(company.TotalWages)}</p>
         <p>Daily Production: {formatNumber(company.ProductionPerDay)}</p>
-        <p>Efficiency Value: {formatPercentage2(company.EfficiencyValue)}</p>
-        <p>Concentration: {formatPercentage2(company.Concentration)}</p>
-        <p>Output Resource: {company.OutputResourceName}</p>
       </div>
     </div>
   );
@@ -220,12 +224,25 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
 
       <Tooltip tooltip={
         <ResourcesToolTip
-          resources={company}
-          amount={company.ResourceAmount}
+          resources={company.Resources || []}
         />
       }>
         <div className={styles.resourcesColumn}>
-          <ResourceIcon resourceName={company.Resources} />
+          {company.Resources && company.Resources.length > 0 ? (
+            <div className={styles.processingWrapper}>
+              <div className={styles.processContainer}>
+                <div className={styles.resourceGroup}>
+                  {company.Resources.map((r, i) => (
+                    <div key={`resource-${i}`} className={styles.resourceItem}>
+                      <Icon src={r.Icon} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Icon src={company.ResourceIcon} />
+          )}
         </div>
       </Tooltip>
 
@@ -272,7 +289,7 @@ const TableHeader: FC = () => {
           <div className={styles.vehicleColumn}><b>Vehicles</b></div>
         </Tooltip>
         <Tooltip tooltip="Resources used by this commercial building">
-          <div className={styles.resourcesColumn}><b>Resources</b></div>
+          <div className={styles.resourcesColumn}><b>Resource Storage</b></div>
         </Tooltip>
         <Tooltip tooltip="Overall efficiency based on multiple factors">
           <div className={styles.efficiencyColumn}><b>Efficiency</b></div>

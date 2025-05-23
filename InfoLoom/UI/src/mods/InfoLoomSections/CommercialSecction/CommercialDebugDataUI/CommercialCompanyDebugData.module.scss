@@ -71,7 +71,7 @@
 }
 
 .resourcesColumn {
-  min-width: 120rem;
+  width: 130rem;
   margin-left: 30rem;
   text-align: center;
 }
@@ -191,4 +191,55 @@
   margin-left: 50rem;
 
 }
+.processingWrapper {
+  display: flex;
+  width: 50rem;
 
+}
+
+.resourceGroup {
+  display: flex;
+  align-items: center;
+  margin: 0.25rem;
+}
+
+.resourceItem {
+  display: flex;
+  align-items: center;
+  margin: 0.25rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 0 0.25rem;
+  font-size: 25rem;
+  line-height: 1;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  margin-left: 20rem;
+  font-size: 25rem;
+}
+.processContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 50rem;
+}
+.emptyGroup {
+  min-width: 20rem;
+  height: 20rem;
+}
+
+.divider {
+  margin: 0 8rem;
+  font-weight: bold;
+}
+
+.resourceGroup {
+  display: flex;
+  align-items: center;
+}

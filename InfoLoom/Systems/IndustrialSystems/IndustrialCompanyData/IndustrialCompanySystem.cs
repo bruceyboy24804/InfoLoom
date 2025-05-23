@@ -24,10 +24,25 @@ using StorageCompany = Game.Companies.StorageCompany;
 
 namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 {
+    public struct ResourceInfo
+    {
+        
+        public string ResourceName;
+        public int Amount;
+        public string Icon;
+
+        public ResourceInfo(Resource resourceType, string resourceName, int amount, string icon)
+        {
+            ResourceName = resourceName;
+            Amount = amount;
+            Icon = icon;
+        }
+    }
     public struct ProcessResourceInfo : IJsonWritable
     {
         public string ResourceName;
         public int Amount;
+        public string ResourceIcon;
         public bool IsOutput;
 
         public void Write(IJsonWriter writer)
@@ -37,6 +52,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             writer.Write(ResourceName);
             writer.PropertyName("amount");
             writer.Write(Amount);
+            writer.PropertyName("resourceIcon");
+            writer.Write(ResourceIcon);
             writer.PropertyName("isOutput");
             writer.Write(IsOutput);
             writer.TypeEnd();
@@ -65,12 +82,10 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         public int MaxWorkers;
         public int VehicleCount;
         public int VehicleCapacity;
-        public string Resources;
         public int ResourceAmount;
         public ProcessResourceInfo[] ProcessResources;
         public int TotalEfficiency;
         public EfficiencyFactorInfo[] Factors;
-        // Added profitability fields
         public float Profitability;
         public int LastTotalWorth;
         public int TotalWages;
@@ -79,8 +94,11 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         public float Concentration;
         public string OutputResourceName;
         public bool IsExtractor;
+        public string ResourceIcon; // For backward compatibility
+        public string ResourceName; // For backward compatibility
+        public ResourceInfo[] Resources; // New field to hold all resources
     }
-
+    
     public partial class IndustrialCompanySystem : GameSystemBase
     {
         private NameSystem m_NameSystem;
@@ -122,7 +140,18 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
             UpdateIndustrialStats();
         }
-
+        private string GetResourceIconPath(Resource resource)
+        {
+            // Special case for Money resource
+            if (resource == Resource.Money)
+            {
+                return "Media/Game/Icons/Money.svg";
+            }
+            
+            Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
+            string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
+            return icon;
+        }
         private void UpdateIndustrialStats()
         {
             var entities = m_IndustrialCompanyQuery.ToEntityArray(Allocator.Temp);
@@ -196,9 +225,10 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             int productionPerDay = 0;
             float efficiencyValue = 1f;
             float concentration = 0f;
-            string outputResourceName = "";
             bool isExtractor = EntityManager.HasComponent<Game.Companies.ExtractorCompany>(entity);
-
+            string outputResourceName = "";
+            string resourceIcon = "";
+            var resources = new List<ResourceInfo>();
             // Get vehicle data
             if (EntityManager.TryGetBuffer<OwnedVehicle>(entity, true, out var vehicleBuffer))
             {
@@ -218,11 +248,20 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             }
 
             // Get resources
+            // Update IndustrialCompanyDTO to handle multiple resources
             if (EntityManager.TryGetBuffer<Resources>(entity, true, out var resourceBuffer) && resourceBuffer.Length > 0)
-            {
-                resourceType = resourceBuffer[0].m_Resource.ToString();
-                resourceAmount = resourceBuffer[0].m_Amount;
-            }
+                    {
+                        for (int r = 0; r < resourceBuffer.Length; r++)
+                        {
+                            var resource = resourceBuffer[r];
+                            resources.Add(new ResourceInfo(
+                                resource.m_Resource,
+                                GetFormattedResourceName(resource.m_Resource),
+                                resource.m_Amount,
+                                GetResourceIconPath(resource.m_Resource)
+                            ));
+                        }
+                    }
 
             // Get profitability component if available
             if (EntityManager.TryGetComponent<Profitability>(entity, out var profitability))
@@ -238,19 +277,21 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             }
 
             // Get process resources
+            var processList = new List<ProcessResourceInfo>();
             if (prefab != Entity.Null &&
                 EntityManager.HasComponent<IndustrialProcessData>(prefab))
             {
                 var processData = EntityManager.GetComponentData<IndustrialProcessData>(prefab);
-                var processList = new List<ProcessResourceInfo>();
 
                 // Output
                 if (processData.m_Output.m_Resource != Resource.NoResource)
                 {
                     string resourceName = EconomyUtils.GetName(processData.m_Output.m_Resource).ToString();
+                    resourceIcon = GetResourceIconPath(processData.m_Output.m_Resource);
                     outputResourceName = resourceName;
                     processList.Add(new ProcessResourceInfo {
                         ResourceName = resourceName,
+                        ResourceIcon = resourceIcon,
                         Amount = processData.m_Output.m_Amount,
                         IsOutput = true
                     });
@@ -262,6 +303,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                     processList.Add(new ProcessResourceInfo {
                         ResourceName = EconomyUtils.GetName(processData.m_Input1.m_Resource).ToString(),
                         Amount = processData.m_Input1.m_Amount,
+                        ResourceIcon = GetResourceIconPath(processData.m_Input1.m_Resource),
                         IsOutput = false
                     });
                 }
@@ -272,12 +314,13 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                     processList.Add(new ProcessResourceInfo {
                         ResourceName = EconomyUtils.GetName(processData.m_Input2.m_Resource).ToString(),
                         Amount = processData.m_Input2.m_Amount,
+                        ResourceIcon = GetResourceIconPath(processData.m_Input2.m_Resource),
                         IsOutput = false
                     });
                 }
-
-                processResources = processList.ToArray();
             }
+
+            processResources = processList.ToArray();
 
             // Get efficiency and property data
             Entity targetEntity = entity;
@@ -391,7 +434,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 MaxWorkers = workProvider.m_MaxWorkers,
                 VehicleCount = activeVehicles,
                 VehicleCapacity = maxDeliveryTrucks,
-                Resources = resourceType,
                 ResourceAmount = resourceAmount,
                 ProcessResources = processResources,
                 TotalEfficiency = efficiency,
@@ -404,10 +446,25 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 EfficiencyValue = efficiencyValue * 100f,
                 Concentration = concentration,
                 OutputResourceName = outputResourceName,
-                IsExtractor = isExtractor
+                IsExtractor = isExtractor,
+                ResourceIcon = resourceIcon,
+                ResourceName = resourceType,
+                Resources = resources.ToArray()
             };
 
             return true;
+        }
+        private string GetFormattedResourceName(Resource resource)
+        {
+            if (resource == Resource.NoResource)
+                return string.Empty;
+                
+            string resourceName = EconomyUtils.GetName(resource);
+            if (string.IsNullOrEmpty(resourceName))
+                return string.Empty;
+                
+            // Capitalize first letter
+            return char.ToUpper(resourceName[0]) + resourceName.Substring(1);
         }
     }
 }

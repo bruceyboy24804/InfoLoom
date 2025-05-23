@@ -1,9 +1,14 @@
 import { Entity } from "cs2/utils";
 import { EfficiencyFactorInfo } from "./EfficiencyFactorInfo";
-
+export interface ResourceInfo {
+    ResourceName: string;
+    Amount: number;
+    Icon: string;
+}
 export interface ProcessResourceInfo {
     resourceName: string;
     amount: number;
+    resourceIcon: string;
     isOutput: boolean;
 }
 
@@ -15,12 +20,12 @@ export interface IndustrialCompanyDebug {
     MaxWorkers: number;
     VehicleCount: number;
     VehicleCapacity: number;
-    Resources: string;
     ResourceAmount: number;
+    ResourceIcon: string;
     ProcessResources: ProcessResourceInfo[];
     TotalEfficiency: number;
     Factors: EfficiencyFactorInfo[];
-
+    Resources: ResourceInfo[];
     Profitability: number;
     LastTotalWorth: number;
     TotalWages: number;

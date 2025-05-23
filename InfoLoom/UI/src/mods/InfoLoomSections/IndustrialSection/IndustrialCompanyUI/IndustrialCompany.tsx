@@ -8,13 +8,13 @@ import {
   formatPercentage1
 } from 'mods/InfoLoomSections/utils/formatText';
 import { IndustrialCompanyDebug, ProcessResourceInfo} from '../../../domain/IndustrialCompanyDebugData';
-import { EfficiencyFactorEnum, EfficiencyFactorInfo } from '../../../domain/EfficiencyFactorInfo';
+import { EfficiencyFactorEnum } from '../../../domain/EfficiencyFactorInfo';
 import styles from './IndustrialCompany.module.scss';
 import { IndustrialCompanyDebugData } from "mods/bindings";
 import {getModule} from "cs2/modding";
 import {Entity, useCssLength} from 'cs2/utils';
 import mod from "mod.json";
-import {ResourceIcon} from "mods/InfoLoomSections/IndustrialSection/IndustrialCompanyUI/resourceIcons";
+import { ResourceInfo } from '../../../domain/CommercialCompanyDebugData';
 
 
 // Import VirtualList components
@@ -117,16 +117,25 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
 };
 
 interface ResourcesToolTipProps {
-  resources: string;
-  amount: number;
+  resources: ResourceInfo[];
 }
 
-const ResourcesToolTip: FC<ResourcesToolTipProps> = ({ resources, amount }) => {
+const ResourcesToolTip: FC<ResourcesToolTipProps> = ({ resources }) => {
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
-        <p><strong>Resources: {resources}</strong></p>
-        <p>Amount: {amount}</p>
+        <p><strong>Resources</strong></p>
+        {resources && resources.length > 0 ? (
+          resources.map((resource, index) => (
+            <div key={index} className={styles.resourceItem}>
+              <p cohinline="cohinline">
+                {resource.ResourceName}: {resource.Amount}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p>No resources</p>
+        )}
       </div>
     </div>
   );
@@ -185,9 +194,7 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
         <p>Total Worth: {formatNumber(company.LastTotalWorth)}</p>
         <p>Total Wages: {formatNumber(company.TotalWages)}</p>
         <p>Daily Production: {formatNumber(company.ProductionPerDay)}</p>
-        <p>Efficiency Value: {formatPercentage2(company.EfficiencyValue)}</p>
         <p>Concentration: {formatPercentage2(company.Concentration)}</p>
-        <p>Output Resource: {company.OutputResourceName}</p>
         {company.IsExtractor && <p>Extractor Type: Yes</p>}
       </div>
     </div>
@@ -225,12 +232,25 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
 
       <Tooltip tooltip={
         <ResourcesToolTip
-          resources={company.Resources}
-          amount={company.ResourceAmount}
+          resources={company.Resources || []}
         />
       }>
         <div className={styles.resourcesColumn}>
-          <ResourceIcon resourceName={company.Resources} />
+          {company.Resources && company.Resources.length > 0 ? (
+            <div className={styles.processingWrapper}>
+              <div className={styles.processContainer}>
+                <div className={styles.resourceGroup}>
+                  {company.Resources.map((r, i) => (
+                    <div key={`resource-${i}`} className={styles.resourceItem}>
+                      <Icon src={r.Icon} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Icon src={company.ResourceIcon} />
+          )}
         </div>
       </Tooltip>
       <Tooltip tooltip={
@@ -252,7 +272,7 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
                       <div className={styles.resourceGroup}>
                         {inputResources.map((r, i) => (
                           <div key={`input-${i}`} className={styles.resourceItem}>
-                            <ResourceIcon resourceName={r.resourceName} />
+                            <Icon src={r.resourceIcon} />
                             {i < inputResources.length - 1 &&
                               <span className={styles.separator}>+</span>
                             }
@@ -267,7 +287,7 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
                       <div className={styles.resourceGroup}>
                         {outputResources.map((r, i) => (
                           <div key={`output-${i}`} className={styles.resourceItem}>
-                            <ResourceIcon resourceName={r.resourceName} />
+                            <Icon src={r.resourceIcon} />
                             {i < outputResources.length - 1 &&
                               <span className={styles.separator}>+</span>
                             }
@@ -322,7 +342,7 @@ const TableHeader: FC = () => {
           <div className={styles.vehicleColumn}><b>Vehicles</b></div>
         </Tooltip>
         <Tooltip tooltip="Resources used by this commercial building">
-          <div className={styles.resourcesColumn}><b>Resources</b></div>
+          <div className={styles.resourcesColumn}><b>Resource Storage</b></div>
         </Tooltip>
         <Tooltip tooltip="Input/output resources processed by this industrial company">
           <div className={styles.processingColumn}><b>Processing</b></div>
