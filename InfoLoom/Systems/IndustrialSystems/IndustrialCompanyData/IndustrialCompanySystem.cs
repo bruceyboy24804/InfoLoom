@@ -1,22 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Colossal.Entities;
 using Colossal.Logging;
+using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using Game;
 using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
+using Game.Common;
 using Game.Companies;
 using Game.Economy;
 using Game.Objects;
 using Game.Prefabs;
+using Game.SceneFlow;
 using Game.Simulation;
 using Game.UI;
+using Game.UI.InGame;
 using Game.Vehicles;
+using InfoLoomTwo.Domain.DataDomain;
+using InfoLoomTwo.Domain.DataDomain.Enums;
+using InfoLoomTwo.Utils;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using DeliveryTruck = Game.Vehicles.DeliveryTruck;
 using ExtractorCompany = Game.Companies.ExtractorCompany;
 using ProcessingCompany = Game.Companies.ProcessingCompany;
@@ -26,18 +37,18 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 {
     public struct ResourceInfo
     {
-        
         public string ResourceName;
         public int Amount;
         public string Icon;
 
-        public ResourceInfo(Resource resourceType, string resourceName, int amount, string icon)
+        public ResourceInfo(string resourceName, int amount, string icon)
         {
             ResourceName = resourceName;
             Amount = amount;
             Icon = icon;
         }
     }
+
     public struct ProcessResourceInfo : IJsonWritable
     {
         public string ResourceName;
@@ -61,18 +72,18 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
     }
 
     public struct EfficiencyFactorInfo
-        {
-            public Game.Buildings.EfficiencyFactor Factor;
-            public int Value;
-            public int Result;
+    {
+        public Game.Buildings.EfficiencyFactor Factor;
+        public int Value;
+        public int Result;
 
-            public EfficiencyFactorInfo(Game.Buildings.EfficiencyFactor factor, int value, int result)
-            {
-                Factor = factor;
-                Value = value;
-                Result = result;
-            }
+        public EfficiencyFactorInfo(Game.Buildings.EfficiencyFactor factor, int value, int result)
+        {
+            Factor = factor;
+            Value = value;
+            Result = result;
         }
+    }
 
     public struct IndustrialCompanyDTO
     {
@@ -91,24 +102,228 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         public int TotalWages;
         public int ProductionPerDay;
         public float EfficiencyValue;
-        public float Concentration;
         public string OutputResourceName;
         public bool IsExtractor;
         public string ResourceIcon; // For backward compatibility
         public string ResourceName; // For backward compatibility
         public ResourceInfo[] Resources; // New field to hold all resources
     }
+
+    // Burst-compatible struct for industrial company data
+    public struct IndustrialCompanyJobData : IComponentData
+    {
+        public Entity EntityId;
+        public FixedString64Bytes CompanyName;
+        public int TotalEmployees;
+        public int MaxWorkers;
+        public int VehicleCount;
+        public int VehicleCapacity;
+        public int TotalEfficiency;
+        public float Profitability;
+        public int LastTotalWorth;
+        public int TotalWages;
+        public int ProductionPerDay;
+        public float EfficiencyValue;
+        public bool IsExtractor;
+        public int ResourceCount;
+    }
+
+    // Burst-compiled job for processing industrial companies
+    [BurstCompile]
+    public struct ProcessIndustrialCompaniesJob : IJobChunk
+    {
+        // Required component type handles
+        [ReadOnly] public EntityTypeHandle EntityType;
+        [ReadOnly] public ComponentTypeHandle<Game.Companies.CompanyData> CompanyDataType;
+        [ReadOnly] public ComponentTypeHandle<WorkProvider> WorkProviderType;
+        [ReadOnly] public ComponentTypeHandle<PrefabRef> PrefabRefType;
+        
+        // Optional component type handles
+        [ReadOnly] public ComponentTypeHandle<PropertyRenter> PropertyRenterType;
+        [ReadOnly] public ComponentTypeHandle<Profitability> ProfitabilityType;
+        [ReadOnly] public ComponentTypeHandle<Attached> AttachedType;
+        
+        // Buffer type handles
+        [ReadOnly] public BufferTypeHandle<Employee> EmployeeBufferType;
+        [ReadOnly] public BufferTypeHandle<OwnedVehicle> OwnedVehicleBufferType;
+        [ReadOnly] public BufferTypeHandle<Resources> ResourcesBufferType;
+        
+        // Component lookups for related entities
+        [ReadOnly] public ComponentLookup<TransportCompanyData> TransportCompanyDataLookup;
+        [ReadOnly] public ComponentLookup<IndustrialProcessData> IndustrialProcessDataLookup;
+        [ReadOnly] public ComponentLookup<ResourceData> ResourceDataLookup;
+        [ReadOnly] public ComponentLookup<Citizen> CitizenLookup;
+        [ReadOnly] public ComponentLookup<DeliveryTruck> DeliveryTruckLookup;
+        [ReadOnly] public ComponentLookup<ExtractorCompany> ExtractorCompanyLookup;
+        [ReadOnly] public ComponentLookup<Game.Areas.Extractor> ExtractorLookup;
+        [ReadOnly] public ComponentLookup<PrefabRef> PrefabRefLookup;
+        [ReadOnly] public ComponentLookup<Game.Prefabs.ExtractorAreaData> ExtractorAreaDataLookup;
+        [ReadOnly] public BufferLookup<Efficiency> EfficiencyLookup;
+        [ReadOnly] public BufferLookup<Game.Areas.SubArea> SubAreaLookup;
+        
+        // Shared data
+        [ReadOnly] public EconomyParameterData EconomyParams;
+        [ReadOnly] public ExtractorParameterData ExtractorParams;
+        [ReadOnly] public ResourcePrefabs ResourcePrefabs;
+        
+        // Output data
+        public NativeList<IndustrialCompanyJobData>.ParallelWriter ResultWriter;
+        
+        // Cache lookups
+        [ReadOnly] public NativeHashMap<Entity, FixedString64Bytes> CompanyNames;
+        
+        // Burst-compatible default name
+        [ReadOnly] public FixedString64Bytes DefaultCompanyName;
+
+        public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            // Early exit if chunk doesn't have required components
+            if (!chunk.Has(EmployeeBufferType))
+                return;
+
+            // Get arrays for the entire chunk
+            var entities = chunk.GetNativeArray(EntityType);
+            var companyDataArray = chunk.GetNativeArray(ref CompanyDataType);
+            var workProviderArray = chunk.GetNativeArray(ref WorkProviderType);
+            var prefabRefArray = chunk.GetNativeArray(ref PrefabRefType);
+            
+            // Check for optional components at chunk level
+            var hasPropertyRenter = chunk.Has(ref PropertyRenterType);
+            var hasProfitability = chunk.Has(ref ProfitabilityType);
+            var hasOwnedVehicles = chunk.Has(ref OwnedVehicleBufferType);
+            var hasResources = chunk.Has(ref ResourcesBufferType);
+            var hasAttached = chunk.Has(ref AttachedType);
+            
+            var propertyRenterArray = hasPropertyRenter ? chunk.GetNativeArray(ref PropertyRenterType) : default;
+            var profitabilityArray = hasProfitability ? chunk.GetNativeArray(ref ProfitabilityType) : default;
+            var attachedArray = hasAttached ? chunk.GetNativeArray(ref AttachedType) : default;
+            
+            // Get buffer accessors
+            var employeeBufferAccessor = chunk.GetBufferAccessor(ref EmployeeBufferType);
+            var ownedVehicleAccessor = hasOwnedVehicles ? chunk.GetBufferAccessor(ref OwnedVehicleBufferType) : default;
+            var resourcesAccessor = hasResources ? chunk.GetBufferAccessor(ref ResourcesBufferType) : default;
+
+            // Process all entities in this chunk
+            for (int i = 0; i < chunk.Count; i++)
+            {
+                var entity = entities[i];
+                var employeeBuffer = employeeBufferAccessor[i];
+                
+                // Skip companies with no employees
+                if (employeeBuffer.Length == 0)
+                    continue;
+
+                var companyData = companyDataArray[i];
+                var workProvider = workProviderArray[i];
+                var prefabRef = prefabRefArray[i];
+                Entity prefab = prefabRef.m_Prefab;
+
+                // Get company name from cache
+                var companyName = CompanyNames.TryGetValue(companyData.m_Brand, out var name) ? 
+                    name : DefaultCompanyName;
+
+                // Calculate basic data
+                int activeVehicles = hasOwnedVehicles ? CountActiveVehicles(ownedVehicleAccessor[i]) : 0;
+                int maxDeliveryTrucks = GetMaxDeliveryTrucks(prefab);
+                int resourceCount = hasResources ? resourcesAccessor[i].Length : 0;
+                bool isExtractor = ExtractorCompanyLookup.HasComponent(entity);
+
+                // Calculate profitability
+                float profitabilityValue = 0f;
+                int lastTotalWorth = 0;
+                if (hasProfitability)
+                {
+                    var profitability = profitabilityArray[i];
+                    profitabilityValue = ((profitability.m_Profitability - 127f) / 127.5f) * 100f;
+                    lastTotalWorth = profitability.m_LastTotalWorth;
+                }
+
+                // Calculate wages
+                int totalWages = CalculateTotalWage(employeeBuffer);
+
+                // Create job data
+                var jobData = new IndustrialCompanyJobData
+                {
+                    EntityId = entity,
+                    CompanyName = companyName,
+                    TotalEmployees = employeeBuffer.Length,
+                    MaxWorkers = workProvider.m_MaxWorkers,
+                    VehicleCount = activeVehicles,
+                    VehicleCapacity = maxDeliveryTrucks,
+                    TotalEfficiency = 100,
+                    Profitability = profitabilityValue,
+                    LastTotalWorth = lastTotalWorth,
+                    TotalWages = totalWages,
+                    ProductionPerDay = 0,
+                    EfficiencyValue = 100f,
+                    IsExtractor = isExtractor,
+                    ResourceCount = resourceCount
+                };
+
+                ResultWriter.AddNoResize(jobData);
+            }
+        }
+
+        [BurstCompile]
+        private int GetMaxDeliveryTrucks(Entity prefab)
+        {
+            return TransportCompanyDataLookup.TryGetComponent(prefab, out var transportData) ? 
+                transportData.m_MaxTransports : 0;
+        }
+
+        [BurstCompile]
+        private int CountActiveVehicles(DynamicBuffer<OwnedVehicle> vehicleBuffer)
+        {
+            int count = 0;
+            for (int i = 0; i < vehicleBuffer.Length; i++)
+            {
+                if (DeliveryTruckLookup.HasComponent(vehicleBuffer[i].m_Vehicle))
+                    count++;
+            }
+            return count;
+        }
+
+        [BurstCompile]
+        private int CalculateTotalWage(DynamicBuffer<Employee> employeeBuffer)
+        {
+            return EconomyUtils.CalculateTotalWage(employeeBuffer, ref EconomyParams);
+        }
+
+        [BurstCompile]
+        private int CalculateProductionPerDay(Entity prefab, float efficiencyValue, DynamicBuffer<Employee> employeeBuffer)
+        {
+            if (!IndustrialProcessDataLookup.TryGetComponent(prefab, out var industryProcess))
+                return 0;
+
+            return EconomyUtils.GetCompanyProductionPerDay(
+                efficiencyValue,
+                true, // isIndustrial
+                employeeBuffer,
+                industryProcess,
+                ResourcePrefabs,
+                ResourceDataLookup,
+                CitizenLookup,
+                ref EconomyParams);
+        }
+    }
     
     public partial class IndustrialCompanySystem : GameSystemBase
     {
         private NameSystem m_NameSystem;
+        private ImageSystem m_ImageSystem;
+        private ResourceSystem m_ResourceSystem;
+        private PrefabSystem m_PrefabSystem;
         private EntityQuery m_IndustrialCompanyQuery;
         private ILog m_Log;
-        public IndustrialCompanyDTO[] m_IndustrialCompanyDTOs;
-        private ImageSystem m_ImageSystem;
-        private PrefabSystem m_PrefabSystem;
-        private ResourceSystem m_ResourceSystem;
+        
         public bool IsPanelVisible;
+        public IndustrialCompanyDTO[] m_IndustrialCompanyDTOs;
+
+        // Cached lookups for performance
+        private NativeHashMap<Entity, FixedString64Bytes> m_CompanyNameCache;
+        private Dictionary<Resource, string> m_ResourceNameCache;
+        private Dictionary<Resource, string> m_ResourceIconCache;
+        private bool m_CacheInitialized;
 
         protected override void OnCreate()
         {
@@ -117,19 +332,34 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             m_IndustrialCompanyDTOs = Array.Empty<IndustrialCompanyDTO>();
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
-            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_ResourceSystem = World.GetOrCreateSystemManaged<ResourceSystem>();
+            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 
-            // Define query for industrial companies
+            // Define optimized query for industrial companies
             m_IndustrialCompanyQuery = SystemAPI.QueryBuilder()
-                .WithAll<Game.Companies.CompanyData, WorkProvider, Employee>()
-                .WithAny<IndustrialCompany, StorageCompany, ProcessingCompany, ExtractorCompany>()
-                .WithNone<CommercialCompany>()
+                .WithAll<IndustrialCompany>()
+                .WithNone<StorageCompany>()
                 .Build();
+
+            // Initialize caches
+            m_CompanyNameCache = new NativeHashMap<Entity, FixedString64Bytes>(1000, Allocator.Persistent);
+            m_ResourceNameCache = new Dictionary<Resource, string>();
+            m_ResourceIconCache = new Dictionary<Resource, string>();
+        }
+
+        protected override void OnDestroy()
+        {
+            if (m_CompanyNameCache.IsCreated) 
+                m_CompanyNameCache.Dispose();
+            base.OnDestroy();
         }
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
+            if (Mod.setting.CustomUpdateInterval)
+            {
+                return Mod.setting.UpdateInterval;
+            }
             return 512;
         }
 
@@ -138,11 +368,265 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             if (!IsPanelVisible)
                 return;
 
-            UpdateIndustrialStats();
+            UpdateIndustrialStatsWithBurstJob();
         }
+
+        protected override void OnGameLoaded(Context serializationContext)
+        {
+            base.OnGameLoaded(serializationContext);
+            InitializeCaches();
+        }
+
+        private void InitializeCaches()
+        {
+            if (m_CacheInitialized)
+                return;
+
+            // Initialize resource name and icon caches
+            for (int i = 0; i < 64; i++)
+            {
+                var resource = (Resource)i;
+                if (resource == Resource.NoResource) continue;
+                var resourceName = GetFormattedResourceName(resource);
+                var iconPath = GetResourceIconPath(resource);
+                m_ResourceNameCache[resource] = resourceName;
+                m_ResourceIconCache[resource] = iconPath;
+            }
+
+            m_CacheInitialized = true;
+        }
+
+        private void UpdateIndustrialStatsWithBurstJob()
+        {
+            if (!IsPanelVisible)
+                return;
+
+            InitializeCaches();
+            UpdateCompanyNameCache();
+
+            // Create result list with estimated capacity
+            int estimatedCount = m_IndustrialCompanyQuery.CalculateEntityCount();
+            var jobResults = new NativeList<IndustrialCompanyJobData>(estimatedCount, Allocator.TempJob);
+
+            // Create the burst-compiled job
+            var job = new ProcessIndustrialCompaniesJob
+            {
+                // Required component type handles
+                EntityType = GetEntityTypeHandle(),
+                CompanyDataType = GetComponentTypeHandle<Game.Companies.CompanyData>(true),
+                WorkProviderType = GetComponentTypeHandle<WorkProvider>(true),
+                PrefabRefType = GetComponentTypeHandle<PrefabRef>(true),
+                
+                // Optional component type handles
+                PropertyRenterType = GetComponentTypeHandle<PropertyRenter>(true),
+                ProfitabilityType = GetComponentTypeHandle<Profitability>(true),
+                AttachedType = GetComponentTypeHandle<Attached>(true),
+                
+                // Buffer type handles
+                EmployeeBufferType = GetBufferTypeHandle<Employee>(true),
+                OwnedVehicleBufferType = GetBufferTypeHandle<OwnedVehicle>(true),
+                ResourcesBufferType = GetBufferTypeHandle<Resources>(true),
+                
+                // Component lookups
+                TransportCompanyDataLookup = GetComponentLookup<TransportCompanyData>(true),
+                IndustrialProcessDataLookup = GetComponentLookup<IndustrialProcessData>(true),
+                ResourceDataLookup = GetComponentLookup<ResourceData>(true),
+                CitizenLookup = GetComponentLookup<Citizen>(true),
+                DeliveryTruckLookup = GetComponentLookup<DeliveryTruck>(true),
+                ExtractorCompanyLookup = GetComponentLookup<ExtractorCompany>(true),
+                ExtractorLookup = GetComponentLookup<Game.Areas.Extractor>(true),
+                PrefabRefLookup = GetComponentLookup<PrefabRef>(true),
+                ExtractorAreaDataLookup = GetComponentLookup<Game.Prefabs.ExtractorAreaData>(true),
+                EfficiencyLookup = GetBufferLookup<Efficiency>(true),
+                SubAreaLookup = GetBufferLookup<Game.Areas.SubArea>(true),
+                
+                // Shared data
+                EconomyParams = SystemAPI.GetSingleton<EconomyParameterData>(),
+                ExtractorParams = SystemAPI.GetSingleton<ExtractorParameterData>(),
+                ResourcePrefabs = m_ResourceSystem.GetPrefabs(),
+                
+                // Cache and output
+                CompanyNames = m_CompanyNameCache,
+                ResultWriter = jobResults.AsParallelWriter(),
+                DefaultCompanyName = new FixedString64Bytes("Unknown Company")
+            };
+
+            // Schedule the job to run in parallel across multiple chunks
+            var jobHandle = job.ScheduleParallel(m_IndustrialCompanyQuery, Dependency);
+            
+            // Complete the job and convert results
+            jobHandle.Complete();
+            
+            // Convert job results to final DTOs
+            ConvertJobResultsToDTO(jobResults);
+            
+            jobResults.Dispose();
+        }
+
+        private void UpdateCompanyNameCache()
+        {
+            var entities = m_IndustrialCompanyQuery.ToEntityArray(Allocator.Temp);
+            var companyDataLookup = GetComponentLookup<Game.Companies.CompanyData>(true);
+
+            try
+            {
+                for (int i = 0; i < entities.Length; i++)
+                {
+                    var entity = entities[i];
+                    if (companyDataLookup.TryGetComponent(entity, out var companyData))
+                    {
+                        if (!m_CompanyNameCache.ContainsKey(companyData.m_Brand))
+                        {
+                            var companyName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand);
+                            var fixedName = new FixedString64Bytes(companyName);
+                            m_CompanyNameCache.TryAdd(companyData.m_Brand, fixedName);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                entities.Dispose();
+            }
+        }
+
+        private void ConvertJobResultsToDTO(NativeList<IndustrialCompanyJobData> jobResults)
+        {
+            var companies = new List<IndustrialCompanyDTO>(jobResults.Length);
+            var resourcesBufferLookup = GetBufferLookup<Resources>(true);
+            var efficiencyBufferLookup = GetBufferLookup<Efficiency>(true);
+            var propertyRenterLookup = GetComponentLookup<PropertyRenter>(true);
+            var prefabRefLookup = GetComponentLookup<PrefabRef>(true);
+            var industrialProcessLookup = GetComponentLookup<IndustrialProcessData>(true);
+
+            for (int i = 0; i < jobResults.Length; i++)
+            {
+                var jobData = jobResults[i];
+                
+                // Get detailed resource information
+                var resources = new List<ResourceInfo>();
+                if (resourcesBufferLookup.HasBuffer(jobData.EntityId))
+                {
+                    var resourceBuffer = resourcesBufferLookup[jobData.EntityId];
+                    for (int r = 0; r < resourceBuffer.Length; r++)
+                    {
+                        var resource = resourceBuffer[r];
+                        string resourceName = GetFormattedResourceName(resource.m_Resource);
+                        string resourceIcon = GetResourceIconPath(resource.m_Resource);
+                        
+                        resources.Add(new ResourceInfo(
+                            resourceName,
+                            resource.m_Amount,
+                            resourceIcon
+                        ));
+                    }
+                }
+
+                // Get process resources
+                var processList = new List<ProcessResourceInfo>();
+                string outputResourceName = "";
+                string outputResourceIcon = "";
+                
+                if (prefabRefLookup.TryGetComponent(jobData.EntityId, out var prefabRef) &&
+                    industrialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var processData))
+                {
+                    // Output
+                    if (processData.m_Output.m_Resource != Resource.NoResource)
+                    {
+                        string resourceName = EconomyUtils.GetName(processData.m_Output.m_Resource).ToString();
+                        outputResourceIcon = GetResourceIconPath(processData.m_Output.m_Resource);
+                        outputResourceName = resourceName;
+                        processList.Add(new ProcessResourceInfo {
+                            ResourceName = resourceName,
+                            ResourceIcon = outputResourceIcon,
+                            Amount = processData.m_Output.m_Amount,
+                            IsOutput = true
+                        });
+                    }
+
+                    // Input 1
+                    if (processData.m_Input1.m_Resource != Resource.NoResource)
+                    {
+                        processList.Add(new ProcessResourceInfo {
+                            ResourceName = EconomyUtils.GetName(processData.m_Input1.m_Resource).ToString(),
+                            Amount = processData.m_Input1.m_Amount,
+                            ResourceIcon = GetResourceIconPath(processData.m_Input1.m_Resource),
+                            IsOutput = false
+                        });
+                    }
+
+                    // Input 2
+                    if (processData.m_Input2.m_Resource != Resource.NoResource)
+                    {
+                        processList.Add(new ProcessResourceInfo {
+                            ResourceName = EconomyUtils.GetName(processData.m_Input2.m_Resource).ToString(),
+                            Amount = processData.m_Input2.m_Amount,
+                            ResourceIcon = GetResourceIconPath(processData.m_Input2.m_Resource),
+                            IsOutput = false
+                        });
+                    }
+                }
+
+                // Get efficiency factors
+                EfficiencyFactorInfo[] factors = Array.Empty<EfficiencyFactorInfo>();
+                if (propertyRenterLookup.HasComponent(jobData.EntityId))
+                {
+                    var targetEntity = propertyRenterLookup[jobData.EntityId].m_Property;
+                    factors = GetEfficiencyFactors(targetEntity, efficiencyBufferLookup);
+                }
+
+                // Create DTO
+                var dto = new IndustrialCompanyDTO
+                {
+                    EntityId = jobData.EntityId,
+                    CompanyName = jobData.CompanyName.ToString(),
+                    TotalEmployees = jobData.TotalEmployees,
+                    MaxWorkers = jobData.MaxWorkers,
+                    VehicleCount = jobData.VehicleCount,
+                    VehicleCapacity = jobData.VehicleCapacity,
+                    ResourceAmount = jobData.ResourceCount,
+                    ProcessResources = processList.ToArray(),
+                    TotalEfficiency = jobData.TotalEfficiency,
+                    Factors = factors,
+                    Profitability = jobData.Profitability,
+                    LastTotalWorth = jobData.LastTotalWorth,
+                    TotalWages = jobData.TotalWages,
+                    ProductionPerDay = jobData.ProductionPerDay,
+                    EfficiencyValue = jobData.EfficiencyValue,
+                    OutputResourceName = outputResourceName,
+                    IsExtractor = jobData.IsExtractor,
+                    ResourceIcon = outputResourceIcon,
+                    ResourceName = outputResourceName,
+                    Resources = resources.ToArray()
+                };
+
+                companies.Add(dto);
+            }
+            var comparer = IndustrialCompanySortingUtility.CreateComparer<IndustrialCompanyDTO>(
+                (a, b) => a.EntityId.Index.CompareTo(b.EntityId.Index),
+                (a, b) => string.Compare(a.CompanyName, b.CompanyName, StringComparison.Ordinal),
+                (a, b) => a.TotalEmployees.CompareTo(b.TotalEmployees),
+                (a, b) => a.TotalEfficiency.CompareTo(b.TotalEfficiency),
+                (a, b) => a.Profitability.CompareTo(b.Profitability)
+            );
+            
+            companies.Sort(comparer);
+
+            m_IndustrialCompanyDTOs = companies.ToArray();
+        }
+
+        private string GetFormattedResourceName(Resource resource)
+        {
+            if (m_ResourceNameCache.TryGetValue(resource, out var name))
+                return name;
+
+            var resourceName = EconomyUtils.GetName(resource).ToString();
+            m_ResourceNameCache[resource] = resourceName;
+            return resourceName;
+        }
+
         private string GetResourceIconPath(Resource resource)
         {
-            // Special case for Money resource
             if (resource == Resource.Money)
             {
                 return "Media/Game/Icons/Money.svg";
@@ -152,319 +636,58 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
             return icon;
         }
-        private void UpdateIndustrialStats()
+
+        private EfficiencyFactorInfo[] GetEfficiencyFactors(Entity targetEntity, BufferLookup<Efficiency> efficiencyBufferLookup)
         {
-            var entities = m_IndustrialCompanyQuery.ToEntityArray(Allocator.Temp);
-            var companies = new List<IndustrialCompanyDTO>(entities.Length);
-
-            try
+            if (!efficiencyBufferLookup.HasBuffer(targetEntity))
+                return Array.Empty<EfficiencyFactorInfo>();
+                
+            var buffer = efficiencyBufferLookup[targetEntity];
+            if (buffer.Length == 0)
+                return Array.Empty<EfficiencyFactorInfo>();
+                
+            using var sortedEfficiencies = buffer.ToNativeArray(Allocator.Temp);
+            sortedEfficiencies.Sort();
+            
+            var tempFactors = new List<EfficiencyFactorInfo>();
+            var totalEfficiency = (int)math.round(100f * BuildingUtils.GetEfficiency(buffer));
+            
+            if (totalEfficiency > 0)
             {
-                for (int i = 0; i < entities.Length; i++)
+                float cumulativeEffect = 100f;
+                for (int i = 0; i < sortedEfficiencies.Length; i++)
                 {
-                    var entity = entities[i];
-
-                    // Skip companies with no employees
-                    if (!EntityManager.TryGetBuffer<Employee>(entity, true, out var employeeBuffer) || employeeBuffer.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    if (TryCreateCompanyDTO(entity, employeeBuffer.Length, out var companyDTO))
-                    {
-                        companies.Add(companyDTO);
-                    }
-                }
-            }
-            finally
-            {
-                entities.Dispose();
-            }
-
-            m_IndustrialCompanyDTOs = companies.ToArray();
-        }
-
-        private bool TryCreateCompanyDTO(Entity entity, int employeeCount, out IndustrialCompanyDTO companyDTO)
-        {
-            companyDTO = default;
-
-            // Make sure we have basic required components
-            if (!EntityManager.HasComponent<Game.Companies.CompanyData>(entity) ||
-                !EntityManager.HasComponent<WorkProvider>(entity) ||
-                !EntityManager.HasComponent<PrefabRef>(entity))
-            {
-                return false;
-            }
-
-            // Get basic company data
-            var companyData = EntityManager.GetComponentData<Game.Companies.CompanyData>(entity);
-            var workProvider = EntityManager.GetComponentData<WorkProvider>(entity);
-            var prefabRef = EntityManager.GetComponentData<PrefabRef>(entity);
-            Entity prefab = prefabRef.m_Prefab;
-
-            // Get company name
-            string companyName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand);
-
-            // Gather all data in a single pass using local methods
-            int activeVehicles = 0, maxDeliveryTrucks = 0;
-            string resourceType = "None";
-            int resourceAmount = 0;
-            ProcessResourceInfo[] processResources = Array.Empty<ProcessResourceInfo>();
-            int efficiency = 100;
-            EfficiencyFactorInfo[] factors = Array.Empty<EfficiencyFactorInfo>();
-
-            // Get economy parameters for calculations
-            var econParams = SystemAPI.GetSingleton<EconomyParameterData>();
-            var resourcePrefabs = m_ResourceSystem.GetPrefabs();
-            var resourceDataLookup = GetComponentLookup<ResourceData>(true);
-            var citizenLookup = GetComponentLookup<Citizen>(true);
-
-            // Profitability related variables
-            float profitabilityValue = 0f;
-            int lastTotalWorth = 0;
-            int totalWages = 0;
-            int productionPerDay = 0;
-            float efficiencyValue = 1f;
-            float concentration = 0f;
-            bool isExtractor = EntityManager.HasComponent<Game.Companies.ExtractorCompany>(entity);
-            string outputResourceName = "";
-            string resourceIcon = "";
-            var resources = new List<ResourceInfo>();
-            // Get vehicle data
-            if (EntityManager.TryGetBuffer<OwnedVehicle>(entity, true, out var vehicleBuffer))
-            {
-                for (int i = 0; i < vehicleBuffer.Length; i++)
-                {
-                    if (EntityManager.HasComponent<DeliveryTruck>(vehicleBuffer[i].m_Vehicle))
-                    {
-                        activeVehicles++;
-                    }
-                }
-            }
-
-            // Get maximum trucks capacity
-            if (prefab != Entity.Null && EntityManager.HasComponent<TransportCompanyData>(prefab))
-            {
-                maxDeliveryTrucks = EntityManager.GetComponentData<TransportCompanyData>(prefab).m_MaxTransports;
-            }
-
-            // Get resources
-            // Update IndustrialCompanyDTO to handle multiple resources
-            if (EntityManager.TryGetBuffer<Resources>(entity, true, out var resourceBuffer) && resourceBuffer.Length > 0)
-                    {
-                        for (int r = 0; r < resourceBuffer.Length; r++)
-                        {
-                            var resource = resourceBuffer[r];
-                            resources.Add(new ResourceInfo(
-                                resource.m_Resource,
-                                GetFormattedResourceName(resource.m_Resource),
-                                resource.m_Amount,
-                                GetResourceIconPath(resource.m_Resource)
-                            ));
-                        }
-                    }
-
-            // Get profitability component if available
-            if (EntityManager.TryGetComponent<Profitability>(entity, out var profitability))
-            {
-                profitabilityValue = ((profitability.m_Profitability - 127f) / 127.5f) * 100f;
-                lastTotalWorth = profitability.m_LastTotalWorth;
-            }
-
-            // Calculate wages
-            if (EntityManager.TryGetBuffer<Employee>(entity, true, out var employeeBuffer))
-            {
-                totalWages = EconomyUtils.CalculateTotalWage(employeeBuffer, ref econParams);
-            }
-
-            // Get process resources
-            var processList = new List<ProcessResourceInfo>();
-            if (prefab != Entity.Null &&
-                EntityManager.HasComponent<IndustrialProcessData>(prefab))
-            {
-                var processData = EntityManager.GetComponentData<IndustrialProcessData>(prefab);
-
-                // Output
-                if (processData.m_Output.m_Resource != Resource.NoResource)
-                {
-                    string resourceName = EconomyUtils.GetName(processData.m_Output.m_Resource).ToString();
-                    resourceIcon = GetResourceIconPath(processData.m_Output.m_Resource);
-                    outputResourceName = resourceName;
-                    processList.Add(new ProcessResourceInfo {
-                        ResourceName = resourceName,
-                        ResourceIcon = resourceIcon,
-                        Amount = processData.m_Output.m_Amount,
-                        IsOutput = true
-                    });
-                }
-
-                // Input 1
-                if (processData.m_Input1.m_Resource != Resource.NoResource)
-                {
-                    processList.Add(new ProcessResourceInfo {
-                        ResourceName = EconomyUtils.GetName(processData.m_Input1.m_Resource).ToString(),
-                        Amount = processData.m_Input1.m_Amount,
-                        ResourceIcon = GetResourceIconPath(processData.m_Input1.m_Resource),
-                        IsOutput = false
-                    });
-                }
-
-                // Input 2
-                if (processData.m_Input2.m_Resource != Resource.NoResource)
-                {
-                    processList.Add(new ProcessResourceInfo {
-                        ResourceName = EconomyUtils.GetName(processData.m_Input2.m_Resource).ToString(),
-                        Amount = processData.m_Input2.m_Amount,
-                        ResourceIcon = GetResourceIconPath(processData.m_Input2.m_Resource),
-                        IsOutput = false
-                    });
-                }
-            }
-
-            processResources = processList.ToArray();
-
-            // Get efficiency and property data
-            Entity targetEntity = entity;
-            if (EntityManager.TryGetComponent<PropertyRenter>(entity, out var renter))
-            {
-                targetEntity = renter.m_Property;
-
-                // Calculate efficiency
-                if (EntityManager.TryGetBuffer(targetEntity, true, out DynamicBuffer<Efficiency> efficiencyBuffer))
-                {
-                    efficiencyValue = BuildingUtils.GetEfficiency(efficiencyBuffer);
+                    var item = sortedEfficiencies[i];
+                    float efficiency = math.max(0f, item.m_Efficiency);
+                    cumulativeEffect *= efficiency;
                     
-                    // For extractors, calculate concentration
-                    if (isExtractor &&
-                        EntityManager.TryGetComponent<Attached>(targetEntity, out var attached) &&
-                        EntityManager.TryGetBuffer(attached.m_Parent, true, out DynamicBuffer<Game.Areas.SubArea> subAreas) &&
-                        EntityManager.TryGetComponent<IndustrialProcessData>(prefab, out var extractorProcess))
+                    int percentageChange = math.max(-99, (int)math.round(100f * efficiency) - 100);
+                    int result = math.max(1, (int)math.round(cumulativeEffect));
+                    
+                    if (percentageChange != 0)
                     {
-                        var extractorLookup = GetComponentLookup<Game.Areas.Extractor>(true);
-                        var prefabRefLookup = GetComponentLookup<PrefabRef>(true);
-                        var extractorAreaDataLookup = GetComponentLookup<Game.Prefabs.ExtractorAreaData>(true);
-                        var extractorParams = SystemAPI.GetSingleton<ExtractorParameterData>();
-
-                        ExtractorCompanySystem.GetBestConcentration(
-                            extractorProcess.m_Output.m_Resource,
-                            subAreas,
-                            extractorLookup,
-                            prefabRefLookup,
-                            extractorAreaDataLookup,
-                            extractorParams,
-                            resourcePrefabs,
-                            resourceDataLookup,
-                            out concentration,
-                            out var _
-                        );
+                        tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, result));
                     }
                 }
             }
-
-            // Calculate production per day
-            if (EntityManager.TryGetBuffer<Employee>(entity, true, out var employees) &&
-                EntityManager.TryGetComponent<IndustrialProcessData>(prefab, out var industryProcess))
+            else
             {
-                productionPerDay = EconomyUtils.GetCompanyProductionPerDay(
-                    efficiencyValue,
-                    true, // isIndustrial is always true here
-                    employees,
-                    industryProcess,
-                    resourcePrefabs,
-                    resourceDataLookup,
-                    citizenLookup,
-                    ref econParams);
-            }
-
-            // Get efficiency
-            if (EntityManager.HasComponent<Efficiency>(targetEntity))
-            {
-                var buffer = EntityManager.GetBuffer<Efficiency>(targetEntity, true);
-                if (buffer.Length > 0)
+                for (int i = 0; i < sortedEfficiencies.Length; i++)
                 {
-                    using var sortedEfficiencies = buffer.ToNativeArray(Allocator.Temp);
-                    sortedEfficiencies.Sort();
-
-                    var tempFactors = new List<EfficiencyFactorInfo>();
-                    efficiency = (int)math.round(100f * BuildingUtils.GetEfficiency(buffer));
-
-                    if (efficiency > 0)
+                    var item = sortedEfficiencies[i];
+                    if (math.max(0f, item.m_Efficiency) == 0f)
                     {
-                        float cumulativeEffect = 100f;
-                        for (int i = 0; i < sortedEfficiencies.Length; i++)
+                        tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
+                        if ((int)item.m_Factor <= 3)
                         {
-                            var item = sortedEfficiencies[i];
-                            float effValue = math.max(0f, item.m_Efficiency);
-                            cumulativeEffect *= effValue;
-
-                            int percentageChange = math.max(-99, (int)math.round(100f * effValue) - 100);
-                            int result = math.max(1, (int)math.round(cumulativeEffect));
-
-                            if (percentageChange != 0)
-                            {
-                                tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, result));
-                            }
+                            break;
                         }
                     }
-                    else
-                    {
-                        for (int i = 0; i < sortedEfficiencies.Length; i++)
-                        {
-                            var item = sortedEfficiencies[i];
-                            if (math.max(0f, item.m_Efficiency) == 0f)
-                            {
-                                tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
-                                if ((int)item.m_Factor <= 3)
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    factors = tempFactors.ToArray();
                 }
             }
-
-            // Create and return the DTO with all collected data
-            companyDTO = new IndustrialCompanyDTO
-            {
-                EntityId = entity,
-                CompanyName = companyName,
-                TotalEmployees = employeeCount,
-                MaxWorkers = workProvider.m_MaxWorkers,
-                VehicleCount = activeVehicles,
-                VehicleCapacity = maxDeliveryTrucks,
-                ResourceAmount = resourceAmount,
-                ProcessResources = processResources,
-                TotalEfficiency = efficiency,
-                Factors = factors,
-                // Add profitability information
-                Profitability = profitabilityValue,
-                LastTotalWorth = lastTotalWorth,
-                TotalWages = totalWages,
-                ProductionPerDay = productionPerDay,
-                EfficiencyValue = efficiencyValue * 100f,
-                Concentration = concentration,
-                OutputResourceName = outputResourceName,
-                IsExtractor = isExtractor,
-                ResourceIcon = resourceIcon,
-                ResourceName = resourceType,
-                Resources = resources.ToArray()
-            };
-
-            return true;
-        }
-        private string GetFormattedResourceName(Resource resource)
-        {
-            if (resource == Resource.NoResource)
-                return string.Empty;
-                
-            string resourceName = EconomyUtils.GetName(resource);
-            if (string.IsNullOrEmpty(resourceName))
-                return string.Empty;
-                
-            // Capitalize first letter
-            return char.ToUpper(resourceName[0]) + resourceName.Substring(1);
+            
+            return tempFactors.ToArray();
         }
     }
 }
+

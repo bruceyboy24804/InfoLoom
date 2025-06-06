@@ -1,17 +1,13 @@
 import React, { useState, useCallback, FC } from 'react';
-import {Button, Dropdown, DropdownToggle, PanelProps, Panel} from 'cs2/ui';
+import { Button, Dropdown, DropdownToggle, PanelProps, Panel, Icon } from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components//InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './CommercialProducts.module.scss';
-import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import {useValue} from "cs2/api";
+import { useValue } from "cs2/api";
 import { CommercialProductsData } from "mods/bindings";
 import { CommercialProductData } from "../../../domain/commercialProductData";
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
-
-
-
 
 interface CommercialProps extends PanelProps {}
 
@@ -29,17 +25,13 @@ interface ResourceLineProps {
 }
 
 const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
-  // Use the display name mapping if available
-  const displayName = data.ResourceName === 'Ore' ? 'MetalOre' : 
-                     data.ResourceName === 'Oil' ? 'CrudeOil' : 
-                     data.ResourceName;
-  const formattedResourceName = formatWords(displayName, true);
-  
+  const formattedResourceName = formatWords(data.ResourceName, true);
+
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
-        <ResourceIcon resourceName={data.ResourceName} />
+      <div className={styles.cell} style={{ width: '15%', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Icon src={data.ResourceIcon}/>
         <span>{formattedResourceName}</span>
       </div>
       {showColumns.demand && (
@@ -84,8 +76,8 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
         </>
       )}
       {showColumns.tax && (
-        <div className={`${styles.cell} ${data.TaxFactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
-          {data.TaxFactor}
+        <div className={`${styles.cell}`} style={{ width: '12%' }}>
+          {data.TaxFactor}%
         </div>
       )}
     </div>
@@ -114,11 +106,12 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
         </>
       )}
       {showColumns.service && (
-        <div className={styles.headerCell} style={{ width: '12%' }}>Service</div>
+        <div className={styles.headerCell} style={{ width: '12%' }}>Service%</div>
       )}
       {showColumns.capacity && (
         <>
-          <div className={styles.headerCell} style={{ width: '20%' }}>Household Need</div>
+          <div className={styles.headerCell} style={{ width: '10%' }}>Cap/Co</div>
+          <div className={styles.headerCell} style={{ width: '10%' }}>Cap%</div>
         </>
       )}
       {showColumns.workers && (
@@ -135,12 +128,8 @@ const TableHeader: React.FC<{ showColumns: ShowColumnsType }> = ({ showColumns }
 };
 
 const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
-  
   const commercialProductsData = useValue(CommercialProductsData);
-      
   
-  
-
   const [showColumns, setShowColumns] = useState<ShowColumnsType>({
     demand: true,
     service: true,
@@ -180,8 +169,6 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
     return true;
   }, [filterDemand]);
 
-  
-
   return (
     <Panel
       draggable
@@ -189,7 +176,6 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
       initialPosition={{ x: 0.50, y: 0.50 }}
       className={styles.panel}
       header={<div className={styles.header}><span className={styles.headerText}>Commercial Products</span></div>}
-
     >
       {commercialProductsData.length === 0 ? (
         <p>Waiting...</p>
@@ -318,21 +304,18 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
           </div>
 
           <TableHeader showColumns={showColumns} />
-          
+
           {commercialProductsData
             .filter(item => item.ResourceName !== 'NoResource')
             .filter(filterData)
             .sort(sortData)
-            .map(item => (
-              <ResourceLine key={item.ResourceName} data={item} showColumns={showColumns} />
+            .map((item, index) => (
+              <ResourceLine key={`${item.ResourceName}-${index}`} data={item} showColumns={showColumns} />
             ))}
         </div>
       )}
     </Panel>
   );
-  
-  
 };
- 
 
 export default $CommercialProducts;

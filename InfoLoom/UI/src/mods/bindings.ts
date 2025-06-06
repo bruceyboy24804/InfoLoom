@@ -12,6 +12,7 @@ import { PopulationGroupData } from "./domain/PopulationGroupData";
 import { CommercialCompanyDebug } from "./domain/CommercialCompanyDebugData";
 import {IndustrialCompanyDebug} from "./domain/IndustrialCompanyDebugData";
 import {ResidentialHouseholdData} from './domain/ResidentialHouseholdData';
+import {CommercialUIData} from "./domain/CommercialUIData";
 
 
 const INFO_LOOM_MENU_OPEN = "InfoLoomMenuOpen";
@@ -82,7 +83,7 @@ export const WorkplacesOpen = bindValue<boolean>(mod.id, WORKPLACES_OPEN, false)
 
 
 
-export const CommercialData = bindValue<number[]>(mod.id, "CommercialData", []);
+export const CommercialData = bindValue<number[]>(mod.id, "CommercialData");
 export const CommercialDataExRes = bindValue<string[]>(mod.id, "CommercialDataExRes", []);
 export const CommercialProductsData = bindValue<CommercialProductData[]>(mod.id, "CommercialProductsData", []);
 export const CommercialCompanyDebugData = bindValue<CommercialCompanyDebug[]>(mod.id, "CommercialCompanyDebugData");

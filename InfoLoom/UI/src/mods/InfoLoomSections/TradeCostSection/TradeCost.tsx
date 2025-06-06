@@ -10,7 +10,7 @@ import {
   Button,
   DraggablePanelProps,
   Dropdown,
-  DropdownToggle,
+  DropdownToggle, Icon,
   Number2,
   Panel,
   Scrollable,
@@ -18,7 +18,6 @@ import {
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from 'cs2/modding';
 import styles from './TradeCost.module.scss';
-import { ResourceIcon } from 'mods/InfoLoomSections/CommercialSecction/CommercialProductsUI/resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
@@ -28,27 +27,10 @@ import { TradeCostsData } from '../../bindings';
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
-type SortOption =
-  | 'name'
-  | 'buyCost'
-  | 'sellCost'
-  | 'profit'
-  | 'profitMargin'
-  | 'importAmount'
-  | 'exportAmount';
 
-export type ShowColumnsType = {
-  buyCost: boolean;
-  sellCost: boolean;
-  profit: boolean;
-  profitMargin: boolean;
-  importAmount: boolean;
-  exportAmount: boolean;
-};
 
 interface ResourceLineProps {
   data: ResourceTradeCost;
-  showColumns: ShowColumnsType;
 }
 
 type ViewType = 'table' | 'graph';
@@ -80,7 +62,7 @@ const getProfitMarginClass = (profitMargin: number): string => {
   return styles.neutral_blue;
 };
 
-const ResourceLine: FC<ResourceLineProps> = ({ data, showColumns }) => {
+const ResourceLine: FC<ResourceLineProps> = ({ data, }) => {
   const formattedName = formatWords(data.Resource, true);
   const profit = calculateProfit(data);
   const profitMargin = calculateProfitMargin(data);
@@ -92,152 +74,57 @@ const ResourceLine: FC<ResourceLineProps> = ({ data, showColumns }) => {
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }} />
       <div className={styles.cell} style={{ width: '25%', justifyContent: 'flex-start', gap: '8px' }}>
-        <ResourceIcon resourceName={data.Resource} />
+        <Icon src={data.ResourceIcon}/>
         <span>{formattedName}</span>
       </div>
-      {showColumns.buyCost && (
         <div className={styles.cell} style={{ width: '10%' }}>
           {data.BuyCost.toFixed(2)}
         </div>
-      )}
-      {showColumns.sellCost && (
         <div className={styles.cell} style={{ width: '10%' }}>
           {data.SellCost.toFixed(2)}
         </div>
-      )}
-      {showColumns.profit && (
         <div className={styles.cell} style={{ width: '10%' }}>
           <span className={profitClass}>{profit.toFixed(2)}</span>
         </div>
-      )}
-      {showColumns.profitMargin && (
         <div className={styles.cell} style={{ width: '10%' }}>
           <span className={profitMarginClass}>{profitMargin.toFixed(2)}%</span>
         </div>
-      )}
-      {showColumns.importAmount && (
         <div className={styles.cell} style={{ width: '10%' }}>
           {importPerTon.toFixed(2)} /t
         </div>
-      )}
-      {showColumns.exportAmount && (
         <div className={styles.cell} style={{ width: '10%' }}>
           {exportPerTon.toFixed(2)} /t
         </div>
-      )}
     </div>
   );
 };
 
-const TableHeader: FC<{ showColumns: ShowColumnsType }> = ({ showColumns }) => (
+const TableHeader: FC<{ }> = ({ }) => (
   <div className={styles.headerRow}>
     <div className={styles.headerCell} style={{ width: '3%' }} />
     <div className={styles.headerCell} style={{ width: '25%' }}>
       Resource
     </div>
-    {showColumns.buyCost && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Buy Cost</b></div>
       </div>
-    )}
-    {showColumns.sellCost && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Sell Cost</b></div>
       </div>
-    )}
-    {showColumns.profit && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Profit</b></div>
       </div>
-    )}
-    {showColumns.profitMargin && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Profit Margin</b></div>
       </div>
-    )}
-    {showColumns.importAmount && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Import Amount</b></div>
       </div>
-    )}
-    {showColumns.exportAmount && (
       <div className={styles.headerCell} style={{ width: '10%' }}>
         <div><b>Export Amount</b></div>
       </div>
-    )}
   </div>
 );
-
-const SortOptions: FC<{
-  sortBy: SortOption;
-  setSortBy: (option: SortOption) => void;
-}> = ({ sortBy, setSortBy }) => {
-  const options: { label: string; key: SortOption }[] = [
-    { label: 'Sort by Name', key: 'name' },
-    { label: 'Sort by Buy Cost', key: 'buyCost' },
-    { label: 'Sort by Sell Cost', key: 'sellCost' },
-    { label: 'Sort by Profit', key: 'profit' },
-    { label: 'Sort by Profit Margin', key: 'profitMargin' },
-    { label: 'Sort by Import Amount (tonnes/ton)', key: 'importAmount' },
-    { label: 'Sort by Export Amount (tonnes/ton)', key: 'exportAmount' },
-  ];
-  return (
-    <Dropdown
-      theme={DropdownStyle}
-      content={
-        <div className={styles.dropdownContent}>
-          {options.map(({ label, key }) => (
-            <div key={key} className={styles.dropdownItem}>
-              <InfoCheckbox
-                label={label}
-                isChecked={sortBy === key}
-                onToggle={() => setSortBy(key)}
-              />
-            </div>
-          ))}
-        </div>
-      }
-    >
-      <DropdownToggle className={styles.dropdownToggle}>
-        Sort Options
-      </DropdownToggle>
-    </Dropdown>
-  );
-};
-
-const ColumnOptions: FC<{
-  showColumns: ShowColumnsType;
-  toggleColumn: (column: keyof ShowColumnsType) => void;
-}> = ({ showColumns, toggleColumn }) => (
-  <Dropdown
-    theme={DropdownStyle}
-    content={
-      <div className={styles.dropdownContent}>
-        {[
-          { label: 'Show Buy Cost', key: 'buyCost' },
-          { label: 'Show Sell Cost', key: 'sellCost' },
-          { label: 'Show Profit', key: 'profit' },
-          { label: 'Show Profit Margin', key: 'profitMargin' },
-          { label: 'Show Import Amount (tonnes/ton)', key: 'importAmount' },
-          { label: 'Show Export Amount (tonnes/ton)', key: 'exportAmount' },
-        ].map(({ label, key }) => (
-          <div key={key} className={styles.dropdownItem}>
-            <InfoCheckbox
-              label={label}
-              isChecked={showColumns[key as keyof ShowColumnsType]}
-              onToggle={() => toggleColumn(key as keyof ShowColumnsType)}
-            />
-          </div>
-        ))}
-      </div>
-    }
-  >
-    <DropdownToggle className={styles.dropdownToggle}>
-      Column Options
-    </DropdownToggle>
-  </Dropdown>
-);
-
 const TradeCostsGraph: FC<TradeCostsGraphProps> = ({ selectedResources }) => {
   const tradeCosts = useValue(TradeCostsData);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -375,57 +262,9 @@ const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...pro
   // Now that TradeCostsData already includes ImportAmount/ExportAmount,
   // we directly assign it.
   const mergedTradeCosts: ResourceTradeCost[] = tradeCosts || [];
-  const [showColumns, setShowColumns] = useState<ShowColumnsType>({
-    buyCost: true,
-    sellCost: true,
-    profit: true,
-    profitMargin: true,
-    importAmount: true,
-    exportAmount: true,
-  });
-  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [view, setView] = useState<ViewType>('table');
   const [selectedResources, setSelectedResources] = useState<Set<string>>(() =>
     new Set(mergedTradeCosts.map((item) => item.Resource))
-  );
-  const toggleColumn = useCallback((column: keyof ShowColumnsType) => {
-    setShowColumns((prev) => ({ ...prev, [column]: !prev[column] }));
-  }, []);
-  const sortData = useCallback(
-    (a: ResourceTradeCost, b: ResourceTradeCost) => {
-      switch (sortBy) {
-        case 'name':
-          return a.Resource.localeCompare(b.Resource);
-        case 'buyCost':
-          return b.BuyCost - a.BuyCost;
-        case 'sellCost':
-          return b.SellCost - a.SellCost;
-        case 'profit':
-          return calculateProfit(b) - calculateProfit(a);
-        case 'profitMargin': {
-          const marginA = calculateProfitMargin(a);
-          const marginB = calculateProfitMargin(b);
-          return marginB - marginA;
-        }
-        case 'importAmount': {
-          const perTonA = a.Count !== 0 ? a.ImportAmount / a.Count : 0;
-          const perTonB = b.Count !== 0 ? b.ImportAmount / b.Count : 0;
-          return perTonB - perTonA;
-        }
-        case 'exportAmount': {
-          const perTonA = a.Count !== 0 ? a.ExportAmount / a.Count : 0;
-          const perTonB = b.Count !== 0 ? b.ExportAmount / b.Count : 0;
-          return perTonB - perTonA;
-        }
-        default:
-          return 0;
-      }
-    },
-    [sortBy]
-  );
-  const sortedTradeCosts = useMemo(
-    () => [...mergedTradeCosts].sort(sortData),
-    [mergedTradeCosts, sortData]
   );
   useEffect(() => {
     if (mergedTradeCosts.length > 0 && selectedResources.size === 0) {
@@ -462,20 +301,17 @@ const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...pro
           {view === 'table' ? (
             <>
               <div className={styles.controls}>
-                <SortOptions sortBy={sortBy} setSortBy={setSortBy} />
-                <ColumnOptions showColumns={showColumns} toggleColumn={toggleColumn} />
                 <Button onClick={() => setView('graph')} className={styles.graphButton}>
                   Trade Cost Graph
                 </Button>
               </div>
-              <DataDivider />
-              <TableHeader showColumns={showColumns} />
+              <TableHeader />
               <DataDivider />
               <div className={styles.tableBody}>
-                {sortedTradeCosts.map((item) => (
-                  <ResourceLine key={item.Resource} data={item} showColumns={showColumns} />
-                ))}
-              </div>
+                  {mergedTradeCosts.map((item) => (
+                    <ResourceLine key={item.Resource} data={item} />
+                  ))}
+                </div>
             </>
           ) : (
             <>
@@ -490,7 +326,7 @@ const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...pro
                           <InfoCheckbox
                             label={
                               <div className={styles.checkboxLabel}>
-                                <ResourceIcon resourceName={item.Resource} />
+                                <Icon src={item.ResourceIcon}/>
                                 <span>{formatWords(item.Resource, true)}</span>
                               </div>
                             }

@@ -47,7 +47,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             public NativeList<Entity> serviceBuildings;
             public NativeList<Entity> servicePrefabs;
             public NativeList<Entity> policies;
-            public int policyCount;
         }
 
         // Job to count household data for each district.
@@ -64,7 +63,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             [ReadOnly] public BufferLookup<HouseholdAnimal> m_HouseholdAnimalFromEntity;
             [ReadOnly] public BufferLookup<Renter> m_RenterFromEntity;
             [ReadOnly] public CitizenHappinessParameterData m_HappinessData;
-            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap; // Map: district Entity -> index in m_Districts
+            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap; 
 
             public NativeList<DistrictEntry> m_Districts;
 
@@ -129,7 +128,177 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        // Job to process AgeData and EducationData for each district.
+        // Combined job to process service buildings and employees in one pass
+        [BurstCompile]
+        private struct ProcessBuildingsJob : IJobChunk
+        {
+            [ReadOnly] public EntityTypeHandle m_EntityHandle;
+            [ReadOnly] public ComponentTypeHandle<PrefabRef> m_PrefabRefHandle;
+            [ReadOnly] public ComponentTypeHandle<CurrentDistrict> m_CurrentDistrictHandle;
+            [ReadOnly] public BufferTypeHandle<ServiceDistrict> m_ServiceDistrictHandle;
+            [ReadOnly] public BufferTypeHandle<Renter> m_RenterHandle;
+            [ReadOnly] public BufferTypeHandle<Employee> m_EmployeeHandle;
+            [ReadOnly] public ComponentTypeHandle<WorkProvider> m_WorkProviderHandle;
+            [ReadOnly] public BufferLookup<Employee> m_EmployeeLookup;
+            [ReadOnly] public ComponentLookup<WorkProvider> m_WorkProviderLookup;
+            [ReadOnly] public ComponentLookup<CompanyData> m_CompanyDataLookup;
+            [ReadOnly] public ComponentLookup<WorkplaceData> m_WorkplaceDataLookup;
+            [ReadOnly] public ComponentLookup<SpawnableBuildingData> m_SpawnableDataLookup;
+            [ReadOnly] public ComponentLookup<Game.Buildings.Park> m_ParkLookup;
+            [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenterLookup;
+            [ReadOnly] public ComponentLookup<PrefabRef> m_PrefabRefLookup;
+            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap;
+            
+            public NativeArray<DistrictEntry> m_Districts;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
+                NativeArray<PrefabRef> prefabs = chunk.GetNativeArray(ref m_PrefabRefHandle);
+                NativeArray<CurrentDistrict> districts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
+                
+                bool hasServiceDistrict = chunk.Has(ref m_ServiceDistrictHandle);
+                bool hasRenter = chunk.Has(ref m_RenterHandle);
+                bool hasEmployee = chunk.Has(ref m_EmployeeHandle);
+                bool hasWorkProvider = chunk.Has(ref m_WorkProviderHandle);
+
+                // Process service buildings if chunk has ServiceDistrict component
+                if (hasServiceDistrict)
+                {
+                    BufferAccessor<ServiceDistrict> serviceDistricts = chunk.GetBufferAccessor(ref m_ServiceDistrictHandle);
+                    
+                    for (int i = 0; i < chunk.Count; i++)
+                    {
+                        Entity building = entities[i];
+                        Entity prefabEntity = prefabs[i].m_Prefab;
+                        var serviceDistrictBuffer = serviceDistricts[i];
+                        
+                        for (int j = 0; j < serviceDistrictBuffer.Length; j++)
+                        {
+                            Entity districtEntity = serviceDistrictBuffer[j].m_District;
+                            
+                            if (m_DistrictIndexMap.TryGetValue(districtEntity, out int districtIndex))
+                            {
+                                var district = m_Districts[districtIndex];
+                                district.serviceBuildings.Add(building);
+                                district.servicePrefabs.Add(prefabEntity);
+                                m_Districts[districtIndex] = district;
+                            }
+                        }
+                    }
+                }
+
+                // Process employee data
+                bool isParkChunk = chunk.Has<Game.Buildings.Park>();
+                
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    Entity building = entities[i];
+                    Entity prefabEntity = prefabs[i].m_Prefab;
+                    Entity districtEntity = districts[i].m_District;
+                    
+                    if (!m_DistrictIndexMap.TryGetValue(districtEntity, out int districtIndex))
+                        continue;
+
+                    // Determine if this building has employees
+                    bool hasEmployees = false;
+                    Entity employeeEntity = building;
+                    
+                    if (!isParkChunk && hasRenter)
+                    {
+                        // Handle buildings with renters
+                        var renterBuffer = chunk.GetBufferAccessor(ref m_RenterHandle)[i];
+                        
+                        if (renterBuffer.Length == 0 && m_SpawnableDataLookup.HasComponent(prefabEntity))
+                        {
+                            // Skip empty commercial or industrial buildings - handled by zone check logic
+                            continue;
+                        }
+                        
+                        for (int j = 0; j < renterBuffer.Length; j++)
+                        {
+                            Entity renter = renterBuffer[j].m_Renter;
+                            
+                            if (m_CompanyDataLookup.HasComponent(renter) && 
+                                m_EmployeeLookup.HasBuffer(renter) && 
+                                m_WorkProviderLookup.HasComponent(renter))
+                            {
+                                employeeEntity = renter;
+                                hasEmployees = true;
+                                break;
+                            }
+                        }
+                    }
+                    else if (hasEmployee && hasWorkProvider)
+                    {
+                        // Direct employee and work provider
+                        hasEmployees = true;
+                    }
+                    
+                    if (!hasEmployees)
+                        continue;
+                    
+                    // Process employee data for this building
+                    var district = m_Districts[districtIndex];
+                    
+                    int buildingLevel = 1;
+                    if (m_SpawnableDataLookup.TryGetComponent(prefabEntity, out var spawnableData))
+                    {
+                        buildingLevel = spawnableData.m_Level;
+                    }
+                    else if (m_PropertyRenterLookup.TryGetComponent(building, out var propertyRenter) && 
+                             m_PrefabRefLookup.TryGetComponent(propertyRenter.m_Property, out var propertyPrefabRef) && 
+                             m_SpawnableDataLookup.TryGetComponent(propertyPrefabRef.m_Prefab, out var propertySpawnableData))
+                    {
+                        buildingLevel = propertySpawnableData.m_Level;
+                    }
+                    
+                    if (hasEmployee && hasWorkProvider)
+                    {
+                        var employees = chunk.GetBufferAccessor(ref m_EmployeeHandle)[i];
+                        var workProvider = chunk.GetNativeArray(ref m_WorkProviderHandle)[i];
+                        Entity employeePrefab = m_PrefabRefLookup[employeeEntity].m_Prefab;
+                        
+                        if (m_WorkplaceDataLookup.TryGetComponent(employeePrefab, out var workplaceData))
+                        {
+                            WorkplaceComplexity complexity = workplaceData.m_Complexity;
+                            EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
+                                workProvider.m_MaxWorkers, buildingLevel, complexity);
+                                
+                            district.employeeCount += employees.Length;
+                            district.maxEmployees += workplacesData.total;
+                            district.educationDataWorkplaces += workplacesData;
+                            district.educationDataEmployees += EmploymentData.GetEmployeesData(
+                                employees, workplacesData.total - employees.Length);
+                                
+                            m_Districts[districtIndex] = district;
+                        }
+                    }
+                    else if (m_EmployeeLookup.HasBuffer(employeeEntity) && 
+                             m_WorkProviderLookup.TryGetComponent(employeeEntity, out var workProviderData))
+                    {
+                        Entity employeePrefab = m_PrefabRefLookup[employeeEntity].m_Prefab;
+                        
+                        if (m_WorkplaceDataLookup.TryGetComponent(employeePrefab, out var workplaceData))
+                        {
+                            var employees = m_EmployeeLookup[employeeEntity];
+                            WorkplaceComplexity complexity = workplaceData.m_Complexity;
+                            EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
+                                workProviderData.m_MaxWorkers, buildingLevel, complexity);
+                                
+                            district.employeeCount += employees.Length;
+                            district.maxEmployees += workplacesData.total;
+                            district.educationDataWorkplaces += workplacesData;
+                            district.educationDataEmployees += EmploymentData.GetEmployeesData(
+                                employees, workplacesData.total - employees.Length);
+                                
+                            m_Districts[districtIndex] = district;
+                        }
+                    }
+                }
+            }
+        }
+        
         [BurstCompile]
         private struct ProcessDistrictDataJob : IJobParallelFor
         {
@@ -143,7 +312,7 @@ namespace InfoLoomTwo.Systems.DistrictData
 
             public void Execute(int index)
             {
-                // Create local accumulators since AgeData and EducationData are immutable and have no setters.
+                
                 int children = 0, teens = 0, adults = 0, elders = 0;
                 int uneducated = 0, poorlyEducated = 0, educated = 0, wellEducated = 0, highlyEducated = 0;
 
@@ -179,7 +348,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                                 break;
                         }
 
-                        // Accumulate EducationData values.
+                        
                         switch (citizen.GetEducationLevel())
                         {
                             case 0:
@@ -201,179 +370,80 @@ namespace InfoLoomTwo.Systems.DistrictData
                     }
                 }
 
-                // Create new structs using the accumulated values.
+               
                 district.ageData = new AgeData(children, teens, adults, elders);
                 district.educationData = new EducationData(uneducated, poorlyEducated, educated, wellEducated, highlyEducated);
                 Districts[index] = district;
             }
         }
 
-        // Job to process employee data for each district
-            private void ProcessEmployeeData()
-            {
-                // Reset employee data for all districts
-                for (int i = 0; i < m_Districts.Length; i++)
-                {
-                    var district = m_Districts[i];
-                    district.employeeCount = 0;
-                    district.maxEmployees = 0;
-                    district.educationDataEmployees = default(EmploymentData);
-                    district.educationDataWorkplaces = default(EmploymentData);
-                    m_Districts[i] = district;
-                }
+        [BurstCompile]
+        private struct ProcessDistrictPoliciesJob : IJobParallelFor
+        {
+            [ReadOnly] public NativeArray<Entity> PolicyEntities;
+            [ReadOnly] public BufferLookup<Policy> PolicyBufferLookup;
+            [ReadOnly] public EntityCommandBuffer.ParallelWriter CommandBuffer;
+            public NativeArray<DistrictEntry> Districts;
 
-                NativeArray<Entity> buildings = m_DistrictEmployeeQuery.ToEntityArray(Allocator.TempJob);
-                NativeArray<CurrentDistrict> districts = m_DistrictEmployeeQuery.ToComponentDataArray<CurrentDistrict>(Allocator.TempJob);
-                NativeArray<PrefabRef> prefabs = m_DistrictEmployeeQuery.ToComponentDataArray<PrefabRef>(Allocator.TempJob);
+            public void Execute(int index)
+            {
+                var district = Districts[index];
+                district.policies.Clear();
                 
-                try
+                Entity districtEntity = district.district;
+                
+                if (!PolicyBufferLookup.HasBuffer(districtEntity))
                 {
-                    for (int i = 0; i < buildings.Length; i++)
-                    {
-                        Entity building = buildings[i];
-                        Entity districtEntity = districts[i].m_District;
-                        Entity prefab = prefabs[i].m_Prefab;
+                    Districts[index] = district;
+                    return;
+                }
+                
+                var activePolicies = PolicyBufferLookup[districtEntity];
+                if (activePolicies.Length == 0)
+                {
+                    Districts[index] = district;
+                    return;
+                }
+                
+                for (int j = 0; j < activePolicies.Length; j++)
+                {
+                    Policy policy = activePolicies[j];
+                    
+                    if ((policy.m_Flags & PolicyFlags.Active) == 0)
+                        continue;
                         
-                        // Find the district in our list
-                        int districtIndex = -1;
-                        for (int d = 0; d < m_Districts.Length; d++)
-                        {
-                            if (m_Districts[d].district == districtEntity)
-                            {
-                                districtIndex = d;
-                                break;
-                            }
-                        }
-                        
-                        if (districtIndex == -1)
-                            continue;
-                            
-                        // Check if this building has employees
-                        if (HasEmployees(building, prefab))
-                        {
-                            AddEmployeesToDistrict(building, districtIndex);
-                        }
-                    }
-                }
-                finally
-                {
-                    buildings.Dispose();
-                    districts.Dispose();
-                    prefabs.Dispose();
-                }
-            }
-
-            // New method that mimics EmployeesSection.AddEmployees but updates our district data
-            private void AddEmployeesToDistrict(Entity entity, int districtIndex)
-            {
-                Entity prefab = EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab;
-                Entity employeeEntity = GetEmployeeEntity(entity);
-                Entity employeePrefab = EntityManager.GetComponentData<PrefabRef>(employeeEntity).m_Prefab;
-                
-                int buildingLevel = 1;
-                if (EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var spawnableData))
-                {
-                    buildingLevel = spawnableData.m_Level;
-                }
-                else if (EntityManager.TryGetComponent<PropertyRenter>(entity, out var propertyRenter) && 
-                        EntityManager.TryGetComponent<PrefabRef>(propertyRenter.m_Property, out var propertyPrefabRef) && 
-                        EntityManager.TryGetComponent<SpawnableBuildingData>(propertyPrefabRef.m_Prefab, out var propertySpawnableData))
-                {
-                    buildingLevel = propertySpawnableData.m_Level;
-                }
-                
-                if (EntityManager.TryGetBuffer<Employee>(employeeEntity, true, out var employees) && 
-                    EntityManager.TryGetComponent<WorkProvider>(employeeEntity, out var workProvider))
-                {
-                    var district = m_Districts[districtIndex];
+                    Entity policyEntity = policy.m_Policy;
                     
-                    WorkplaceComplexity complexity = EntityManager.GetComponentData<WorkplaceData>(employeePrefab).m_Complexity;
-                    EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
-                        workProvider.m_MaxWorkers, buildingLevel, complexity);
-                    
-                    district.employeeCount += employees.Length;
-                    district.maxEmployees += workplacesData.total;
-                    district.educationDataWorkplaces += workplacesData;
-                    district.educationDataEmployees += EmploymentData.GetEmployeesData(
-                        employees, workplacesData.total - employees.Length);
-                    
-                    m_Districts[districtIndex] = district;
-                }
-            }
-
-            private bool HasEmployees(Entity entity, Entity prefab)
-            {
-                if (!EntityManager.TryGetBuffer<Renter>(entity, true, out var buffer) || 
-                    EntityManager.HasComponent<Game.Buildings.Park>(entity))
-                {
-                    if (EntityManager.HasComponent<Employee>(entity) && EntityManager.HasComponent<WorkProvider>(entity))
+                    bool isDistrictPolicy = false;
+                    for (int k = 0; k < PolicyEntities.Length; k++)
                     {
-                        return true;
+                        if (PolicyEntities[k] == policyEntity)
+                        {
+                            isDistrictPolicy = true;
+                            break;
+                        }
                     }
-                    return false;
+                    
+                    if (!isDistrictPolicy)
+                        continue;
+                    
+                    district.policies.Add(policyEntity);
                 }
                 
-                // Original has slightly different logic here
-                if (buffer.Length == 0 && EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var spawnableData))
-                {
-                    m_PrefabSystem.TryGetPrefab<ZonePrefab>(spawnableData.m_ZonePrefab, out var zonePrefab);
-                    if (zonePrefab != null)
-                    {
-                        // Notice this inverted logic matches exactly what the original does
-                        if (zonePrefab.m_AreaType != Game.Zones.AreaType.Commercial)
-                        {
-                            return zonePrefab.m_AreaType == Game.Zones.AreaType.Industrial;
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-                
-                // Rest of the method is the same
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    Entity renter = buffer[i].m_Renter;
-                    if (EntityManager.HasComponent<CompanyData>(renter))
-                    {
-                        if (EntityManager.HasComponent<Employee>(renter))
-                        {
-                            return EntityManager.HasComponent<WorkProvider>(renter);
-                        }
-                        return false;
-                    }
-                }
-                return false;
+                Districts[index] = district;
             }
+        }
 
-            private Entity GetEmployeeEntity(Entity entity)
-            {
-                if (!EntityManager.HasComponent<Game.Buildings.Park>(entity) && 
-                    EntityManager.TryGetBuffer<Renter>(entity, true, out var buffer))
-                {
-                    for (int i = 0; i < buffer.Length; i++)
-                    {
-                        Entity renter = buffer[i].m_Renter;
-                        if (EntityManager.HasComponent<CompanyData>(renter))
-                        {
-                            return renter;
-                        }
-                    }
-                }
-                return entity;
-            }
-
-        // Normal Entity Queries.
+        // Combined query for buildings that might have employees or be service buildings
+        private EntityQuery m_CombinedBuildingQuery;
         private EntityQuery m_DistrictBuildingQuery;
-        private EntityQuery m_DistrictEmployeeQuery;
         private EntityQuery m_HappinessParameterQuery;
         private EntityQuery m_DistrictQuery;
-        private EntityQuery m_ServiceDistrictBuildingQuery;
+        private EntityQuery m_DistrictPoliciesQuery;
         private PrefabSystem m_PrefabSystem;
         private ImageSystem m_ImageSystem;
         private PrefabUISystem m_PrefabUISystem;
-        // Add after other field declarations
         private PoliciesUISystem m_PoliciesUISystem;
-        private EntityQuery m_DistrictPoliciesQuery;
         private SelectedInfoUISystem m_SelectedInfoUISystem;
         private NameSystem m_NameSystem;
         private NativeList<DistrictEntry> m_Districts;
@@ -401,7 +471,8 @@ namespace InfoLoomTwo.Systems.DistrictData
                 }
             });
 
-            m_DistrictEmployeeQuery = GetEntityQuery(new EntityQueryDesc
+            // Create a combined query for service buildings and employee buildings
+            m_CombinedBuildingQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[]
                 {
@@ -411,23 +482,10 @@ namespace InfoLoomTwo.Systems.DistrictData
                 },
                 Any = new ComponentType[]
                 {
+                    typeof(ServiceDistrict),
                     typeof(Renter),
-                    typeof(Employee)
-                },
-                None = new ComponentType[]
-                {
-                    typeof(Temp),
-                    typeof(Deleted)
-                }
-            });
-
-            m_ServiceDistrictBuildingQuery = GetEntityQuery(new EntityQueryDesc
-            {
-                All = new ComponentType[]
-                {
-                    typeof(Building),
-                    typeof(PrefabRef),
-                    typeof(ServiceDistrict)
+                    typeof(Employee),
+                    typeof(WorkProvider)
                 },
                 None = new ComponentType[]
                 {
@@ -446,6 +504,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                 All = new ComponentType[] { typeof(District) },
                 None = new ComponentType[] { typeof(Temp) }
             });
+            
             m_DistrictPoliciesQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[] { ComponentType.ReadOnly<PolicyData>() },
@@ -455,6 +514,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                     ComponentType.ReadOnly<DistrictModifierData>()
                 }
             });
+            
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
             m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
@@ -462,7 +522,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
             m_PoliciesUISystem = World.GetOrCreateSystemManaged<PoliciesUISystem>();
             m_PrefabUISystem = World.GetOrCreateSystemManaged<PrefabUISystem>();
-
 
             RequireForUpdate<District>();
         }
@@ -489,7 +548,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             return 256;
         }
         
-        // Refactored OnUpdate that splits functionality to helper methods.
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)
@@ -500,24 +558,48 @@ namespace InfoLoomTwo.Systems.DistrictData
 
             using (var districtMap = BuildDistrictMap())
             {
+                // Schedule the stats job for residential buildings
                 ScheduleStatsJob(districtMap);
+                
+                // Process service buildings and employees in one pass with a chunk job
+                var districtsArray = m_Districts.AsArray();
+                var processBuildingsJob = new ProcessBuildingsJob
+                {
+                    m_EntityHandle = GetEntityTypeHandle(),
+                    m_PrefabRefHandle = GetComponentTypeHandle<PrefabRef>(true),
+                    m_CurrentDistrictHandle = GetComponentTypeHandle<CurrentDistrict>(true),
+                    m_ServiceDistrictHandle = GetBufferTypeHandle<ServiceDistrict>(true),
+                    m_RenterHandle = GetBufferTypeHandle<Renter>(true),
+                    m_EmployeeHandle = GetBufferTypeHandle<Employee>(true),
+                    m_WorkProviderHandle = GetComponentTypeHandle<WorkProvider>(true),
+                    m_EmployeeLookup = GetBufferLookup<Employee>(true),
+                    m_WorkProviderLookup = GetComponentLookup<WorkProvider>(true),
+                    m_CompanyDataLookup = GetComponentLookup<CompanyData>(true),
+                    m_WorkplaceDataLookup = GetComponentLookup<WorkplaceData>(true),
+                    m_SpawnableDataLookup = GetComponentLookup<SpawnableBuildingData>(true),
+                    m_ParkLookup = GetComponentLookup<Game.Buildings.Park>(true),
+                    m_PropertyRenterLookup = GetComponentLookup<PropertyRenter>(true),
+                    m_PrefabRefLookup = GetComponentLookup<PrefabRef>(true),
+                    m_DistrictIndexMap = districtMap,
+                    m_Districts = districtsArray
+                };
+                
+                Dependency = processBuildingsJob.Schedule(m_CombinedBuildingQuery, Dependency);
+                
+                // Process household and citizen data in parallel
+                var processDataJob = new ProcessDistrictDataJob
+                {
+                    Districts = districtsArray,
+                    HouseholdCitizenLookup = GetBufferLookup<HouseholdCitizen>(true),
+                    CitizenDataLookup = GetComponentLookup<Citizen>(true)
+                };
+                
+                Dependency = processDataJob.Schedule(districtsArray.Length, 32, Dependency);
+                Dependency.Complete();
             }
 
-            // Process age and education data in a parallel job.
-            var districtsArray = m_Districts.AsArray();
-            var processJob = new ProcessDistrictDataJob
-            {
-                Districts = districtsArray,
-                HouseholdCitizenLookup = GetBufferLookup<HouseholdCitizen>(true),
-                CitizenDataLookup = GetComponentLookup<Citizen>(true)
-            };
-            Dependency = processJob.Schedule(districtsArray.Length, 1, Dependency);
-            Dependency.Complete();
-
             ProcessWealthData();
-            ProcessEmployeeData();
-            ProcessServiceBuildings();
-            ProcessDistrictPolicies();
+            ProcessDistrictPoliciesParallel();
         }
 
         // Clears and disposes existing district entries.
@@ -537,7 +619,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             m_Districts.Clear();
         }
 
-        // Builds new district entries from the district query.
         private void BuildDistrictEntries()
         {
             using (var districts = m_DistrictQuery.ToEntityArray(Allocator.Temp))
@@ -561,14 +642,12 @@ namespace InfoLoomTwo.Systems.DistrictData
                         educationDataWorkplaces = default(EmploymentData),
                         serviceBuildings = new NativeList<Entity>(16, Allocator.Persistent),
                         servicePrefabs = new NativeList<Entity>(16, Allocator.Persistent),
-                        policies = new NativeList<Entity>(8, Allocator.Persistent),
-                        policyCount = 0
+                        policies = new NativeList<Entity>(8, Allocator.Persistent)
                     });
                 }
             }
         }
         
-        // Builds a NativeHashMap for fast lookup from district entity to index.
         private NativeHashMap<Entity, int> BuildDistrictMap()
         {
             var districtMap = new NativeHashMap<Entity, int>(m_Districts.Length, Allocator.TempJob);
@@ -579,7 +658,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             return districtMap;
         }
 
-        // Schedules the stats job that processes building and resident data.
         private void ScheduleStatsJob(NativeHashMap<Entity, int> districtMap)
         {
             var jobData = new CountDistrictStatsJob
@@ -602,7 +680,6 @@ namespace InfoLoomTwo.Systems.DistrictData
             Dependency.Complete();
         }
 
-        // Process wealth data on the main thread.
         private void ProcessWealthData()
         {
             for (int i = 0; i < m_Districts.Length; i++)
@@ -613,129 +690,27 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
         }
 
-        // Process service buildings data
-        private void ProcessServiceBuildings()
+        private void ProcessDistrictPoliciesParallel()
         {
-            // Clear existing service buildings data
-            for (int i = 0; i < m_Districts.Length; i++)
-            {
-                var district = m_Districts[i];
-                district.serviceBuildings.Clear();
-                district.servicePrefabs.Clear();
-                m_Districts[i] = district;
-            }
-
-            // Get required data
-            NativeArray<Entity> buildings = m_ServiceDistrictBuildingQuery.ToEntityArray(Allocator.TempJob);
-            NativeArray<PrefabRef> prefabs = m_ServiceDistrictBuildingQuery.ToComponentDataArray<PrefabRef>(Allocator.TempJob);
+            var policyEntities = m_DistrictPoliciesQuery.ToEntityArray(Allocator.TempJob);
+            var districtsArray = m_Districts.AsArray();
             
-            try
+            var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+            
+            var job = new ProcessDistrictPoliciesJob
             {
-                for (int i = 0; i < buildings.Length; i++)
-                {
-                    Entity building = buildings[i];
-                    
-                    // Skip if the building doesn't have service districts
-                    if (!EntityManager.HasComponent<ServiceDistrict>(building))
-                        continue;
-                        
-                    DynamicBuffer<ServiceDistrict> serviceDistricts = 
-                        EntityManager.GetBuffer<ServiceDistrict>(building, true);
-                        
-                    for (int j = 0; j < serviceDistricts.Length; j++)
-                    {
-                        Entity districtEntity = serviceDistricts[j].m_District;
-                        
-                        // Find the district in our list
-                        int districtIndex = -1;
-                        for (int d = 0; d < m_Districts.Length; d++)
-                        {
-                            if (m_Districts[d].district == districtEntity)
-                            {
-                                districtIndex = d;
-                                break;
-                            }
-                        }
-                        
-                        if (districtIndex == -1)
-                            continue;
-                            
-                        // Add the service building to the district
-                        var district = m_Districts[districtIndex];
-                        district.serviceBuildings.Add(building);
-                        district.servicePrefabs.Add(prefabs[i].m_Prefab);
-                        m_Districts[districtIndex] = district;
-                    }
-                }
-            }
-            finally
-            {
-                buildings.Dispose();
-                prefabs.Dispose();
-            }
+                PolicyEntities = policyEntities,
+                PolicyBufferLookup = GetBufferLookup<Policy>(true),
+                CommandBuffer = commandBuffer.AsParallelWriter(),
+                Districts = districtsArray
+            };
+            
+            Dependency = job.Schedule(districtsArray.Length, 32, Dependency);
+            Dependency.Complete();
+            
+            commandBuffer.Dispose();
+            policyEntities.Dispose();
         }
-        private void ProcessDistrictPolicies()
-        {
-            // Clear existing policy data
-            for (int i = 0; i < m_Districts.Length; i++)
-            {
-                var district = m_Districts[i];
-                district.policies.Clear();
-                district.policyCount = 0;
-                m_Districts[i] = district;
-            }
-            
-            // Get district policies query results
-            using var policyEntities = m_DistrictPoliciesQuery.ToEntityArray(Allocator.Temp);
-            
-            for (int i = 0; i < m_Districts.Length; i++)
-            {
-                Entity districtEntity = m_Districts[i].district;
-                
-                // Check if district has policies
-                if (!EntityManager.HasComponent<Policy>(districtEntity))
-                    continue;
-                    
-                // Get active policies for this district
-                DynamicBuffer<Policy> activePolicies = EntityManager.GetBuffer<Policy>(districtEntity, true);
-                if (activePolicies.Length == 0)
-                    continue;
-                    
-                // Process each active policy
-                for (int j = 0; j < activePolicies.Length; j++)
-                {
-                    Policy policy = activePolicies[j];
-                    
-                    // Skip inactive policies
-                    if ((policy.m_Flags & PolicyFlags.Active) == 0)
-                        continue;
-                        
-                    Entity policyEntity = policy.m_Policy;
-                    
-                    // Skip if not a district policy
-                    bool isDistrictPolicy = false;
-                    for (int k = 0; k < policyEntities.Length; k++)
-                    {
-                        if (policyEntities[k] == policyEntity)
-                        {
-                            isDistrictPolicy = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!isDistrictPolicy)
-                        continue;
-                        
-                    // Add policy to the district
-                    var district = m_Districts[i];
-                    district.policies.Add(policyEntity);
-                    district.policyCount++;
-                    
-                    m_Districts[i] = district;
-                }
-            }
-        }
-        
         
         public void WriteDistricts(IJsonWriter writer)
         {
@@ -775,9 +750,8 @@ namespace InfoLoomTwo.Systems.DistrictData
                 writer.PropertyName("entity");
                 writer.Write(district.district);
                 
-                
                 writer.PropertyName("policyCount");
-                writer.Write(district.policyCount);
+                writer.Write(district.policies.Length);
                 writer.PropertyName("policies");
                 WritePolicyData(writer, district.policies);
                 
@@ -864,13 +838,11 @@ namespace InfoLoomTwo.Systems.DistrictData
                 writer.TypeBegin("DistrictPolicy");
                 writer.PropertyName("name");
                 
-                // Try to get localized name from prefab
                 if (m_PrefabSystem.TryGetPrefab<PolicyPrefab>(policies[i], out var prefab))
                 {
                     string policyName = prefab.name;
                     string localizedName = policyName;
                     
-                    // Get localized name if available
                     if (GameManager.instance.localizationManager.activeDictionary.TryGetValue($"Policy.TITLE[{policyName}]", out var localizedValue))
                     {
                         localizedName = localizedValue;
@@ -880,12 +852,10 @@ namespace InfoLoomTwo.Systems.DistrictData
                 }
                 else
                 {
-                    // Fallback to entity name
                     m_NameSystem.BindName(writer, policies[i]);
                 }
                 
                 writer.PropertyName("icon");
-                // Use the same GetGroupIcon method as service buildings
                 writer.Write(m_ImageSystem.GetIconOrGroupIcon(policies[i]));
                 writer.PropertyName("entity");
                 writer.Write(policies[i]);

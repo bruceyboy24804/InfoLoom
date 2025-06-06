@@ -1,6 +1,7 @@
-import React, { FC, ReactElement } from 'react';
+import React, { FC, ReactElement, useState, useEffect, useMemo, useCallback } from 'react';
 import { useValue, trigger } from 'cs2/api';
-import { Tooltip, Panel, DraggablePanelProps, Button, FloatingButton, Icon } from 'cs2/ui';
+import { Tooltip, Panel, DraggablePanelProps, Button, FloatingButton, Icon, Portal } from 'cs2/ui';
+import { AutoNavigationScope, FocusActivation } from "cs2/input";
 import {
   formatWords,
   formatNumber,
@@ -39,6 +40,7 @@ const useUniformSizeProvider: (height: number, visible: number, extents: number)
 const DataDivider: FC = () => (
   <div className={styles.dataDivider} />
 );
+
 const focusEntity = (e: Entity) => {
   trigger("camera", "focusEntity", e);
 };
@@ -95,16 +97,16 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
 
           return (
             <div key={index} className={styles.factorRow}>
-                            <span className={styles.factorName}>
-                                {factorName}
-                            </span>
+              <span className={styles.factorName}>
+                {factorName}
+              </span>
               <span className={
                 factor.Value > 0 ? styles.positive :
                   factor.Value < 0 ? styles.negative :
                     styles.neutral
               }>
-                                {factor.Value > 0 ? '+' : ''}{formatPercentage2(factor.Value)}
-                            </span>
+                {factor.Value > 0 ? '+' : ''}{formatPercentage2(factor.Value)}
+              </span>
               <span className={styles.factorResult}>{formatPercentage2(factor.Result)}</span>
             </div>
           );
@@ -213,9 +215,7 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
       </Tooltip>
 
       <div className={styles.employeeColumn}>
-
         {`${formatNumber(company.TotalEmployees)}/${formatNumber(company.MaxWorkers)}`}
-
       </div>
 
       <div className={styles.vehicleColumn}>
@@ -307,72 +307,120 @@ const TableHeader: FC = () => {
 
 const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) => {
   const companiesData = useValue(CommercialCompanyDebugData);
-  const [visibleRange, setVisibleRange] = React.useState({ startIndex: 0, endIndex: 0 });
+  const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
+  const [heightFull, setHeightFull] = useState(600); // Default fallback height
 
-  // Only process/prepare data for visible items plus buffer
-  const visibleCompanies = React.useMemo(() => {
+  // Dynamic height calculation
+  const calculateHeights = useCallback(() => {
+    const wrapperElement = document.querySelector(".info-layout_BVk") as HTMLElement | null;
+    const newHeightFull = wrapperElement?.offsetHeight ?? 600;
+    setHeightFull(newHeightFull);
+  }, []);
+
+  useEffect(() => {
+    calculateHeights();
+    const observer = new MutationObserver(() => {
+      calculateHeights();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [calculateHeights]);
+
+  // Improved memoization with dynamic height
+  const [visibleCompanies, maxListHeight] = useMemo(() => {
     const bufferSize = 5;
     const start = Math.max(0, visibleRange.startIndex - bufferSize);
     const end = Math.min(companiesData.length, visibleRange.endIndex + bufferSize);
-    return companiesData.slice(start, end);
-  }, [companiesData, visibleRange.startIndex, visibleRange.endIndex]);
+    const companies = companiesData.slice(start, end);
+    
+    // Calculate max height: reserve 250px for header, footer, and padding
+    const calculatedHeight = Math.min(
+      30 * companiesData.length, 
+      heightFull - 250
+    );
+    
+    return [companies, Math.max(200, calculatedHeight)]; // Minimum 200px
+  }, [companiesData, visibleRange.startIndex, visibleRange.endIndex, heightFull]);
 
-  const sizeProvider = useUniformSizeProvider(30, companiesData.length, 5);
+  // Size provider using proper CSS units
+  const sizeProvider = useUniformSizeProvider(
+    useCssLength("30rem"),
+    companiesData.length,
+    5
+  );
 
-  const handleRenderedRangeChange = React.useCallback((startIndex: number, endIndex: number) => {
+  const handleRenderedRangeChange = useCallback((startIndex: number, endIndex: number) => {
     setVisibleRange({ startIndex, endIndex });
   }, []);
 
-  const renderItem: RenderItemFn = (itemIndex, indexInRange) => {
-    if (itemIndex < 0 || itemIndex >= companiesData.length) {
-      return null;
-    }
-
-    // Calculate the adjusted index within visibleCompanies
+  const renderItem: RenderItemFn = useCallback((itemIndex: number, indexInRange: number) => {
+    if (itemIndex < 0 || itemIndex >= companiesData.length) return null;
+    
     const bufferSize = 5;
     const adjustedIndex = itemIndex - Math.max(0, visibleRange.startIndex - bufferSize);
+    
+    if (adjustedIndex < 0 || adjustedIndex >= visibleCompanies.length) return null;
+    
+    return (
+      <CompanyRow
+        key={`company-${itemIndex}`}
+        company={visibleCompanies[adjustedIndex]}
+      />
+    );
+  }, [companiesData.length, visibleRange.startIndex, visibleCompanies]);
 
-    // Only render if this index exists in our visible window
-    if (adjustedIndex >= 0 && adjustedIndex < visibleCompanies.length) {
-      return (
-        <CompanyRow
-          key={itemIndex}
-          company={visibleCompanies[adjustedIndex]}
-        />
-      );
-    }
-
-    return null;
-  };
+  // Early return for no data
+  if (!companiesData.length) {
+    return (
+      <Portal>
+        <Panel
+          draggable
+          onClose={onClose}
+          initialPosition={{ x: 0.50, y: 0.50 }}
+          className={styles.panel}
+          header={<div className={styles.header}><span className={styles.headerText}>Commercial Companies</span></div>}
+        >
+          <p className={styles.loadingText}>No Commercial Companies Found</p>
+        </Panel>
+      </Portal>
+    );
+  }
 
   return (
-    <Panel
-      draggable
-      onClose={onClose}
-      initialPosition={{ x: 0.50, y: 0.50 }}
-      className={styles.panel}
-      header={<div className={styles.header}><span className={styles.headerText}>Commercial Companies</span></div>}
-    >
-      {!companiesData.length ? (
-        <p className={styles.loadingText}>No Commercial Companies Found</p>
-      ) : (
+    <Portal>
+      <Panel
+        draggable
+        onClose={onClose}
+        initialPosition={{ x: 0.50, y: 0.50 }}
+        className={styles.panel}
+        header={<div className={styles.header}><span className={styles.headerText}>Commercial Companies</span></div>}
+      >
         <div>
           <TableHeader />
           <DataDivider />
           <div className={styles.virtualListContainer}>
-            <VanillaVirtualList
-              direction="vertical"
-              sizeProvider={sizeProvider}
-              renderItem={renderItem}
-              style={{ height: '500rem' }}
-              smooth
-              onRenderedRangeChange={handleRenderedRangeChange}
-            />
+            <AutoNavigationScope activation={FocusActivation.AnyChildren}>
+              <VanillaVirtualList
+                direction="vertical"
+                sizeProvider={sizeProvider}
+                renderItem={renderItem}
+                style={{ 
+                  maxHeight: `${maxListHeight}px`
+                }}
+                smooth
+                onRenderedRangeChange={handleRenderedRangeChange}
+              />
+            </AutoNavigationScope>
           </div>
           <DataDivider />
         </div>
-      )}
-    </Panel>
+      </Panel>
+    </Portal>
   );
 };
 
