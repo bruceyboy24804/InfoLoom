@@ -13,7 +13,6 @@ using UnityEngine;
 
 namespace InfoLoomTwo.Systems.TradeCostData
 {
-    
     public partial class TradeCostSystem : GameSystemBase
     {
         private Dictionary<Resource, ResourceTradeCost> m_ResourceTradeCosts = new();
@@ -29,11 +28,9 @@ namespace InfoLoomTwo.Systems.TradeCostData
         
         // Simple properties
         public bool IsPanelVisible { get; set; }
-        public bool ForceUpdate { get; private set; }
+        
         public int TotalImports => m_ResourceTradeCosts.Values.Sum(x => x.ImportAmount);
         public int TotalExports => m_ResourceTradeCosts.Values.Sum(x => x.ExportAmount);
-        
-        public void ForceUpdateOnce() => ForceUpdate = true;
         
         protected override void OnCreate()
         {
@@ -58,10 +55,8 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
         protected override void OnUpdate()
         {
-            if (!IsPanelVisible || !ForceUpdate) return;
-            
+            if (!IsPanelVisible ) return;
             UpdateAllResourceData();
-            ForceUpdate = false;
         }
 
         private void UpdateAllResourceData()
@@ -96,10 +91,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 
                 // Get icon path with better error handling
                 string iconPath = GetResourceIconPath(resource);
-                
-                // Debug logging to see what's happening
-                Debug.Log($"Resource: {resource}, IconPath: '{iconPath}'");
-                
                 m_ResourceTradeCosts[resource] = new ResourceTradeCost
                 {
                     Resource = resource.ToString(),
@@ -111,9 +102,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                     ExportAmount = exports
                 };
             }
-            
-            // Debug: Log how many resources we processed
-            Debug.Log($"TradeCostSystem: Processed {m_ResourceTradeCosts.Count} resources");
         }
 
         private float GetTradeCost(Resource resource, bool import, DynamicBuffer<Game.City.CityModifier> cityEffects)
@@ -195,7 +183,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
                 if (resourcePrefab == Entity.Null)
                 {
-                    Debug.LogWarning($"No prefab found for resource: {resource}");
                     return GetFallbackIcon(resource);
                 }
                 
@@ -203,7 +190,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
                 if (string.IsNullOrEmpty(icon))
                 {
-                    Debug.LogWarning($"No icon found for resource: {resource}");
                     return GetFallbackIcon(resource);
                 }
                 
@@ -211,7 +197,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error getting icon for resource {resource}: {e.Message}");
                 return GetFallbackIcon(resource);
             }
         }

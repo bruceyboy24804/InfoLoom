@@ -34,7 +34,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 {
     public struct CommercialProductDTO
     {
-        public Resource ResourceType;
+        
         public string ResourceName;
         public string ResourceIcon;
         public int Demand;
@@ -276,8 +276,8 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
         {
             int resourceIndex = EconomyUtils.GetResourceIndex(resource);
 
-            // Skip NoResource but be more permissive for other resources
-            if (resource == Resource.NoResource || 
+            // Only process commercial resources, just like the vanilla system
+            if (!EconomyUtils.IsCommercialResource(resource) || 
                 !m_ResourceDatas.HasComponent(m_ResourcePrefabs[resource]))
                 return false;
 
@@ -306,7 +306,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 }
             }
 
-            // Create demand job data for UI - include ALL resources, not just those with demand
+            // Create demand job data for UI - now only for commercial resources
             var demandJobData = new DemandJobData
             {
                 ResourceType = resource,
@@ -332,7 +332,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 CurrentServiceWorkers = m_CurrentServiceWorkers[resourceIndex]
             };
 
-            // Always add to results so we show all resources
+            // Always add commercial resources to results
             m_DemandJobResults.Add(demandJobData);
 
             // Update company and building demands if there's demand
@@ -342,7 +342,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 return true;
             }
 
-            // Return true to count this as a valid resource even if no demand
+            // Return true to count this as a valid commercial resource even if no demand
             return true;
         }
 
@@ -534,7 +534,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
             {
                 return Mod.setting.UpdateInterval;
             }
-            return 256;
+            return 512;
         }
 
         protected override void OnUpdate()
@@ -684,7 +684,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
                 var productDTO = new CommercialProductDTO
                 {
-                    ResourceType = jobData.ResourceType,
                     ResourceName = resourceName,
                     ResourceIcon = m_ResourceIconCache.TryGetValue(jobData.ResourceType, out var icon) ? 
                         icon : "",
@@ -712,7 +711,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
             }
 
             // Sort products by resource type for consistent ordering
-            products.Sort((a, b) => a.ResourceType.CompareTo(b.ResourceType));
             m_CommercialProductDTOs = products.ToArray();
         }
 

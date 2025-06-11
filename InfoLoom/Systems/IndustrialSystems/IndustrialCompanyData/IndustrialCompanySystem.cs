@@ -294,15 +294,15 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         {
             if (!IndustrialProcessDataLookup.TryGetComponent(prefab, out var industryProcess))
                 return 0;
-
+            
             return EconomyUtils.GetCompanyProductionPerDay(
                 efficiencyValue,
                 true, // isIndustrial
                 employeeBuffer,
                 industryProcess,
                 ResourcePrefabs,
-                ResourceDataLookup,
-                CitizenLookup,
+                ref ResourceDataLookup,
+                ref CitizenLookup,
                 ref EconomyParams);
         }
     }
@@ -690,4 +690,3 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         }
     }
 }
-

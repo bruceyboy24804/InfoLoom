@@ -545,7 +545,11 @@ namespace InfoLoomTwo.Systems.DistrictData
         
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            return 256;
+           if (Mod.setting.CustomUpdateInterval)
+           {
+               return Mod.setting.UpdateInterval;
+           }
+           return 512;
         }
         
         protected override void OnUpdate()

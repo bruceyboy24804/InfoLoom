@@ -15,7 +15,7 @@ using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
-using InfoLoomTwo.Systems.DemographicsData.Demographics;
+using InfoLoomTwo.Systems.DemographicsData;
 using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
@@ -52,7 +52,7 @@ namespace InfoLoomTwo.Systems
         private const string WorkplacesOpen = "WorkplacesOpen";
         private const string CommercialCompanyDebugOpen = "CommercialCompanyDebugOpen";
         private const string IndustrialCompanyDebugOpen = "IndustrialCompanyDebugOpen";
-        private const string ResidentialDataDebugOpen = "ResidentialDataDebugOpen";
+        private const string HouseholdsDataOpen = "HouseholdsDataOpen";
         
         
         
@@ -100,7 +100,6 @@ namespace InfoLoomTwo.Systems
         private TradeCostSystem m_TradeCostSystem;
         private WorkforceSystem m_WorkforceSystem;
         private WorkplacesSystem m_WorkplacesSystem;
-        //private ResidentialHouseholdSystem m_ResidentialHouseholdSystem;
         
         //Bindings
         //BuildingDemandUI
@@ -114,6 +113,7 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<CommercialCompanyDTO[]> m_uiDebugData;
         private ValueBinding<bool> _cCDPVBinding;
         private ValueBinding<Entity> m_CameraBinding;
+        //HouseholdData
         //DemographicsUI
         private GetterValueBinding<int> m_OldCitizenBinding;
         private ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
@@ -132,7 +132,7 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<string[]> m_IndustrialExcludedResourcesBinding;
         private ValueBindingHelper<int[]> m_IndustrialBinding;
         //IndustrialProductsDataUI
-        private ValueBindingHelper<IndustrialProductsData[]> m_IndustrialProductBinding;
+        private ValueBindingHelper<IndustrialProductDTO[]> m_IndustrialProductBinding;
         //IndustrialCompanyDebugDataUI
         private ValueBindingHelper<IndustrialCompanyDTO[]> m_uiDebugData2;
         private ValueBinding<bool> _iCDVBinding;
@@ -172,6 +172,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _tCPVBinding;
         private ValueBinding<bool> _wFPVBinding;
         private ValueBinding<bool> _wPPVBinding;
+        private ValueBinding<bool> _householdsDataVisibleBinding;
         
 
         private ILog m_Log;
@@ -201,7 +202,6 @@ namespace InfoLoomTwo.Systems
             m_WorkplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
             m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             m_IndustrialCompanySystem = World.GetOrCreateSystemManaged<IndustrialCompanySystem>();
-            //m_ResidentialHouseholdSystem = World.GetOrCreateSystemManaged<ResidentialHouseholdSystem>();
             
             
             //InfoLoomMenu
@@ -273,9 +273,7 @@ namespace InfoLoomTwo.Systems
              _wPPVBinding = new ValueBinding<bool>(ModID, WorkplacesOpen, false);
              AddBinding(_wPPVBinding);
              AddBinding(new TriggerBinding<bool>(ModID, WorkplacesOpen, SetWorkplacesVisibility));
-            
-            
-
+             
             m_uiBuildingDemand = CreateBinding("BuildingDemandData", new int[0]);
             //CommercialDemandDataUI
             m_CommercialBinding = CreateBinding("CommercialData", new int[10]);
@@ -284,7 +282,6 @@ namespace InfoLoomTwo.Systems
             //CommercialProductsDataUI
             m_CommercialProductBinding = CreateBinding("CommercialProductsData", Array.Empty<CommercialProductDTO>());
             //CommercialCompanyDebugDataUI
-             // You need to create this binding for the Commercial Company Debug panel visibility
             _cCDPVBinding = new ValueBinding<bool>(ModID, CommercialCompanyDebugOpen, false);
              AddBinding(_cCDPVBinding);
              AddBinding(new TriggerBinding<bool>(ModID, CommercialCompanyDebugOpen, SetCommercialCompanyDebugVisibility));
@@ -323,7 +320,7 @@ namespace InfoLoomTwo.Systems
             m_IndustrialExcludedResourcesBinding = CreateBinding("IndustrialDataExRes", new string[0]);
 
             //IndustrialProductsDataUI
-            m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductsData>());
+            m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductDTO>());
             
             //IndustrialCompanyDebugDataUI
             _iCDVBinding = new ValueBinding<bool>(ModID, IndustrialCompanyDebugOpen, false);
@@ -361,7 +358,7 @@ namespace InfoLoomTwo.Systems
                 m_IndustrialExcludedResourcesBinding = CreateBinding("IndustrialDataExRes", new string[0]);
 
                 //IndustrialProductsDataUI
-                m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductsData>());
+                m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductDTO>());
 
                 //ResidentialDemandDataUI
                 m_ResidentialBinding = CreateBinding("ResidentialData", new int[18]);
@@ -406,53 +403,17 @@ namespace InfoLoomTwo.Systems
                 
             }
 
-           if (_cPPVBinding.value )
+            if (_cPPVBinding.value)
             {
-                m_CommercialProductBinding.Value = CommercialProductsSystem.m_DemandData
-                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
-                    .Select(d => new CommercialProductDTO
-                    {
-                        ResourceName = d.ResourceName.ToString(),
-                        Demand = d.Demand,
-                        Building = d.Building,
-                        Free = d.Free,
-                        Companies = d.Companies,
-                        Workers = d.Workers,
-                        SvcPercent = d.SvcPercent,
-                        CapPercent = d.CapPercent,
-                        CapPerCompany = d.CapPerCompany,
-                        WrkPercent = d.WrkPercent,
-                    })
-                    .ToArray();
-        
-                if (m_CommercialProductBinding.Value.Length == 0 && CommercialProductsSystem.m_DemandData.Length > 0)
-                {
-                    m_CommercialProductBinding.Value = new CommercialProductDTO[]
-                    {
-                        new CommercialProductDTO
-                        {
-                            ResourceName = "All",
-                            Demand = 0,
-                            Building = 0,
-                            Free = 0,
-                            Companies = 0,
-                            Workers = 0,
-                            SvcPercent = 0,
-                            CapPercent = 0,
-                            CapPerCompany = 0,
-                            WrkPercent = 0,
-                            TaxFactor = 0
-                        }
-                    };
-                }
-                m_CommercialProductsSystem.IsPanelVisible = true; 
-                
+                m_CommercialProductBinding.Value = m_CommercialProductsSystem.m_CommercialProductDTOs;
+                m_CommercialProductsSystem.IsPanelVisible = true;
             }
             if (_cCDPVBinding.value)
             {
                 m_CommercialCompanyDataSystem.IsPanelVisible = true;
                 m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
             }
+            
             if (_iCDVBinding.value)
             {
                 m_IndustrialCompanySystem.IsPanelVisible = true;
@@ -513,49 +474,8 @@ namespace InfoLoomTwo.Systems
         
             if (_iPPVBinding.value && _uiUpdateState.Advance())
             {
-                m_IndustrialProductBinding.Value = IndustrialProductsSystem.m_DemandData
-                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
-                    .Select(d => new IndustrialProductsData
-                    {
-                        ResourceName = d.ResourceName.ToString(),
-                        Demand = d.Demand,
-                        Building = d.Building,
-                        Free = d.Free,
-                        Companies = d.Companies,
-                        Workers = d.Workers,
-                        SvcPercent = d.SvcPercent,
-                        CapPercent = d.CapPercent,
-                        CapPerCompany = d.CapPerCompany,
-                        WrkPercent = d.WrkPercent,
-                        TaxFactor = d.TaxFactor
-                    })
-                    .ToArray();
-        
-                if (m_IndustrialProductBinding.Value.Length == 0 && IndustrialProductsSystem.m_DemandData.Length > 0)
-                {
-                    m_IndustrialProductBinding.Value = new IndustrialProductsData[]
-                    {
-                        new IndustrialProductsData
-                        {
-                            ResourceName = "All",
-                            Demand = 0,
-                            Building = 0,
-                            Free = 0,
-                            Companies = 0,
-                            Workers = 0,
-                            SvcPercent = 0,
-                            CapPercent = 0,
-                            CapPerCompany = 0,
-                            WrkPercent = 0,
-                            TaxFactor = 0
-                        }
-                    };
-                }
-                
-                
+                m_IndustrialProductBinding.Value = m_IndustrialProductsSystem.m_IndustrialProductDTOs;
                 m_IndustrialProductsSystem.IsPanelVisible = true;
-                m_IndustrialProductsSystem.ForceUpdateOnce();
-                
             }
             
             /*if (m_ResidentialHouseholdDebugBinding.value)
@@ -674,16 +594,15 @@ namespace InfoLoomTwo.Systems
             }
         }
         private void SetCommercialProductsVisibility(bool open)
-{
-    _cPPVBinding.Update(open);
-    m_CommercialProductsSystem.IsPanelVisible = open;
+        {
+            _cPPVBinding.Update(open);
+            m_CommercialProductsSystem.IsPanelVisible = open;
 
-    if (open)
-    {
-        // Use the already created DTOs from CommercialProductsSystem
-        m_CommercialProductBinding.Value = m_CommercialProductsSystem.m_CommercialProductDTOs;
-    }
-}
+            if (open)
+            {
+                m_CommercialProductBinding.Value = m_CommercialProductsSystem.m_CommercialProductDTOs;
+            }
+        }
         
         private void SetDemographicsVisibility(bool open)
         {
@@ -742,24 +661,7 @@ namespace InfoLoomTwo.Systems
             
             if (open)
             {
-               
-                m_IndustrialProductsSystem.ForceUpdateOnce();
-                m_IndustrialProductBinding.Value = IndustrialProductsSystem.m_DemandData
-                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
-                    .Select(d => new IndustrialProductsData
-                    {
-                        ResourceName = d.ResourceName.ToString(),
-                        Demand = d.Demand,
-                        Building = d.Building,
-                        Free = d.Free,
-                        Companies = d.Companies,
-                        Workers = d.Workers,
-                        SvcPercent = d.SvcPercent,
-                        CapPercent = d.CapPercent,
-                        CapPerCompany = d.CapPerCompany,
-                        WrkPercent = d.WrkPercent,
-                        TaxFactor = d.TaxFactor
-                    }).ToArray();
+                m_IndustrialProductBinding.Value = m_IndustrialProductsSystem.m_IndustrialProductDTOs;
             }
         }
         
@@ -846,7 +748,6 @@ namespace InfoLoomTwo.Systems
             m_TradeCostSystem.IsPanelVisible = open;
             if (open)
             {
-                m_TradeCostSystem.ForceUpdateOnce();
                 var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
                 m_TradeCostsBinding.Value = tradeCostSystem.GetSortedResourceTradeCosts().ToList();
             }

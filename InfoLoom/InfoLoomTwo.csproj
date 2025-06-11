@@ -2,7 +2,6 @@
 
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<TargetFramework>net472</TargetFramework>
 		<Configurations>Debug;Release</Configurations>
 		<LangVersion>9</LangVersion>
 		
@@ -45,9 +44,9 @@
 	  <Compile Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
 	  <EmbeddedResource Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
 	  <None Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
-	  <Compile Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
-	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
-	  <None Remove="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\**" />
+	  <Compile Remove="UI\src\mods\components\Pagination\**" />
+	  <EmbeddedResource Remove="UI\src\mods\components\Pagination\**" />
+	  <None Remove="UI\src\mods\components\Pagination\**" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -206,6 +205,9 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="UI\src\mods\components\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\ResidentialHousehold.module.scss" />
 	</ItemGroup>
 	
 

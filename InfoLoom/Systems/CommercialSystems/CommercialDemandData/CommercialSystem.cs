@@ -220,7 +220,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                         continue;
                     }
                     ResourceData resourceData = m_ResourceDatas[m_ResourcePrefabs[iterator.resource]];
-                    if ((resourceData.m_Weight == 0f && !resourceData.m_IsLeisure) || !EconomyUtils.GetProcessComplexity(m_CommercialProcessDataChunks, m_WorkplaceDatas, iterator.resource, m_EntityType, m_ProcessType, out var complexity))
+                    if ((resourceData.m_Weight == 0f && !resourceData.m_IsLeisure) || !EconomyUtils.GetProcessComplexity(m_CommercialProcessDataChunks, ref m_WorkplaceDatas, iterator.resource, m_EntityType, m_ProcessType, out var complexity))
                     {
                         continue;
                     }

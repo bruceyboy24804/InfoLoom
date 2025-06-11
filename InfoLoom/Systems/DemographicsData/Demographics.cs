@@ -19,7 +19,7 @@ using InfoLoomTwo.Extensions;
 using Unity.Burst;
 using Purpose = Colossal.Serialization.Entities.Purpose;
 
-namespace InfoLoomTwo.Systems.DemographicsData.Demographics
+namespace InfoLoomTwo.Systems.DemographicsData
 {
     // This System is based on PopulationInfoviewUISystem by CO
 

@@ -4,7 +4,6 @@ import React, {useCallback, useMemo} from "react";
 import {Button, Panel} from "cs2/ui";
 import styles from "../ResidentialMenu/ResidentialMenu.module.scss";
 import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
-import ResidentialHousehold from '../../InfoLoomSections/ResidentialSection/ResidentialHouseholdUI/ResidentialHousehold';
 
 // Define types for section configuration
 interface SectionItem {
@@ -18,8 +17,6 @@ type SectionsType = Record<string, SectionItem>;
 export const ResidentialMenuButton = (): JSX.Element => {
   const residentialMenuOpen = useValue(bindings.ResidentialMenuOpen);
   const residentialDemandOpen = useValue(bindings.ResidentialDemandOpen);
-  // Uncomment if you need this state in the future
-  // const residentialDataDebugOpen = useValue(bindings.ResidentialDataDebugOpen);
 
   // Define sections with memoization to prevent recreation on each render
   const sections = useMemo<SectionsType>(() => ({
@@ -28,11 +25,6 @@ export const ResidentialMenuButton = (): JSX.Element => {
       isOpen: residentialDemandOpen,
       toggle: bindings.SetResidentialDemandOpen
     },
-    /*"Households": {
-      component: <ResidentialHousehold/>,
-      isOpen: residentialDataDebugOpen,
-      toggle: bindings.SetResidentialDataDebugOpen
-    },*/
   }), [residentialDemandOpen]); // Add residentialDataDebugOpen to dependencies when uncommented
 
   const toggleSection = useCallback(

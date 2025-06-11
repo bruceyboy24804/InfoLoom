@@ -8,11 +8,8 @@ import {ResourceTradeCost} from "./domain/tradeCostData";
 import {workforceInfo} from "./domain/workforceInfo";
 import {workplacesInfo} from "./domain/WorkplacesInfo";
 import {GroupingStrategy} from "./domain/GroupingStrategy";
-import { PopulationGroupData } from "./domain/PopulationGroupData";
 import { CommercialCompanyDebug } from "./domain/CommercialCompanyDebugData";
 import {IndustrialCompanyDebug} from "./domain/IndustrialCompanyDebugData";
-import {ResidentialHouseholdData} from './domain/ResidentialHouseholdData';
-import {CommercialUIData} from "./domain/CommercialUIData";
 
 
 const INFO_LOOM_MENU_OPEN = "InfoLoomMenuOpen";
@@ -33,7 +30,7 @@ const WORKFORCE_OPEN = "WorkforceOpen";
 const WORKPLACES_OPEN = "WorkplacesOpen";
 const COMMERCIAL_COMPANY_DEBUG_OPEN = "CommercialCompanyDebugOpen";
 const INDUSTRIAL_COMPANY_DEBUG_OPEN = "IndustrialCompanyDebugOpen";
-const RESIDENTIAL_DATA_DEBUG_OPEN = "ResidentialDataDebugOpen";
+const HOUSEHOLDS_DATA_OPEN = "HouseholdsDataOpen";
 export const BUILDING_DEMAND_DATA = "BuildingDemandData";
 export const COMMERCIAL_DATA = "CommercialData";
 export const COMMERCIAL_DATA_EX_RES = "CommercialDataExRes";
@@ -125,18 +122,3 @@ export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPE
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
 export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) => trigger(mod.id, "SetDemoGroupingStrategy", strategy);
 
-
-// ResidentialHousehold bindings
-export const ResidentialDataDebugOpen = bindValue<boolean>(mod.id, RESIDENTIAL_DATA_DEBUG_OPEN, false);
-export const SetResidentialDataDebugOpen = (open: boolean) => trigger(mod.id, RESIDENTIAL_DATA_DEBUG_OPEN, open);
-export const ResidentialDataDebug = bindValue<ResidentialHouseholdData[]>(mod.id, "ResidentialDataDebug", []);
-export const DiscoverCurrentPage$ = bindValue<number>(mod.id, "Discover.CurrentPage", 1);
-export const DiscoverMaxPages$ = bindValue<number>(mod.id, "Discover.MaxPages", 1);
-export const RoadNames = bindValue<string[]>(mod.id, "RoadNames", []);
-export const FilteredResidentialData = bindValue<ResidentialHouseholdData[]>(mod.id, "FilteredResidentialData", []);
-
-// ResidentialHousehold trigger functions
-export const setDiscoverPage = (page: number) => trigger(mod.id, "Discover.SetPage", page);
-export const setDiscoverMaxPages = (maxPages: number) => trigger(mod.id, "Discover.SetMaxPages", maxPages);
-export const selectRoad = (roadName: string) => trigger(mod.id, "SelectRoad", roadName);
-export const clearRoadFilter = () => trigger(mod.id, "ClearRoadFilter", true);

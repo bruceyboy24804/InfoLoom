@@ -1,11 +1,10 @@
 import React, { useState, useCallback, FC } from 'react';
-import {Button, Dropdown, DropdownToggle, PanelProps, Scrollable, Panel} from 'cs2/ui';
+import { Dropdown, DropdownToggle, PanelProps, Scrollable, Panel, Icon } from 'cs2/ui';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { getModule } from "cs2/modding";
 import styles from './IndustrialProducts.module.scss';
-import { ResourceIcon } from './resourceIcons';
 import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
-import {bindValue, useValue} from "cs2/api";
+import {useValue} from "cs2/api";
 import { industrialProductData } from 'mods/domain/industrialProductData';
 import {IndustrialProductsData} from "../../../bindings";
 
@@ -95,7 +94,7 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
 const DataDivider: React.FC = () => {
   return (
     <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
-      <div style={{ borderBottom: '1px solid gray' }}></div>
+      <div style={{ borderBottom: '1rem solid gray' }}></div>
     </div>
   );
 };
@@ -136,18 +135,10 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
 
 interface ResourceLineProps {
   data: industrialProductData;
-  showColumns: {
-    demand: boolean;
-    buildings: boolean;
-    storage: boolean;
-    production: boolean;
-    workers: boolean;
-    tax: boolean;
-  };
 }
 
 // Component: ResourceLine
-const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
+const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
   // Use the display name mapping if available
   const displayName = data.ResourceName === 'Ore' ? 'MetalOre' : 
                      data.ResourceName === 'Oil' ? 'CrudeOil' : 
@@ -157,71 +148,60 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data, showColumns }) => {
   return (
     <div className={styles.row_S2v}>
       <div className={styles.cell} style={{ width: '3%' }}></div>
-      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start', gap: '8px' }}>
-        <ResourceIcon resourceName={data.ResourceName} />
+      <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start'}}>
+        <Icon src={data.ResourceIcon}/>
         <span>{formattedResourceName}</span>
       </div>
-      {showColumns.demand && (
-        <>
           <div className={`${styles.cell} ${data.Demand < 0 ? styles.negative_YWY : ''}`} style={{ width: '6%' }}>
             {data.Demand}
           </div>
           <div className={`${styles.cell} ${data.Building <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
             {data.Building}
           </div>
-          <div className={`${styles.cell} ${data.Free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '4%' }}>
+          <div className={`${styles.cell} ${data.Free <= 0 ? styles.negative_YWY : ''}`} style={{ width: '10%' }}>
             {data.Free}
           </div>
-          <div className={styles.cell} style={{ width: '5%' }}>
+          <div className={styles.cell} style={{ width: '10%' }}>
             {data.Companies}
           </div>
-        </>
-      )}
-      {showColumns.storage && (
+
+
         <div className={styles.cell} style={{ width: '12%' }}>
           {data.SvcPercent}
         </div>
-      )}
-      {showColumns.production && (
-        <>
+
+
+
           <div className={styles.cell} style={{ width: '10%' }}>
             {data.CapPerCompany}
           </div>
           <div className={styles.cell} style={{ width: '10%' }}>
             {data.CapPercent}
           </div>
-        </>
-      )}
-      {showColumns.workers && (
-        <>
+
+
+
+
           <div className={styles.cell} style={{ width: '9%' }}>
             {data.Workers}
           </div>
           <div className={`${styles.cell} ${data.WrkPercent < 90 ? styles.negative_YWY : styles.positive_zrK}`} style={{ width: '9%' }}>
             {`${data.WrkPercent}%`}
           </div>
-        </>
-      )}
-      {showColumns.tax && (
-        <div className={`${styles.cell} ${data.TaxFactor < 0 ? styles.negative_YWY : ''}`} style={{ width: '12%' }}>
-          {data.TaxFactor}
-        </div>
-      )}
+
+
     </div>
   );
 };
 
 // Header component for the resource table
-const TableHeader: React.FC<{ showColumns: any }> = ({ showColumns }) => {
+const TableHeader: React.FC = () => {
   return (
     <div className={styles.headerRow}>
       <div className={styles.headerCell} style={{ width: '3%' }}></div>
       <div className={styles.headerCell} style={{ width: '15%' }}>
         Resource
-        <div className={styles.tooltip}>Resource type and icon</div>
       </div>
-      {showColumns.demand && (
-        <>
           <div className={styles.headerCell} style={{ width: '6%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span>Resource</span>
             <span>Demand</span>
@@ -230,130 +210,36 @@ const TableHeader: React.FC<{ showColumns: any }> = ({ showColumns }) => {
             <span>Building</span>
             <span>Demand</span>
           </div>
-          <div className={styles.headerCell} style={{ width: '4%' }}>
+          <div className={styles.headerCell} style={{ width: '10%' }}>
             Free
-            <div className={styles.tooltip}>Free</div>
           </div>
-          <div className={styles.headerCell} style={{ width: '5%' }}>
-            Comp
-            <div className={styles.tooltip}>Number of companies</div>
+          <div className={styles.headerCell} style={{ width: '10%' }}>
+            Num
           </div>
-        </>
-      )}
-      {showColumns.storage && (
         <div className={styles.headerCell} style={{ width: '12%' }}>
           Storage
-          <div className={styles.tooltip}>No. of storage buildings</div>
         </div>
-      )}
-      {showColumns.production && (
-        <>
           <div className={styles.headerCell} style={{ width: '10%' }}>
             Production
-            <div className={styles.tooltip}>Production</div>
           </div>
           <div className={styles.headerCell} style={{ width: '10%' }}>
             Demand
-            <div className={styles.tooltip}>Demand</div>
-          </div>
-        </>
-      )}
-      {showColumns.workers && (
-        <>
-          <div className={styles.headerCell} style={{ width: '9%' }}>
-            Count
-            <div className={styles.tooltip}>Number of workers</div>
           </div>
           <div className={styles.headerCell} style={{ width: '9%' }}>
-            Staffing
-            <div className={styles.tooltip}>Worker staffing percentage</div>
+            workers
           </div>
-        </>
-      )}
-      {showColumns.tax && (
-        <div className={styles.headerCell} style={{ width: '12%' }}>
-          Tax Factor
-          <div className={styles.tooltip}>Tax rate multiplier</div>
-        </div>
-      )}
+          <div className={styles.headerCell} style={{ width: '9%' }}>
+            Worker %
+          </div>
     </div>
   );
 };
 
 // Interface for $Industrial props
-interface IndustrialProps extends PanelProps {
-}
-
+interface IndustrialProps extends PanelProps {}
 // Component: $Commercial
 const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
   const industrialProducts = useValue(IndustrialProductsData);
-
-  // State to control panel visibility
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
-
-  
-  
-  // Column visibility toggles
-  const [showColumns, setShowColumns] = useState({
-    demand: true,
-    buildings: true,
-    storage: true,
-    production: true,
-    workers: true,
-    tax: true,
-  });
-
-  // State for sorting and filtering
-  const [sortBy, setSortBy] = useState<'name' | 'demand' | 'workers' | 'tax'>('name');
-  const [filterDemand, setFilterDemand] = useState<'all' | 'positive' | 'negative'>('all');
-  const [filterWorkers, setFilterWorkers] = useState<'all' | 'full' | 'partial' | 'none'>('all');
-
-  // Toggle column visibility
-  const toggleColumn = useCallback((column: keyof typeof showColumns) => {
-    
-    setShowColumns(prev => {
-      const newState = {
-        ...prev,
-        [column]: !prev[column]
-      };
-      
-      return newState;
-    });
-  }, []);
-
-  // Sort and filter functions
-  const sortData = useCallback((a: industrialProductData, b: industrialProductData) => {
-  switch (sortBy) {
-    case 'name':
-      return a.ResourceName.localeCompare(b.ResourceName);
-    case 'demand':
-      return b.Demand - a.Demand;
-    case 'workers':
-      return b.Workers - a.Workers;
-    case 'tax':
-      return b.TaxFactor - a.TaxFactor;
-    default:
-      return 0;
-  }
-}, [sortBy]);
-
-
-  const applyDataFilter = useCallback((item: industrialProductData) => {
-  if (filterDemand === 'positive' && item.Demand <= 0) return false;
-  if (filterDemand === 'negative' && item.Demand >= 0) return false;
-  if (filterWorkers === 'full' && item.WrkPercent < 100) return false;
-  if (filterWorkers === 'partial' && (item.WrkPercent === 0 || item.WrkPercent === 100)) return false;
-  if (filterWorkers === 'none' && item.WrkPercent > 0) return false;
-  return true;
-}, [filterDemand, filterWorkers]);
-
-  
-  
-
-  if (!isPanelVisible) {
-    return null;
-  }
-
   return (
     <Panel
       draggable
@@ -367,184 +253,13 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
       ) : (
         <div className={styles.panelContent}>
           <div className={styles.controls}>
-            <Dropdown
-              theme={DropdownStyle}
-              content={
-                <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Sort by Name"
-                      isChecked={sortBy === 'name'}
-                      onToggle={() => setSortBy('name')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Sort by Demand"
-                      isChecked={sortBy === 'demand'}
-                      onToggle={() => setSortBy('demand')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Sort by Workers"
-                      isChecked={sortBy === 'workers'}
-                      onToggle={() => setSortBy('workers')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Sort by Tax"
-                      isChecked={sortBy === 'tax'}
-                      onToggle={() => setSortBy('tax')}
-                    />
-                  </div>
-                </div>
-              }
-            >
-              <DropdownToggle style={{ marginRight: '5rem' }}>
-                Sort Options
-              </DropdownToggle>
-            </Dropdown>
 
-            <Dropdown
-              theme={DropdownStyle}
-              content={
-                <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="All Demand"
-                      isChecked={filterDemand === 'all'}
-                      onToggle={() => setFilterDemand('all')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Positive Demand"
-                      isChecked={filterDemand === 'positive'}
-                      onToggle={() => setFilterDemand('positive')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Negative Demand"
-                      isChecked={filterDemand === 'negative'}
-                      onToggle={() => setFilterDemand('negative')}
-                    />
-                  </div>
-                </div>
-              }
-            >
-              <DropdownToggle style={{ marginRight: '5rem' }}>
-                Filter by Demand
-              </DropdownToggle>
-            </Dropdown>
-
-            <Dropdown
-              theme={DropdownStyle}
-              content={
-                <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="All Workers"
-                      isChecked={filterWorkers === 'all'}
-                      onToggle={() => setFilterWorkers('all')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Fully Staffed"
-                      isChecked={filterWorkers === 'full'}
-                      onToggle={() => setFilterWorkers('full')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Partially Staffed"
-                      isChecked={filterWorkers === 'partial'}
-                      onToggle={() => setFilterWorkers('partial')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="No Workers"
-                      isChecked={filterWorkers === 'none'}
-                      onToggle={() => setFilterWorkers('none')}
-                    />
-                  </div>
-                </div>
-              }
-            >
-              <DropdownToggle style={{ marginRight: '5rem' }}>
-                Filter by Workers
-              </DropdownToggle>
-            </Dropdown>
-
-            <Dropdown
-              theme={DropdownStyle}
-              content={
-                <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Demand Info"
-                      isChecked={showColumns.demand}
-                      onToggle={() => toggleColumn('demand')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Buildings"
-                      isChecked={showColumns.buildings}
-                      onToggle={() => toggleColumn('buildings')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Storage"
-                      isChecked={showColumns.storage}
-                      onToggle={() => toggleColumn('storage')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Production"
-                      isChecked={showColumns.production}
-                      onToggle={() => toggleColumn('production')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Workers"
-                      isChecked={showColumns.workers}
-                      onToggle={() => toggleColumn('workers')}
-                    />
-                  </div>
-                  <div className={styles.dropdownItem}>
-                    <InfoCheckbox
-                      label="Tax"
-                      isChecked={showColumns.tax}
-                      onToggle={() => toggleColumn('tax')}
-                    />
-                  </div>
-                </div>
-              }
-            >
-              <DropdownToggle style={{ marginRight: '5rem' }}>
-                Column Visibility
-              </DropdownToggle>
-            </Dropdown>
           </div>
-
-          <TableHeader showColumns={showColumns} />
-              {industrialProducts
-              .filter((item: industrialProductData) => item.ResourceName !== 'NoResource')
-              .filter(applyDataFilter)
-              .sort((a: industrialProductData, b: industrialProductData) => sortData(a, b))
-              .map((item: industrialProductData) => (
+          <TableHeader />
+              {industrialProducts.map((item: industrialProductData) => (
                 <ResourceLine
                   key={item.ResourceName}
                   data={item}
-                  showColumns={showColumns}
                 />
               ))}
         </div>

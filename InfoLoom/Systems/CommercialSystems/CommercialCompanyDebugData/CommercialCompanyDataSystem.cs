@@ -290,14 +290,17 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             if (!IndustrialProcessDataLookup.TryGetComponent(prefab, out var industryProcess))
                 return 0;
 
+            // Commercial companies are not industrial, so pass false for isIndustrial
+            // Get the resource data for the output resource
+            var resourceData = ResourceDataLookup[ResourcePrefabs[industryProcess.m_Output.m_Resource]];
+            
             return EconomyUtils.GetCompanyProductionPerDay(
                 efficiencyValue,
-                false,
+                false, // isIndustrial parameter (commercial companies)
                 employeeBuffer,
                 industryProcess,
-                ResourcePrefabs,
-                ResourceDataLookup,
-                CitizenLookup,
+                resourceData,
+                ref CitizenLookup,
                 ref EconomyParams);
         }
     }
