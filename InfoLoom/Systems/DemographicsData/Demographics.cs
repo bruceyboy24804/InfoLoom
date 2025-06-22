@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System;
 using Game.Buildings;
 using Game;
+using Game.UI.InGame;
 using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Extensions;
 using Unity.Burst;
@@ -249,7 +250,16 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
                         if (!isActuallyStudent && !isActuallyWorker)
                         {
-                            info.Other++;
+                            // Check if citizen is elderly to categorize as retired, otherwise unemployed
+                            if (age == CitizenAge.Elderly)
+                            {
+                                info.Retired++;
+                                // You could also store the occupation type here if needed
+                            }
+                            else
+                            {
+                                info.Unemployed++;
+                            }
                         }
                         if (ageInDays > m_Totals[6])
                             m_Totals[6] = ageInDays;
@@ -318,7 +328,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            return 256;
+            return 512;
         }
 
         protected override void OnUpdate()
@@ -328,7 +338,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 
             ForceUpdate = false;
 
-            Setting setting = Mod.setting;
+            //Setting setting = Mod.setting;
             
             ResetResults();
             
@@ -388,7 +398,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
             public int School3 { get; set; }
             public int School4 { get; set; }
             public int Work { get; set; }
-            public int Other { get; set; }
+            public int Unemployed { get; set; }
+            public int Retired { get; set; }
 
             public PopulationGroupData()
             {
@@ -425,7 +436,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 School3 = ageInfo.School3,
                                 School4 = ageInfo.School4,
                                 Work = ageInfo.Work,
-                                Other = ageInfo.Other
+                                Unemployed = ageInfo.Unemployed,
+                                Retired = ageInfo.Retired
                             });
                         }
                     }
@@ -484,7 +496,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 School3 = 0,
                 School4 = 0,
                 Work = 0,
-                Other = 0
+                Unemployed = 0,
+                Retired = 0
             };
 
             // Sum the values for all ages in the range
@@ -501,7 +514,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 group.School3 += ageInfo.School3;
                 group.School4 += ageInfo.School4;
                 group.Work += ageInfo.Work;
-                group.Other += ageInfo.Other;
+                group.Unemployed += ageInfo.Unemployed;
+                group.Retired += ageInfo.Retired;
             }
             
             return group;

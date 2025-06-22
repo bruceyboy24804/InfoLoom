@@ -1,5 +1,5 @@
 .panel {
-  width: 1200rem; // Slightly increased panel width to accommodate all columns
+  width: 1000rem;
   max-width: 1300rem;
 }
 
@@ -18,84 +18,103 @@
 }
 
 .tableHeader {
-  max-width: 1200rem;
-  margin: 0 auto;
+  width: 100%;
   padding: 0 25rem;
 }
+
+.headerRow {
+  width: 100%;
+  height: 40rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border-bottom: 2rem solid rgba(255, 255, 255, 0.3);
+}
+
 .row {
   width: 100%;
+  height: 32rem;
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  padding: 1rem 25rem;
-  min-width: min-content;
-}
-
-.headerRow {
-   width: 100%;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 1rem 25rem;
-  min-width: min-content;
-}
-
-.headerRow {
-  padding: 1rem 0;
+  padding: 0 25rem;
+  border-bottom: 1rem solid rgba(255, 255, 255, 0.1);
 }
 
 .nameColumn {
-  display: flex;
+  width: 200rem;
   min-width: 200rem;
-  margin-right: 5rem;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 500;
 }
 
 .serviceColumn {
+  width: 100rem;
   min-width: 100rem;
-  margin-left: 30rem;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .employeeColumn {
-  min-width: 100rem;
-  margin-left: 30rem;
-  text-align: center;
+  width: 120rem;
+  min-width: 120rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .vehicleColumn {
+  width: 100rem;
   min-width: 100rem;
-  margin-left: 30rem;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .resourcesColumn {
-  width: 130rem;
-  margin-left: 30rem;
-  text-align: center;
+  width: 120rem;
+  min-width: 120rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .efficiencyColumn {
-  min-width: 90rem;
-  margin-left: 50rem;
-  text-align: center;
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .profitabilityColumn {
-  min-width: 60rem;
-  margin-left: 30rem;
-  text-align: right;
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .locationColumn {
-  min-width: 60rem;
-  margin-left: 50rem;
+  width: 80rem;
+  min-width: 80rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.scrollable {
-  max-height: 550rem;
-  overflow-y: auto;
-  width: 100%;
-  padding: 8rem;
+
+.headerCell {
+  font-weight: bold;
+  font-size: 14rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .dataDivider {
@@ -103,12 +122,13 @@
   height: 4rem;
   flex-direction: column;
   justify-content: center;
+  margin: 5rem 0;
+}
 
-  &::after {
-    content: '';
-    border-bottom: 1rem solid gray;
-    width: 100%;
-  }
+.dataDivider::after {
+  content: '';
+  border-bottom: 1rem solid gray;
+  width: 100%;
 }
 
 .loadingText {
@@ -116,27 +136,22 @@
   padding: 20rem;
 }
 
-.scrollableContent {
-  padding: 1rem 0;
-}
-
 .tooltipContent {
   z-index: 10;
-  max-width: 300rem;
-  word-wrap: break-word;
+  max-width: 400rem;
 }
 
 .tooltipText {
   margin-bottom: 1rem;
   color: #ffffff;
+}
 
-  p {
-    margin-bottom: 5rem;
-    font-size: 15rem;
-    text-align: left;
-    display: flex;
-    flex-direction: row;
-  }
+.tooltipText p {
+  margin-bottom: 5rem;
+  font-size: 15rem;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
 }
 
 .factorRow {
@@ -146,99 +161,146 @@
 }
 
 .factorName {
-  display: flex;
-  width: 200rem;
-  flex: 2;
+  width: 100rem;
   text-align: left;
 }
 
-.factorValue {
-  flex: 1;
-  text-align: right;
-}
-
 .factorResult {
-  margin-left: 10rem;
-  flex: 1;
+  margin-left: 20rem;
+  width: 30rem;
   text-align: right;
   font-weight: bold;
 }
 
 .positive {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .negative {
-  color: #F44336;
+  color: #f44336;
 }
 
 .neutral {
-  color: #FFFFFF;
+  color: #ffffff;
 }
+
 .virtualListContainer {
   height: 500rem;
   width: 100%;
-
 }
+
 .magnifierIcon {
-  width: 30rem;
-  height: 30rem;
-  border-top-left-radius:  var(--panelRadiusInner);
-  border-top-right-radius: var(--panelRadiusInner);
-  border-bottom-left-radius: var(--panelRadiusInner);
-  border-bottom-right-radius: var(--panelRadiusInner);
-  margin-left: 50rem;
-
+  width: 28rem;
+  height: 28rem;
+  border-radius: 4rem;
 }
+
 .processingWrapper {
   display: flex;
-  width: 50rem;
-
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .resourceGroup {
   display: flex;
   align-items: center;
-  margin: 0.25rem;
+  margin: 0 2rem;
 }
 
 .resourceItem {
   display: flex;
   align-items: center;
-  margin: 0.25rem;
+  margin: 0 1rem;
 }
 
 .divider {
   display: flex;
   align-items: center;
-  margin: 0 0.25rem;
-  font-size: 25rem;
+  margin: 0 4rem;
+  font-size: 16rem;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .separator {
   display: flex;
   align-items: center;
-  margin-left: 20rem;
-  font-size: 25rem;
+  margin: 0 2rem;
+  font-size: 12rem;
+  color: rgba(255, 255, 255, 0.5);
 }
+
 .processContainer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 50rem;
+  justify-content: center;
+  width: 100%;
 }
+
 .emptyGroup {
-  min-width: 20rem;
-  height: 20rem;
+  width: 16rem;
+  height: 16rem;
+  opacity: 0.3;
 }
 
-.divider {
-  margin: 0 8rem;
-  font-weight: bold;
-}
-
-.resourceGroup {
+.sortableHeader {
   display: flex;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableHeader:hover {
+  opacity: 0.8;
+}
+
+.sortArrows {
+  display: flex;
+  flex-direction: column;
+  margin-left: 6rem;
+}
+
+.sortIcon {
+  width: 14rem;
+  height: 14rem;
+  opacity: 0.8;
+}
+
+.resourceIcon {
+  width: 18rem;
+  height: 18rem;
+  margin: 0 1rem;
+}
+
+.efficiencyHigh {
+  color: #4caf50;
+}
+
+.efficiencyMedium {
+  color: #ff9800;
+}
+
+.efficiencyLow {
+  color: #f44336;
+}
+
+.profitabilityPositive {
+  color: #4caf50;
+}
+
+.profitabilityNegative {
+  color: #f44336;
+}
+
+.serviceHigh {
+  color: #4caf50;
+}
+
+.serviceMedium {
+  color: #ff9800;
+}
+
+.serviceLow {
+  color: #f44336;
 }

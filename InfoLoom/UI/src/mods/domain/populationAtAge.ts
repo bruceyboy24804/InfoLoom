@@ -5,6 +5,7 @@ export interface populationAtAge {
   School2: number;
   School3: number;
   School4: number;
-  Other: number;
+  Unemployed: number;
+  Retired: number;
   Total: number;
 }

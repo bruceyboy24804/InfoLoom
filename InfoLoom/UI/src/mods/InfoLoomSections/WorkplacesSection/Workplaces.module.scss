@@ -1,6 +1,5 @@
 .panel {
-  width: 800rem; /* Reduced from 1000rem */
-  max-width: 95%; /* Prevent panel from extending beyond screen */
+  width: 1400rem;
   display: flex;
   flex-direction: column;
   background-color: var(--panelColorNormal);
@@ -11,69 +10,250 @@
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  height: 18rem; /* Reduced from 20rem */
+  height: 18rem;
   text-transform: none;
 }
 
 .headerText {
   margin-left: -5rem;
-  font-size: 110%; /* Reduced from 115% */
+  font-size: 110%;
 }
 
-/* Table header row */
-.headerRow {
+.workplaceLevel {
+  width: 99%;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.spacer1 {
+  width: 1%;
+}
+
+.levelNameContainer {
   display: flex;
-  padding: 0.7rem;
+  align-items: center;
+  width: 14%;
+}
+
+.levelSymbol {
+  width: 1.2em;
+}
+
+.dataColumn {
+  width: 7%;
+  justify-content: center;
+}
+
+.percentColumn {
+  width: 5%;
+  justify-content: center;
+}
+
+.employeeColumn {
+  width: 7%;
+  justify-content: center;
+}
+
+.commuterColumn {
+  width: 7%;
+  justify-content: center;
+}
+
+.openColumn {
+  width: 6%;
+  justify-content: center;
+}
+
+.spacingTop {
+  height: 10rem;
+}
+
+.spacingSmall {
+  height: 5rem;
+}
+
+.chartToggle {
+  display: flex;
+  justify-content: center;
+  margin: 15rem 0 10rem 0;
+  padding: 3rem 6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4rem;
+}
+
+.toggleButton {
+  width: 130rem;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 10rem 0;
+  border: none;
+  background-color: var(--dividerColor);
+  color: var(--menuText1Normal);
+  font-size: var(--fontSizeM);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background-color: var(--hoverColorBright);
+  }
+
+  &.buttonSelected {
+    background-color: var(--selectedColor);
+
+    &:hover {
+      background-color: var(--selectedColor);
+    }
+  }
+}
+
+.chartSection {
+  margin-top: 10rem;
+  padding: 0;
+}
+
+.chartTitle {
+  font-size: 105%;
   font-weight: bold;
-  color: white;
-  border-bottom: 1rem solid #ffffff1a;
+  text-align: center;
+  padding: 0 10rem;
+}
+
+.stackedBarContainer {
   margin-bottom: 5rem;
 }
 
-/* Row styling for each workforce level */
-.workforceRow {
+.barLabel {
   display: flex;
   align-items: center;
-  padding: 0.7rem;
-  width: 100%;
-  margin-bottom: 3rem;
+  font-size: 90%;
+  padding: 0 5rem;
 }
 
-/* Column styles */
-.educationCol {
-  display: flex;
-  align-items: center;
-  width: 20%;
-}
-
-.colorBox {
-  width: 12rem;
-  height: 12rem;
+.barLabelSymbol {
+  width: 1em;
+  height: 1em;
   margin-right: 8rem;
   border-radius: 2rem;
 }
 
-.dataCol {
-  width: 16%;
-  text-align: center;
+.barLabelText {
+  flex: 1;
 }
 
-/* Scrollable container */
+.barLabelValue {
+  margin-left: 10rem;
+  font-weight: bold;
+}
+
+.stackedBar {
+  height: 20rem;
+  width: 100%;
+  display: flex;
+  border-radius: 3rem;
+  overflow: hidden;
+  border: 1rem solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  margin: 5rem 0;
+}
+
+.barSegment {
+  height: 100%;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  display: block;
+}
+
+.barSegment:hover {
+  opacity: 0.8;
+}
+
+.legendContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 15rem;
+  padding: 10rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  font-size: 85%;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.legendItem:hover {
+  opacity: 0.8;
+}
+
+.legendSymbol {
+  width: 12rem;
+  height: 12rem;
+  margin-right: 5rem;
+  border-radius: 2rem;
+}
+
+.tooltipContent {
+  min-width: 200rem;
+  padding: 8rem;
+}
+
+.tooltipHeader {
+  display: flex;
+  flex-direction: row;
+  font-weight: bold;
+  font-size: 105%;
+  margin-bottom: 6rem;
+  color: #ffffff;
+  border-bottom: 1rem solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 4rem;
+}
+
+.tooltipRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  font-size: 90%;
+}
+
+.tooltipRow span:first-child {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tooltipRow span:last-child {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.tooltipDivider {
+  height: 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 6rem 0;
+}
+
+/* Legacy styles for compatibility - can be removed if not needed */
 .scrollable {
-  max-height: 550rem; /* Reduced from 600rem */
+  max-height: 550rem;
   overflow-y: auto;
   width: 100%;
   padding: 8rem;
 }
 
-/* Loading state */
 .loadingText {
   text-align: center;
   padding: 1rem;
   color: white;
 }
 
-/* Container for the whole component */
 .container {
   padding: 12rem;
   width: 100%;
@@ -82,8 +262,8 @@
 }
 
 .sectionTitle {
-  font-size: 14rem; /* Reduced from 15rem */
-  margin: 10rem 0 5rem; /* Reduced from 12rem 0 6rem */
+  font-size: 14rem;
+  margin: 10rem 0 5rem;
   font-weight: 500;
 }
 
@@ -95,3 +275,152 @@
   margin-top: 5rem;
 }
 
+/* Summary section */
+.summarySection {
+  margin-bottom: 20rem;
+  padding-bottom: 12rem;
+  border-bottom: 1rem solid #ffffff1a;
+}
+
+.summaryTitle {
+  font-size: 14rem;
+  margin-bottom: 5rem;
+}
+
+.summaryGrid {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: 4rem;
+  flex: 1 0 22%;
+  min-width: 100rem;
+}
+
+.summaryValue {
+  font-size: 12rem;
+  font-weight: bold;
+}
+
+.summaryLabel {
+  font-size: 11rem;
+  opacity: 0.8;
+  margin-top: 2rem;
+}
+
+/* Comprehensive table styles */
+.comprehensiveTable {
+  margin-bottom: 25rem;
+  border: 1rem solid #ffffff1a;
+  border-radius: 5rem;
+  overflow: hidden;
+}
+
+.comprehensiveTableHeader {
+  background-color: #ffffff1a;
+  font-weight: bold;
+  color: white;
+}
+
+.comprehensiveTableRow {
+  display: flex;
+  align-items: center;
+  padding: 8rem;
+  border-bottom: 1rem solid #ffffff0d;
+  transition: background-color 0.2s ease;
+}
+
+.comprehensiveTableRow:hover {
+  background-color: #ffffff05;
+}
+
+.comprehensiveTableRow:last-child {
+  border-bottom: none;
+}
+
+.comprehensiveEducationCol {
+  display: flex;
+  align-items: center;
+  width: 120rem;
+  font-size: 15rem;
+}
+
+.comprehensiveDataCol {
+  width: 90rem;
+  text-align: center;
+  font-size: 15rem;
+}
+
+.comprehensiveTotalRow {
+  font-weight: bold;
+  background-color: #ffffff0d;
+  border-top: 2rem solid #ffffff1a;
+}
+
+/* Stacked bar chart styles */
+.stackedBarContainer {
+  margin-bottom: 15rem;
+}
+
+.stackedBar {
+  width: 100%;
+  height: 25rem;
+  display: flex;
+  border-radius: 3rem;
+  overflow: hidden;
+  background-color: #ffffff0d;
+  margin-bottom: 8rem;
+  position: relative;
+}
+
+.stackedBarSegment {
+  height: 100%;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.stackedBarSegment:hover {
+  opacity: 0.8;
+}
+
+.stackedBarLabel {
+  font-size: 15rem;
+  margin-bottom: 3rem;
+  color: #ffffffcc;
+}
+
+.stackedBarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 8rem;
+  font-size: 15rem;
+}
+
+.stackedBarLegendItem {
+  display: flex;
+  align-items: center;
+}
+
+.stackedBarLegendColor {
+  width: 15rem;
+  height: 15rem;
+  border-radius: 2rem;
+  margin-right: 5rem;
+}
+
+.stackedBarValue {
+  font-weight: 500;
+  margin-left: 3rem;
+}
+
+/* Section title for subsections */
+.tableSectionTitle {
+  font-size: 13rem;
+  font-weight: 500;
+  margin: 15rem 0 5rem;
+  color: #ffffffcc;
+}

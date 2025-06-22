@@ -14,7 +14,7 @@ using Game.Economy;
 using Game.Prefabs;
 using Game.UI;
 using Game.Vehicles;
-using InfoLoomTwo.Utils;
+using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -144,7 +144,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
             // Early exit if chunk doesn't have required components
-            if (!chunk.Has(EmployeeBufferType))
+            if (!chunk.Has (ref EmployeeBufferType))
                 return;
 
             // Get arrays for the entire chunk
@@ -307,6 +307,14 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
     public partial class CommercialCompanyDataSystem : GameSystemBase
     {
+        public IndexSortingEnum m_CurrentIndexSorting = IndexSortingEnum.Off;
+        public CompanyNameEnum m_CurrentCompanyNameSorting = CompanyNameEnum.Off;
+        public ServiceUsageEnum m_CurrentServiceUsageSorting = ServiceUsageEnum.Off;
+        public EmployeesEnum m_CurrentEmployeesSorting = EmployeesEnum.Off;
+        public EfficiancyEnum m_CurrentEfficiencySorting = EfficiancyEnum.Off;
+        public ProfitabilityEnum m_CurrentProfitabilitySorting = ProfitabilityEnum.Off;
+        public ResourceAmountEnum m_CurrentResourceAmountSorting = ResourceAmountEnum.Off;
+        public CommercialCompanyDTO[] m_SortedCommercialCompanyDTOs;
         private NameSystem m_NameSystem;
         private ImageSystem m_ImageSystem;
         private ResourceSystem m_ResourceSystem;
@@ -354,11 +362,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            if (Mod.setting.CustomUpdateInterval)
-            {
-                return Mod.setting.UpdateInterval;
-            }
-            return 512;
+            return 1024;
         }
 
         protected override void OnUpdate()
@@ -549,18 +553,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 };
                 companies.Add(companyDTO);
             }
-            var comparer = CommercialCompanySortingUtility.CreateComparer<CommercialCompanyDTO>(
-                (a, b) => a.EntityId.Index.CompareTo(b.EntityId.Index),
-                (a, b) => string.Compare(a.CompanyName, b.CompanyName, StringComparison.Ordinal),
-                (a, b) => a.ServiceAvailable.CompareTo(b.ServiceAvailable),
-                (a, b) => a.TotalEmployees.CompareTo(b.TotalEmployees),
-                (a, b) => a.TotalEfficiency.CompareTo(b.TotalEfficiency),
-                (a, b) => a.Profitability.CompareTo(b.Profitability)
-            );
-            
-            companies.Sort(comparer);
             m_CommercialCompanyDTOs = companies.ToArray();
         }
+        
+
 
         // Helper methods
         private string GetResourceIconPath(Resource resource)
@@ -638,5 +634,95 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             
             return tempFactors.ToArray();
         }
+        public int CompareByIndex(CommercialCompanyDTO x, CommercialCompanyDTO y)
+{
+    switch (m_CurrentIndexSorting)
+    {
+        case IndexSortingEnum.Ascending:
+            return x.EntityId.Index.CompareTo(y.EntityId.Index);
+        case IndexSortingEnum.Descending:
+            return y.EntityId.Index.CompareTo(x.EntityId.Index);
+        default:
+            return 0;
     }
+}
+
+public int CompareByName(CommercialCompanyDTO x, CommercialCompanyDTO y)
+{
+    switch (m_CurrentCompanyNameSorting)
+    {
+        case CompanyNameEnum.Ascending:
+            return string.Compare(x.CompanyName, y.CompanyName, StringComparison.OrdinalIgnoreCase);
+        case CompanyNameEnum.Descending:
+            return string.Compare(y.CompanyName, x.CompanyName, StringComparison.OrdinalIgnoreCase);
+        default:
+            return 0;
+    }
+}
+
+public int CompareByServiceUsage(CommercialCompanyDTO x, CommercialCompanyDTO y)
+{
+    switch (m_CurrentServiceUsageSorting)
+    {
+        case ServiceUsageEnum.Ascending:
+            return x.ServiceAvailable.CompareTo(y.ServiceAvailable);
+        case ServiceUsageEnum.Descending:
+            return y.ServiceAvailable.CompareTo(x.ServiceAvailable);
+        default:
+            return 0;
+    }
+}
+
+public int CompareByEmployees(CommercialCompanyDTO x, CommercialCompanyDTO y)
+{
+    switch (m_CurrentEmployeesSorting)
+    {
+        case EmployeesEnum.Ascending:
+            return x.TotalEmployees.CompareTo(y.TotalEmployees);
+        case EmployeesEnum.Descending:
+            return y.TotalEmployees.CompareTo(x.TotalEmployees);
+        default:
+            return 0;
+    }
+}
+
+public int CompareByEfficiency(CommercialCompanyDTO x, CommercialCompanyDTO y)
+{
+    switch (m_CurrentEfficiencySorting)
+    {
+        case EfficiancyEnum.Ascending:
+            return x.TotalEfficiency.CompareTo(y.TotalEfficiency);
+        case EfficiancyEnum.Descending:
+            return y.TotalEfficiency.CompareTo(x.TotalEfficiency);
+        default:
+            return 0;
+    }
+}
+
+        public int CompareByProfitability(CommercialCompanyDTO x, CommercialCompanyDTO y)
+        {
+            switch (m_CurrentProfitabilitySorting)
+            {
+                case ProfitabilityEnum.Ascending:
+                    return x.Profitability.CompareTo(y.Profitability);
+                case ProfitabilityEnum.Descending:
+                    return y.Profitability.CompareTo(x.Profitability);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByResourceAmount(CommercialCompanyDTO x, CommercialCompanyDTO y)
+        {
+            switch (m_CurrentResourceAmountSorting)
+            {
+                case ResourceAmountEnum.Ascending:
+                    return x.ResourceAmount.CompareTo(y.ResourceAmount);
+                case ResourceAmountEnum.Descending:
+                    return y.ResourceAmount.CompareTo(x.ResourceAmount);
+                default:
+                    return 0;
+            }
+        }
+    }
+    
 }

@@ -21,7 +21,6 @@ using Game.Simulation;
 using Game.Tools;
 using Game.UI;
 using Game.Zones;
-using InfoLoomTwo.Utils;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -923,10 +922,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            if (Mod.setting.CustomUpdateInterval)
-            {
-                return Mod.setting.UpdateInterval;
-            }
             return 512;
         }
 

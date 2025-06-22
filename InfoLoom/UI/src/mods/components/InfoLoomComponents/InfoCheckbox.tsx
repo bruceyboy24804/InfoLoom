@@ -8,13 +8,18 @@ interface InfoCheckboxProps {
   disabled?: boolean;
 }
 
-const InfoCheckbox: React.FC<InfoCheckboxProps> = ({ label, checked, onChange, disabled = false }) => {
+const InfoCheckbox: React.FC<InfoCheckboxProps> = ({
+  label,
+  checked,
+  onChange,
+  disabled = false,
+}) => {
   return (
     <label className="info-checkbox-container">
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={e => onChange(e.target.checked)}
         disabled={disabled}
       />
       <span className="checkbox-label">{label}</span>

@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { bindValue, useValue } from "cs2/api";
-import { DraggablePanelProps, Panel, PanelProps } from "cs2/ui";
+import { DraggablePanelProps, Panel, PanelProps, Tooltip } from "cs2/ui";
+import { useLocalization } from 'cs2/l10n';
 import styles from "./residential.module.scss";
 import { ResidentialData } from "../../../bindings";
-
 
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
@@ -116,96 +116,107 @@ const SingleValue = ({ value, flag, width, small }: SingleValueProps): JSX.Eleme
   );
 };
 
-interface BuildingDemandSectionProps {
-  data: number[];
-}
-
-const BuildingDemandSection = ({ data }: BuildingDemandSectionProps): JSX.Element => {
-    const freeL = data[0]-data[3];
-	const freeM = data[1]-data[4];
-	const freeH = data[2]-data[5];
-	const ratio = data[6]/10;
-	const ratioString = `$No demand at {ratio}%`;
-	const needL = Math.max(1, Math.floor(ratio * data[0] / 100));
-	const needM = Math.max(1, Math.floor(ratio * data[1] / 100));
-	const needH = Math.max(1, Math.floor(ratio * data[2] / 100));
-	const demandL = Math.floor((1 - freeL / needL) * 100);
-	const demandM = Math.floor((1 - freeM / needM) * 100);
-	const demandH = Math.floor((1 - freeH / needH) * 100);
-	// calculate totals and free ratio
-	const totalRes = data[0] + data[1] + data[2];
-	const totalOcc = data[3] + data[4] + data[5];
-	const totalFree = totalRes - totalOcc;
-	const freeRatio = (totalRes > 0 ? Math.round(1000*totalFree/totalRes)/10 : 0);
-	return (
-
-        <div style={{boxSizing: 'border-box', border: '1px solid gray'}}>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v" style={{width: '36%'}}></div>
-                <SingleValue value="LOW"/>
-                <SingleValue value="MEDIUM"/>
-                <SingleValue value="HIGH"/>
-                <SingleValue value="TOTAL"/>
-            </div>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v" style={{width: '2%'}}></div>
-                <div className="row_S2v" style={{width: '34%'}}>
-                    Total properties
-                </div>
-                <SingleValue value={data[0]}/>
-                <SingleValue value={data[1]}/>
-                <SingleValue value={data[2]}/>
-                <SingleValue value={totalRes}/>
-            </div>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v small_ExK" style={{width: '2%'}}></div>
-                <div className="row_S2v small_ExK" style={{width: '34%'}}>
-                    - Occupied properties
-                </div>
-                <SingleValue value={data[3]} small={true}/>
-                <SingleValue value={data[4]} small={true}/>
-                <SingleValue value={data[5]} small={true}/>
-                <SingleValue value={totalOcc} small={true}/>
-            </div>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v" style={{width: '2%'}}></div>
-                <div className="row_S2v" style={{width: '34%'}}>
-                    = Empty properties
-                </div>
-                <SingleValue value={freeL} flag={freeL > needL}/>
-                <SingleValue value={freeM} flag={freeM > needM}/>
-                <SingleValue value={freeH} flag={freeH > needH}/>
-                <SingleValue value={totalFree}/>
-            </div>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v small_ExK" style={{width: '2%'}}></div>
-                <div className="row_S2v small_ExK" style={{width: '34%'}}>{"No demand at " + ratio + "%"}</div>
-                <SingleValue value={needL} small={true}/>
-                <SingleValue value={needM} small={true}/>
-                <SingleValue value={needH} small={true}/>
-                <div className="row_S2v" style={{width: '16%'}}></div>
-            </div>
-            <div className="labels_L7Q row_S2v">
-                <div className="row_S2v" style={{width: '2%'}}></div>
-                <div className="row_S2v" style={{width: '34%'}}>BUILDING DEMAND</div>
-                <SingleValue value={demandL} flag={demandL < 0}/>
-                <SingleValue value={demandM} flag={demandM < 0}/>
-                <SingleValue value={demandH} flag={demandH < 0}/>
-                <SingleValue value={`${freeRatio}%`}/>
-            </div>
-            <div className="space_uKL" style={{height: '3rem'}}></div>
-        </div>
-    );
-};
 
 const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Element => {
+  const {translate} = useLocalization();
     const ilResidential = useValue(ResidentialData);
-
 
     const homelessThreshold =
         ilResidential.length > 13
             ? Math.round((ilResidential[12] * ilResidential[13]) / 1000)
             : 0;
+
+    const BuildingDemandSectionWithTranslation = ({ data }: { data: number[] }) => {
+        const freeL = data[0]-data[3];
+        const freeM = data[1]-data[4];
+        const freeH = data[2]-data[5];
+        const ratioX = data[18]/10;
+        const ratioY = data[19]/10;
+        const ratioZ = data[20]/10;
+        const needL = Math.max(1, Math.floor(ratioX * data[0] / 100));
+        const needM = Math.max(1, Math.floor(ratioY * data[1] / 100));
+        const needH = Math.max(1, Math.floor(ratioZ * data[2] / 100));
+        const demandL = Math.floor((1 - freeL / needL) * 100);
+        const demandM = Math.floor((1 - freeM / needM) * 100);
+        const demandH = Math.floor((1 - freeH / needH) * 100);
+        const totalRes = data[0] + data[1] + data[2];
+        const totalOcc = data[3] + data[4] + data[5];
+        const totalFree = totalRes - totalOcc;
+        const freeRatio = (totalRes > 0 ? Math.round(1000*totalFree/totalRes)/10 : 0);
+        
+        return (
+          <div style={{boxSizing: 'border-box', border: '1px solid gray'}}>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v" style={{width: '36%'}}></div>
+              <SingleValue value={translate("InfoLoomTwo.ResidentialPanel[Low]", "LOW")}/>
+              <SingleValue value={translate("InfoLoomTwo.ResidentialPanel[Medium]", "MEDIUM")}/>
+              <SingleValue value={translate("InfoLoomTwo.ResidentialPanel[High]", "HIGH")}/>
+              <SingleValue value={translate("InfoLoomTwo.ResidentialPanel[Total]", "TOTAL")}/>
+            </div>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v" style={{width: '2%'}}></div>
+              <div className="row_S2v" style={{width: '34%'}}>
+                <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[TotalPropertiesTooltip]", "Total number of residential properties by density type")}>
+                  <span>{translate("InfoLoomTwo.ResidentialPanel[TotalProperties]", "Total properties")}</span>
+                </Tooltip>
+              </div>
+              <SingleValue value={data[0]}/>
+              <SingleValue value={data[1]}/>
+              <SingleValue value={data[2]}/>
+              <SingleValue value={totalRes}/>
+            </div>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v small_ExK" style={{width: '2%'}}></div>
+              <div className="row_S2v small_ExK" style={{width: '34%'}}>
+                <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[OccupiedPropertiesTooltip]", "Properties currently occupied by households")}>
+                  <span>{translate("InfoLoomTwo.ResidentialPanel[OccupiedProperties]", "- Occupied properties")}</span>
+                </Tooltip>
+              </div>
+              <SingleValue value={data[3]} small={true}/>
+              <SingleValue value={data[4]} small={true}/>
+              <SingleValue value={data[5]} small={true}/>
+              <SingleValue value={totalOcc} small={true}/>
+            </div>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v" style={{width: '2%'}}></div>
+              <div className="row_S2v" style={{width: '34%'}}>
+                <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[EmptyPropertiesTooltip]", "Available properties ready for new households to move in. Green indicates sufficient supply, red indicates shortage.")}>
+                  <span>{translate("InfoLoomTwo.ResidentialPanel[EmptyProperties]", "= Empty properties")}</span>
+                </Tooltip>
+              </div>
+              <SingleValue value={freeL} flag={freeL > needL}/>
+              <SingleValue value={freeM} flag={freeM > needM}/>
+              <SingleValue value={freeH} flag={freeH > needH}/>
+              <SingleValue value={totalFree}/>
+            </div>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v small_ExK" style={{width: '2%'}}></div>
+              <div className="row_S2v small_ExK" style={{width: '34%'}}>
+                <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[NoDemandAtTooltip]", "Target number of empty properties needed to maintain zero building demand. Based on free residential requirement percentages.")}>
+                  <span>{translate("InfoLoomTwo.ResidentialPanel[NoDemandAt]", "No demand at")}</span>
+                </Tooltip>
+              </div>
+              <SingleValue value={needL} small={true}/>
+              <SingleValue value={needM} small={true}/>
+              <SingleValue value={needH} small={true}/>
+              <div className="row_S2v" style={{width: '16%'}}></div>
+            </div>
+            <div className="labels_L7Q row_S2v">
+              <div className="row_S2v" style={{width: '2%'}}></div>
+              <div className="row_S2v" style={{width: '34%'}}>
+                <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[BuildingDemandTooltip]", "Demand for new residential buildings. Calculated as (1 - empty properties / target empty properties) × 100. Green = surplus, Red = shortage. Total column shows overall empty property percentage.")}>
+                  <span>{translate("InfoLoomTwo.ResidentialPanel[BuildingDemand]", "BUILDING DEMAND")}</span>
+                </Tooltip>
+              </div>
+              <SingleValue value={demandL} flag={demandL < 0}/>
+              <SingleValue value={demandM} flag={demandM < 0}/>
+              <SingleValue value={demandH} flag={demandH < 0}/>
+              <SingleValue value={`${freeRatio}%`}/>
+            </div>
+            <div className="space_uKL" style={{height: '3rem'}}></div>
+          </div>
+        );
+    };
 
     return (
         <Panel
@@ -215,15 +226,15 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
       className={styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>Residential</span>
+          <span className={styles.headerText}>{translate("InfoLoomTwo.ResidentialPanel[Title]", "Residential")}</span>
         </div>
       }
     >
       {ilResidential.length === 0 ? (
-        <p style={{ color: 'white' }}>Waiting...</p> 
+        <p style={{ color: 'white' }}>{translate("InfoLoomTwo.ResidentialPanel[Waiting]", "Waiting...")}</p> 
       ) : (
         <div>
-          <BuildingDemandSection data={ilResidential} />
+          <BuildingDemandSectionWithTranslation data={ilResidential} />
           {/* OTHER DATA, two columns */}
           <div style={{ display: 'flex' }}>
             <div
@@ -236,24 +247,43 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
               }}
             >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
-              <RowWithTwoColumns left="STUDY POSITIONS" right={ilResidential[14]} />
+              <RowWithTwoColumns 
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[StudyPositionsTooltip]", "Total available study positions across all education levels (elementary through university)")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[StudyPositions]", "STUDY POSITIONS")}</span>
+                  </Tooltip>
+                } 
+                right={ilResidential[14]} 
+              />
               <DataDivider />
               <RowWithThreeColumns
-                left="HAPPINESS"
-                leftSmall={`${ilResidential[8]} is neutral`}
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[HappinessTooltip]", "Average happiness of all citizens. Affects residential demand - unhappy citizens create more demand for housing.")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[Happiness]", "HAPPINESS")}</span>
+                  </Tooltip>
+                }
+                leftSmall={`${ilResidential[8]} ${translate("InfoLoomTwo.ResidentialPanel[HappinessNeutral]", "is neutral")}`}
                 right1={ilResidential[7]}
                 flag1={ilResidential[7] < ilResidential[8]}
               />
               <DataDivider />
               <RowWithThreeColumns 
-                  left="UNEMPLOYMENT" 
-                  leftSmall={`${ilResidential[10]/10}% is neutral`} 
+                  left={
+                    <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[UnemploymentTooltip]", "Percentage of working-age population that is unemployed. High unemployment increases residential demand as people seek cheaper housing.")}>
+                      <span>{translate("InfoLoomTwo.ResidentialPanel[Unemployment]", "UNEMPLOYMENT")}</span>
+                    </Tooltip>
+                  }
+                  leftSmall={`${ilResidential[10]/10}${translate("InfoLoomTwo.ResidentialPanel[UnemploymentNeutral]", "% is neutral")}`} 
                   right1={ilResidential[9]} 
                   flag1={ilResidential[9]>ilResidential[10]/10} 
               />
               <DataDivider />
               <RowWithThreeColumns
-                left="HOUSEHOLD DEMAND"
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[HouseholdDemandTooltip]", "Overall demand for households to move into the city. Positive values indicate growing population, negative values indicate population decline.")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[HouseholdDemand]", "HOUSEHOLD DEMAND")}</span>
+                  </Tooltip>
+                }
                 right1={ilResidential[16]}
                 flag1={ilResidential[16] < 0}
               />
@@ -263,29 +293,51 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
               style={{
                 width: '50%',
                 boxSizing: 'border-box',
-                border: '1px solid gray',
+                border: '1rem solid gray',
                 paddingLeft: '10rem',
                 paddingRight: '10rem',
               }}
             >
               <div className="space_uKL" style={{ height: '3rem' }}></div>
-              <RowWithTwoColumns left="HOUSEHOLDS" right={ilResidential[12]} />
+              <RowWithTwoColumns 
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[HouseholdsTooltip]", "Total number of households that have recently moved into the city")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[Households]", "HOUSEHOLDS")}</span>
+                  </Tooltip>
+                } 
+                right={ilResidential[12]} 
+              />
               <DataDivider />
               <RowWithThreeColumns
-                left="HOMELESS"
-                leftSmall={`${homelessThreshold} is neutral`}
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[HomelessTooltip]", "Number of households without homes. High homelessness increases residential demand and reduces city attractiveness.")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[Homeless]", "HOMELESS")}</span>
+                  </Tooltip>
+                }
+                leftSmall={`${homelessThreshold} ${translate("InfoLoomTwo.ResidentialPanel[HomelessNeutral]", "is neutral")}`}
                 right1={ilResidential[11]}
                 flag1={ilResidential[11] > homelessThreshold}
               />
               <DataDivider />
               <RowWithThreeColumns
-                left="TAX RATE (weighted)"
-                leftSmall="10% is neutral"
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[TaxRateTooltip]", "Weighted average residential tax rate across all density types. Higher taxes reduce residential demand as people seek more affordable cities.")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[TaxRate]", "TAX RATE (weighted)")}</span>
+                  </Tooltip>
+                }
+                leftSmall={translate("InfoLoomTwo.ResidentialPanel[TaxNeutral]", "10% is neutral")}
                 right1={ilResidential[15] / 10}
                 flag1={ilResidential[15] > 100}
               />
               <DataDivider />
-              <RowWithTwoColumns left="STUDENT CHANCE" right={`${ilResidential[17]} %`} />
+              <RowWithTwoColumns 
+                left={
+                  <Tooltip tooltip={translate("InfoLoomTwo.ResidentialPanel[StudentChanceTooltip]", "Percentage chance that unemployed citizens will become students instead of seeking jobs. Based on student vs unemployment demand factors.")}>
+                    <span>{translate("InfoLoomTwo.ResidentialPanel[StudentChance]", "STUDENT CHANCE")}</span>
+                  </Tooltip>
+                } 
+                right={`${ilResidential[17]} %`} 
+              />
               <div className="space_uKL" style={{ height: '3rem' }}></div>
             </div>
           </div>

@@ -11,6 +11,8 @@ using Game.UI;
 using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Domain;
 using InfoLoomTwo.Domain.DataDomain;
+using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
+using InfoLoomTwo.Domain.DataDomain.Enums.TradeCostEnums;
 using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
@@ -55,6 +57,9 @@ namespace InfoLoomTwo.Systems
         private const string HouseholdsDataOpen = "HouseholdsDataOpen";
         
         
+        private CommercialCompanyDTO[] m_SortedCompanyData = Array.Empty<CommercialCompanyDTO>();
+        private bool m_NeedSort = true;
+        private int m_LastDataCount = 0;
         
         /*private const string BuildingDemandData = "BuildingDemandData";
         private const string CommercialData = "CommercialData";
@@ -113,6 +118,17 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<CommercialCompanyDTO[]> m_uiDebugData;
         private ValueBinding<bool> _cCDPVBinding;
         private ValueBinding<Entity> m_CameraBinding;
+        
+        private ValueBindingHelper<CompanyNameEnum> m_CommercialNameSortingBinding;
+        private ValueBindingHelper<IndexSortingEnum> m_CommercialIndexSortingBinding;
+        private ValueBindingHelper<ServiceUsageEnum> m_CommercialServiceUsageSortingBinding;
+        private ValueBindingHelper<EmployeesEnum> m_CommercialEmployeesSortingBinding;
+        private ValueBindingHelper<EfficiancyEnum> m_CommercialEfficiencySortingBinding;
+        private ValueBindingHelper<ProfitabilityEnum> m_CommercialProfitabilitySortingBinding;
+        private ValueBindingHelper<ResourceAmountEnum> m_CommercialResourceAmountSortingBinding;
+        
+        
+        
         //HouseholdData
         //DemographicsUI
         private GetterValueBinding<int> m_OldCitizenBinding;
@@ -121,8 +137,8 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> m_DemoStatsToggledOnBinding;
         private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
         private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
-        private ValueBindingHelper<Demographics.PopulationGroupData[]> m_GroupedPopulationBinding;  
-        private ValueBindingHelper<Demographics.GroupStrategyInfo[]> m_GroupStrategiesBinding;
+        //private ValueBindingHelper<Demographics.PopulationGroupData[]> m_GroupedPopulationBinding;  
+        //private ValueBindingHelper<Demographics.GroupStrategyInfo[]> m_GroupStrategiesBinding;
 //DistrictDataUI
         private RawValueBinding m_uiDistricts;
         private RawValueBinding m_uiResidents;
@@ -136,20 +152,33 @@ namespace InfoLoomTwo.Systems
         //IndustrialCompanyDebugDataUI
         private ValueBindingHelper<IndustrialCompanyDTO[]> m_uiDebugData2;
         private ValueBinding<bool> _iCDVBinding;
+        
+        private ValueBindingHelper<CompanyNameEnum2> m_IndustrialNameSortingBinding;
+        private ValueBindingHelper<IndexSortingEnum2> m_IndustrialIndexSortingBinding;
+        private ValueBindingHelper<EmployeesEnum2> m_IndustrialEmployeesSortingBinding;
+        private ValueBindingHelper<EfficiancyEnum2> m_IndustrialEfficiencySortingBinding;
+        private ValueBindingHelper<ProfitabilityEnum2> m_IndustrialProfitabilitySortingBinding;
+        private ValueBindingHelper<ResourceAmountEnum2> m_IndustrialResourceAmountSortingBinding;
+        
         //ResidentialDemandDataUI
         public ValueBindingHelper<int[]> m_ResidentialBinding;
-        //ResidentialHousingDebugDataUI
-        /*private ValueBinding<bool> m_ResidentialHouseholdDebugBinding;
-        private ValueBindingHelper<ResidentialHouseholdSystem.ResidentialDataInformation[]> m_ResidentialDataInformationBinding;
-        private ValueBindingHelper<int> CurrentPage;
-		private ValueBindingHelper<int> MaxPages;
-        private ValueBindingHelper<string[]> m_RoadNamesBinding;
-        private ValueBindingHelper<ResidentialHouseholdSystem.ResidentialDataInformation[]> m_FilteredResidentialDataBinding;
-        private string m_SelectedRoad = "";
-        private int m_ItemsPerPage = 15;*/
+        
 
+        //TrafficDataUI
+        private RawValueBinding m_uiTrafficData;
+        
         //TradeCostsUI
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
+        private ValueBindingHelper<BuyCostEnum> m_BuyCostSortingBinding;
+        private ValueBindingHelper<SellCostEnum> m_SellCostSortingBinding;
+        private ValueBindingHelper<ImportAmountEnum> m_ImportAmountSortingBinding;
+        private ValueBindingHelper<ExportAmountEnum> m_ExportAmountSortingBinding;
+        private ValueBindingHelper<ProfitEnum> m_ProfitSortingBinding;
+        private ValueBindingHelper<ProfitMarginEnum> m_ProfitMarginSortingBinding;
+        private ValueBindingHelper<ResourceNameEnum> m_ResourceNameSortingBinding;
+        
+        
+        
         //WorkforceUI
         private ValueBindingHelper<WorkforcesInfo[]> m_WorkforcesBinder;
         //WorkplacesUI
@@ -173,6 +202,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _wFPVBinding;
         private ValueBinding<bool> _wPPVBinding;
         private ValueBinding<bool> _householdsDataVisibleBinding;
+        private ValueBinding<bool> _TrafficDataVisibleBinding;
         
 
         private ILog m_Log;
@@ -274,6 +304,12 @@ namespace InfoLoomTwo.Systems
              AddBinding(_wPPVBinding);
              AddBinding(new TriggerBinding<bool>(ModID, WorkplacesOpen, SetWorkplacesVisibility));
              
+             _TrafficDataVisibleBinding = new ValueBinding<bool>(ModID, "TrafficDataVisible", false);
+                AddBinding(_TrafficDataVisibleBinding);
+               AddBinding(new TriggerBinding<bool>(ModID, "TrafficDataVisible", SetTrafficDataVisibility));
+             
+             
+             
             m_uiBuildingDemand = CreateBinding("BuildingDemandData", new int[0]);
             //CommercialDemandDataUI
             m_CommercialBinding = CreateBinding("CommercialData", new int[10]);
@@ -287,6 +323,16 @@ namespace InfoLoomTwo.Systems
              AddBinding(new TriggerBinding<bool>(ModID, CommercialCompanyDebugOpen, SetCommercialCompanyDebugVisibility));
              m_uiDebugData = CreateBinding("CommercialCompanyDebugData", new CommercialCompanyDTO[0]);
              AddBinding(new TriggerBinding<Entity>(ModID, "GoTo", NavigateTo));
+             
+             m_CommercialIndexSortingBinding = CreateBinding("CommercialIndexSorting", "SetCommercialIndexSorting" , IndexSortingEnum.Off);
+             m_CommercialNameSortingBinding = CreateBinding("CommercialNameSorting", "SetCommercialNameSorting", CompanyNameEnum.Off);
+             m_CommercialServiceUsageSortingBinding = CreateBinding("CommercialServiceUsageSorting", "SetCommercialServiceUsageSorting", ServiceUsageEnum.Off);
+             m_CommercialEmployeesSortingBinding = CreateBinding("CommercialEmployeesSorting", "SetCommercialEmployeesSorting", EmployeesEnum.Off);
+             m_CommercialEfficiencySortingBinding = CreateBinding("CommercialEfficiencySorting", "SetCommercialEfficiencySorting", EfficiancyEnum.Off);
+             m_CommercialProfitabilitySortingBinding = CreateBinding("CommercialProfitabilitySorting", "SetCommercialProfitabilitySorting", ProfitabilityEnum.Off);
+             m_CommercialResourceAmountSortingBinding = CreateBinding("CommercialResourceAmountSorting", "SetCommercialResourceAmountSorting", ResourceAmountEnum.Off);
+             
+             
 
              
             //DemographicsUI
@@ -304,7 +350,7 @@ namespace InfoLoomTwo.Systems
              AddBinding(m_DemoAgeGroupingToggledOnBinding);
              AddBinding(new TriggerBinding<bool>(ModID, "DemoAgeGroupingToggledOn", SetDemoAgeGroupingVisibility));
              m_DemoGroupingStrategyBinding = CreateBinding("DemoGroupingStrategy", "SetDemoGroupingStrategy",  GroupingStrategy.None);
-            m_GroupedPopulationBinding = CreateBinding("PopulationGroupDatas", new Demographics.PopulationGroupData[0]);
+            //m_GroupedPopulationBinding = CreateBinding("PopulationGroupDatas", new Demographics.PopulationGroupData[0]);
 
             
             //DistrictDataUI
@@ -312,8 +358,6 @@ namespace InfoLoomTwo.Systems
             AddBinding(m_uiDistricts = new RawValueBinding("InfoLoomTwo", "DistrictData", m_DistrictDataSystem.WriteDistricts));
             
 
-            // Second binding: Resident statistics
-            
 
             //IndustrialDemandDataUI
             m_IndustrialBinding = CreateBinding("IndustrialData", new int[16]);
@@ -327,25 +371,32 @@ namespace InfoLoomTwo.Systems
              AddBinding(_iCDVBinding);
              AddBinding(new TriggerBinding<bool>(ModID, IndustrialCompanyDebugOpen, SetIndustrialCompanyDebugVisibility));
              m_uiDebugData2 = CreateBinding("IndustrialCompanyDebugData", new IndustrialCompanyDTO[0]);
+             
+            m_IndustrialIndexSortingBinding = CreateBinding("IndustrialIndexSorting", "SetIndustrialIndexSorting", IndexSortingEnum2.Off);
+            m_IndustrialNameSortingBinding = CreateBinding("IndustrialNameSorting", "SetIndustrialNameSorting", CompanyNameEnum2.Off);
+            m_IndustrialEmployeesSortingBinding = CreateBinding("IndustrialEmployeesSorting", "SetIndustrialEmployeesSorting", EmployeesEnum2.Off);
+            m_IndustrialEfficiencySortingBinding = CreateBinding("IndustrialEfficiencySorting", "SetIndustrialEfficiencySorting", EfficiancyEnum2.Off);
+            m_IndustrialProfitabilitySortingBinding = CreateBinding("IndustrialProfitabilitySorting", "SetIndustrialProfitabilitySorting", ProfitabilityEnum2.Off);
+            m_IndustrialResourceAmountSortingBinding = CreateBinding("IndustrialResourceAmountSorting", "SetIndustrialResourceAmountSorting", ResourceAmountEnum2.Off);
 
             //ResidentialDemandDataUI
-            m_ResidentialBinding = CreateBinding("ResidentialData", new int[18]);
-            //ResidentialHousingDebugDataUI
-            /*m_ResidentialHouseholdDebugBinding = new ValueBinding<bool>(ModID, ResidentialDataDebugOpen, false);
-            AddBinding(m_ResidentialHouseholdDebugBinding);
-            AddBinding(new TriggerBinding<bool>(ModID, ResidentialDataDebugOpen, SetResidentialHouseholdVisibility));
-            m_ResidentialDataInformationBinding = CreateBinding("ResidentialDataDebug", Array.Empty<ResidentialHouseholdSystem.ResidentialDataInformation>());
-            CurrentPage = CreateBinding("Discover.CurrentPage", 1);
-			MaxPages = CreateBinding("Discover.MaxPages", 1);
-            CreateTrigger<int>("Discover.SetPage", SetDiscoverPage);
-            CreateTrigger<int>("Discover.SetMaxPages", SetDiscoverMaxPages);
-            m_RoadNamesBinding = CreateBinding("RoadNames", Array.Empty<string>());
-            m_FilteredResidentialDataBinding = CreateBinding("FilteredResidentialData", Array.Empty<ResidentialHouseholdSystem.ResidentialDataInformation>());
-            AddBinding(new TriggerBinding<string>(ModID, "SelectRoad", FilterResidentialHouseholdsByRoad));
-            AddBinding(new TriggerBinding<bool>(ModID, "ClearRoadFilter", ClearRoadFilter));*/
+            m_ResidentialBinding = CreateBinding("ResidentialData", new int[21]);
+            
             
             //TradeCostsUI
             m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
+            m_BuyCostSortingBinding = CreateBinding("BuyCost", "SetBuyCost", BuyCostEnum.Off);
+            m_SellCostSortingBinding = CreateBinding("SellCost", "SetSellCost", SellCostEnum.Off);
+            m_ImportAmountSortingBinding = CreateBinding("ImportAmount", "SetImportAmount", ImportAmountEnum.Off);
+            m_ExportAmountSortingBinding = CreateBinding("ExportAmount", "SetExportAmount", ExportAmountEnum.Off);
+            m_ProfitSortingBinding = CreateBinding("Profit", "SetProfit", ProfitEnum.Off);
+            m_ProfitMarginSortingBinding = CreateBinding("ProfitMargin", "SetProfitMargin", ProfitMarginEnum.Off);
+            m_ResourceNameSortingBinding = CreateBinding("ResourceName", "SetResourceName", ResourceNameEnum.Off);
+            
+            
+            
+            
+            
 
             //WorkforceUI
             m_WorkforcesBinder = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
@@ -410,15 +461,124 @@ namespace InfoLoomTwo.Systems
             }
             if (_cCDPVBinding.value)
             {
-                m_CommercialCompanyDataSystem.IsPanelVisible = true;
-                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+                    m_CommercialCompanyDataSystem.IsPanelVisible = true;
+                    
+                    // Get the current sorting values from bindings
+                    CompanyNameEnum companyNameSorting = m_CommercialNameSortingBinding.Value;
+                    EfficiancyEnum efficiencySorting = m_CommercialEfficiencySortingBinding.Value;
+                    IndexSortingEnum indexSorting = m_CommercialIndexSortingBinding.Value;
+                    ServiceUsageEnum serviceUsageSorting = m_CommercialServiceUsageSortingBinding.Value;
+                    EmployeesEnum employeesSorting = m_CommercialEmployeesSortingBinding.Value;
+                    ProfitabilityEnum profitabilitySorting = m_CommercialProfitabilitySortingBinding.Value;
+                    ResourceAmountEnum resourceAmountSorting = m_CommercialResourceAmountSortingBinding.Value;
+                    
+                    // Set the current sorting values in the data system
+                    m_CommercialCompanyDataSystem.m_CurrentIndexSorting = indexSorting;
+                    m_CommercialCompanyDataSystem.m_CurrentCompanyNameSorting = companyNameSorting;
+                    m_CommercialCompanyDataSystem.m_CurrentServiceUsageSorting = serviceUsageSorting;
+                    m_CommercialCompanyDataSystem.m_CurrentEmployeesSorting = employeesSorting;
+                    m_CommercialCompanyDataSystem.m_CurrentEfficiencySorting = efficiencySorting;
+                    m_CommercialCompanyDataSystem.m_CurrentProfitabilitySorting = profitabilitySorting;
+                    m_CommercialCompanyDataSystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
+                    
+                    // Sort the original array directly using the comparison methods
+                    // Each sort will be applied in sequence
+                    if (indexSorting != IndexSortingEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByIndex);
+                    
+                    if (companyNameSorting != CompanyNameEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByName);
+                    
+                    if (serviceUsageSorting != ServiceUsageEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByServiceUsage);
+                    
+                    if (employeesSorting != EmployeesEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByEmployees);
+                    if (resourceAmountSorting != ResourceAmountEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByResourceAmount);
+                    
+                    if (efficiencySorting != EfficiancyEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByEfficiency);
+                    
+                    if (profitabilitySorting != ProfitabilityEnum.Off)
+                        Array.Sort(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs, m_CommercialCompanyDataSystem.CompareByProfitability);
+                    
+                    // Update UI with the sorted data
+                    m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+                    
+                    // Update the UI to reflect current sorting values
+                    m_CommercialNameSortingBinding.UpdateCallback(companyNameSorting);
+                    m_CommercialEfficiencySortingBinding.UpdateCallback(efficiencySorting);
+                    m_CommercialIndexSortingBinding.UpdateCallback(indexSorting);
+                    m_CommercialServiceUsageSortingBinding.UpdateCallback(serviceUsageSorting);
+                    m_CommercialEmployeesSortingBinding.UpdateCallback(employeesSorting);
+                    m_CommercialProfitabilitySortingBinding.UpdateCallback(profitabilitySorting);
             }
-            
             if (_iCDVBinding.value)
             {
                 m_IndustrialCompanySystem.IsPanelVisible = true;
+                
+                // Get the current sorting values from bindings
+                CompanyNameEnum2 companyNameSorting = m_IndustrialNameSortingBinding.Value;
+                EfficiancyEnum2 efficiencySorting = m_IndustrialEfficiencySortingBinding.Value;
+                IndexSortingEnum2 indexSorting = m_IndustrialIndexSortingBinding.Value;
+                EmployeesEnum2 employeesSorting = m_IndustrialEmployeesSortingBinding.Value;
+                ProfitabilityEnum2 profitabilitySorting = m_IndustrialProfitabilitySortingBinding.Value;
+                ResourceAmountEnum2 resourceAmountSorting = m_IndustrialResourceAmountSortingBinding.Value;
+                
+                // Set the current sorting values in the data system
+                m_IndustrialCompanySystem.m_CurrentIndexSorting = indexSorting;
+                m_IndustrialCompanySystem.m_CurrentCompanyNameSorting = companyNameSorting;
+                m_IndustrialCompanySystem.m_CurrentEmployeesSorting = employeesSorting;
+                m_IndustrialCompanySystem.m_CurrentEfficiencySorting = efficiencySorting;
+                m_IndustrialCompanySystem.m_CurrentProfitabilitySorting = profitabilitySorting;
+                m_IndustrialCompanySystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
+                // Sort the original array directly using the comparison methods
+                // Each sort will be applied in sequence
+                if (indexSorting != IndexSortingEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByIndex);
+                if (companyNameSorting != CompanyNameEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByName);
+                if (employeesSorting != EmployeesEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByEmployees);
+                if (resourceAmountSorting != ResourceAmountEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByResourceAmount);
+                if (efficiencySorting != EfficiancyEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByEfficiency);
+                if (profitabilitySorting != ProfitabilityEnum2.Off)
+                    Array.Sort(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs, m_IndustrialCompanySystem.CompareByProfitability);
+                // Update UI with the sorted data
                 m_uiDebugData2.Value = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
                 
+            }
+            if (_tCPVBinding.value)
+            {
+                var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
+                BuyCostEnum buyCostSorting = m_BuyCostSortingBinding.Value;
+                SellCostEnum sellCostSorting = m_SellCostSortingBinding.Value;
+                ImportAmountEnum importAmountSorting = m_ImportAmountSortingBinding.Value;
+                ExportAmountEnum exportAmountSorting = m_ExportAmountSortingBinding.Value;
+                ProfitEnum profitSorting = m_ProfitSortingBinding.Value;
+                ProfitMarginEnum profitMarginSorting = m_ProfitMarginSortingBinding.Value;
+                ResourceNameEnum resourceNameSorting = m_ResourceNameSortingBinding.Value;
+                
+                // Set the current sorting values in the data system
+                tradeCostSystem.m_BuyCostEnum = buyCostSorting;
+                tradeCostSystem.m_sellCostEnum = sellCostSorting;
+                tradeCostSystem.m_importAmountEnum = importAmountSorting;
+                tradeCostSystem.m_exportAmountEnum = exportAmountSorting;
+                tradeCostSystem.m_profitEnum = profitSorting;
+                tradeCostSystem.m_profitMarginEnum = profitMarginSorting;
+                tradeCostSystem.m_resourceNameEnum = resourceNameSorting;
+                
+                m_BuyCostSortingBinding.UpdateCallback(buyCostSorting);
+                m_SellCostSortingBinding.UpdateCallback(sellCostSorting);
+                m_ImportAmountSortingBinding.UpdateCallback(importAmountSorting);
+                m_ExportAmountSortingBinding.UpdateCallback(exportAmountSorting);
+                m_ProfitSortingBinding.UpdateCallback(profitSorting);
+                m_ProfitMarginSortingBinding.UpdateCallback(profitMarginSorting);
+                m_ResourceNameSortingBinding.UpdateCallback(resourceNameSorting);
+                m_TradeCostsBinding.Value = tradeCostSystem.GetSortedResourceTradeCosts().ToList();
             }
             //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} 2.");
             if (_dPVBinding.value)
@@ -434,9 +594,9 @@ namespace InfoLoomTwo.Systems
                 // Update the grouped population data binding
 
                 //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} getting population by age group");
-                m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy).ToArray();
+                //m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy).ToArray();
                 
-                m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
+                //m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
                 m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
                 
                 if (m_DemoStatsToggledOnBinding.value)
@@ -477,18 +637,6 @@ namespace InfoLoomTwo.Systems
                 m_IndustrialProductBinding.Value = m_IndustrialProductsSystem.m_IndustrialProductDTOs;
                 m_IndustrialProductsSystem.IsPanelVisible = true;
             }
-            
-            /*if (m_ResidentialHouseholdDebugBinding.value)
-            { 
-                m_ResidentialHouseholdSystem.IsPanelVisible = true;
-               m_ResidentialDataInformationBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
-
-                // Load all road names for dropdown
-                m_RoadNamesBinding.Value = m_ResidentialHouseholdSystem.GetAllRoadNames();
-
-                // Initialize filtered data with all residences
-                m_FilteredResidentialDataBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
-            }*/
             if (_rDPVBinding.value)
             {
                 ResidentialSystem residentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();
@@ -499,18 +647,7 @@ namespace InfoLoomTwo.Systems
                
                 
             }
-            /*if (_rDPVBinding.value)
-            {
-                m_ResidentialDataInformationBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation.ToArray();
-                m_ResidentialHouseholdSystem.IsPanelVisible = true;
-                
-            }*/
-        
-            if (_tCPVBinding.value )
-            {
-                var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
-                m_TradeCostsBinding.Value = tradeCostSystem.GetSortedResourceTradeCosts().ToList();
-            }
+            
         
             if (_wFPVBinding.value)
             {
@@ -532,7 +669,8 @@ namespace InfoLoomTwo.Systems
                 m_WorkplacesSystem.ForceUpdateOnce();
                 
             }
-        
+            
+            
             base.OnUpdate();
         }
         private void SetInfoLoomMenuVisibility(bool open)
@@ -678,70 +816,6 @@ namespace InfoLoomTwo.Systems
                 m_ResidentialBinding.Value = residentialSystem.m_Results.ToArray();
             }
         }
-        /*private void SetResidentialHouseholdVisibility(bool open)
-        {
-            m_ResidentialHouseholdDebugBinding.Update(open);
-            m_ResidentialHouseholdSystem.IsPanelVisible = open;
-
-            if (open)
-            {
-                // Reset pagination to first page when opening
-                SetDiscoverPage(1);
-                
-                // Load all road names for dropdown
-                m_RoadNamesBinding.Value = m_ResidentialHouseholdSystem.GetAllRoadNames();
-                
-                // Refresh data with current pagination
-                UpdateResidentialData();
-            }
-        }
-        private void UpdateResidentialData()
-        {
-            // Update system's pagination settings
-            m_ResidentialHouseholdSystem.SetPagination(CurrentPage.Value, m_ItemsPerPage);
-            
-            // Refresh data for current page
-            if (!string.IsNullOrEmpty(m_SelectedRoad))
-            {
-                var filteredData = m_ResidentialHouseholdSystem.FilterHouseholdsByRoad(m_SelectedRoad);
-                m_FilteredResidentialDataBinding.Value = filteredData;
-            }
-            else
-            {
-                // Load all data for current page
-                m_ResidentialDataInformationBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation;
-                m_FilteredResidentialDataBinding.Value = m_ResidentialHouseholdSystem.m_ResidentialDataInformation;
-            }
-            
-            // Update pagination info
-            int totalItems = m_ResidentialHouseholdSystem.GetTotalCount();
-            int maxPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)m_ItemsPerPage));
-            SetDiscoverMaxPages(maxPages);
-        }
-        private void FilterResidentialHouseholdsByRoad(string roadName)
-        {
-            m_SelectedRoad = roadName;
-            
-            // Reset to first page when filtering
-            SetDiscoverPage(1);
-            
-            // Apply the filter and update the UI binding
-            UpdateResidentialData();
-        }
-
-        private void ClearRoadFilter(bool clear)
-        {
-            if (clear)
-            {
-                m_SelectedRoad = "";
-                
-                // Reset to first page when clearing filter
-                SetDiscoverPage(1);
-                
-                // Refresh data without filter
-                UpdateResidentialData();
-            }
-        }*/
         private void SetTradeCostsVisibility(bool open)
         {
             _tCPVBinding.Update(open);
@@ -870,7 +944,7 @@ namespace InfoLoomTwo.Systems
         private void UpdateGroupedDemographicsData(GroupingStrategy strategy)
         {
             var demographics = World.GetExistingSystemManaged<Demographics>();
-            m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy).ToArray();
+            //m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy).ToArray();
         }
         public void NavigateTo(Entity entity)
         {
@@ -881,20 +955,15 @@ namespace InfoLoomTwo.Systems
                m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
             }
         }
-        /*private void SetDiscoverPage(int page)
+        private void SetTrafficDataVisibility(bool open)
         {
-            CurrentPage.Value = Math.Max(1, Math.Min(page, MaxPages.Value));
-            
-            if (m_ResidentialHouseholdDebugBinding.value)
+            _TrafficDataVisibleBinding.Update(open);
+            if (open)
             {
-                // This crucial line was missing - need to refresh data when page changes
-                UpdateResidentialData();
+               
+                m_uiTrafficData.Update();
             }
         }
-
-        private void SetDiscoverMaxPages(int maxPages)
-        {
-            MaxPages.Value = maxPages;
-        }*/
     }
 }
+

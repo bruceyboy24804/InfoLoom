@@ -7,6 +7,7 @@ using Game.Prefabs;
 using Game.Simulation;
 using Game.UI;
 using InfoLoomTwo.Domain.DataDomain;
+using InfoLoomTwo.Domain.DataDomain.Enums.TradeCostEnums;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
@@ -31,7 +32,13 @@ namespace InfoLoomTwo.Systems.TradeCostData
         
         public int TotalImports => m_ResourceTradeCosts.Values.Sum(x => x.ImportAmount);
         public int TotalExports => m_ResourceTradeCosts.Values.Sum(x => x.ExportAmount);
-        
+        public BuyCostEnum m_BuyCostEnum = BuyCostEnum.Off;
+        public ExportAmountEnum m_exportAmountEnum = ExportAmountEnum.Off;
+        public ImportAmountEnum m_importAmountEnum = ImportAmountEnum.Off;
+        public ProfitEnum m_profitEnum = ProfitEnum.Off;
+        public ProfitMarginEnum m_profitMarginEnum = ProfitMarginEnum.Off;
+        public ResourceNameEnum m_resourceNameEnum = ResourceNameEnum.Off;
+        public SellCostEnum m_sellCostEnum = SellCostEnum.Off;
         protected override void OnCreate()
         {
             // Get all required systems in one go
@@ -42,15 +49,13 @@ namespace InfoLoomTwo.Systems.TradeCostData
             m_ResourceSystem = World.GetOrCreateSystemManaged<ResourceSystem>();
             m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+           
+            
         }
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            if (Mod.setting.CustomUpdateInterval)
-            {
-                return Mod.setting.UpdateInterval;
-            }
-            return 512;
+            return 1024;
         }
 
         protected override void OnUpdate()
@@ -125,48 +130,74 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
         public IEnumerable<ResourceTradeCost> GetSortedResourceTradeCosts()
         {
-            // Create a list from the dictionary values to sort
-            var tradeCosts = m_ResourceTradeCosts.Values.ToList();
-
-            // Create the comparison functions as Func<T,T,int> instead of Comparison<T>
-            Func<ResourceTradeCost, ResourceTradeCost, int> resourceNameComparer = (a, b) => 
-                string.Compare(a.Resource, b.Resource, StringComparison.Ordinal);
+            // Start with the basic filtered collection
+            var query = m_ResourceTradeCosts.Values
+                .Where(x => x.ImportAmount > 0 || x.ExportAmount > 0);
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> buyCostComparer = (a, b) => 
-                a.BuyCost.CompareTo(b.BuyCost);
+            // Apply sorting in order of precedence (first criteria has lowest precedence)
+            if (m_resourceNameEnum != ResourceNameEnum.Off)
+            {
+                query = m_resourceNameEnum == ResourceNameEnum.Ascending
+                    ? query.OrderBy(x => x.Resource)
+                    : query.OrderByDescending(x => x.Resource);
+            }
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> sellCostComparer = (a, b) => 
-                a.SellCost.CompareTo(b.SellCost);
+            if (m_profitMarginEnum != ProfitMarginEnum.Off)
+            {
+                query = m_profitMarginEnum == ProfitMarginEnum.Ascending
+                    ? query.OrderBy(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1))
+                    : query.OrderByDescending(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1));
+            }
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> profitComparer = (a, b) => 
-                (b.SellCost - b.BuyCost).CompareTo(a.SellCost - a.BuyCost);
+            if (m_profitEnum != ProfitEnum.Off)
+            {
+                query = m_profitEnum == ProfitEnum.Ascending
+                    ? query.OrderBy(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount)
+                    : query.OrderByDescending(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount);
+            }
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> profitMarginComparer = (a, b) => {
-                float marginA = a.BuyCost > 0 ? (a.SellCost - a.BuyCost) / a.BuyCost : 0;
-                float marginB = b.BuyCost > 0 ? (b.SellCost - b.BuyCost) / b.BuyCost : 0;
-                return marginB.CompareTo(marginA);
-            };
+            if (m_exportAmountEnum != ExportAmountEnum.Off)
+            {
+                query = m_exportAmountEnum == ExportAmountEnum.Ascending
+                    ? query.OrderBy(x => x.ExportAmount)
+                    : query.OrderByDescending(x => x.ExportAmount);
+            }
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> importAmountComparer = (a, b) => 
-                a.ImportAmount.CompareTo(b.ImportAmount);
+            if (m_importAmountEnum != ImportAmountEnum.Off)
+            {
+                query = m_importAmountEnum == ImportAmountEnum.Ascending
+                    ? query.OrderBy(x => x.ImportAmount)
+                    : query.OrderByDescending(x => x.ImportAmount);
+            }
             
-            Func<ResourceTradeCost, ResourceTradeCost, int> exportAmountComparer = (a, b) => 
-                a.ExportAmount.CompareTo(b.ExportAmount);
-
-            // Create the comparer using TradeCostSortingUtility
-            var comparer = Utils.TradeCostSortingUtility.CreateComparer(
-                resourceNameComparer,
-                buyCostComparer,
-                sellCostComparer,
-                profitComparer,
-                profitMarginComparer,
-                importAmountComparer,
-                exportAmountComparer);
-
-            // Sort the list using the created comparer
-            tradeCosts.Sort(comparer);
-
-            return tradeCosts;
+            if (m_sellCostEnum != SellCostEnum.Off)
+            {
+                query = m_sellCostEnum == SellCostEnum.Ascending
+                    ? query.OrderBy(x => x.SellCost)
+                    : query.OrderByDescending(x => x.SellCost);
+            }
+            
+            if (m_BuyCostEnum != BuyCostEnum.Off)
+            {
+                query = m_BuyCostEnum == BuyCostEnum.Ascending
+                    ? query.OrderBy(x => x.BuyCost)
+                    : query.OrderByDescending(x => x.BuyCost);
+            }
+            
+            // If no sorting was applied, use the default sort
+            if (m_BuyCostEnum == BuyCostEnum.Off && 
+                m_sellCostEnum == SellCostEnum.Off && 
+                m_importAmountEnum == ImportAmountEnum.Off && 
+                m_exportAmountEnum == ExportAmountEnum.Off && 
+                m_profitEnum == ProfitEnum.Off && 
+                m_profitMarginEnum == ProfitMarginEnum.Off && 
+                m_resourceNameEnum == ResourceNameEnum.Off)
+            {
+                query = query.OrderByDescending(x => x.ImportAmount + x.ExportAmount)
+                            .ThenBy(x => x.Resource);
+            }
+            
+            return query;
         }
 
         private string GetResourceIconPath(Resource resource)
@@ -231,5 +262,89 @@ namespace InfoLoomTwo.Systems.TradeCostData
             return resource != Resource.Money && 
                    resource != Resource.NoResource;
         }
+        public int CompareByBuyCost(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_BuyCostEnum)
+            {
+                case BuyCostEnum.Ascending:
+                    return x.BuyCost.CompareTo(y.BuyCost);
+                case BuyCostEnum.Descending:
+                    return y.BuyCost.CompareTo(x.BuyCost);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByExportAmount(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_exportAmountEnum)
+            {
+                case ExportAmountEnum.Ascending:
+                    return x.ExportAmount.CompareTo(y.ExportAmount);
+                case ExportAmountEnum.Descending:
+                    return y.ExportAmount.CompareTo(x.ExportAmount);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByImportAmount(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_importAmountEnum)
+            {
+                case ImportAmountEnum.Ascending:
+                    return x.ImportAmount.CompareTo(y.ImportAmount);
+                case ImportAmountEnum.Descending:
+                    return y.ImportAmount.CompareTo(x.ImportAmount);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByProfit(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_profitEnum)
+            {
+                case ProfitEnum.Ascending:
+                    return (x.ExportAmount - x.ImportAmount).CompareTo(y.ExportAmount - y.ImportAmount);
+                case ProfitEnum.Descending:
+                    return (y.ExportAmount - y.ImportAmount).CompareTo(x.ExportAmount - x.ImportAmount);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByProfitMargin(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_profitMarginEnum)
+            {
+                case ProfitMarginEnum.Ascending:
+                    return (x.ExportAmount - x.ImportAmount).CompareTo(y.ExportAmount - y.ImportAmount);
+                case ProfitMarginEnum.Descending:
+                    return (y.ExportAmount - y.ImportAmount).CompareTo(x.ExportAmount - x.ImportAmount);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByResourceName(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_resourceNameEnum)
+            {
+                case ResourceNameEnum.Ascending:
+                    return string.Compare(x.Resource, y.Resource, StringComparison.Ordinal);
+                case ResourceNameEnum.Descending:
+                    return string.Compare(y.Resource, x.Resource, StringComparison.Ordinal);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareBySellCost(ResourceTradeCost x, ResourceTradeCost y)
+        {
+            switch (m_sellCostEnum)
+            {
+                case SellCostEnum.Ascending:
+                    return x.SellCost.CompareTo(y.SellCost);
+                case SellCostEnum.Descending:
+                    return y.SellCost.CompareTo(x.SellCost);
+                default:
+                    return 0;
+            }
+        }    
     }    
 }

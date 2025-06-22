@@ -1,5 +1,5 @@
 // RadioButton.module.scss
-$borderColorNormal: rgba(254,254,254,0.5);
+$borderColorNormal: rgba(254, 254, 254, 0.5);
 $borderColorFocused: rgba(254, 254, 254, 0.6);
 
 .radioContainer {
@@ -37,7 +37,7 @@ $borderColorFocused: rgba(254, 254, 254, 0.6);
 }
 
 .radioContainer:hover {
-  background-color: rgb(254, 254, 254, 0.2)
+  background-color: rgb(254, 254, 254, 0.2);
 }
 
 .radioContainer:active {
@@ -45,7 +45,7 @@ $borderColorFocused: rgba(254, 254, 254, 0.6);
   border-left-color: $borderColorFocused;
   border-bottom-color: $borderColorFocused;
   border-right-color: $borderColorFocused;
-  background-color: rgb(254, 254, 254, 0.3)
+  background-color: rgb(254, 254, 254, 0.3);
 }
 
 .dotIcon {

@@ -1,5 +1,5 @@
 .panel {
-  width: 1200rem;
+  width: 1100rem;
   max-width: 1300rem;
 }
 
@@ -18,76 +18,102 @@
 }
 
 .tableHeader {
-  max-width: 1200rem;
-  margin: 0 auto;
-  padding: 0 25rem;
-}
-
-.row {
   width: 100%;
-  height: 30rem;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 1rem 25rem;
-  min-width: min-content;
+  padding: 0 25rem;
 }
 
 .headerRow {
   width: 100%;
+  height: 40rem;
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  padding: 1rem 25rem;
-  min-width: min-content;
-  padding: 1rem 0;
+  border-bottom: 2rem solid rgba(255, 255, 255, 0.3);
+}
+
+.row {
+  width: 100%;
+  height: 32rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 25rem;
+  border-bottom: 1rem solid rgba(255, 255, 255, 0.1);
 }
 
 .nameColumn {
-  display: flex;
+  width: 200rem;
   min-width: 200rem;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 500;
 }
 
 .employeeColumn {
+  width: 100rem;
   min-width: 100rem;
-  text-align: center;
-  margin-left: 10rem;
-}
-
-.processingColumn {
-  text-align: center;
-  width: 200rem;
-  margin-left: 30rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .vehicleColumn {
   width: 100rem;
-  text-align: center;
-  margin-left: 10rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .resourcesColumn {
-  width: 130rem;
-  text-align: center;
-  margin-left: 10rem;
+  width: 120rem;
+  min-width: 120rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.processingColumn {
+  width: 220rem;
+  min-width: 220rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .efficiencyColumn {
   width: 100rem;
-  margin-left: 30rem;
-  text-align: center;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .profitabilityColumn {
-  min-width: 50rem;
-  margin-left: 30rem;
-  text-align: right;
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .locationColumn {
-  width: 30rem;
-  margin-left: 30rem;
+  width: 80rem;
+  min-width: 80rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerCell {
+  font-weight: bold;
+  font-size: 14rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .dataDivider {
@@ -95,12 +121,13 @@
   height: 4rem;
   flex-direction: column;
   justify-content: center;
+  margin: 5rem 0;
+}
 
-  &::after {
-    content: '';
-    border-bottom: 1rem solid gray;
-    width: 100%;
-  }
+.dataDivider::after {
+  content: '';
+  border-bottom: 1rem solid gray;
+  width: 100%;
 }
 
 .loadingText {
@@ -111,20 +138,19 @@
 .tooltipContent {
   z-index: 10;
   max-width: 400rem;
-  word-wrap: break-word;
 }
 
 .tooltipText {
   margin-bottom: 1rem;
   color: #ffffff;
+}
 
-  p {
-    margin-bottom: 5rem;
-    font-size: 15rem;
-    text-align: left;
-    display: flex;
-    flex-direction: row;
-  }
+.tooltipText p {
+  margin-bottom: 5rem;
+  font-size: 15rem;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
 }
 
 .factorRow {
@@ -146,15 +172,15 @@
 }
 
 .factorPositive {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .factorNegative {
-  color: #F44336;
+  color: #f44336;
 }
 
 .factorNeutral {
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .virtualListContainer {
@@ -163,58 +189,105 @@
 }
 
 .magnifierIcon {
-  width: 30rem;
-  height: 30rem;
-  border-top-left-radius: var(--panelRadiusInner);
-  border-top-right-radius: var(--panelRadiusInner);
-  border-bottom-left-radius: var(--panelRadiusInner);
-  border-bottom-right-radius: var(--panelRadiusInner);
-  margin-left: 50rem;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 4rem;
 }
 
 .processingWrapper {
   display: flex;
   align-items: center;
-  margin-left: 30rem;
-  width: 200rem;
+  justify-content: center;
+  width: 100%;
 }
 
 .resourceGroup {
   display: flex;
   align-items: center;
-  margin: 0.25rem;
+  margin: 0 2rem;
 }
 
 .resourceItem {
   display: flex;
   align-items: center;
-  margin: 0.25rem;
+  margin: 0 1rem;
 }
 
 .divider {
   display: flex;
   align-items: center;
-  margin: 0 0.25rem;
-  font-size: 25rem;
+  margin: 0 4rem;
+  font-size: 16rem;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .separator {
   display: flex;
   align-items: center;
-  margin-left: 20rem;
-  font-size: 25rem;
+  margin: 0 2rem;
+  font-size: 12rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .processContainer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 200rem;
+  justify-content: center;
+  width: 100%;
 }
 
 .emptyGroup {
-  min-width: 20rem;
-  height: 20rem;
+  width: 16rem;
+  height: 16rem;
+  opacity: 0.3;
 }
 
+.sortableHeader {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableHeader:hover {
+  opacity: 0.8;
+}
+
+.sortArrows {
+  display: flex;
+  flex-direction: column;
+  margin-left: 6rem;
+}
+
+.sortIcon {
+  width: 14rem;
+  height: 14rem;
+  opacity: 0.8;
+}
+
+.resourceIcon {
+  width: 18rem;
+  height: 18rem;
+  margin: 0 1rem;
+}
+
+.efficiencyHigh {
+  color: #4caf50;
+}
+
+.efficiencyMedium {
+  color: #ff9800;
+}
+
+.efficiencyLow {
+  color: #f44336;
+}
+
+.profitabilityPositive {
+  color: #4caf50;
+}
+
+.profitabilityNegative {
+  color: #f44336;
+}

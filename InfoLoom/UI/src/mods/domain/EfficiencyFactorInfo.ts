@@ -2,7 +2,7 @@
 import { EfficiencyFactor } from 'cs2/bindings';
 
 export enum EfficiencyFactorEnum {
-  Destroyed ,
+  Destroyed,
   Abandoned,
   Disabled,
   Fire,
@@ -35,7 +35,7 @@ export enum EfficiencyFactorEnum {
 
 // This interface needs to match the backend EfficiencyFactorInfo structure
 export interface EfficiencyFactorInfo {
-    Factor: EfficiencyFactorEnum; // Matches the C# enum
-    Value: number;  // Matches the C# int
-    Result: number; // Matches the C# int
+  Factor: EfficiencyFactorEnum; // Matches the C# enum
+  Value: number; // Matches the C# int
+  Result: number; // Matches the C# int
 }

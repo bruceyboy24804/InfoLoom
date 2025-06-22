@@ -402,7 +402,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            return 256;
+            return 512;
         }
         //[Preserve]
         protected override void OnUpdate()

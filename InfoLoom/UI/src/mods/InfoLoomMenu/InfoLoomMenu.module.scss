@@ -8,7 +8,7 @@
   margin-top: var(--gap8);
   background-color: var(--panelColorNormal);
   backdrop-filter: var(--panelBlur);
-  border-top-left-radius:  var(--panelRadiusInner);
+  border-top-left-radius: var(--panelRadiusInner);
   border-top-right-radius: var(--panelRadiusInner);
   border-bottom-left-radius: var(--panelRadiusInner);
   border-bottom-right-radius: var(--panelRadiusInner);
@@ -60,8 +60,8 @@
   position: relative;
   overflow: hidden;
   transition:
-          background 0.3s ease,
-          transform 0.2s ease;
+    background 0.3s ease,
+    transform 0.2s ease;
 
   &:hover {
     background-color: var(--hoverColorBright);
@@ -95,6 +95,6 @@
   position: absolute;
   right: 0;
   margin-left: 8px;
-    width: 15rem;
-    height: 15rem;
+  width: 15rem;
+  height: 15rem;
 }

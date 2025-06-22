@@ -230,7 +230,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            return 256;
+            return 512;
         }
         protected override void OnUpdate()
         {

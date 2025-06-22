@@ -1,11 +1,11 @@
 .CollapsiblePanel {
-    padding-bottom: 5rem;
-    --panelRadius: 10rem;
-    width: 100%;
+  padding-bottom: 5rem;
+  --panelRadius: 10rem;
+  width: 100%;
 
-    > div:last-child  {
-        > div:last-child {
-            padding-bottom: 5rem;
-        }
+  > div:last-child {
+    > div:last-child {
+      padding-bottom: 5rem;
     }
+  }
 }

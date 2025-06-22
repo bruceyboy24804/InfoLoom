@@ -11,5 +11,4 @@ export interface industrialProductData {
   Workers: number;
   WrkPercent: number;
   TaxFactor: number;
-  
 }

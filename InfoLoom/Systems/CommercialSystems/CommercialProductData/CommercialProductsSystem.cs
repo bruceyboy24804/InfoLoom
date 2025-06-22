@@ -20,7 +20,6 @@ using Game.Simulation.Flow;
 using Game.Tools;
 using Game.UI;
 using Game.Zones;
-using InfoLoomTwo.Utils;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -312,7 +311,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
                 ResourceType = resource,
                 ResourceName = default, // Will be populated outside the job to avoid managed calls in Burst
                 Demand = m_ResourceDemands[resourceIndex],
-                Building = m_BuildingDemand.value,
+                Building = m_BuildingDemands[resourceIndex], // <-- FIX: Use per-resource value here!
                 Free = m_FreeProperties[resourceIndex],
                 Companies = m_ServiceCompanies[resourceIndex],
                 Workers = m_CurrentServiceWorkers[resourceIndex],
@@ -530,10 +529,6 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialProductData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            if (Mod.setting.CustomUpdateInterval)
-            {
-                return Mod.setting.UpdateInterval;
-            }
             return 512;
         }
 

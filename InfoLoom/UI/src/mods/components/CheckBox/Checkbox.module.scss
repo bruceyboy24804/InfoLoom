@@ -1,53 +1,53 @@
-$borderColorNormal: rgba(254,254,254,0.5);
+$borderColorNormal: rgba(254, 254, 254, 0.5);
 $borderColorFocused: rgba(254, 254, 254, 0.6);
 
 .checkboxContainer {
-    width: 20rem;
-    height: 20rem;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    border-top-color: $borderColorNormal;
-    border-left-color: $borderColorNormal;
-    border-right-color: $borderColorNormal;
-    border-bottom-color: $borderColorNormal;
-    margin-left: 6rem;
-    padding-top: var(--gap1);
-    padding-right: var(--gap1);
-    padding-bottom: var(--gap1);
-    padding-left: var(--gap1);
-    border-top-style: solid;
-    border-left-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-top-width: var(--stroke2);
-    border-left-width: var(--stroke2);
-    border-bottom-width: var(--stroke2);
-    border-right-width: var(--stroke2);
-    border-top-left-radius: 3rem 3rem;
-    border-top-right-radius: 3rem 3rem;
-    border-bottom-left-radius: 3rem 3rem;
-    border-bottom-right-radius: 3rem 3rem;
-    transition-property: background-color;
-    transition-duration: 0.15s;
-    transition-delay: 0s;
-    transition-timing-function: ease;
+  width: 20rem;
+  height: 20rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border-top-color: $borderColorNormal;
+  border-left-color: $borderColorNormal;
+  border-right-color: $borderColorNormal;
+  border-bottom-color: $borderColorNormal;
+  margin-left: 6rem;
+  padding-top: var(--gap1);
+  padding-right: var(--gap1);
+  padding-bottom: var(--gap1);
+  padding-left: var(--gap1);
+  border-top-style: solid;
+  border-left-style: solid;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  border-top-width: var(--stroke2);
+  border-left-width: var(--stroke2);
+  border-bottom-width: var(--stroke2);
+  border-right-width: var(--stroke2);
+  border-top-left-radius: 3rem 3rem;
+  border-top-right-radius: 3rem 3rem;
+  border-bottom-left-radius: 3rem 3rem;
+  border-bottom-right-radius: 3rem 3rem;
+  transition-property: background-color;
+  transition-duration: 0.15s;
+  transition-delay: 0s;
+  transition-timing-function: ease;
 }
 
 .checkboxContainer:hover {
-    background-color: rgb(254, 254, 254, 0.2)
+  background-color: rgb(254, 254, 254, 0.2);
 }
 
 .checkboxContainer:active {
-    border-top-color: $borderColorFocused;
-    border-left-color: $borderColorFocused;
-    border-bottom-color: $borderColorFocused;
-    border-right-color: $borderColorFocused;
-    background-color: rgb(254, 254, 254, 0.3)
+  border-top-color: $borderColorFocused;
+  border-left-color: $borderColorFocused;
+  border-bottom-color: $borderColorFocused;
+  border-right-color: $borderColorFocused;
+  background-color: rgb(254, 254, 254, 0.3);
 }
 
 .checkmarkIcon {
-    width: 15rem;
-    height: 15rem;
+  width: 15rem;
+  height: 15rem;
 }

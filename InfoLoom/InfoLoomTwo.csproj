@@ -47,6 +47,8 @@
 	  <Compile Remove="UI\src\mods\components\Pagination\**" />
 	  <EmbeddedResource Remove="UI\src\mods\components\Pagination\**" />
 	  <None Remove="UI\src\mods\components\Pagination\**" />
+	  <Compile Remove="Setting.cs" />
+	  <None Include="UI\src\mods\bindings.ts" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -117,9 +119,7 @@
 			<Private>false</Private>
 		</Reference>
 	</ItemGroup>
-	<Target Name="InstallUI" AfterTargets="AfterBuild">
-		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
-	</Target>
+	
 	<ItemGroup>
 		<None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
@@ -204,11 +204,14 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Folder Include="Locale\" />
 	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Content Include="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\ResidentialHousehold.module.scss" />
 	</ItemGroup>
-	
+	<Target Name="InstallUI" AfterTargets="AfterBuild">
+		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
+	</Target>
 
 </Project>

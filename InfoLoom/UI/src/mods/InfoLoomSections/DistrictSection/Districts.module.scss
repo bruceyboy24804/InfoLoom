@@ -30,7 +30,6 @@
   align-items: center;
   box-sizing: border-box;
   padding: 1rem 25rem;
-  min-width: min-content;
 }
 
 .headerRow {
@@ -128,13 +127,10 @@
 .serviceIcon {
   width: 30px;
   height: 30px;
-  object-fit: contain;
 }
 .policyIcon {
   width: 30px;
   height: 30px;
-  object-fit: contain;
-  
 }
 .noServices {
   font-size: 15rem;
@@ -144,7 +140,6 @@
 .tooltipContent {
   z-index: 10; // Ensure tooltips appear above other elements
   max-width: 300rem; // Prevent tooltips from being too wide
-  word-wrap: break-word; // Ensure long text wraps properly
 }
 
 .tooltipText {
@@ -208,7 +203,7 @@
 }
 
 .boldText {
-  margin: 0 0.25em;  // Adds spacing before and after
+  margin: 0 0.25em; // Adds spacing before and after
   font-weight: bold;
 }
 
@@ -281,7 +276,6 @@
 }
 .chartLegend {
   display: flex;
-  gap: 20rem;
   margin-bottom: 10rem;
   justify-content: center;
   font-size: 12rem;
@@ -292,18 +286,19 @@
   align-items: center;
 }
 
-.employeeIndicator, .workplaceIndicator {
+.employeeIndicator,
+.workplaceIndicator {
   width: 12rem;
   height: 12rem;
   margin-right: 5rem;
 }
 
 .employeeIndicator {
-  background-color: #368A2E;
+  background-color: #368a2e;
 }
 
 .workplaceIndicator {
-  border: 2rem solid #368A2E;
+  border: 2rem solid #368a2e;
   background: transparent;
 }
 
@@ -342,6 +337,6 @@
   text-align: right;
   font-size: 13rem;
 }
-.householdCountText{
+.householdCountText {
   text-align: right;
 }

@@ -11,7 +11,8 @@ namespace InfoLoomTwo.Domain.DataDomain
         public int School2 { get; set; }
         public int School3 { get; set; }
         public int School4 { get; set; }
-        public int Other { get; set; }
+        public int Unemployed { get; set; }
+        public int Retired { get; set; }
         public int ChildCount { get; set; }
         public int TeenCount { get; set; }
         public int AdultCount { get; set; }
@@ -26,7 +27,8 @@ namespace InfoLoomTwo.Domain.DataDomain
             School2 = 0;
             School3 = 0;
             School4 = 0;
-            Other = 0;
+            Unemployed = 0;
+            Retired = 0;
             ChildCount = 0;
             TeenCount = 0;
             AdultCount = 0;

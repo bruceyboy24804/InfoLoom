@@ -1,5 +1,5 @@
 .panel {
-  width: 950rem;
+  width: 1200rem; /* Increased width to accommodate new column */
   display: flex;
   flex-direction: column; /* Ensure proper layout */
   background-color: var(--panelColorNormal);
@@ -19,134 +19,241 @@
   font-size: 110%; /* Reduced from 115% */
 }
 
+.alignedParagraph {
+  display: flex;
+  justify-content: space-between;
+  text-align: justify;
+  margin-bottom: 0.25em;
+}
+
+.alignedParagraphLeft {
+  width: 40%;
+  margin-left: 10%;
+}
+
+.alignedParagraphRight {
+  width: 40%;
+  margin-right: 10%;
+  text-align: right;
+}
+
+.horizontalLine {
+  border-bottom: 5rem solid white;
+  margin: 1rem 0;
+}
+
+.tableContainer {
+  margin: 20rem;
+}
+
+.tableCell {
+  border: 1rem solid #ddd;
+  padding: 8rem;
+  text-align: center;
+  width: 10%;
+}
+
 .tableHeader {
-  margin: 15rem 0; /* Reduced from 25rem */
+  background-color: #f2f2f2;
 }
 
-/* Table header row */
-.headerRow {
+.workforceLevel {
+  width: 99%;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.spacer1 {
+  width: 1%;
+}
+
+.levelNameContainer {
   display: flex;
-  padding: 0.7rem;
+  align-items: center;
+  width: 20%; /* Reduced to make room for new column */
+}
+
+.levelSymbol {
+  width: 1.2em;
+}
+
+.dataColumn {
+  width: 10%; /* Reduced slightly to fit new column */
+  justify-content: center;
+}
+
+.percentColumn {
+  width: 7%; /* Reduced slightly to fit new column */
+  justify-content: center;
+}
+
+.unemployedColumn {
+  width: 10%; /* Reduced slightly to fit new column */
+  justify-content: center;
+}
+
+.employableColumn {
+  width: 10%;
+  justify-content: center;
+}
+
+.smallColumn {
+  width: 8%; /* Reduced slightly to fit new column */
+  justify-content: center;
+}
+
+.spacingTop {
+  height: 10rem;
+}
+
+.spacingSmall {
+  height: 5rem;
+}
+
+/* Stacked Bar Chart Styles */
+.chartSection {
+  margin-top: 20rem;
+  padding: 0 10rem;
+}
+
+.chartTitle {
+  font-size: 105%;
   font-weight: bold;
-  color: white;
-  border-bottom: 1rem solid #ffffff1a;
-  margin-bottom: 5rem;
+  margin-bottom: 10rem;
+  text-align: center;
 }
 
-/* Row styling for each workforce level */
-.workforceRow {
+.stackedBarContainer {
+  margin-bottom: 8rem;
+}
+
+.barLabel {
   display: flex;
   align-items: center;
-  padding: 0.7rem;
-  width: 100%;
   margin-bottom: 3rem;
+  font-size: 90%;
 }
 
-/* Column styles */
-.educationCol {
-  display: flex;
-  align-items: center;
-  width: 100rem;
-}
-
-.colorBox {
-  width: 12rem;
-  height: 12rem;
+.barLabelSymbol {
+  width: 1em;
+  height: 1em;
   margin-right: 8rem;
   border-radius: 2rem;
 }
 
-.dataCol {
-  width: 120rem;
-  text-align: center;
+.barLabelText {
+  flex: 1;
 }
 
-/* Scrollable container */
-.scrollable {
-  max-height: 550rem;
-  overflow-y: auto;
+.barLabelValue {
+  margin-left: 10rem;
+  font-weight: bold;
+}
+
+.stackedBar {
+  height: 20rem;
   width: 100%;
+  display: flex;
+  border-radius: 3rem;
+  overflow: hidden;
+  border: 1rem solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.barSegment {
+  height: 100%;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.barSegment:hover {
+  opacity: 0.8;
+}
+
+.legendContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 15rem;
+  padding: 10rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  font-size: 85%;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.legendItem:hover {
+  opacity: 0.8;
+}
+
+.legendSymbol {
+  width: 12rem;
+  height: 12rem;
+  margin-right: 5rem;
+  border-radius: 2rem;
+}
+
+.totalBar {
+  margin-top: 15rem;
+  padding-top: 15rem;
+  border-top: 1rem solid rgba(255, 255, 255, 0.3);
+}
+
+.totalBarLabel {
+  font-weight: bold;
+  font-size: 95%;
+}
+
+/* Tooltip Styles */
+.tooltipContent {
+  min-width: 200rem;
   padding: 8rem;
 }
 
-/* Loading state */
-.loadingText {
-  text-align: center;
-  padding: 1rem;
-  color: white;
+.tooltipHeader {
+  font-weight: bold;
+  font-size: 105%;
+  margin-bottom: 6rem;
+  color: #ffffff;
+  border-bottom: 1rem solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 4rem;
 }
 
-/* Summary section */
-.summarySection {
-  margin-bottom: 20rem;
-  padding-bottom: 12rem;
-  border-bottom: 1rem solid #ffffff1a;
-}
-
-.summaryTitle {
-  font-size: 14rem;
-  margin-bottom: 5rem;
-}
-
-.summaryGrid {
+.tooltipRow {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 3rem;
+  font-size: 90%;
 }
 
-.summaryItem {
-  text-align: center;
-  padding: 4rem;
-  flex: 1 0 22%;
-  min-width: 100rem;
+.tooltipRow span:first-child {
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.summaryValue {
-  font-size: 12rem;
+.tooltipRow span:last-child {
   font-weight: bold;
+  color: #ffffff;
 }
 
-.summaryLabel {
-  font-size: 11rem;
-  opacity: 0.8;
-  margin-top: 2rem;
+.tooltipDivider {
+  height: 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 6rem 0;
+}
+.infoButton {
+  top: 5rem;
+  right: 50rem;
+  width: 30rem;
+  height: 30rem;
+  position: absolute;
 }
 
-/* Section titles */
-.sectionTitle {
-  font-size: 14rem;
-  margin: 10rem 0 5rem;
-  font-weight: 500;
-}
 
-/* Total row highlighting */
-.totalRow {
-  font-weight: bold;
-  background-color: #ffffff0d;
-  border-radius: 3rem;
-  margin-top: 5rem;
-}
-
-/* Container for the whole component */
-.container {
-  padding: 12rem;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* Section title for tables */
-.tableSectionTitle {
-  font-size: 13rem;
-  font-weight: 500;
-  margin: 15rem 0 4rem;
-  color: #ffffffcc;
-}
-
-/* Table description text */
-.tableDescription {
-  font-size: 11rem;
-  opacity: 0.7;
-  margin-bottom: 8rem;
-}
 

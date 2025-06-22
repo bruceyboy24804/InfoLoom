@@ -50,7 +50,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_TaxSystem = World.GetOrCreateSystemManaged<TaxSystem>();
             m_CitySystem = World.GetOrCreateSystemManaged<CitySystem>();
             
-            m_Results = new NativeArray<int>(18, Allocator.Persistent);
+            m_Results = new NativeArray<int>(21, Allocator.Persistent);
         }
 
         protected override void OnDestroy()
@@ -59,7 +59,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
             base.OnDestroy();
         }
 
-        public override int GetUpdateInterval(SystemUpdatePhase phase) => 256;
+        public override int GetUpdateInterval(SystemUpdatePhase phase) => 512;
 
         protected override void OnUpdate()
         {
@@ -78,7 +78,7 @@ namespace InfoLoomTwo.Systems.ResidentialData
             
             var city = m_CitySystem.City;
             var population = EntityManager.GetComponentData<Game.City.Population>(city);
-            var demandParams = GetSingleton<Game.Prefabs.DemandParameterData>();
+            var demandParams = SystemAPI.GetSingleton<Game.Prefabs.DemandParameterData>();
             
             // Ultra-fast direct assignments
             PopulateBasicData(residentialData, householdData, population, demandParams, studyPositions);
@@ -103,9 +103,6 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_Results[5] = occupied.z; // High occupied
             
             // Demand parameters (6, 8, 10, 13, 15)
-            m_Results[6] = (int)(10f * (demandParams.m_FreeResidentialRequirement.x + 
-                                      demandParams.m_FreeResidentialRequirement.y + 
-                                      demandParams.m_FreeResidentialRequirement.z) / 3f);
             m_Results[8] = demandParams.m_NeutralHappiness;
             m_Results[10] = (int)(10f * demandParams.m_NeutralUnemployment);
             m_Results[13] = (int)(10f * demandParams.m_NeutralHomelessness);
@@ -125,6 +122,10 @@ namespace InfoLoomTwo.Systems.ResidentialData
             // Demand data
             m_Results[16] = m_ResidentialDemandSystem.householdDemand;
             m_Results[17] = CalculateStudentRatio();
+            
+            m_Results[18] = 10  * demandParams.m_FreeResidentialRequirement.x;
+            m_Results[19] = 10  * demandParams.m_FreeResidentialRequirement.y;
+            m_Results[20] = 10  * demandParams.m_FreeResidentialRequirement.z;
         }
 
         private int CalculateWeightedTaxRate()

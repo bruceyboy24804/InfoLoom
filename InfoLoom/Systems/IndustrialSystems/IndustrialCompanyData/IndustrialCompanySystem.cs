@@ -21,7 +21,7 @@ using Game.UI.InGame;
 using Game.Vehicles;
 using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Domain.DataDomain.Enums;
-using InfoLoomTwo.Utils;
+using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -309,6 +309,14 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
     
     public partial class IndustrialCompanySystem : GameSystemBase
     {
+        public IndexSortingEnum2 m_CurrentIndexSorting = IndexSortingEnum2.Off;
+        public CompanyNameEnum2 m_CurrentCompanyNameSorting = CompanyNameEnum2.Off;
+        public EmployeesEnum2 m_CurrentEmployeesSorting = EmployeesEnum2.Off;
+        public EfficiancyEnum2 m_CurrentEfficiencySorting = EfficiancyEnum2.Off;
+        public ProfitabilityEnum2 m_CurrentProfitabilitySorting = ProfitabilityEnum2.Off;
+        public ResourceAmountEnum2 m_CurrentResourceAmountSorting = ResourceAmountEnum2.Off;
+        
+        
         private NameSystem m_NameSystem;
         private ImageSystem m_ImageSystem;
         private ResourceSystem m_ResourceSystem;
@@ -356,11 +364,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            if (Mod.setting.CustomUpdateInterval)
-            {
-                return Mod.setting.UpdateInterval;
-            }
-            return 512;
+            return 1024;
         }
 
         protected override void OnUpdate()
@@ -602,16 +606,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
                 companies.Add(dto);
             }
-            var comparer = IndustrialCompanySortingUtility.CreateComparer<IndustrialCompanyDTO>(
-                (a, b) => a.EntityId.Index.CompareTo(b.EntityId.Index),
-                (a, b) => string.Compare(a.CompanyName, b.CompanyName, StringComparison.Ordinal),
-                (a, b) => a.TotalEmployees.CompareTo(b.TotalEmployees),
-                (a, b) => a.TotalEfficiency.CompareTo(b.TotalEfficiency),
-                (a, b) => a.Profitability.CompareTo(b.Profitability)
-            );
-            
-            companies.Sort(comparer);
-
             m_IndustrialCompanyDTOs = companies.ToArray();
         }
 
@@ -688,5 +682,78 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             
             return tempFactors.ToArray();
         }
+        public int CompareByIndex(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentIndexSorting)
+            {
+                case IndexSortingEnum2.Ascending:
+                    return x.EntityId.Index.CompareTo(y.EntityId.Index);
+                case IndexSortingEnum2.Descending:
+                    return y.EntityId.Index.CompareTo(x.EntityId.Index);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByName(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentCompanyNameSorting)
+            {
+                case CompanyNameEnum2.Ascending:
+                    return string.Compare(x.CompanyName, y.CompanyName, StringComparison.OrdinalIgnoreCase);
+                case CompanyNameEnum2.Descending:
+                    return string.Compare(y.CompanyName, x.CompanyName, StringComparison.OrdinalIgnoreCase);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByEmployees(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentEmployeesSorting)
+            {
+                case EmployeesEnum2.Ascending:
+                    return x.TotalEmployees.CompareTo(y.TotalEmployees);
+                case EmployeesEnum2.Descending:
+                    return y.TotalEmployees.CompareTo(x.TotalEmployees);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByEfficiency(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentEfficiencySorting)
+            {
+                case EfficiancyEnum2.Ascending:
+                    return x.TotalEfficiency.CompareTo(y.TotalEfficiency);
+                case EfficiancyEnum2.Descending:
+                    return y.TotalEfficiency.CompareTo(x.TotalEfficiency);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByProfitability(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentProfitabilitySorting)
+            {
+                case ProfitabilityEnum2.Ascending:
+                    return x.Profitability.CompareTo(y.Profitability);
+                case ProfitabilityEnum2.Descending:
+                    return y.Profitability.CompareTo(x.Profitability);
+                default:
+                    return 0;
+            }
+        }
+        public int CompareByResourceAmount(IndustrialCompanyDTO x, IndustrialCompanyDTO y)
+        {
+            switch (m_CurrentResourceAmountSorting)
+            {
+                case ResourceAmountEnum2.Ascending:
+                    return x.ResourceAmount.CompareTo(y.ResourceAmount);
+                case ResourceAmountEnum2.Descending:
+                    return y.ResourceAmount.CompareTo(x.ResourceAmount);
+                default:
+                    return 0;
+            }
+        }
+            
     }
 }

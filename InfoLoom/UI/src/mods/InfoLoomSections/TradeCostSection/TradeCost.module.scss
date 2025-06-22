@@ -46,7 +46,6 @@
 /* Controls Section (Dropdowns and Buttons) */
 .controls {
   display: flex;
-  gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 1rem;
@@ -71,21 +70,20 @@
 /* Table Header Row */
 .headerRow {
   display: flex;
-  
-  background-color:  var(--toolbarFieldColor-hover) ;
+
+  background-color: var(--toolbarFieldColor-hover);
 }
 
 /* Table Header Cells */
 .headerCell {
   padding: 8px 4px;
   text-align: center;
-  font-size: 0.80em;
+  font-size: 0.8em;
   font-weight: 600;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   white-space: nowrap;
   line-height: 1.2;
   text-transform: uppercase;
@@ -128,7 +126,6 @@
       height: 36px;
       margin-right: 8px;
       flex-shrink: 0;
-      object-fit: contain;
     }
   }
 }
@@ -165,9 +162,7 @@
 
 /* Action Button Base Styling */
 
-
 /* Graphs Button Specific Styling */
-
 
 /* Graph Header (Back Button Container) */
 .graphHeader {
@@ -180,7 +175,6 @@
 .graphViewContainer {
   display: flex;
   flex: 1; /* Allow the container to expand */
-  gap: 1rem; /* Space between checkboxes and graph */
   overflow: hidden; /* Prevent overflow */
 }
 
@@ -212,7 +206,6 @@
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Space between icon and label */
   color: #ccc; /* Label color */
 }
 
@@ -261,7 +254,6 @@
   .dropdownToggle {
     width: 100%;
   }
-
 
   .graphViewContainer {
     flex-direction: column;
@@ -313,4 +305,22 @@
   &:hover {
     background-color: white;
   }
+}
+.sortableHeader {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+.sortArrows {
+  display: flex;
+  flex-direction: column;
+}
+.sortIcon {
+  width: 15rem;
+  height: 15rem;
 }

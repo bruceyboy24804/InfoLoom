@@ -470,7 +470,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
 
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-            return 256;
+            return 512;
         }
 
         protected override void OnUpdate()

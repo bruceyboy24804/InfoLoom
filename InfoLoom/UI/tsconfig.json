@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
+    "jsx":"react-jsx",
     "target": "ESNext",
     "module": "ESNext",
-    "sourceMap": true,
     "moduleResolution": "Node",
     "isolatedModules": true,
     "strict": true,
@@ -11,11 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "src",
     "skipLibCheck": true,
-    "typeRoots": ["../types"],
+    "typeRoots": ["./types"],
     "resolveJsonModule": true,
     "paths": {
-      "mod.json": ["../mod.json"],
-      "cs2/*": ["../types/*"]
+      "mod.json": ["../mod.json"]
     }
-  }
-}
+  },
+} 

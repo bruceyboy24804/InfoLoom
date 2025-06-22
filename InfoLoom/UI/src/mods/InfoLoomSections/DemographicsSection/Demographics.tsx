@@ -1,7 +1,7 @@
 import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
 import styles from './Demographics.module.scss';
 import Chart from 'chart.js/auto';
-
+import { useLocalization } from 'cs2/l10n';
 // Local or app-level imports
 import {useValue} from 'cs2/api';
 import {InfoCheckbox} from 'mods/components/InfoCheckbox/InfoCheckbox';
@@ -26,7 +26,7 @@ const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "cla
 
 
 interface AlignedParagraphProps {
-  left: string;
+  left: string | null;
   right: number;
 }
 
@@ -39,7 +39,7 @@ interface AgeRange {
 }
 
 interface GroupingOption {
-  label: string;
+  label: string | null;
   value: GroupingStrategy;
   ranges: AgeRange[];
 }
@@ -51,7 +51,8 @@ interface AggregatedInfo {
   highSchool: number;
   college: number;
   university: number;
-  other: number;
+  Unemployed: number;
+  Retired: number;
   total: number;
 }
 
@@ -112,24 +113,20 @@ function generateRanges(step: number): AgeRange[] {
 }
 
 /** Predefined grouping strategies. */
-const GROUP_STRATEGIES: GroupingOption[] = [
+const GROUP_STRATEGIES_BASE = [
   {
-    label: 'Detailed View',
     value: GroupingStrategy.None,
     ranges: [],
   },
   {
-    label: '5-Year Groups',
     value: GroupingStrategy.FiveYear,
     ranges: generateRanges(5),
   },
   {
-    label: '10-Year Groups',
     value: GroupingStrategy.TenYear,
     ranges: generateRanges(10),
   },
   {
-    label: 'Lifecycle Groups',
     value: GroupingStrategy.LifeCycle,
     ranges: [
       { label: 'Child', min: 0, max: 20 },
@@ -155,7 +152,8 @@ function aggregatePopulationData(
     highSchool: 0,
     college: 0,
     university: 0,
-    other: 0,
+    Unemployed: 0,
+    Retired: 0,
     total: 0,
   }));
 
@@ -171,7 +169,8 @@ function aggregatePopulationData(
       agg.highSchool += info.School2;
       agg.college += info.School3;
       agg.university += info.School4;
-      agg.other += info.Other;
+      agg.Unemployed += info.Unemployed;
+      agg.Retired += info.Retired;
       agg.total += info.Total;
     }
   });
@@ -218,61 +217,24 @@ const AlignedParagraph = ({ left, right }: AlignedParagraphProps): JSX.Element =
 };*/
 
 /**
- * Displays high-level statistics (Population, Tourists, etc.).
- */
-const StatisticsSummary = ({
-  StructureTotals,
-  OldestCitizen,
-}: StatisticsSummaryProps): JSX.Element => {
-  // Safely extract required totals
-  const allCitizens = StructureTotals[0];
-  const population = StructureTotals[1];
-  const tourists = StructureTotals[2];
-  const commuters = StructureTotals[3];
-  const students = StructureTotals[4];
-  const workers = StructureTotals[5];
-  const movingAway = StructureTotals[7];
-  const dead = StructureTotals[8];
-  const homeless = StructureTotals[9];
-
-  return (
-    <div className={styles.statisticsContainer}>
-      <div className={`${styles.statisticsColumn} ${styles.left}`}>
-        <AlignedParagraph left="All Citizens" right={allCitizens} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="- Tourists" right={tourists} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="- Commuters" right={commuters} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="- Moving Away" right={movingAway} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="Population" right={population} />
-      </div>
-      <div className={`${styles.statisticsColumn} ${styles.right}`}>
-        <AlignedParagraph left="Dead" right={dead} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="Students" right={students} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="Workers" right={workers} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="Homeless" right={homeless} />
-        <div className={styles.spacer} />
-        <AlignedParagraph left="Oldest Citizen" right={OldestCitizen} />
-      </div>
-    </div>
-  );
-};
-
-/**
  * Replace the custom canvas DemographicsChart with Chart.js implementation
  */
 const DemographicsChart = memo(({
-
   StructureDetails,
   groupingStrategy,
-                                }: {
+  legendLabels,
+}: {
   StructureDetails: populationAtAge[];
   groupingStrategy: GroupingStrategy;
+  legendLabels: {
+    work: string;
+    elementary: string;
+    highSchool: string;
+    college: string;
+    university: string;
+    retired: string;
+    unemployed: string;
+  };
 }): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -285,7 +247,8 @@ const DemographicsChart = memo(({
     highSchool: '#00C217',
     college: '#005C4E',
     university: '#2462FF',
-    other: '#A1A1A1',
+    Retired: '#A1A1A1',
+    Unemployed: '#FF0000',
   };
 
   // Build chart data from StructureDetails based on groupingStrategy
@@ -307,12 +270,13 @@ const DemographicsChart = memo(({
       data: number[];
       backgroundColor: string;
     }> = [
-      { label: 'Work', data: [] as number[], backgroundColor: chartColors.work },
-      { label: 'Elementary', data: [] as number[], backgroundColor: chartColors.elementary },
-      { label: 'High School', data: [] as number[], backgroundColor: chartColors.highSchool },
-      { label: 'College', data: [] as number[], backgroundColor: chartColors.college },
-      { label: 'University', data: [] as number[], backgroundColor: chartColors.university },
-      { label: 'Other', data: [] as number[], backgroundColor: chartColors.other },
+      { label: legendLabels.work, data: [] as number[], backgroundColor: chartColors.work },
+      { label: legendLabels.elementary, data: [] as number[], backgroundColor: chartColors.elementary },
+      { label: legendLabels.highSchool, data: [] as number[], backgroundColor: chartColors.highSchool },
+      { label: legendLabels.college, data: [] as number[], backgroundColor: chartColors.college },
+      { label: legendLabels.university, data: [] as number[], backgroundColor: chartColors.university },
+      { label: legendLabels.retired, data: [] as number[], backgroundColor: chartColors.Retired },
+      { label: legendLabels.unemployed, data: [] as number[], backgroundColor: chartColors.Unemployed },
     ];
 
     if (groupingStrategy === GroupingStrategy.None) {
@@ -328,39 +292,44 @@ const DemographicsChart = memo(({
       
       datasets = [
         { 
-          label: 'Work', 
+          label: legendLabels.work, 
           data: age_range.map(age => get_value('Work', age)), 
           backgroundColor: chartColors.work 
         },
         { 
-          label: 'Elementary', 
+          label: legendLabels.elementary, 
           data: age_range.map(age => get_value('School1', age)), 
           backgroundColor: chartColors.elementary 
         },
         { 
-          label: 'High School', 
+          label: legendLabels.highSchool, 
           data: age_range.map(age => get_value('School2', age)), 
           backgroundColor: chartColors.highSchool 
         },
         { 
-          label: 'College', 
+          label: legendLabels.college, 
           data: age_range.map(age => get_value('School3', age)), 
           backgroundColor: chartColors.college 
         },
         { 
-          label: 'University', 
+          label: legendLabels.university, 
           data: age_range.map(age => get_value('School4', age)), 
           backgroundColor: chartColors.university 
         },
         { 
-          label: 'Other', 
-          data: age_range.map(age => get_value('Other', age)), 
-          backgroundColor: chartColors.other 
+          label: legendLabels.retired, 
+          data: age_range.map(age => get_value('Retired', age)), 
+          backgroundColor: chartColors.Retired 
+        },
+        { 
+          label: legendLabels.unemployed, 
+          data: age_range.map(age => get_value('Unemployed', age)), 
+          backgroundColor: chartColors.Unemployed 
         },
       ];
     } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
       // Use the predefined lifecycle ranges
-      const lifecycleRanges = GROUP_STRATEGIES.find(s => s.value === GroupingStrategy.LifeCycle)?.ranges || [];
+      const lifecycleRanges = GROUP_STRATEGIES_BASE.find(s => s.value === GroupingStrategy.LifeCycle)?.ranges || [];
       const groups = lifecycleRanges.map(range => ({
         label: range.label,
         work: 0,
@@ -368,7 +337,8 @@ const DemographicsChart = memo(({
         highSchool: 0,
         college: 0,
         university: 0,
-        other: 0
+        Unemployed: 0,
+        Retired: 0
       }));
 
       StructureDetails.forEach(d => {
@@ -380,23 +350,25 @@ const DemographicsChart = memo(({
           groups[idx].highSchool += d.School2;
           groups[idx].college += d.School3;
           groups[idx].university += d.School4;
-          groups[idx].other += d.Other;
+          groups[idx].Unemployed += d.Unemployed;
+          groups[idx].Retired += d.Retired;
         }
       });
 
       labels = groups.map(g => g.label);
       datasets = [
-        { label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
-        { label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
-        { label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
-        { label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
-        { label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
-        { label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
+        { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
+        { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+        { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+        { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
+        { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
+        { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
+        { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
       ];
     } else {
       // Handle 5-year and 10-year grouping
       const step = groupingStrategy === GroupingStrategy.FiveYear ? 5 : 10;
-      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; other: number; }[] = [];
+      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; Retired: number; Unemployed: number; }[] = [];
       for (let i = 0; i < 120; i += step) {
         groups.push({
           label: `${i}-${i + step}`,
@@ -405,7 +377,8 @@ const DemographicsChart = memo(({
           highSchool: 0,
           college: 0,
           university: 0,
-          other: 0,
+          Retired: 0,
+          Unemployed: 0,
         });
       }
       
@@ -418,18 +391,20 @@ const DemographicsChart = memo(({
           groups[idx].highSchool += d.School2;
           groups[idx].college += d.School3;
           groups[idx].university += d.School4;
-          groups[idx].other += d.Other;
+          groups[idx].Unemployed += d.Unemployed;
+          groups[idx].Retired += d.Retired;
         }
       });
       
       labels = groups.map(g => g.label);
       datasets = [
-        { label: 'Work', data: groups.map(g => g.work), backgroundColor: chartColors.work },
-        { label: 'Elementary', data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
-        { label: 'High School', data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
-        { label: 'College', data: groups.map(g => g.college), backgroundColor: chartColors.college },
-        { label: 'University', data: groups.map(g => g.university), backgroundColor: chartColors.university },
-        { label: 'Other', data: groups.map(g => g.other), backgroundColor: chartColors.other },
+        { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
+        { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+        { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+        { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
+        { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
+        { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
+        { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
       ];
     }
 
@@ -437,7 +412,7 @@ const DemographicsChart = memo(({
       labels,
       datasets
     };
-  }, [StructureDetails, groupingStrategy]);
+  }, [StructureDetails, groupingStrategy, legendLabels]);
 
   // Initialize chart ONLY ONCE - based on TradeCost.tsx pattern
   useEffect(() => {
@@ -563,7 +538,7 @@ const DemographicsChart = memo(({
 				  0.95, // lifecycle
 				
 				// Add maxBarThickness to prevent bars from becoming too large
-				maxBarThickness: 
+			 maxBarThickness: 
 				  groupingStrategy === GroupingStrategy.None ? 5 :
 				  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
 				  groupingStrategy === GroupingStrategy.TenYear ? 35 :
@@ -696,6 +671,7 @@ const DemographicsChart = memo(({
 
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
+  const {translate} = useLocalization();
   const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>(GroupingStrategy.None);
   const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
@@ -703,27 +679,6 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const demoStatsToggledOn = useValue(DemoStatsToggledOn);
   const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
   const demoGroupingStrategy = useValue(DemoGroupingStrategy);
-const groupingOptions = GROUP_STRATEGIES.map((strategy) => (
-  <DropdownItem
-    key={strategy.value}
-    value={strategy.value}
-    closeOnSelect={true}
-    onChange={() => SetDemoGroupingStrategy(strategy.value)}
-    className={DropdownStyle.dropdownItem}
-    selected={demoGroupingStrategy === strategy.value}
-  >
-    <div className={styles.dropdownItem}>
-      <span>{strategy.label}</span>
-      <span className={styles.itemCount}>
-        ({strategy.ranges.length || demographicsDataStructureDetails?.length || 0})
-      </span>
-    </div>
-  </DropdownItem>
-));
-const renderSelectedGrouping = () => {
-  const selected = GROUP_STRATEGIES.find(strategy => strategy.value === demoGroupingStrategy);
-  return selected ? selected.label : 'Age Grouping Options';
-};
 
   return (
       <Panel
@@ -733,33 +688,105 @@ const renderSelectedGrouping = () => {
           initialPosition={{x: 0.16, y: 0.15}}
           header={
             <div className={styles.header}>
-              <span className={styles.headerText}>Demographics</span>
+              <span className={styles.headerText}>{translate('InfoLoomTwo.DemographicsPanel[Title]', "Demographics")}</span>
             </div>
           }
       >
         <div className={styles.container}>
           <div className={styles.toggleContainer}>
             <InfoCheckbox
-                label="Show Statistics"
+                label={translate('InfoLoomTwo.DemographicsPanel[Toggle]', "Show Statistics")}
                 isChecked={demoStatsToggledOn}
                 onToggle={SetDemoStatsToggledOn}
-
             />
             <Dropdown
             theme={DropdownStyle}
-            content={groupingOptions}
+            content={[
+              {
+                label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem1]', 'Detailed View'),
+                value: GroupingStrategy.None,
+                ranges: [],
+              },
+              {
+                label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem2]', '5-Year Groups'),
+                value: GroupingStrategy.FiveYear,
+                ranges: generateRanges(5),
+              },
+              {
+                label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem3]', '10-Year Groups'),
+                value: GroupingStrategy.TenYear,
+                ranges: generateRanges(10),
+              },
+              {
+                label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem4]', 'Lifecycle Groups'),
+                value: GroupingStrategy.LifeCycle,
+                ranges: [
+                  { label: 'Child', min: 0, max: 20 },
+                  { label: 'Teen', min: 21, max: 35 },
+                  { label: 'Adult', min: 36, max: 83 },
+                  { label: 'Elderly', min: 84, max: 120 },
+                ],
+              },
+            ].map((strategy) => (
+              <DropdownItem
+                key={strategy.value}
+                value={strategy.value}
+                closeOnSelect={true}
+                onChange={() => SetDemoGroupingStrategy(strategy.value)}
+                className={DropdownStyle.dropdownItem}
+                selected={demoGroupingStrategy === strategy.value}
+              >
+                <div className={styles.dropdownItem}>
+                  <span>{strategy.label}</span>
+                  <span className={styles.itemCount}>
+                    ({strategy.ranges.length || demographicsDataStructureDetails?.length || 0})
+                  </span>
+                </div>
+              </DropdownItem>
+            ))}
           >
             <DropdownToggle disabled={false}>
-              <div className={styles.dropdownName}>{renderSelectedGrouping()}</div>
+              <div className={styles.dropdownName}>
+                {(() => {
+                  const strategies = [
+                    { label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem1]', 'Detailed View'), value: GroupingStrategy.None },
+                    { label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem2]', '5-Year Groups'), value: GroupingStrategy.FiveYear },
+                    { label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem3]', '10-Year Groups'), value: GroupingStrategy.TenYear },
+                    { label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem4]', 'Lifecycle Groups'), value: GroupingStrategy.LifeCycle },
+                  ];
+                  const selected = strategies.find(strategy => strategy.value === demoGroupingStrategy);
+                  return selected ? selected.label : translate('InfoLoomTwo.DemographicsPanel[DropdownItem1]', 'Detailed View');
+                })()}
+              </div>
             </DropdownToggle>
           </Dropdown>
           </div>
 
           {demoStatsToggledOn && (
-              <StatisticsSummary
-                  StructureTotals={demographicsDataStructureTotals}
-                  OldestCitizen={demographicsDataOldestCitizen}
-              />
+              <div className={styles.statisticsContainer}>
+                <div className={`${styles.statisticsColumn} ${styles.left}`}>
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem1]', "All Citizens")} right={demographicsDataStructureTotals[0]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem2]', "- Tourists")} right={demographicsDataStructureTotals[2]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem3]', "- Commuters")} right={demographicsDataStructureTotals[3]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem4]', "- Moving Away")} right={demographicsDataStructureTotals[7]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem5]', "Population")} right={demographicsDataStructureTotals[1]} />
+                </div>
+                <div className={`${styles.statisticsColumn} ${styles.right}`}>
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem6]', "Dead")} right={demographicsDataStructureTotals[8]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem7]', "Students")} right={demographicsDataStructureTotals[4]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem8]', "Workers")} right={demographicsDataStructureTotals[5]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem9]', "Homeless")} right={demographicsDataStructureTotals[9]} />
+                  <div className={styles.spacer} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem10]', "Oldest Citizen")} right={demographicsDataOldestCitizen} />
+                </div>
+              </div>
           )}
 
           <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
@@ -767,6 +794,15 @@ const renderSelectedGrouping = () => {
               <DemographicsChart
                   StructureDetails={demographicsDataStructureDetails}
                   groupingStrategy={demoGroupingStrategy}
+                  legendLabels={{
+                    work: translate('InfoLoomTwo.DemographicsPanel[LegendItem1]', 'Work') || 'Work',
+                    elementary: translate('InfoLoomTwo.DemographicsPanel[LegendItem2]', 'Elementary') || 'Elementary',
+                    highSchool: translate('InfoLoomTwo.DemographicsPanel[LegendItem3]', 'High School') || 'High School',
+                    college: translate('InfoLoomTwo.DemographicsPanel[LegendItem4]', 'College') || 'College',
+                    university: translate('InfoLoomTwo.DemographicsPanel[LegendItem5]', 'University') || 'University',
+                    retired: translate('InfoLoomTwo.DemographicsPanel[LegendItem6]', 'Retired') || 'Retired',
+                    unemployed: translate('InfoLoomTwo.DemographicsPanel[LegendItem7]', 'Unemployed') || 'Unemployed',
+                  }}
               />
             </div>
           </Scrollable>

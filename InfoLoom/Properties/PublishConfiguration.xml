@@ -124,18 +124,14 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.9.0" />
+	<ModVersion Value="1.10.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.3.*" />
 	<!--Dependency for the mod, can be set multiple times-->
-	<Dependency Id="" />
+	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.9.0
-- Compatability for game version  1.3.3f1.
-- significantly improved perfroance of some of the systems and the panels.
-- Added sorting options for 3 pansls in the settings panel.
-- Added slider for the update interval for the systems to update.
-</ChangeLog>
+	<ChangeLog>## Version 1.10.1
+- Some minor bug fixes and improvements</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
 	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />

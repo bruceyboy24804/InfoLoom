@@ -1,308 +1,611 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { useValue } from 'cs2/api';
-import { DraggablePanelProps, Panel, Scrollable } from "cs2/ui";
-import styles from "./Workplaces.module.scss";
-import { workplacesInfo } from 'mods/domain/WorkplacesInfo';
-import { WorkplacesData } from "../../bindings";
+import { WorkplacesData } from 'mods/bindings';
+import { DraggablePanelProps, Panel, Tooltip, Button, PanelFoldout } from 'cs2/ui';
+import styles from './Workplaces.module.scss';
+import { workplacesInfo } from '../../domain/WorkplacesInfo';
+import { useLocalization } from 'cs2/l10n';
 
-// Define valid sector keys to fix TypeScript indexing error
-type SectorKey = 'Service' | 'Commercial' | 'Leisure' | 'Extractor' | 'Industrial' | 'Office';
-
-// Define sector interface with proper typing
-interface Sector {
-  name: string;
-  key: SectorKey;
-  color: string;
-  total?: number;
+interface WorkplaceLevelProps {
+  levelColor?: string;
+  levelName: string | null;
+  levelValues: workplacesInfo;
+  total: number;
+  isHeader?: boolean;
+  translations?: {
+    total: string | null;
+    percent: string | null;
+    service: string | null;
+    commercial: string | null;
+    leisure: string | null;
+    extractor: string | null;
+    industrial: string | null;
+    office: string | null;
+    employee: string | null;
+    commuter: string | null;
+    open: string | null;
+    filled: string | null;
+    totalTooltip?: string | null;
+    percentTooltip?: string | null;
+    serviceTooltip?: string | null;
+    commercialTooltip?: string | null;
+    leisureTooltip?: string | null;
+    extractorTooltip?: string | null;
+    industrialTooltip?: string | null;
+    officeTooltip?: string | null;
+    employeeTooltip?: string | null;
+    commuterTooltip?: string | null;
+    openTooltip?: string | null;
+    filledTooltip?: string | null;
+  };
 }
 
-// Main Workplaces Component
-const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
-  const ilWorkplaces = useValue(WorkplacesData);
-  initialPosition = { x: 0.038, y: 0.15 };
-  
-  // Early return if data isn't loaded yet
-  if (ilWorkplaces.length === 0) {
-    return (
-      <Panel 
-        draggable={true}
-        onClose={onClose}
-        initialPosition={initialPosition}
-        className={styles.panel}
-        header={
-          <div className={styles.header}>
-            <span className={styles.headerText}>Workplaces</span>
-          </div>
-        }
-      >
-        <p className={styles.loadingText}>Loading...</p>
-      </Panel>
-    );
-  }
-
-  // Central color definitions for consistent theming
-  const colors = {
-    // Education level colors
-    education: {
-      uneducated: '#808080',
-      poorlyEducated: '#B09868',
-      educated: '#368A2E',
-      wellEducated: '#B981C0',
-      highlyEducated: '#5796D1',
-    },
-    // Sector colors
-    sector: {
-      service: '#4287f5',
-      commercial: '#f5d142',
-      leisure: '#f542a7',
-      extractor: '#8c42f5',
-      industrial: '#f55142',
-      office: '#42f5b3',
-    },
-    // Status colors
-    status: {
-      local: '#4CAF50', // Green
-      commuter: '#9E9E9E', // Gray
-      vacant: '#F44336', // Red
-      overqualified: '#B981C0', // Purple
-    }
+interface StackedBarProps {
+  levelName: string | null;
+  levelColor: string;
+  levelValues: workplacesInfo;
+  total: number;
+  barType?: 'sector' | 'employment';
+  translations: {
+    segments: Array<{ label: string }>;
+    segmentTooltipCount: string | null;
+    segmentTooltipWithin: string | null;
+    segmentTooltipOfTotal: string | null;
+    barTooltipHeader: string | null;
+    barTooltipTotal: string | null;
+    barTooltipPercentage: string | null;
   };
+}
 
-  // Configure our data for display
-  const workforceLevels = [
-    { levelColor: colors.education.uneducated, levelName: 'Uneducated', levelValues: ilWorkplaces[0] },
-    { levelColor: colors.education.poorlyEducated, levelName: 'Poorly Educated', levelValues: ilWorkplaces[1] },
-    { levelColor: colors.education.educated, levelName: 'Educated', levelValues: ilWorkplaces[2] },
-    { levelColor: colors.education.wellEducated, levelName: 'Well Educated', levelValues: ilWorkplaces[3] },
-    { levelColor: colors.education.highlyEducated, levelName: 'Highly Educated', levelValues: ilWorkplaces[4] },
-  ];
-  
-  // Total values
-  const totalWorkplaces = Number(ilWorkplaces[5]?.Total) || 0;
-  const totalEmployees = workforceLevels.reduce((sum, level) => sum + (level.levelValues.Employee || 0), 0);
-  const totalCommuters = workforceLevels.reduce((sum, level) => sum + (level.levelValues.Commuter || 0), 0);
-  const totalOpen = workforceLevels.reduce((sum, level) => sum + (level.levelValues.Open || 0), 0);
-  
-  // Calculate workplace distribution by sector
-  const sectors: Sector[] = [
-    { name: 'City Services', key: 'Service', color: colors.sector.service },
-    { name: 'Sales', key: 'Commercial', color: colors.sector.commercial },
-    { name: 'Leisure', key: 'Leisure', color: colors.sector.leisure },
-    { name: 'Extractor', key: 'Extractor', color: colors.sector.extractor },
-    { name: 'Industrial', key: 'Industrial', color: colors.sector.industrial },
-    { name: 'Office', key: 'Office', color: colors.sector.office },
-  ];
-  
-  const sectorTotals = sectors.map(sector => {
-    // Safe way to access properties with type checking
-    const getSectorValue = (level: { levelValues: workplacesInfo }) => {
-      // Type assertion to tell TypeScript this is a valid key
-      const key = sector.key;
-      return level.levelValues[key] || 0;
-    };
-    
-    return {
-      ...sector,
-      total: workforceLevels.reduce((sum, level) => sum + getSectorValue(level), 0),
-    };
-  });
+const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({
+  levelColor,
+  levelName,
+  levelValues,
+  total,
+  isHeader = false,
+  translations,
+}) => {
+  const percent = total > 0 ? ((100 * levelValues.Total) / total).toFixed(1) + '%' : '';
+  const filledRate =
+    levelValues.Total > 0
+      ? ((100 * (levelValues.Employee + levelValues.Commuter)) / levelValues.Total).toFixed(1) + '%'
+      : '';
 
-  // Calculate distribution of workforce by sector and education level
-  const sectorEducationDistribution = sectors.map(sector => {
-    const educationBreakdown = workforceLevels.map(level => {
-      const key = sector.key;
-      return {
-        educationLevel: level.levelName,
-        count: level.levelValues[key] || 0,
-        color: level.levelColor
-      };
-    });
-
-    return {
-      ...sector,
-      educationBreakdown
-    };
-  });
-
-  // Calculate vacancy rates by education level
-  const vacancyRates = workforceLevels.map(level => {
-    const total = level.levelValues.Total || 0;
-    const open = level.levelValues.Open || 0;
-    const rate = total > 0 ? (open / total) * 100 : 0;
-
-    return {
-      level: level.levelName,
-      color: level.levelColor,
-      total,
-      open,
-      rate
-    };
-  });
-
-  // Format number for display - abbreviate large numbers
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-  };
-  
-  // Calculate percentage
-  const getPercentage = (value: number, total: number) => {
-    return total > 0 ? `${((value / total) * 100).toFixed(1)}%` : '0%';
-  };
-  
   return (
-    <Panel 
+    <div className={`labels_L7Q row_S2v ${styles.workplaceLevel}`}>
+      <div className={styles.spacer1}></div>
+      <div className={styles.levelNameContainer}>
+        {levelColor && (
+          <div
+            className={`symbol_aAH ${styles.levelSymbol}`}
+            style={{ backgroundColor: levelColor }}
+          ></div>
+        )}
+        <div>{levelName}</div>
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.totalTooltip ? (
+            <Tooltip tooltip={translations.totalTooltip} direction="down" alignment="center">
+              <span>{translations.total}</span>
+            </Tooltip>
+          ) : (
+            translations?.total
+          )
+        ) : (
+          levelValues.Total.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.percentColumn}`}>
+        {isHeader ? (
+          translations?.percentTooltip ? (
+            <Tooltip tooltip={translations.percentTooltip} direction="down" alignment="center">
+              <span>{translations.percent}</span>
+            </Tooltip>
+          ) : (
+            translations?.percent
+          )
+        ) : (
+          percent
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.serviceTooltip ? (
+            <Tooltip tooltip={translations.serviceTooltip} direction="down" alignment="center">
+              <span>{translations.service}</span>
+            </Tooltip>
+          ) : (
+            translations?.service
+          )
+        ) : (
+          levelValues.Service.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.commercialTooltip ? (
+            <Tooltip tooltip={translations.commercialTooltip} direction="down" alignment="center">
+              <span>{translations.commercial}</span>
+            </Tooltip>
+          ) : (
+            translations?.commercial
+          )
+        ) : (
+          levelValues.Commercial.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.leisureTooltip ? (
+            <Tooltip tooltip={translations.leisureTooltip} direction="down" alignment="center">
+              <span>{translations.leisure}</span>
+            </Tooltip>
+          ) : (
+            translations?.leisure
+          )
+        ) : (
+          levelValues.Leisure.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.extractorTooltip ? (
+            <Tooltip tooltip={translations.extractorTooltip} direction="down" alignment="center">
+              <span>{translations.extractor}</span>
+            </Tooltip>
+          ) : (
+            translations?.extractor
+          )
+        ) : (
+          levelValues.Extractor.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.industrialTooltip ? (
+            <Tooltip tooltip={translations.industrialTooltip} direction="down" alignment="center">
+              <span>{translations.industrial}</span>
+            </Tooltip>
+          ) : (
+            translations?.industrial
+          )
+        ) : (
+          levelValues.Industrial.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.dataColumn}`}>
+        {isHeader ? (
+          translations?.officeTooltip ? (
+            <Tooltip tooltip={translations.officeTooltip} direction="down" alignment="center">
+              <span>{translations.office}</span>
+            </Tooltip>
+          ) : (
+            translations?.office
+          )
+        ) : (
+          levelValues.Office.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.employeeColumn}`}>
+        {isHeader ? (
+          translations?.employeeTooltip ? (
+            <Tooltip tooltip={translations.employeeTooltip} direction="down" alignment="center">
+              <span>{translations.employee}</span>
+            </Tooltip>
+          ) : (
+            translations?.employee
+          )
+        ) : (
+          levelValues.Employee.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.commuterColumn}`}>
+        {isHeader ? (
+          translations?.commuterTooltip ? (
+            <Tooltip tooltip={translations.commuterTooltip} direction="down" alignment="center">
+              <span>{translations.commuter}</span>
+            </Tooltip>
+          ) : (
+            translations?.commuter
+          )
+        ) : (
+          levelValues.Commuter.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.openColumn}`}>
+        {isHeader ? (
+          translations?.openTooltip ? (
+            <Tooltip tooltip={translations.openTooltip} direction="down" alignment="center">
+              <span>{translations.open}</span>
+            </Tooltip>
+          ) : (
+            translations?.open
+          )
+        ) : (
+          levelValues.Open.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v small_ExK ${styles.percentColumn}`}>
+        {isHeader ? (
+          translations?.filledTooltip ? (
+            <Tooltip tooltip={translations.filledTooltip} direction="down" alignment="center">
+              <span>{translations.filled}</span>
+            </Tooltip>
+          ) : (
+            translations?.filled
+          )
+        ) : (
+          filledRate
+        )}
+      </div>
+    </div>
+  );
+};
+
+const StackedBar: React.FC<StackedBarProps> = ({
+  levelName,
+  levelColor,
+  levelValues,
+  total,
+  barType = 'sector',
+  translations,
+}) => {
+  if (total === 0 || levelValues.Total === 0) return null;
+
+  const sectorSegments = [
+    { label: translations.segments[0]?.label || 'Service', value: levelValues.Service, color: '#4287f5' },
+    { label: translations.segments[1]?.label || 'Commercial', value: levelValues.Commercial, color: '#f5d142' },
+    { label: translations.segments[2]?.label || 'Leisure', value: levelValues.Leisure, color: '#f542a7' },
+    { label: translations.segments[3]?.label || 'Extractor', value: levelValues.Extractor, color: '#8c42f5' },
+    { label: translations.segments[4]?.label || 'Industrial', value: levelValues.Industrial, color: '#f55142' },
+    { label: translations.segments[5]?.label || 'Office', value: levelValues.Office, color: '#42f5b3' },
+  ];
+
+  const employmentSegments = [
+    { label: translations.segments[0]?.label || 'Employee', value: levelValues.Employee, color: '#4CAF50' },
+    { label: translations.segments[1]?.label || 'Commuter', value: levelValues.Commuter, color: '#FF9800' },
+    { label: translations.segments[2]?.label || 'Open', value: levelValues.Open, color: '#F44336' },
+  ];
+
+  const segments = barType === 'employment' ? employmentSegments : sectorSegments;
+  const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
+
+  const createTooltipContent = (segment: (typeof segments)[0]) => {
+    const percentage = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
+    const totalPercentage = total > 0 ? (segment.value / total) * 100 : 0;
+
+    return (
+      <div className={styles.tooltipContent}>
+        <div className={styles.tooltipHeader}>
+          {levelName} - {segment.label}
+        </div>
+        <div className={styles.tooltipRow}>
+          <span>{translations.segmentTooltipCount || 'Count'}:</span>
+          <span>{segment.value.toLocaleString()}</span>
+        </div>
+        <div className={styles.tooltipRow}>
+          <span>{(translations.segmentTooltipWithin || 'Within {0}').replace('{0}', levelName || '')}:</span>
+          <span>{percentage.toFixed(1)}%</span>
+        </div>
+        <div className={styles.tooltipRow}>
+          <span>{translations.segmentTooltipOfTotal || 'Of Total Workplaces'}:</span>
+          <span>{totalPercentage.toFixed(1)}%</span>
+        </div>
+      </div>
+    );
+  };
+
+  const barTooltipContent = (
+    <div className={styles.tooltipContent}>
+      <div className={styles.tooltipHeader}>{(translations.barTooltipHeader || '{0} Summary').replace('{0}', levelName || '')}</div>
+      <div className={styles.tooltipRow}>
+        <span>{translations.barTooltipTotal || 'Total'}:</span>
+        <span>{levelValues.Total.toLocaleString()}</span>
+      </div>
+      <div className={styles.tooltipRow}>
+        <span>{translations.barTooltipPercentage || '% of Total Workplaces'}:</span>
+        <span>{total > 0 ? ((levelValues.Total / total) * 100).toFixed(1) : '0'}%</span>
+      </div>
+      <div className={styles.tooltipDivider}></div>
+      {segments.map((segment, index) => {
+        if (segment.value === 0) return null;
+        const percentage = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
+        return (
+          <div key={index} className={styles.tooltipRow}>
+            <span style={{ color: segment.color }}>• {segment.label}:</span>
+            <span>
+              {segment.value.toLocaleString()} ({percentage.toFixed(1)}%)
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <PanelFoldout
+      header={
+        <div className={styles.barLabel}>
+          <div className={styles.barLabelSymbol} style={{ backgroundColor: levelColor }}></div>
+          <div className={styles.barLabelText}>{levelName}</div>
+          <div className={styles.barLabelValue}>{levelValues.Total.toLocaleString()}</div>
+        </div>
+      }
+      initialExpanded={false}
+      className={styles.stackedBarContainer}
+    >
+      <Tooltip tooltip={barTooltipContent} direction="down" alignment="center">
+        <div className={styles.stackedBar}>
+          {segments.map((segment, index) => {
+            const percentage =
+              totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
+            return percentage > 0 ? (
+              <Tooltip
+                key={index}
+                tooltip={createTooltipContent(segment)}
+                direction="up"
+                alignment="center"
+              >
+                <div
+                  className={styles.barSegment}
+                  style={{
+                    width: `${percentage}%`,
+                    backgroundColor: segment.color,
+                  }}
+                />
+              </Tooltip>
+            ) : null;
+          })}
+        </div>
+      </Tooltip>
+    </PanelFoldout>
+  );
+};
+
+interface WorkplaceChartProps {
+  workplaces: workplacesInfo[];
+  chartType: 'sector' | 'employment';
+  onChartTypeChange: (type: 'sector' | 'employment') => void;
+  chartTitle: string | null;
+  toggleButton1: string | null;
+  toggleButton2: string | null;
+  legendItems: Array<{ label: string | null; color: string }>;
+  legendTooltipSuffix: string | null;
+  educationLevels: Array<{ name: string | null; color: string; data: workplacesInfo }>;
+  translations: any;
+  totalLabel: string | null;
+}
+
+const WorkplaceChart: React.FC<WorkplaceChartProps> = ({
+  workplaces,
+  chartType,
+  onChartTypeChange,
+  chartTitle,
+  toggleButton1,
+  toggleButton2,
+  legendItems,
+  legendTooltipSuffix,
+  educationLevels,
+  translations,
+  totalLabel,
+}) => {
+  return (
+    <PanelFoldout
+      header={<div className={styles.chartTitle}>{chartTitle}</div>}
+      initialExpanded={false}
+      className={styles.chartSection}
+    >
+      <div className={styles.chartToggle}>
+        <button
+          className={`${styles.toggleButton} ${chartType === 'sector' ? styles.buttonSelected : ''}`}
+          onClick={() => onChartTypeChange('sector')}
+        >
+          {toggleButton1}
+        </button>
+        <button
+          className={`${styles.toggleButton} ${chartType === 'employment' ? styles.buttonSelected : ''}`}
+          onClick={() => onChartTypeChange('employment')}
+        >
+          {toggleButton2}
+        </button>
+      </div>
+      <div className={styles.legendContainer}>
+        {legendItems.map((item, index) => (
+          <Tooltip
+            key={index}
+            tooltip={`${item.label}: ${legendTooltipSuffix}`}
+            direction="up"
+            alignment="center"
+          >
+            <div className={styles.legendItem}>
+              <div className={styles.legendSymbol} style={{ backgroundColor: item.color }}></div>
+              <span>{item.label}</span>
+            </div>
+          </Tooltip>
+        ))}
+      </div>
+      {educationLevels.map((level, index) => (
+        <StackedBar
+          key={index}
+          levelName={level.name}
+          levelColor={level.color}
+          levelValues={level.data}
+          total={workplaces[5].Total}
+          barType={chartType}
+          translations={translations}
+        />
+      ))}
+
+      <StackedBar
+        levelName={totalLabel}
+        levelColor="#FFFFFF"
+        levelValues={workplaces[5]}
+        total={workplaces[5].Total}
+        barType={chartType}
+        translations={translations}
+      />
+    </PanelFoldout>
+  );
+};
+
+const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
+  const { translate } = useLocalization();
+  const [chartType, setChartType] = useState<'sector' | 'employment'>('sector');
+  const workplaces = useValue(WorkplacesData);
+  const headers: workplacesInfo = {
+    Total: 0,
+    Service: 0,
+    Commercial: 0,
+    Leisure: 0,
+    Extractor: 0,
+    Industrial: 0,
+    Office: 0,
+    Employee: 0,
+    Commuter: 0,
+    Open: 0,
+    Name: '',
+  };
+
+  return (
+    <Panel
       draggable={true}
       onClose={onClose}
-      initialPosition={{ x: 0.71, y: 0.70 }}
+      initialPosition={{ x: 0.038, y: 0.15 }}
       className={styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>Workplaces</span>
+          <span className={styles.headerText}>{translate("InfoLoomTwo.WorkplacesPanel[Title]", "Workplaces")}</span>
         </div>
       }
     >
-      <Scrollable className={styles.scrollable}>
-        <div className={styles.container}>
-          {/* Detailed Data Table */}
-          <div className={styles.sectionTitle}>Detailed Workplace Data</div>
-          <div>
-            {/* Table Headers */}
-            <div className={styles.headerRow}>
-              <div className={styles.educationCol}>Education Level</div>
-              <div className={styles.dataCol}>Total</div>
-              <div className={styles.dataCol}>%</div>
-              <div className={styles.dataCol}>Local</div>
-              <div className={styles.dataCol}>Commuter</div>
-              <div className={styles.dataCol}>Open</div>
-            </div>
+      {workplaces.length === 0 ? (
+        <p>Waiting...</p>
+      ) : (
+        <div>
+          <div className={styles.spacingTop}></div>
+          <WorkplaceLevel 
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[HeaderItem1]", "Education")} 
+            levelValues={headers} 
+            total={0} 
+            isHeader={true}
+            translations={{
+              total: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem2]", "Total"),
+              percent: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem3]", "%"),
+              service: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem4]", "Service"),
+              commercial: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem5]", "Commercial"),
+              leisure: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem6]", "Leisure"),
+              extractor: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem7]", "Extractor"),
+              industrial: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem8]", "Industrial"),
+              office: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem9]", "Office"),
+              employee: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem10]", "Employee"),
+              commuter: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem11]", "Commuter"),
+              open: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem12]", "Open"),
+              filled: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem13]", "Filled"),
+              totalTooltip: translate("InfoLoomTwo.WorkplacesPanel[TotalTooltip]", "Total workplaces at this education level"),
+              percentTooltip: translate("InfoLoomTwo.WorkplacesPanel[PercentTooltip]", "Percentage of total workplaces"),
+              serviceTooltip: translate("InfoLoomTwo.WorkplacesPanel[ServiceTooltip]", "Service sector workplaces"),
+              commercialTooltip: translate("InfoLoomTwo.WorkplacesPanel[CommercialTooltip]", "Commercial sector workplaces"),
+              leisureTooltip: translate("InfoLoomTwo.WorkplacesPanel[LeisureTooltip]", "Leisure sector workplaces"),
+              extractorTooltip: translate("InfoLoomTwo.WorkplacesPanel[ExtractorTooltip]", "Extractor sector workplaces"),
+              industrialTooltip: translate("InfoLoomTwo.WorkplacesPanel[IndustrialTooltip]", "Industrial sector workplaces"),
+              officeTooltip: translate("InfoLoomTwo.WorkplacesPanel[OfficeTooltip]", "Office sector workplaces"),
+              employeeTooltip: translate("InfoLoomTwo.WorkplacesPanel[EmployeeTooltip]", "Workplaces filled by city residents"),
+              commuterTooltip: translate("InfoLoomTwo.WorkplacesPanel[CommuterTooltip]", "Workplaces filled by commuters from outside the city"),
+              openTooltip: translate("InfoLoomTwo.WorkplacesPanel[OpenTooltip]", "Unfilled workplace positions"),
+              filledTooltip: translate("InfoLoomTwo.WorkplacesPanel[FilledTooltip]", "Percentage of workplace positions that are filled"),
+            }}
+          />
+          <div className={styles.spacingSmall}></div>
+          <WorkplaceLevel
+            levelColor="#808080"
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row1EL]", "Uneducated")}
+            levelValues={workplaces[0]}
+            total={workplaces[5].Total}
+          />
+          <WorkplaceLevel
+            levelColor="#B09868"
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row2EL]", "Poorly Educated")}
+            levelValues={workplaces[1]}
+            total={workplaces[5].Total}
+          />
+          <WorkplaceLevel
+            levelColor="#368A2E"
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row3EL]", "Educated")}
+            levelValues={workplaces[2]}
+            total={workplaces[5].Total}
+          />
+          <WorkplaceLevel
+            levelColor="#B981C0"
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row4EL]", "Well Educated")}
+            levelValues={workplaces[3]}
+            total={workplaces[5].Total}
+          />
+          <WorkplaceLevel
+            levelColor="#5796D1"
+            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row5EL]", "Highly Educated")}
+            levelValues={workplaces[4]}
+            total={workplaces[5].Total}
+          />
+          <div className={styles.spacingSmall}></div>
+          <WorkplaceLevel levelName={translate("InfoLoomTwo.WorkplacesPanel[Row6]", "TOTAL")} levelValues={workplaces[5]} total={0} />
 
-            {/* Workplace Levels Rows */}
-            {[...workforceLevels,
-              { levelColor: undefined, levelName: 'TOTAL', levelValues: ilWorkplaces[5] }
-            ].map((level, index) => {
-              const rowClassName = level.levelName === 'TOTAL' ?
-                `${styles.workforceRow} ${styles.totalRow}` :
-                styles.workforceRow;
-
-              const percent = totalWorkplaces > 0 && typeof level.levelValues.Total === 'number'
-                ? `${((100 * level.levelValues.Total) / totalWorkplaces).toFixed(1)}%`
-                : '';
-
-              return (
-                <div key={index} className={rowClassName}>
-                  <div className={styles.educationCol}>
-                    {level.levelColor && (
-                      <div
-                        className={styles.colorBox}
-                        style={{ backgroundColor: level.levelColor }}
-                      />
-                    )}
-                    <div>{level.levelName}</div>
-                  </div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Total || 0)}</div>
-                  <div className={styles.dataCol}>{percent}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Employee || 0)}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Commuter || 0)}</div>
-                  <div className={styles.dataCol}>{formatNumber(level.levelValues.Open || 0)}</div>
-                </div>
-              );
-            })}
-          </div>
-          
-          {/* Vacancy Analysis Table */}
-          <div className={styles.sectionTitle}>Vacancy Analysis</div>
-          <div>
-            {/* Table Headers */}
-            <div className={styles.headerRow}>
-              <div className={styles.educationCol}>Education Level</div>
-              <div className={styles.dataCol}>Open Positions</div>
-              <div className={styles.dataCol}>Total Positions</div>
-              <div className={styles.dataCol}>Vacancy Rate</div>
-            </div>
-
-            {/* Vacancy Rows */}
-            {vacancyRates.map((item, index) => (
-              <div key={index} className={styles.workforceRow}>
-                <div className={styles.educationCol}>
-                  <div
-                    className={styles.colorBox}
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div>{item.level}</div>
-                </div>
-                <div className={styles.dataCol}>{formatNumber(item.open)}</div>
-                <div className={styles.dataCol}>{formatNumber(item.total)}</div>
-                <div className={styles.dataCol}>{`${item.rate.toFixed(1)}%`}</div>
-              </div>
-            ))}
-            {/* Total row for vacancies */}
-            <div className={`${styles.workforceRow} ${styles.totalRow}`}>
-              <div className={styles.educationCol}>TOTAL</div>
-              <div className={styles.dataCol}>{formatNumber(totalOpen)}</div>
-              <div className={styles.dataCol}>{formatNumber(totalWorkplaces)}</div>
-              <div className={styles.dataCol}>
-                {totalWorkplaces > 0 ? `${((totalOpen / totalWorkplaces) * 100).toFixed(1)}%` : '0%'}
-              </div>
-            </div>
-          </div>
-
-          {/* Commuter Analysis Table */}
-          <div className={styles.sectionTitle}>Commuter Analysis</div>
-          <div>
-            {/* Table Headers */}
-            <div className={styles.headerRow}>
-              <div className={styles.educationCol}>Education Level</div>
-              <div className={styles.dataCol}>Local Workers</div>
-              <div className={styles.dataCol}>Commuters</div>
-              <div className={styles.dataCol}>Commuter %</div>
-              <div className={styles.dataCol}>Total Workers</div>
-            </div>
-
-            {/* Commuter Analysis Rows */}
-            {workforceLevels.map((level, index) => {
-              const localWorkers = level.levelValues.Employee || 0;
-              const commuters = level.levelValues.Commuter || 0;
-              const totalWorkers = localWorkers + commuters;
-              const commuterPercent = totalWorkers > 0 ? (commuters / totalWorkers) * 100 : 0;
-
-              return (
-                <div key={index} className={styles.workforceRow}>
-                  <div className={styles.educationCol}>
-                    <div
-                      className={styles.colorBox}
-                      style={{ backgroundColor: level.levelColor }}
-                    />
-                    <div>{level.levelName}</div>
-                  </div>
-                  <div className={styles.dataCol}>{formatNumber(localWorkers)}</div>
-                  <div className={styles.dataCol}>{formatNumber(commuters)}</div>
-                  <div className={styles.dataCol}>{`${commuterPercent.toFixed(1)}%`}</div>
-                  <div className={styles.dataCol}>{formatNumber(totalWorkers)}</div>
-                </div>
-              );
-            })}
-            {/* Total row for commuter analysis */}
-            <div className={`${styles.workforceRow} ${styles.totalRow}`}>
-              <div className={styles.educationCol}>TOTAL</div>
-              <div className={styles.dataCol}>{formatNumber(totalEmployees)}</div>
-              <div className={styles.dataCol}>{formatNumber(totalCommuters)}</div>
-              <div className={styles.dataCol}>
-                {totalEmployees + totalCommuters > 0 ?
-                  `${((totalCommuters / (totalEmployees + totalCommuters)) * 100).toFixed(1)}%` : '0%'}
-              </div>
-              <div className={styles.dataCol}>{formatNumber(totalEmployees + totalCommuters)}</div>
-            </div>
-          </div>
+          <WorkplaceChart
+            workplaces={workplaces}
+            chartType={chartType}
+            onChartTypeChange={setChartType}
+            chartTitle={chartType === 'employment' 
+              ? translate("InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]", "Employment Status by Education Level")
+              : translate("InfoLoomTwo.WorkplacesPanel[ChartTitleSector]", "Workplace Distribution by Sector")
+            }
+            toggleButton1={translate("InfoLoomTwo.WorkplacesPanel[ToggleButton1]", "By Sector")}
+            toggleButton2={translate("InfoLoomTwo.WorkplacesPanel[ToggleButton2]", "By Employment")}
+            legendItems={chartType === 'employment' ? [
+              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]", "Employee"), color: '#4CAF50' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]", "Commuter"), color: '#FF9800' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]", "Open"), color: '#F44336' },
+            ] : [
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]", "Service"), color: '#4287f5' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]", "Commercial"), color: '#f5d142' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]", "Leisure"), color: '#f542a7' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]", "Extractor"), color: '#8c42f5' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]", "Industrial"), color: '#f55142' },
+              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]", "Office"), color: '#42f5b3' },
+            ]}
+            legendTooltipSuffix={translate("InfoLoomTwo.WorkplacesPanel[LegendTooltipSuffix]", "Click on bar segments above to see detailed breakdown")}
+            educationLevels={[
+              { name: translate("InfoLoomTwo.WorkplacesPanel[Row1EL]", "Uneducated"), color: '#808080', data: workplaces[0] },
+              { name: translate("InfoLoomTwo.WorkplacesPanel[Row2EL]", "Poorly Educated"), color: '#B09868', data: workplaces[1] },
+              { name: translate("InfoLoomTwo.WorkplacesPanel[Row3EL]", "Educated"), color: '#368A2E', data: workplaces[2] },
+              { name: translate("InfoLoomTwo.WorkplacesPanel[Row4EL]", "Well Educated"), color: '#B981C0', data: workplaces[3] },
+              { name: translate("InfoLoomTwo.WorkplacesPanel[Row5EL]", "Highly Educated"), color: '#5796D1', data: workplaces[4] },
+            ]}
+            translations={{
+              segments: chartType === 'employment' ? [
+                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]", "Employee") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]", "Commuter") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]", "Open") },
+              ] : [
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]", "Service") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]", "Commercial") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]", "Leisure") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]", "Extractor") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]", "Industrial") },
+                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]", "Office") },
+              ],
+              segmentTooltipCount: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]", "Count"),
+              segmentTooltipWithin: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]", "Within {0}"),
+              segmentTooltipOfTotal: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipOfTotal]", "Of Total Workplaces"),
+              barTooltipHeader: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]", "{0} Summary"),
+              barTooltipTotal: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipTotal]", "Total"),
+              barTooltipPercentage: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]", "% of Total Workplaces"),
+            }}
+            totalLabel={translate("InfoLoomTwo.WorkplacesPanel[Row6]", "TOTAL")}
+          />
         </div>
-      </Scrollable>
+      )}
     </Panel>
   );
 };
 
 export default Workplaces;
-

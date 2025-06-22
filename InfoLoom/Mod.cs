@@ -8,6 +8,7 @@ using HarmonyLib;
 using InfoLoomTwo.Systems;
 using System.Linq;
 using Game.UI.InGame;
+using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
@@ -22,8 +23,7 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 /*using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
 using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;*/
-using InfoLoomTwo.Systems.TradeCostData;
-using Unity.Entities;
+using InfoLoomTwo.Systems.TradeCostData; using Unity.Entities;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -33,12 +33,12 @@ namespace InfoLoomTwo
     {
         public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
-       public static Setting setting;
+       //public static Setting setting;
         public static Mod Instance { get; private set; }
      
         public static ExecutableAsset modAsset { get; private set; }    
         internal ILog Log { get; private set; }
-        public static string ID => "InfoLoomTwo";
+        public static string ID => nameof(InfoLoomTwo);
 
         // Static logger instance with custom logger name and settings
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
@@ -47,6 +47,11 @@ namespace InfoLoomTwo
         // Method that runs when the mod is loaded
         public void OnLoad(UpdateSystem updateSystem)
         {
+            
+            foreach (var item in new LocaleHelper($"{ID}.Locale.json").GetAvailableLanguages())
+            {
+                GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
+            }
             // Log entry for debugging purposes
             log.Info(nameof(OnLoad));
             Instance = this;
@@ -54,17 +59,17 @@ namespace InfoLoomTwo
             log.effectivenessLevel = Level.Debug;
 #endif
             //Try to fetch the mod asset from the mod manager
-            setting = new Setting(this);
-            if (setting == null)
+            //setting = new Setting(this);
+            //if (setting == null)
             {
-                Log.Error("Failed to initialize settings.");
-                return;
+            //    Log.Error("Failed to initialize settings.");
+            //    return;
             }
-            setting.RegisterInOptionsUI();
-           AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
+            //setting.RegisterInOptionsUI();
+           //AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
              //Load localization
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
+            //GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
 
             var harmony = new Harmony(harmonyId);
             harmony.PatchAll(typeof(Mod).Assembly);
@@ -77,7 +82,6 @@ namespace InfoLoomTwo
            
 
             // Register custom update systems for UI updates
-            
             updateSystem.UpdateAt<Demographics>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<WorkforceSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<WorkplacesSystem>(SystemUpdatePhase.GameSimulation);
@@ -98,11 +102,11 @@ namespace InfoLoomTwo
         {
             //Log entry for debugging purposes
             log.Info(nameof(OnDispose));
-            if (setting != null)
-            {
-              setting.UnregisterInOptionsUI();
-               setting = null;
-            }
+            //if (setting != null)
+           // {
+            //  setting.UnregisterInOptionsUI();
+            //   setting = null;
+           // }
 
             var harmony = new Harmony(harmonyId);
             harmony.UnpatchAll(harmonyId);

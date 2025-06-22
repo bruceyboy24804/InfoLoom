@@ -1,4 +1,4 @@
-export interface ResourceTradeCost{
+export interface ResourceTradeCost {
   Resource: string;
   ResourceIcon: string;
   BuyCost: number;
@@ -7,4 +7,3 @@ export interface ResourceTradeCost{
   ImportAmount: number;
   ExportAmount: number;
 }
-
