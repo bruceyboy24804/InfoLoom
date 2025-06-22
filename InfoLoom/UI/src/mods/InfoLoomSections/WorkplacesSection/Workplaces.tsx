@@ -285,7 +285,7 @@ const StackedBar: React.FC<StackedBarProps> = ({
           <span>{segment.value.toLocaleString()}</span>
         </div>
         <div className={styles.tooltipRow}>
-          <span>{(translations.segmentTooltipWithin || 'Within {0}').replace('{0}', levelName || '')}:</span>
+          <span>{(translations.segmentTooltipWithin || 'Within ').replace('{0}', levelName || '')}:</span>
           <span>{percentage.toFixed(1)}%</span>
         </div>
         <div className={styles.tooltipRow}>
@@ -298,7 +298,7 @@ const StackedBar: React.FC<StackedBarProps> = ({
 
   const barTooltipContent = (
     <div className={styles.tooltipContent}>
-      <div className={styles.tooltipHeader}>{(translations.barTooltipHeader || '{0} Summary').replace('{0}', levelName || '')}</div>
+      <div className={styles.tooltipHeader}>{(translations.barTooltipHeader || 'Summary').replace('{0}', levelName || '')}</div>
       <div className={styles.tooltipRow}>
         <span>{translations.barTooltipTotal || 'Total'}:</span>
         <span>{levelValues.Total.toLocaleString()}</span>
@@ -594,9 +594,9 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                 { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]", "Office") },
               ],
               segmentTooltipCount: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]", "Count"),
-              segmentTooltipWithin: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]", "Within {0}"),
+              segmentTooltipWithin: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]", "Within "),
               segmentTooltipOfTotal: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipOfTotal]", "Of Total Workplaces"),
-              barTooltipHeader: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]", "{0} Summary"),
+              barTooltipHeader: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]", "Summary"),
               barTooltipTotal: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipTotal]", "Total"),
               barTooltipPercentage: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]", "% of Total Workplaces"),
             }}

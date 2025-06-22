@@ -204,7 +204,6 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Locale\" />
 	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 	<ItemGroup>

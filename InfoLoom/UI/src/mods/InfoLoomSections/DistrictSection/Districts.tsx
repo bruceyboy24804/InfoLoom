@@ -374,7 +374,7 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
   return (
     <div className={styles.row}>
       <div className={styles.nameColumn}>{getDisplayName(data.name, translate)}</div>
-      <Tooltip tooltip={(translate("InfoLoomTwo.DistrictPanel[HouseholdsMaxTooltip]", "max households: {0}") || "max households: {0}").replace("{0}", formatNumber(data.maxHouseholds))}>
+      <Tooltip tooltip={(translate("InfoLoomTwo.DistrictPanel[HouseholdsMaxTooltip]", "max households: ") || "max households: ").replace("{0}", formatNumber(data.maxHouseholds))}>
         <div className={styles.householdColumn}>
           <div className={styles.householdCountText}>{formatNumber(data.householdCount)}</div>
         </div>
