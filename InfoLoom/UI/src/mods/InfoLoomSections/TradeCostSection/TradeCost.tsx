@@ -150,7 +150,7 @@ const ResourceLine: FC<ResourceLineProps> = ({ data, translations }) => {
           <span className={profitMarginClass}>{profitMargin.toFixed(2)}%</span>
         </Tooltip>
       </div>
-      <div className={styles.cell} style={{ width: '10%' }}>
+      <div className={styles.cell} style={{ width: '15%' }}>
         <Tooltip 
           tooltip={translations.importAmountTooltip}
           direction="up"
@@ -159,7 +159,7 @@ const ResourceLine: FC<ResourceLineProps> = ({ data, translations }) => {
           <span>{importPerTon.toFixed(2)} /t</span>
         </Tooltip>
       </div>
-      <div className={styles.cell} style={{ width: '10%' }}>
+      <div className={styles.cell} style={{ width: '15%' }}>
         <Tooltip 
           tooltip={translations.exportAmountTooltip}
           direction="up"
@@ -323,7 +323,7 @@ const TableHeader: FC<TableHeaderProps> = ({ sortingStates, translations }) => {
           }}
         />
       </div>
-      <div className={styles.headerCell} style={{ width: '10%' }}>
+      <div className={styles.headerCell} style={{ width: '15%' }}>
         <SortableHeader
           title={translations.importAmountHeader || "Import Amount"}
           sortState={sortingStates.ImportAmount}
@@ -335,7 +335,7 @@ const TableHeader: FC<TableHeaderProps> = ({ sortingStates, translations }) => {
           }}
         />
       </div>
-      <div className={styles.headerCell} style={{ width: '10%' }}>
+      <div className={styles.headerCell} style={{ width: '15%' }}>
         <SortableHeader
           title={translations.exportAmountHeader || "Export Amount"}
           sortState={sortingStates.ExportAmount}

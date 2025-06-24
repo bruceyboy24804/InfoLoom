@@ -16,46 +16,15 @@
 	  <Compile Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <EmbeddedResource Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
 	  <None Remove="UI\src\mods\InfoLoomSections\DistrictsSection\**" />
-	  <Compile Remove="Systems\CommercialSystems\CommercialDemandPatch\ModifiedCommercialDemandSystem.cs" />
-	  <Compile Remove="Systems\HouseholdData\HouseholdDataSystem.cs" />
-	  <Compile Remove="Systems\HouseholdData\HouseholdCountByDistrictSystem.cs" />
 	  <Compile Remove="Systems\BuildingDemandData\**" />
 	  <EmbeddedResource Remove="Systems\BuildingDemandData\**" />
 	  <None Remove="Systems\BuildingDemandData\**" />
-	  <Compile Remove="Systems\CommercialSystems\CommercialProductData\CommercialProductsUISystem.cs" />
-	  <Compile Remove="Systems\DemographicsData\DemographicsUISystem.cs" />
-	  <Compile Remove="Systems\DistrictData\DistrictDataUISystem.cs" />
-	  <Compile Remove="Systems\IndustrialSystems\IndustrialDemandData\IndustrialUISystem.cs" />
-	  <Compile Remove="Systems\IndustrialSystems\IndustrialProductData\IndustrialProductsUISystem.cs" />
-	  <Compile Remove="Systems\ResidentialData\ResidentialUISystem.cs" />
-	  <Compile Remove="Systems\TradeCostData\TradeCostUISystem.cs" />
-	  <Compile Remove="Systems\WorkforceData\WorkforceUISystem.cs" />
-	  <Compile Remove="Systems\WorkplacesData\WorkplacesUISystem.cs" />
 	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <Compile Remove="Systems\DistrictData\EmployeesDataSystem.cs" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <Compile Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
-	  <EmbeddedResource Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
-	  <None Remove="Systems\ResidentialData\ResidentialHouseholdData\**" />
-	  <Compile Remove="UI\src\mods\components\Pagination\**" />
-	  <EmbeddedResource Remove="UI\src\mods\components\Pagination\**" />
-	  <None Remove="UI\src\mods\components\Pagination\**" />
 	  <Compile Remove="Setting.cs" />
-	  <None Include="UI\src\mods\bindings.ts" />
-	  <Compile Remove="Systems\TouristInfo\TouristInfoSection.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
 	  <Compile Remove="Systems\CommercialSystems\CommercialDemandPatch\CommercialDemendPatch.cs" />
-	  <Compile Remove="Systems\DistrictInfoLoomUISystem.cs" />
-	  <Compile Remove="Systems\ModifierDataUISystem.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="Setting.cs~RF27a28093.TMP" />
@@ -205,12 +174,21 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Systems\TouristInfo\" />
 	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Content Include="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\ResidentialHousehold.module.scss" />
 	</ItemGroup>
+	<ItemGroup>
+        <EmbeddedResource Include="Locale.json" />
+        <EmbeddedResource Include="Locale\*.json" />
+        <None Remove="Locale.json" />
+        <None Remove="Locale\*.json" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Locale\" />
+    </ItemGroup>
 	<Target Name="InstallUI" AfterTargets="AfterBuild">
 		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
 	</Target>

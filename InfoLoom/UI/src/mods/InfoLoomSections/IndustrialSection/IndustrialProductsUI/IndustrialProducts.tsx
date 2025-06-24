@@ -256,14 +256,14 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
     return (
       <div className={styles.headerRow}>
         <div className={styles.headerCell} style={{ width: '3%' }}></div>
-        <div className={styles.headerCell} style={{ width: '15%' }}>
+        <div className={styles.headerCell} style={{ width: '10%' }}>
           <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[ResourceTooltip]", "Resource type being produced")}>
             <span>{translate("InfoLoomTwo.IndustrialProductsPanel[Resource]", "Resource")}</span>
           </Tooltip>
         </div>
         <div
           className={styles.headerCell}
-          style={{ width: '6%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          style={{ width: '10%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
           <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[ResourceDemandTooltip]", "Total demand for this resource from all sources (city services, population, companies)")}>
             <div style={{ textAlign: 'center' }}>
@@ -274,7 +274,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
         </div>
         <div
           className={styles.headerCell}
-          style={{ width: '4%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          style={{ width: '10%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
         >
           <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[BuildingDemandTooltip]", "Building demand percentage (0-100%) based on company demand, workforce, taxes, and local market conditions")}>
             <div style={{ textAlign: 'center' }}>
@@ -293,7 +293,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
             <span>{translate("InfoLoomTwo.IndustrialProductsPanel[Num]", "Num")}</span>
           </Tooltip>
         </div>
-        <div className={styles.headerCell} style={{ width: '12%' }}>
+        <div className={styles.headerCell} style={{ width: '10%' }}>
           <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[StorageTooltip]", "Number of storage facilities available for this resource")}>
             <span>{translate("InfoLoomTwo.IndustrialProductsPanel[Storage]", "Storage")}</span>
           </Tooltip>
@@ -335,14 +335,14 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
     return (
       <div className={styles.row_S2v}>
         <div className={styles.cell} style={{ width: '3%' }}></div>
-        <div className={styles.cell} style={{ width: '15%', justifyContent: 'flex-start' }}>
+        <div className={styles.cell} style={{ width: '10%', justifyContent: 'flex-start' }}>
           <Icon src={data.ResourceIcon} />
           <span>{formattedResourceName}</span>
         </div>
         <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[ResourceDemandValueTooltip]", "Total resource demand from all consumers including city services, population, and industrial processes")}>
           <div
             className={`${styles.cell} ${data.Demand < 0 ? styles.negative_YWY : ''}`}
-            style={{ width: '6%' }}
+            style={{ width: '10%' }}
           >
             {data.Demand}
           </div>
@@ -350,7 +350,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
         <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[BuildingDemandValueTooltip]", "Building demand calculated from workforce availability, tax rates, local demand, and input costs. Higher values indicate stronger demand for new buildings.")}>
           <div
             className={`${styles.cell} ${data.Building <= 0 ? styles.negative_YWY : ''}`}
-            style={{ width: '4%' }}
+            style={{ width: '10%' }}
           >
             {data.Building}
           </div>
@@ -369,7 +369,7 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
           </div>
         </Tooltip>
         <Tooltip tooltip={translate("InfoLoomTwo.IndustrialProductsPanel[StorageValueTooltip]", "Number of storage facilities for this resource")}>
-          <div className={styles.cell} style={{ width: '12%' }}>
+          <div className={styles.cell} style={{ width: '10%' }}>
             {data.SvcPercent}
           </div>
         </Tooltip>

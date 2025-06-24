@@ -304,7 +304,7 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
   const uneducatedTooltip = translate("InfoLoomTwo.CommercialDemandPanel[UneducatedWorkforceTooltip]", "Number of uneducated citizens available for work.");
   const noDemandForLabel = translate("InfoLoomTwo.CommercialDemandPanel[NoDemandFor]", "NO DEMAND FOR");
   const excludedResourcesTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ExcludedResourcesTooltip]", "Resources that currently have no commercial demand in your city. This may be due to oversupply, lack of customers, or economic factors.");
-
+  
   return (
     <Panel
       draggable
