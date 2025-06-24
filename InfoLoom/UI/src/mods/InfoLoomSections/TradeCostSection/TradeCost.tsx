@@ -638,7 +638,7 @@ const $TradeCosts: FC<DraggablePanelProps> = ({ onClose, initialPosition, ...pro
                       alignment="center"
                     >
                       <Button onClick={() => setView('table')} className={styles.backButton}>
-                        {translate("InfoLoomTwo.TradeCostsPanel[BackButton]", "← Back to Table")}
+                        {translate("InfoLoomTwo.TradeCostsPanel[BackButton]", "Back to Table")}
                       </Button>
                     </Tooltip>
                   </div>

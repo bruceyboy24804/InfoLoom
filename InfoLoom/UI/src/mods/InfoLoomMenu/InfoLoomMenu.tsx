@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { Button, FloatingButton, Tooltip, Icon } from "cs2/ui";
-import icon from "images/infoloom.svg";
+import icon from "images/Statistics.svg";
 import styles from "./InfoLoomMenu.module.scss";
 import Demographics from "mods/InfoLoomSections/DemographicsSection/Demographics";
 import Workforce from "mods/InfoLoomSections/WorkforceSection/Workforce";

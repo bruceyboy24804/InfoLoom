@@ -1,4 +1,5 @@
 ﻿
+using System;
 using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
@@ -48,7 +49,7 @@ namespace InfoLoomTwo
         public void OnLoad(UpdateSystem updateSystem)
         {
             
-            foreach (var item in new LocaleHelper($"{ID}.Locale.json").GetAvailableLanguages())
+            foreach (var item in new LocaleHelper("InfoLoomTwo.Locale.json").GetAvailableLanguages())
             {
                 GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
             }
@@ -95,8 +96,9 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
+            
+            
         }
-        
         // Method that runs when the mod is disposed of
         public void OnDispose()
         {

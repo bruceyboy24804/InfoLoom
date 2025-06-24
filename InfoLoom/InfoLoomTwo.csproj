@@ -49,6 +49,7 @@
 	  <None Remove="UI\src\mods\components\Pagination\**" />
 	  <Compile Remove="Setting.cs" />
 	  <None Include="UI\src\mods\bindings.ts" />
+	  <Compile Remove="Systems\TouristInfo\TouristInfoSection.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -204,6 +205,7 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Folder Include="Systems\TouristInfo\" />
 	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 	<ItemGroup>

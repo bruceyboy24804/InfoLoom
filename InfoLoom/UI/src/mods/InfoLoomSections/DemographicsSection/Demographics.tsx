@@ -223,6 +223,7 @@ const DemographicsChart = memo(({
   StructureDetails,
   groupingStrategy,
   legendLabels,
+  lifecycleLabels, // <-- add this prop
 }: {
   StructureDetails: populationAtAge[];
   groupingStrategy: GroupingStrategy;
@@ -235,6 +236,7 @@ const DemographicsChart = memo(({
     retired: string;
     unemployed: string;
   };
+  lifecycleLabels?: string[]; // <-- add this prop
 }): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -355,7 +357,11 @@ const DemographicsChart = memo(({
         }
       });
 
-      labels = groups.map(g => g.label);
+      // Use translated labels if provided
+      labels = lifecycleLabels && lifecycleLabels.length === groups.length
+        ? lifecycleLabels
+        : groups.map(g => g.label);
+
       datasets = [
         { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
         { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
@@ -395,7 +401,7 @@ const DemographicsChart = memo(({
           groups[idx].Retired += d.Retired;
         }
       });
-      
+
       labels = groups.map(g => g.label);
       datasets = [
         { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
@@ -412,7 +418,7 @@ const DemographicsChart = memo(({
       labels,
       datasets
     };
-  }, [StructureDetails, groupingStrategy, legendLabels]);
+  }, [StructureDetails, groupingStrategy, legendLabels, lifecycleLabels]);
 
   // Initialize chart ONLY ONCE - based on TradeCost.tsx pattern
   useEffect(() => {
@@ -680,6 +686,14 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
   const demoGroupingStrategy = useValue(DemoGroupingStrategy);
 
+  // Prepare translated lifecycle group labels, fallback to English if translation is null
+  const lifecycleLabels = [
+    translate('InfoLoomTwo.DemographicsPanel[YAxisItem1]', 'Child') || 'Child',
+    translate('InfoLoomTwo.DemographicsPanel[YAxisItem2]', 'Teen') || 'Teen',
+    translate('InfoLoomTwo.DemographicsPanel[YAxisItem3]', 'Adult') || 'Adult',
+    translate('InfoLoomTwo.DemographicsPanel[YAxisItem4]', 'Elderly') || 'Elderly',
+  ];
+
   return (
       <Panel
           draggable
@@ -803,6 +817,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                     retired: translate('InfoLoomTwo.DemographicsPanel[LegendItem6]', 'Retired') || 'Retired',
                     unemployed: translate('InfoLoomTwo.DemographicsPanel[LegendItem7]', 'Unemployed') || 'Unemployed',
                   }}
+                  lifecycleLabels={lifecycleLabels}
               />
             </div>
           </Scrollable>

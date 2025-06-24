@@ -78,71 +78,72 @@ const focusEntity = (e: Entity) => {
 
 interface EfficiencyTooltipProps {
   company: CommercialCompanyDebug;
+  translate: (key: string, fallback: string) => string | null;
 }
 
-const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company }) => {
-  const getFactorName = (factor: EfficiencyFactorEnum): string => {
+const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) => {
+  const getFactorName = (factor: EfficiencyFactorEnum): string | null => {
     switch (factor) {
       case EfficiencyFactorEnum.Destroyed:
-        return 'Destroyed';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDestroyed]", "Destroyed");
       case EfficiencyFactorEnum.Abandoned:
-        return 'Abandoned';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyAbandoned]", "Abandoned");
       case EfficiencyFactorEnum.Disabled:
-        return 'Disabled';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDisabled]", "Disabled");
       case EfficiencyFactorEnum.Fire:
-        return 'Fire';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyFire]", "Fire");
       case EfficiencyFactorEnum.ServiceBudget:
-        return 'Service Budget';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyServiceBudget]", "Service Budget");
       case EfficiencyFactorEnum.NotEnoughEmployees:
-        return 'Not Enough Employees';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNotEnoughEmployees]", "Not Enough Employees");
       case EfficiencyFactorEnum.SickEmployees:
-        return 'Sick Employees';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySickEmployees]", "Sick Employees");
       case EfficiencyFactorEnum.EmployeeHappiness:
-        return 'Employee Happiness';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyEmployeeHappiness]", "Employee Happiness");
       case EfficiencyFactorEnum.ElectricitySupply:
-        return 'Electricity Supply';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricitySupply]", "Lack of electricity");
       case EfficiencyFactorEnum.ElectricityFee:
-        return 'Electricity Fee';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricityFee]", "Electricity fee");
       case EfficiencyFactorEnum.WaterSupply:
-        return 'Water Supply';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterSupply]", "Lack of water");
       case EfficiencyFactorEnum.DirtyWater:
-        return 'Dirty Water';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDirtyWater]", "Polluted water");
       case EfficiencyFactorEnum.SewageHandling:
-        return 'Sewage Handling';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySewageHandling]", "Backed up sewer");
       case EfficiencyFactorEnum.WaterFee:
-        return 'Water Fee';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterFee]", "Water fee");
       case EfficiencyFactorEnum.Garbage:
-        return 'Garbage';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyGarbage]", "Piled up garbage");
       case EfficiencyFactorEnum.Telecom:
-        return 'Telecommunications';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyTelecom]", "Network Quality");
       case EfficiencyFactorEnum.Mail:
-        return 'Mail';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMail]", "Mail Handling");
       case EfficiencyFactorEnum.MaterialSupply:
-        return 'Material Supply';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMaterialSupply]", "Lack of resources");
       case EfficiencyFactorEnum.WindSpeed:
-        return 'Wind Speed';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWindSpeed]", "Low wind speed");
       case EfficiencyFactorEnum.WaterDepth:
-        return 'Water Depth';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterDepth]", "Low water depth");
       case EfficiencyFactorEnum.SunIntensity:
-        return 'Sun Intensity';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySunIntensity]", "Lack of sunlight");
       case EfficiencyFactorEnum.NaturalResources:
-        return 'Natural Resources';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNaturalResources]", "Natural Resources");
       case EfficiencyFactorEnum.CityModifierSoftware:
-        return 'City Modifier: Software';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierSoftware]", "City Effect");
       case EfficiencyFactorEnum.CityModifierElectronics:
-        return 'City Modifier: Electronics';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierElectronics]", "City Effect");
       case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
-        return 'Industrial Efficiency';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierIndustrial]", "Industrial Efficiency");
       case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
-        return 'Office Efficiency';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierOffice]", "Office Efficiency");
       case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
-        return 'Hospital Efficiency';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierHospital]", "Hospital Efficiency");
       case EfficiencyFactorEnum.SpecializationBonus:
-        return 'Specialization Bonus';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySpecializationBonus]", "City Production Specialization");
       case EfficiencyFactorEnum.Count:
-        return 'Count';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCount]", "Count");
       default:
-        return 'Unknown Factor';
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyUnknown]", "Unknown Factor");
     }
   };
 
@@ -309,7 +310,7 @@ interface CompanyRowProps {
 // Memoize the CompanyRow component to prevent re-renders when props haven't changed
 const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
   const totalEfficiency = company.TotalEfficiency;
-  
+  const { translate } = useLocalization();
   // Calculate service usage (inverted from availability)
   const serviceUsagePercentage =
     company.MaxService > 0 ? 1 - company.ServiceAvailable / company.MaxService : 0;
@@ -377,9 +378,9 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
           )}
         </div>
       </Tooltip>
-
+          
       {/* Efficiency Column */}
-      <Tooltip tooltip={<EfficiencyTooltip company={company} />}>
+      <Tooltip tooltip={<EfficiencyTooltip company={company} translate={translate} />}>
         <div className={styles.efficiencyColumn}>
           <span className={getEfficiencyClass(totalEfficiency)}>
             {formatPercentage2(totalEfficiency)}

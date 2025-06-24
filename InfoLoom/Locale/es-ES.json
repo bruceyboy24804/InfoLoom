@@ -496,4 +496,5 @@
    "InfoLoomTwo.DemandPanel[PoorZoneLocation]": "Zona poco atractiva",
    "InfoLoomTwo.DemandPanel[PoorZoneLocationTooltip]": "Las zonas poco atractivas reducen la demanda de desarrollo.",
    "InfoLoomTwo.DemandPanel[FactorWeightTooltip]": "Cuanto mayor sea el número, más influencia tendrá este factor en la demanda."
+   
 }

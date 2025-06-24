@@ -87,62 +87,62 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) =
   // Helper function to get readable factor name from enum value with translation
   const getFactorName = (factor: EfficiencyFactorEnum): string => {
     switch (factor) {
-      case EfficiencyFactorEnum.Destroyed:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDestroyed]", "Destroyed") || "Destroyed";
-      case EfficiencyFactorEnum.Abandoned:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyAbandoned]", "Abandoned") || "Abandoned";
-      case EfficiencyFactorEnum.Disabled:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDisabled]", "Disabled") || "Disabled";
-      case EfficiencyFactorEnum.Fire:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyFire]", "Fire") || "Fire";
-      case EfficiencyFactorEnum.ServiceBudget:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyServiceBudget]", "Service Budget") || "Service Budget";
-      case EfficiencyFactorEnum.NotEnoughEmployees:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNotEnoughEmployees]", "Not Enough Employees") || "Not Enough Employees";
-      case EfficiencyFactorEnum.SickEmployees:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySickEmployees]", "Sick Employees") || "Sick Employees";
-      case EfficiencyFactorEnum.EmployeeHappiness:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyEmployeeHappiness]", "Employee Happiness") || "Employee Happiness";
-      case EfficiencyFactorEnum.ElectricitySupply:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricitySupply]", "Electricity Supply") || "Electricity Supply";
-      case EfficiencyFactorEnum.ElectricityFee:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricityFee]", "Electricity Fee") || "Electricity Fee";
-      case EfficiencyFactorEnum.WaterSupply:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterSupply]", "Water Supply") || "Water Supply";
-      case EfficiencyFactorEnum.DirtyWater:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDirtyWater]", "Dirty Water") || "Dirty Water";
-      case EfficiencyFactorEnum.SewageHandling:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySewageHandling]", "Sewage Handling") || "Sewage Handling";
-      case EfficiencyFactorEnum.WaterFee:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterFee]", "Water Fee") || "Water Fee";
-      case EfficiencyFactorEnum.Garbage:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyGarbage]", "Garbage") || "Garbage";
-      case EfficiencyFactorEnum.Telecom:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyTelecom]", "Telecommunications") || "Telecommunications";
-      case EfficiencyFactorEnum.Mail:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMail]", "Mail") || "Mail";
-      case EfficiencyFactorEnum.MaterialSupply:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMaterialSupply]", "Material Supply") || "Material Supply";
-      case EfficiencyFactorEnum.WindSpeed:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWindSpeed]", "Wind Speed") || "Wind Speed";
-      case EfficiencyFactorEnum.WaterDepth:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterDepth]", "Water Depth") || "Water Depth";
-      case EfficiencyFactorEnum.SunIntensity:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySunIntensity]", "Sun Intensity") || "Sun Intensity";
-      case EfficiencyFactorEnum.NaturalResources:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNaturalResources]", "Natural Resources") || "Natural Resources";
-      case EfficiencyFactorEnum.CityModifierSoftware:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierSoftware]", "City Modifier: Software") || "City Modifier: Software";
-      case EfficiencyFactorEnum.CityModifierElectronics:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierElectronics]", "City Modifier: Electronics") || "City Modifier: Electronics";
-      case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierIndustrial]", "Industrial Efficiency") || "Industrial Efficiency";
-      case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierOffice]", "Office Efficiency") || "Office Efficiency";
-      case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierHospital]", "Hospital Efficiency") || "Hospital Efficiency";
-      case EfficiencyFactorEnum.SpecializationBonus:
-        return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySpecializationBonus]", "Specialization Bonus") || "Specialization Bonus";
+  case EfficiencyFactorEnum.Destroyed:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDestroyed]", "Destroyed") || "Destroyed";
+  case EfficiencyFactorEnum.Abandoned:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyAbandoned]", "Abandoned") || "Abandoned";
+  case EfficiencyFactorEnum.Disabled:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDisabled]", "Disabled") || "Disabled";
+  case EfficiencyFactorEnum.Fire:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyFire]", "Fire") || "Fire";
+  case EfficiencyFactorEnum.ServiceBudget:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyServiceBudget]", "Service Budget") || "Service Budget";
+  case EfficiencyFactorEnum.NotEnoughEmployees:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNotEnoughEmployees]", "Not Enough Employees") || "Not Enough Employees";
+  case EfficiencyFactorEnum.SickEmployees:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySickEmployees]", "Sick Employees") || "Sick Employees";
+  case EfficiencyFactorEnum.EmployeeHappiness:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyEmployeeHappiness]", "Employee Happiness") || "Employee Happiness";
+  case EfficiencyFactorEnum.ElectricitySupply:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricitySupply]", "Lack of electricity") || "Lack of electricity";
+  case EfficiencyFactorEnum.ElectricityFee:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricityFee]", "Electricity fee") || "Electricity fee";
+  case EfficiencyFactorEnum.WaterSupply:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterSupply]", "Lack of water") || "Lack of water";
+  case EfficiencyFactorEnum.DirtyWater:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDirtyWater]", "Polluted water") || "Polluted water";
+  case EfficiencyFactorEnum.SewageHandling:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySewageHandling]", "Backed up sewer") || "Backed up sewer";
+  case EfficiencyFactorEnum.WaterFee:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterFee]", "Water fee") || "Water fee";
+  case EfficiencyFactorEnum.Garbage:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyGarbage]", "Piled up garbage") || "Piled up garbage";
+  case EfficiencyFactorEnum.Telecom:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyTelecom]", "Network Quality") || "Network Quality";
+  case EfficiencyFactorEnum.Mail:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMail]", "Mail Handling") || "Mail Handling";
+  case EfficiencyFactorEnum.MaterialSupply:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMaterialSupply]", "Lack of resources") || "Lack of resources";
+  case EfficiencyFactorEnum.WindSpeed:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWindSpeed]", "Low wind speed") || "Low wind speed";
+  case EfficiencyFactorEnum.WaterDepth:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterDepth]", "Low water depth") || "Low water depth";
+  case EfficiencyFactorEnum.SunIntensity:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySunIntensity]", "Lack of sunlight") || "Lack of sunlight";
+  case EfficiencyFactorEnum.NaturalResources:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNaturalResources]", "Natural Resources") || "Natural Resources";
+  case EfficiencyFactorEnum.CityModifierSoftware:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierSoftware]", "City Effect") || "City Effect";
+  case EfficiencyFactorEnum.CityModifierElectronics:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierElectronics]", "City Effect") || "City Effect";
+  case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierIndustrial]", "Industrial Efficiency") || "Industrial Efficiency";
+  case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierOffice]", "Office Efficiency") || "Office Efficiency";
+  case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierHospital]", "Hospital Efficiency") || "Hospital Efficiency";
+  case EfficiencyFactorEnum.SpecializationBonus:
+    return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencySpecializationBonus]", "City Production Specialization") || "City Production Specialization";
       case EfficiencyFactorEnum.Count:
         return translate("InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCount]", "Count") || "Count";
       default:

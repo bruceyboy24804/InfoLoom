@@ -8,97 +8,86 @@ using Game.SceneFlow;
 namespace InfoLoomTwo.Extensions
 {
     public class LocaleHelper
-    {
-        private readonly Dictionary<string, Dictionary<string, string>> _locale;
+	{
+		private readonly Dictionary<string, Dictionary<string, string>> _locale;
 
-        public LocaleHelper(string dictionaryResourceName)
-        {
-            var assembly = GetType().Assembly;
+		public LocaleHelper(string dictionaryResourceName)
+		{
+			var assembly = GetType().Assembly;
 
-            _locale = new Dictionary<string, Dictionary<string, string>>
-            {
-                [string.Empty] = GetDictionary(dictionaryResourceName),
-            };
+			_locale = new Dictionary<string, Dictionary<string, string>>
+			{
+				[string.Empty] = GetDictionary(dictionaryResourceName)
+			};
 
-            foreach (var name in assembly.GetManifestResourceNames())
-            {
-                if (
-                    name == dictionaryResourceName
-                    || !name.Contains(
-                        Path.GetFileNameWithoutExtension(dictionaryResourceName) + "."
-                    )
-                )
-                {
-                    continue;
-                }
+			foreach (var name in assembly.GetManifestResourceNames())
+			{
+				if (name == dictionaryResourceName || !name.Contains(Path.GetFileNameWithoutExtension(dictionaryResourceName) + "."))
+				{
+					continue;
+				}
 
-                var key = Path.GetFileNameWithoutExtension(name);
+				var key = Path.GetFileNameWithoutExtension(name);
 
-                _locale[key.Substring(key.LastIndexOf('.') + 1)] = GetDictionary(name);
-            }
+				_locale[key.Substring(key.LastIndexOf('.') + 1)] = GetDictionary(name);
+			}
 
-            Dictionary<string, string> GetDictionary(string resourceName)
-            {
-                using var resourceStream = assembly.GetManifestResourceStream(resourceName);
-                if (resourceStream == null)
-                {
-                    return new Dictionary<string, string>();
-                }
+			Dictionary<string, string> GetDictionary(string resourceName)
+			{
+				using var resourceStream = assembly.GetManifestResourceStream(resourceName);
+				if (resourceStream == null)
+				{
+					return new Dictionary<string, string>();
+				}
 
-                using var reader = new StreamReader(resourceStream, Encoding.UTF8);
-                JSON.MakeInto<Dictionary<string, string>>(
-                    JSON.Load(reader.ReadToEnd()),
-                    out var dictionary
-                );
+				using var reader = new StreamReader(resourceStream, Encoding.UTF8);
+				JSON.MakeInto<Dictionary<string, string>>(JSON.Load(reader.ReadToEnd()), out var dictionary);
 
-                return dictionary;
-            }
-        }
+				return dictionary;
+			}
+		}
 
-        public static string Translate(string id, string fallback = null)
-        {
-            if (
-                GameManager.instance.localizationManager.activeDictionary.TryGetValue(
-                    id,
-                    out var result
-                )
-            )
-            {
-                return result;
-            }
+		public static string? Translate(string? id, string? fallback = null)
+		{
+			if (id is not null && GameManager.instance.localizationManager.activeDictionary.TryGetValue(id, out var result))
+			{
+				return result;
+			}
 
-            return fallback ?? id;
-        }
+			return fallback ?? id;
+		}
 
-        public IEnumerable<DictionarySource> GetAvailableLanguages()
-        {
-            foreach (var item in _locale)
-            {
-                yield return new DictionarySource(item.Key is "" ? "en-US" : item.Key, item.Value);
-            }
-        }
+		internal static string? GetTooltip(string key)
+		{
+			return Translate($"Tooltip.LABEL[{Mod.ID}.{key}]");
+		}
 
-        public class DictionarySource : IDictionarySource
-        {
-            private readonly Dictionary<string, string> _dictionary;
+		public IEnumerable<DictionarySource> GetAvailableLanguages()
+		{
+			foreach (var item in _locale)
+			{
+				yield return new DictionarySource(item.Key is "" ? "en-US" : item.Key, item.Value);
+			}
+		}
 
-            public DictionarySource(string localeId, Dictionary<string, string> dictionary)
-            {
-                LocaleId = localeId;
-                _dictionary = dictionary;
-            }
+		public class DictionarySource : IDictionarySource
+		{
+			private readonly Dictionary<string, string> _dictionary;
 
-            public string LocaleId { get; }
+			public DictionarySource(string localeId, Dictionary<string, string> dictionary)
+			{
+				LocaleId = localeId;
+				_dictionary = dictionary;
+			}
 
-            public IEnumerable<KeyValuePair<string, string>> ReadEntries(
-                IList<IDictionaryEntryError> errors,
-                Dictionary<string, int> indexCounts
-            )
-            {
-                return _dictionary;
-            }
+			public string LocaleId { get; }
 
-            public void Unload() { }
-        }
-    }
+			public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
+			{
+				return _dictionary;
+			}
+
+			public void Unload() { }
+		}
+	}
 }
