@@ -318,6 +318,7 @@ export const ResourceNameSorting = bindValue<ResourceNameEnum>(
 export const SetResourceNameSorting = (sorting: ResourceNameEnum) =>
   trigger(mod.id, 'SetResourceName', sorting);
 
-//TrafficAndCimData
-//export const TrafficAndCimDataOpen = bindValue<boolean>(mod.id, "TrafficDataVisible", false);
-//export const SetTrafficAndCimDataOpen = (open: boolean) => trigger(mod.id, "TrafficDataVisible", open);
+
+export const HistoricalData = bindValue<number[]>(mod.id, 'ResourceHistoricalData', []);
+export const SetHistoricalData = (resourceName: string) => trigger(mod.id, 'GetResourceHistoricalData', resourceName);
+

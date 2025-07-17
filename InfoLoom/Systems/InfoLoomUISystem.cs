@@ -102,7 +102,7 @@ namespace InfoLoomTwo.Systems
         private IndustrialProductsSystem m_IndustrialProductsSystem;
         private IndustrialCompanySystem m_IndustrialCompanySystem;
         private ResidentialSystem m_ResidentialSystem;
-        private TradeCostSystem m_TradeCostSystem;
+        private TradeCostsSystem m_TradeCostSystem;
         private WorkforceSystem m_WorkforceSystem;
         private WorkplacesSystem m_WorkplacesSystem;
         
@@ -113,7 +113,7 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<string[]> m_ExcludedResourcesBinding;
         private ValueBindingHelper<int[]> m_CommercialBinding;
         //CommercialProductsDataUI
-        private ValueBindingHelper<CommercialProductDTO[]> m_CommercialProductBinding;
+        private ValueBindingHelper<CommercialProductsData[]> m_CommercialProductBinding;
         //CommercialCompanyDebugDataUI
         private ValueBindingHelper<CommercialCompanyDTO[]> m_uiDebugData;
         private ValueBinding<bool> _cCDPVBinding;
@@ -148,7 +148,7 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<string[]> m_IndustrialExcludedResourcesBinding;
         private ValueBindingHelper<int[]> m_IndustrialBinding;
         //IndustrialProductsDataUI
-        private ValueBindingHelper<IndustrialProductDTO[]> m_IndustrialProductBinding;
+        private ValueBindingHelper<IndustrialProductsData[]> m_IndustrialProductBinding;
         //IndustrialCompanyDebugDataUI
         private ValueBindingHelper<IndustrialCompanyDTO[]> m_uiDebugData2;
         private ValueBinding<bool> _iCDVBinding;
@@ -183,6 +183,9 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<WorkforcesInfo[]> m_WorkforcesBinder;
         //WorkplacesUI
         private ValueBindingHelper<WorkplacesInfo[]> m_WorkplacesBinder;
+        
+        //Historical data
+        private ValueBindingHelper<List<float>> m_ResourceHistoricalDataBinding;
 
         // Panel 
         private ValueBinding<bool> _panelVisibleBinding;
@@ -227,7 +230,7 @@ namespace InfoLoomTwo.Systems
             m_IndustrialSystem = base.World.GetOrCreateSystemManaged<IndustrialSystem>();
             m_IndustrialProductsSystem = base.World.GetOrCreateSystemManaged<IndustrialProductsSystem>();
             m_ResidentialSystem = base.World.GetOrCreateSystemManaged<ResidentialSystem>();
-            m_TradeCostSystem = base.World.GetOrCreateSystemManaged<TradeCostSystem>();
+            m_TradeCostSystem = base.World.GetOrCreateSystemManaged<TradeCostsSystem>();
             m_WorkforceSystem = base.World.GetOrCreateSystemManaged<WorkforceSystem>();
             m_WorkplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
             m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
@@ -316,7 +319,7 @@ namespace InfoLoomTwo.Systems
             m_ExcludedResourcesBinding = CreateBinding("CommercialDataExRes", new string[0]);
 
             //CommercialProductsDataUI
-            m_CommercialProductBinding = CreateBinding("CommercialProductsData", Array.Empty<CommercialProductDTO>());
+            m_CommercialProductBinding = CreateBinding("CommercialProductsData", Array.Empty<CommercialProductsData>());
             //CommercialCompanyDebugDataUI
             _cCDPVBinding = new ValueBinding<bool>(ModID, CommercialCompanyDebugOpen, false);
              AddBinding(_cCDPVBinding);
@@ -364,7 +367,7 @@ namespace InfoLoomTwo.Systems
             m_IndustrialExcludedResourcesBinding = CreateBinding("IndustrialDataExRes", new string[0]);
 
             //IndustrialProductsDataUI
-            m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductDTO>());
+            m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductsData>());
             
             //IndustrialCompanyDebugDataUI
             _iCDVBinding = new ValueBinding<bool>(ModID, IndustrialCompanyDebugOpen, false);
@@ -403,25 +406,13 @@ namespace InfoLoomTwo.Systems
 
             //WorkplacesUI
             m_WorkplacesBinder = CreateBinding("WorkplacesData", new WorkplacesInfo[0]);
-    
+
+            //Historical data
             
-                m_IndustrialBinding = CreateBinding("IndustrialData", new int[16]);
-                m_IndustrialExcludedResourcesBinding = CreateBinding("IndustrialDataExRes", new string[0]);
-
-                //IndustrialProductsDataUI
-                m_IndustrialProductBinding = CreateBinding("IndustrialProductsData", Array.Empty<IndustrialProductDTO>());
-
-                //ResidentialDemandDataUI
-                m_ResidentialBinding = CreateBinding("ResidentialData", new int[18]);
-
-                //TradeCostsUI
-                m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
-                //WorkforceUI
-                m_WorkforcesBinder = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
-
-                //WorkplacesUI
-                m_WorkplacesBinder = CreateBinding("WorkplacesData", new WorkplacesInfo[0]);
         }
+
+        
+
         protected override void OnUpdate()
         {
             if (_bDPVBinding.value )
@@ -454,10 +445,55 @@ namespace InfoLoomTwo.Systems
                 
             }
 
-            if (_cPPVBinding.value)
+            if (_cPPVBinding.value )
             {
-                m_CommercialProductBinding.Value = m_CommercialProductsSystem.m_CommercialProductDTOs;
-                m_CommercialProductsSystem.IsPanelVisible = true;
+                m_CommercialProductBinding.Value = CommercialProductsSystem.m_ProductsData
+                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
+                    .Select(d => new CommercialProductsData
+                    {
+                        ResourceName = d.ResourceName.ToString(),
+                        Demand = d.Demand,
+                        Building = d.Building,
+                        Free = d.Free,
+                        Companies = d.Companies,
+                        Workers = d.Workers,
+                        SvcFactor = d.SvcFactor,
+                        SvcPercent = d.SvcPercent,
+                        ResourceNeedPercent = d.ResourceNeedPercent,
+                        ResourceNeedPerCompany = d.ResourceNeedPerCompany,
+                        WrkPercent = d.WrkPercent,
+                        TaxFactor = d.TaxFactor,
+                        CurrentTourists = d.CurrentTourists,
+                        AvailableLodging = d.AvailableLodging,
+                        RequiredRooms = d.RequiredRooms,
+                    })
+                    .ToArray();
+        
+                if (m_CommercialProductBinding.Value.Length == 0 && CommercialProductsSystem.m_ProductsData.Length > 0)
+                {
+                    m_CommercialProductBinding.Value = new CommercialProductsData[]
+                    {
+                        new CommercialProductsData
+                        {
+                            ResourceName = "All",
+                            Demand = 0,
+                            Building = 0,
+                            Free = 0,
+                            Companies = 0,
+                            Workers = 0,
+                            SvcFactor = 0,
+                            SvcPercent = 0,
+                            ResourceNeedPercent = 0,
+                            ResourceNeedPerCompany = 0,
+                            WrkPercent = 0,
+                            TaxFactor = 0,
+                            CurrentTourists = 0,
+                            AvailableLodging = 0,
+                            RequiredRooms = 0,
+                        }
+                    };
+                }
+                m_CommercialProductsSystem.IsPanelVisible = true; 
             }
             if (_cCDPVBinding.value)
             {
@@ -553,7 +589,7 @@ namespace InfoLoomTwo.Systems
             }
             if (_tCPVBinding.value)
             {
-                var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
+                var tradeCostsSystem = World.GetOrCreateSystemManaged<TradeCostsSystem>();
                 BuyCostEnum buyCostSorting = m_BuyCostSortingBinding.Value;
                 SellCostEnum sellCostSorting = m_SellCostSortingBinding.Value;
                 ImportAmountEnum importAmountSorting = m_ImportAmountSortingBinding.Value;
@@ -563,13 +599,13 @@ namespace InfoLoomTwo.Systems
                 ResourceNameEnum resourceNameSorting = m_ResourceNameSortingBinding.Value;
                 
                 // Set the current sorting values in the data system
-                tradeCostSystem.m_BuyCostEnum = buyCostSorting;
-                tradeCostSystem.m_sellCostEnum = sellCostSorting;
-                tradeCostSystem.m_importAmountEnum = importAmountSorting;
-                tradeCostSystem.m_exportAmountEnum = exportAmountSorting;
-                tradeCostSystem.m_profitEnum = profitSorting;
-                tradeCostSystem.m_profitMarginEnum = profitMarginSorting;
-                tradeCostSystem.m_resourceNameEnum = resourceNameSorting;
+                tradeCostsSystem.m_BuyCostEnum = buyCostSorting;
+                tradeCostsSystem.m_sellCostEnum = sellCostSorting;
+                tradeCostsSystem.m_importAmountEnum = importAmountSorting;
+                tradeCostsSystem.m_exportAmountEnum = exportAmountSorting;
+                tradeCostsSystem.m_profitEnum = profitSorting;
+                tradeCostsSystem.m_profitMarginEnum = profitMarginSorting;
+                tradeCostsSystem.m_resourceNameEnum = resourceNameSorting;
                 
                 m_BuyCostSortingBinding.UpdateCallback(buyCostSorting);
                 m_SellCostSortingBinding.UpdateCallback(sellCostSorting);
@@ -578,7 +614,7 @@ namespace InfoLoomTwo.Systems
                 m_ProfitSortingBinding.UpdateCallback(profitSorting);
                 m_ProfitMarginSortingBinding.UpdateCallback(profitMarginSorting);
                 m_ResourceNameSortingBinding.UpdateCallback(resourceNameSorting);
-                m_TradeCostsBinding.Value = tradeCostSystem.GetSortedResourceTradeCosts().ToList();
+                m_TradeCostsBinding.Value = tradeCostsSystem.GetSortedResourceTradeCosts().ToList();
             }
             //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} 2.");
             if (_dPVBinding.value)
@@ -634,7 +670,44 @@ namespace InfoLoomTwo.Systems
         
             if (_iPPVBinding.value && _uiUpdateState.Advance())
             {
-                m_IndustrialProductBinding.Value = m_IndustrialProductsSystem.m_IndustrialProductDTOs;
+                m_IndustrialProductBinding.Value = IndustrialProductsSystem.m_DemandData
+                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
+                    .Select(d => new IndustrialProductsData
+                    {
+                        ResourceName = EconomyUtils.GetName(d.ResourceName),
+                        Demand = d.Demand,
+                        Building = d.Building,
+                        Free = d.Free,
+                        Companies = d.Companies,
+                        Workers = d.Workers,
+                        SvcPercent = d.SvcPercent,
+                        WrkPercent = d.WrkPercent,
+                        TaxFactor = d.TaxFactor,
+                        CapPercent = d.CapPercent,
+                        CapPerCompany = d.CapPerCompany,
+                    }).ToArray();
+                if (m_IndustrialProductBinding.Value.Length == 0 && IndustrialProductsSystem.m_DemandData.Length > 0)
+                {
+                    m_IndustrialProductBinding.Value = new IndustrialProductsData[]
+                    {
+                        new IndustrialProductsData
+                        {
+                            ResourceName = "All",
+                            Demand = 0,
+                            Building = 0,
+                            Free = 0,
+                            Companies = 0,
+                            Workers = 0,
+                            SvcPercent = 0,
+                            CapPercent = 0,
+                            CapPerCompany = 0,
+                            WrkPercent = 0,
+                            TaxFactor = 0,
+                            
+                            
+                        }
+                    };
+                }
                 m_IndustrialProductsSystem.IsPanelVisible = true;
             }
             if (_rDPVBinding.value)
@@ -735,10 +808,30 @@ namespace InfoLoomTwo.Systems
         {
             _cPPVBinding.Update(open);
             m_CommercialProductsSystem.IsPanelVisible = open;
-
+            
             if (open)
             {
-                m_CommercialProductBinding.Value = m_CommercialProductsSystem.m_CommercialProductDTOs;
+                
+                m_CommercialProductBinding.Value = CommercialProductsSystem.m_ProductsData
+                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
+                    .Select(d => new CommercialProductsData
+                    {
+                        ResourceName = EconomyUtils.GetName(d.ResourceName),
+                        Demand = d.Demand,
+                        Building = d.Building,
+                        Free = d.Free,
+                        Companies = d.Companies,
+                        Workers = d.Workers,
+                        SvcFactor = d.SvcFactor,
+                        SvcPercent = d.SvcPercent,
+                        ResourceNeedPercent = d.ResourceNeedPercent,
+                        ResourceNeedPerCompany = d.ResourceNeedPerCompany,
+                        WrkPercent = d.WrkPercent,
+                        TaxFactor = d.TaxFactor,
+                        CurrentTourists = d.CurrentTourists,
+                        AvailableLodging = d.AvailableLodging,
+                        RequiredRooms = d.RequiredRooms,
+                    }).ToArray();
             }
         }
         
@@ -799,7 +892,22 @@ namespace InfoLoomTwo.Systems
             
             if (open)
             {
-                m_IndustrialProductBinding.Value = m_IndustrialProductsSystem.m_IndustrialProductDTOs;
+                m_IndustrialProductBinding.Value = IndustrialProductsSystem.m_DemandData
+                    .Where(d => d.Demand > 0 || d.Companies > 0 || d.Building > 0 || d.Free > 0)
+                    .Select(d => new IndustrialProductsData
+                    {
+                        ResourceName = EconomyUtils.GetName(d.ResourceName),
+                        Demand = d.Demand,
+                        Building = d.Building,
+                        Free = d.Free,
+                        Companies = d.Companies,
+                        Workers = d.Workers,
+                        SvcPercent = d.SvcPercent,
+                        WrkPercent = d.WrkPercent,
+                        TaxFactor = d.TaxFactor,
+                        CapPercent = d.CapPercent,
+                        CapPerCompany = d.CapPerCompany,
+                    }).ToArray();
             }
         }
         
@@ -822,8 +930,26 @@ namespace InfoLoomTwo.Systems
             m_TradeCostSystem.IsPanelVisible = open;
             if (open)
             {
-                var tradeCostSystem = World.GetOrCreateSystemManaged<TradeCostSystem>();
-                m_TradeCostsBinding.Value = tradeCostSystem.GetSortedResourceTradeCosts().ToList();
+                // Get current sorting values and apply them to the system
+                BuyCostEnum buyCostSorting = m_BuyCostSortingBinding.Value;
+                SellCostEnum sellCostSorting = m_SellCostSortingBinding.Value;
+                ImportAmountEnum importAmountSorting = m_ImportAmountSortingBinding.Value;
+                ExportAmountEnum exportAmountSorting = m_ExportAmountSortingBinding.Value;
+                ProfitEnum profitSorting = m_ProfitSortingBinding.Value;
+                ProfitMarginEnum profitMarginSorting = m_ProfitMarginSortingBinding.Value;
+                ResourceNameEnum resourceNameSorting = m_ResourceNameSortingBinding.Value;
+                
+                // Set the current sorting values in the data system
+                m_TradeCostSystem.m_BuyCostEnum = buyCostSorting;
+                m_TradeCostSystem.m_sellCostEnum = sellCostSorting;
+                m_TradeCostSystem.m_importAmountEnum = importAmountSorting;
+                m_TradeCostSystem.m_exportAmountEnum = exportAmountSorting;
+                m_TradeCostSystem.m_profitEnum = profitSorting;
+                m_TradeCostSystem.m_profitMarginEnum = profitMarginSorting;
+                m_TradeCostSystem.m_resourceNameEnum = resourceNameSorting;
+                
+                // Get the sorted data and update UI
+                m_TradeCostsBinding.Value = m_TradeCostSystem.GetSortedResourceTradeCosts().ToList();
             }
         }
         
@@ -960,10 +1086,8 @@ namespace InfoLoomTwo.Systems
             _TrafficDataVisibleBinding.Update(open);
             if (open)
             {
-               
                 m_uiTrafficData.Update();
             }
         }
     }
 }
-

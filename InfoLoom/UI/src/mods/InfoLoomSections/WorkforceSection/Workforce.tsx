@@ -145,15 +145,6 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
           unemployment
         )}
       </div>
-      <div className={`row_S2v ${styles.employableColumn}`}>
-        {isHeader ? (
-          <Tooltip tooltip={translations?.employableTooltip} direction="down" alignment="center">
-            <span>{translations?.employable}</span>
-          </Tooltip>
-        ) : (
-          levelValues.Employable.toLocaleString()
-        )}
-      </div>
       <div className={`row_S2v small_ExK ${styles.smallColumn}`}>
         {isHeader ? (
           <Tooltip tooltip={translations?.underTooltip} direction="down" alignment="center">
@@ -170,6 +161,15 @@ const WorkforceLevel: React.FC<WorkforceLevelProps> = ({
           </Tooltip>
         ) : (
           levelValues.Outside.toLocaleString()
+        )}
+      </div>
+      <div className={`row_S2v ${styles.employableColumn}`}>
+        {isHeader ? (
+          <Tooltip tooltip={translations?.employableTooltip} direction="down" alignment="center">
+            <span>{translations?.employable}</span>
+          </Tooltip>
+        ) : (
+          levelValues.Employable.toLocaleString()
         )}
       </div>
       <div className={`row_S2v small_ExK ${styles.smallColumn}`}>
@@ -191,9 +191,9 @@ const StackedBar: React.FC<StackedBarProps> = ({ levelName, levelColor, levelVal
   const segments = [
     { label: translations.segments[0].label, value: levelValues.Worker, color: '#4CAF50' },
     { label: translations.segments[1].label, value: levelValues.Unemployed, color: '#F44336' },
-    { label: translations.segments[2].label, value: levelValues.Employable, color: '#FF9800' },
     { label: translations.segments[3].label, value: levelValues.Under, color: '#9C27B0' },
     { label: translations.segments[4].label, value: levelValues.Outside, color: '#607D8B' },
+    { label: translations.segments[2].label, value: levelValues.Employable, color: '#FF9800' },
     { label: translations.segments[5].label, value: levelValues.Homeless, color: '#795548' },
   ];
 
@@ -394,7 +394,7 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
               unemployed: translate("InfoLoomTwo.WorkforcePanel[HeaderItem4]", "Unemployed"),
               unemploymentTooltip: translate("InfoLoomTwo.WorkforcePanel[UnemploymentTooltip]", "Unemployment rate: unemployed / total population"),
               unemployment: translate("InfoLoomTwo.WorkforcePanel[HeaderItem5]", "Unemployment"),
-              employableTooltip: translate("InfoLoomTwo.WorkforcePanel[EmployableTooltip]", "Citizens of working age who are available for employment"),
+              employableTooltip: translate("InfoLoomTwo.WorkforcePanel[EmployableTooltip]", "Sum of Under Employed and Citizens who are working outside of the city"),
               employable: translate("InfoLoomTwo.WorkforcePanel[HeaderItem6]", "Employable"),
               underTooltip: translate("InfoLoomTwo.WorkforcePanel[UnderTooltip]", "Citizens who are woking below the education level (Under employed)"),
               under: translate("InfoLoomTwo.WorkforcePanel[HeaderItem7]", "Under"),
@@ -451,9 +451,9 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
             legendItems={[
               { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem1]", 'Worker'), color: '#4CAF50' },
               { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem2]", 'Unemployed'), color: '#F44336' },
-              { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem3]", 'Employable'), color: '#FF9800' },
               { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem4]", 'Under Employed'), color: '#9C27B0' },
               { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem5]", 'Outside'), color: '#607D8B' },
+              { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem3]", 'Employable'), color: '#FF9800' },
               { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem6]", 'Homeless'), color: '#795548' },
             ]}
             legendTooltipSuffix={translate("InfoLoomTwo.WorkforcePanel[LegendTooltipSuffix]", "Click on bar segments above to see detailed breakdown")}
@@ -461,9 +461,9 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
               segments: [
                 { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem1]", 'Worker') },
                 { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem2]", 'Unemployed') },
-                { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem3]", 'Employable') },
                 { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem4]", 'Under Employed') },
                 { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem5]", 'Outside') },
+                { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem3]", 'Employable') },
                 { label: translate("InfoLoomTwo.WorkforcePanel[StackedBarLegendItem6]", 'Homeless') },
               ],
               segmentTooltipCount: translate("InfoLoomTwo.WorkforcePanel[SegmentTooltipCount]", "Count"),

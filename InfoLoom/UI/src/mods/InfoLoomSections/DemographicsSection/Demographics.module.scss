@@ -40,12 +40,12 @@
 
   :global {
     .toggle-field {
-      width: 180rem !important; // Changed to rem
-      height: 32rem !important; // Changed to rem
-      min-height: 32rem !important; // Changed to rem
+      width: 180rem !important; 
+      height: 32rem !important; 
+      min-height: 32rem !important; 
 
       span {
-        font-size: 14rem; // Changed to rem
+        font-size: 14rem; 
       }
     }
   }
@@ -54,8 +54,8 @@
 .chartContainer {
   padding: 1rem;
   height: calc(100vh - 250px);
-  min-height: 600px; // Reduced min-height from 1500px to 600px
-  overflow: visible; // changed from auto to allow chart overflow
+  min-height: 600px; 
+  overflow: visible; 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,8 +67,8 @@
 }
 
 .chartVisualization {
-  width: 800px; // Reduced width from 1500px to 800px
-  height: 600px; // Reduced height from 1800px to 600px
+  width: 800px; 
+  height: 600px; 
   position: relative;
   contain: paint layout style;
   display: flex;
@@ -79,9 +79,9 @@
   canvas {
     transform: translateZ(0);
     backface-visibility: hidden;
-    display: block !important; // Ensures valid display property
-    width: 100% !important; // Set canvas to fill container
-    height: 100% !important; // Set canvas to fill container
+    display: block !important; 
+    width: 100% !important; 
+    height: 100% !important; 
   }
 }
 

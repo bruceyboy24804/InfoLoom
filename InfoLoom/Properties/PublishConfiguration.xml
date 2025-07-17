@@ -125,17 +125,19 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.11.1" />
+	<ModVersion Value="1.13.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.3.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.11.1
-- InfoLoom now supports Spanish</ChangeLog>
+	<ChangeLog>## Version 1.13.0
+- Added employees to the selected info panel when you click on a company, added a tooltip similair to the vanailla tooltip but infolooms shows Overeducated and Commuters into the tooltip.
+- improved the backend for Commercial and Industrial/Office product data.
+- Improved the ui for Commercial and Industrial/Office panels 	</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />
-	<ExternalLink Type="discord" Url="https://discord.gg/jPafqgUU" />
+	<ExternalLink Type="discord" Url="https://discord.gg/EZUv4ePt" />
 	<ExternalLink Type="crowdin" Url="https://crowdin.com/project/info-loom" />
 </Publish>
 	

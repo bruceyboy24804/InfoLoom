@@ -20,7 +20,7 @@ import {
 } from "../../bindings";
 import {InfoRadioButton} from "../../components/InfoRadioButton/InfoRadioButton";
 import {getModule} from "cs2/modding";
-
+import { ChartDataset } from 'chart.js';
 
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
@@ -425,13 +425,15 @@ const DemographicsChart = memo(({
     if (!canvasRef.current || !containerRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
-    
+    ctx.canvas.width = 200;
+ctx.canvas.height = 200;
     chartRef.current = new Chart(ctx, {
+      
       type: 'bar',
       data: chartData,
       options: {
         indexAxis: 'y', // Horizontal bar chart
-        responsive: true,
+        responsive: false,
         maintainAspectRatio: false,
         plugins: {
           title: {
@@ -557,7 +559,7 @@ const DemographicsChart = memo(({
     
     // Clean up on unmount
     return () => {
-      if (chartRef.current) {
+      if (chartRef.current && canvasRef.current) {
         chartRef.current.destroy();
         chartRef.current = null;
       }
@@ -665,10 +667,11 @@ const DemographicsChart = memo(({
     // Apply the updates
     chartRef.current.update('none');
   }, [groupingStrategy]);
+const INITIAL_CANVAS_STYLE = {height: `0`, width: '0', display: 'block'};
 
   return (
     <div className={styles.chartContainer} ref={containerRef} style={{ width: '100%', height: '100%' }}>
-      <canvas ref={canvasRef} />
+      <canvas ref={canvasRef} style={INITIAL_CANVAS_STYLE} />
     </div>
   );
 });

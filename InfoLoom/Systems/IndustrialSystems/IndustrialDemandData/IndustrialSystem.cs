@@ -84,7 +84,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
             public ComponentLookup<WorkplaceData> m_WorkplaceDatas;
 
             [ReadOnly]
-            public ComponentLookup<ConsumptionData> m_ConsumptionDatas;
+            public ComponentLookup<Game.Prefabs.ConsumptionData> m_ConsumptionDatas;
 
             [ReadOnly]
             public ComponentLookup<StorageLimitData> m_StorageLimitDatas;
@@ -1141,7 +1141,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
                 updateIndustrialDemandJob.m_WorkplaceDatas = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_ServiceUpkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_CityModifiers = SystemAPI.GetBufferLookup<CityModifier>(isReadOnly: true);
-                updateIndustrialDemandJob.m_ConsumptionDatas = SystemAPI.GetComponentLookup<ConsumptionData>(isReadOnly: true);
+                updateIndustrialDemandJob.m_ConsumptionDatas = SystemAPI.GetComponentLookup<Game.Prefabs.ConsumptionData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_InstalledUpgrades = SystemAPI.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
                 updateIndustrialDemandJob.m_Upkeeps = SystemAPI.GetBufferLookup<ServiceUpkeepData>(isReadOnly: true);
                 updateIndustrialDemandJob.m_Populations = SystemAPI.GetComponentLookup<Population>(isReadOnly: true);

@@ -1,4 +1,8 @@
-namespace InfoLoomTwo.Domain
+using System;
+using Game.Economy;
+using Unity.Collections;
+
+namespace InfoLoomTwo.Domain.DataDomain
 {
     public struct CommercialProductsData
     {
@@ -8,10 +12,16 @@ namespace InfoLoomTwo.Domain
             public int Free;
             public int Companies;
             public int Workers;
+            public int SvcFactor;
             public int SvcPercent;
-            public int CapPercent;
-            public int CapPerCompany;
+            public int ResourceNeedPercent;
+            public int ResourceNeedPerCompany;
             public int WrkPercent;
             public int TaxFactor;
+            
+            public int CurrentTourists;
+            public int AvailableLodging;
+            public int RequiredRooms;
+        
     }
 }

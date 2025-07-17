@@ -21,6 +21,7 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
+using InfoLoomTwo.Systems.Sections;
 /*using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
 using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;*/
@@ -91,12 +92,13 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<TradeCostSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
-            
+            ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
+            ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
             
         }
         // Method that runs when the mod is disposed of

@@ -15,8 +15,7 @@ import IndustrialMenuButton from "./IndustrialMenu/IndustrialMenu";
 import DistrictMenuButton from "./DistrictMenu/DistrictMenu";
 import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
-
-
+import {Entity} from "cs2/utils"
 interface SectionItem {
     component: JSX.Element;
     isOpen: boolean;
@@ -41,8 +40,6 @@ function InfoLoomButton(): JSX.Element {
     const tradeCostsOpen = useValue(bindings.TradeCostsOpen);
     const districtMenuOpen = useValue(bindings.DistrictMenuOpen);
     const commercialMenuOpen = useValue(bindings.CommercialMenuOpen);
-    const residentialDemandOpen = useValue(bindings.ResidentialDemandOpen);
-
     // Define sections without translations - move translations to render time
     const sections = useMemo<SectionsType>(() => ({
         Demographics: {
@@ -104,7 +101,7 @@ function InfoLoomButton(): JSX.Element {
             src: "Media/Glyphs/FilledArrowRight.svg"
         }
     }), [demographicsOpen, workforceOpen, workplacesOpen, residentialMenuOpen,
-        buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, districtMenuOpen, commercialMenuOpen]);
+        buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, districtMenuOpen, commercialMenuOpen ]);
 
     const toggleSection = useCallback(
         (name: string) => {
