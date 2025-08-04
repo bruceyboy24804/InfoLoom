@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using Colossal;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game;
+using Game.Agents;
 using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
+using Game.City;
 using Game.Common;
 using Game.Companies;
 using Game.Policies;
@@ -15,14 +18,15 @@ using Game.SceneFlow;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
-using Game.UI.InGame; // Uses shared definitions for AgeData and EducationData
-using Game.Zones;   // Added for zone-related components
+using Game.UI.InGame;
+using Game.Zones;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.DistrictData
@@ -47,108 +51,176 @@ namespace InfoLoomTwo.Systems.DistrictData
             public NativeList<Entity> serviceBuildings;
             public NativeList<Entity> servicePrefabs;
             public NativeList<Entity> policies;
+
+            public int elementaryEligible;
+            public int highSchoolEligible;
+            public int collegeEligible;
+            public int universityEligible;
+
+            public int elementaryCapacity;
+            public int highSchoolCapacity;
+            public int collegeCapacity;
+            public int universityCapacity;
+
+            public int elementaryStudents;
+            public int highSchoolStudents;
+            public int collegeStudents;
+            public int universityStudents;
+
+            public IndicatorValue elementaryAvailability;
+            public IndicatorValue highSchoolAvailability;
+            public IndicatorValue collegeAvailability;
+            public IndicatorValue universityAvailability;
         }
 
-        // Job to count household data for each district.
+        // Unified job that processes all citizen data in one pass
         [BurstCompile]
-        private struct CountDistrictStatsJob : IJobChunk
+        private struct ProcessCitizenDataJob : IJobChunk
         {
             [ReadOnly] public EntityTypeHandle m_EntityHandle;
-            [ReadOnly] public ComponentTypeHandle<CurrentDistrict> m_CurrentDistrictHandle;
-            [ReadOnly] public ComponentTypeHandle<PrefabRef> m_PrefabRefHandle;
-            [ReadOnly] public ComponentLookup<Abandoned> m_AbandonedFromEntity;
-            [ReadOnly] public ComponentLookup<BuildingPropertyData> m_PropertyDataFromEntity;
-            [ReadOnly] public ComponentLookup<Household> m_HouseholdFromEntity;
-            [ReadOnly] public BufferLookup<HouseholdCitizen> m_HouseholdCitizenFromEntity;
-            [ReadOnly] public BufferLookup<HouseholdAnimal> m_HouseholdAnimalFromEntity;
-            [ReadOnly] public BufferLookup<Renter> m_RenterFromEntity;
-            [ReadOnly] public CitizenHappinessParameterData m_HappinessData;
-            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap; 
+            [ReadOnly] public ComponentTypeHandle<Citizen> m_CitizenHandle;
+            [ReadOnly] public ComponentTypeHandle<Game.Citizens.Student> m_StudentHandle;
+            [ReadOnly] public ComponentTypeHandle<Worker> m_WorkerHandle;
+            [ReadOnly] public ComponentLookup<HouseholdMember> m_HouseholdMemberLookup;
+            [ReadOnly] public ComponentLookup<Household> m_HouseholdLookup;
+            [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenterLookup;
+            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup;
+            [ReadOnly] public ComponentLookup<HealthProblem> m_HealthProblemLookup;
+            [ReadOnly] public ComponentLookup<MovingAway> m_MovingAwayLookup;
+            [ReadOnly] public BufferLookup<CityModifier> m_CityModifierLookup;
+            [ReadOnly] public Entity m_City;
+            [ReadOnly] public EducationParameterData m_EducationParameterData;
+            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap;
 
-            public NativeList<DistrictEntry> m_Districts;
-
-            bool TryProcessHousehold(ref DistrictEntry entry, Entity household)
-            {
-                if (!m_HouseholdFromEntity.HasComponent(household) ||
-                    !m_HouseholdCitizenFromEntity.TryGetBuffer(household, out _))
-                    return false;
-
-                entry.householdCount++;
-                // Add number of citizens as residents.
-                var citizens = m_HouseholdCitizenFromEntity[household];
-                entry.residentCount += citizens.Length;
-                entry.households.Add(household);
-
-                if (m_HouseholdAnimalFromEntity.TryGetBuffer(household, out var animals))
-                    entry.petCount += animals.Length;
-
-                return true;
-            }
+            public NativeArray<int> m_AgeData; // districts * 4 (age categories)
+            public NativeArray<int> m_EducationData; // districts * 5 (education levels)
+            public NativeArray<int> m_EligibilityData; // districts * 4 (school levels)
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
-                NativeArray<CurrentDistrict> currentDistricts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
-                NativeArray<PrefabRef> prefabRefs = chunk.GetNativeArray(ref m_PrefabRefHandle);
+                NativeArray<Citizen> citizens = chunk.GetNativeArray(ref m_CitizenHandle);
+                
+                bool hasStudents = chunk.Has(ref m_StudentHandle);
+                bool hasWorkers = chunk.Has(ref m_WorkerHandle);
+                
+                NativeArray<Game.Citizens.Student> students = hasStudents ? chunk.GetNativeArray(ref m_StudentHandle) : default;
+                NativeArray<Worker> workers = hasWorkers ? chunk.GetNativeArray(ref m_WorkerHandle) : default;
 
-                // Process each chunk entity.
+                var cityModifiers = m_CityModifierLookup[m_City];
+
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    Entity building = entities[i];
-                    Entity district = currentDistricts[i].m_District;
-                    Entity prefab = prefabRefs[i].m_Prefab;
+                    Entity citizenEntity = entities[i];
+                    Citizen citizen = citizens[i];
 
-                    if (m_AbandonedFromEntity.HasComponent(building))
-                        continue;
-                    if (!m_PropertyDataFromEntity.HasComponent(prefab))
-                        continue;
-                    var propertyData = m_PropertyDataFromEntity[prefab];
-                    if (propertyData.m_ResidentialProperties <= 0)
-                        continue;
-                    if (!m_DistrictIndexMap.TryGetValue(district, out int districtIndex))
+                    if (!GetDistrictIndex(citizenEntity, out int districtIndex))
                         continue;
 
-                    var entry = m_Districts[districtIndex];
-                    entry.maxHouseholds += propertyData.m_ResidentialProperties;
+                    // Process age data
+                    int ageIndex = districtIndex * 4 + (int)citizen.GetAge();
+                    m_AgeData[ageIndex]++;
 
-                    if (m_RenterFromEntity.TryGetBuffer(building, out var renters))
+                    // Process education data
+                    int educationIndex = districtIndex * 5 + citizen.GetEducationLevel();
+                    m_EducationData[educationIndex]++;
+
+                    // Process school eligibility
+                    ProcessSchoolEligibility(citizen, citizenEntity, districtIndex, hasStudents && i < students.Length ? students[i] : default, 
+                                           hasWorkers && i < workers.Length, cityModifiers);
+                }
+            }
+
+            private bool GetDistrictIndex(Entity citizenEntity, out int districtIndex)
+            {
+                districtIndex = -1;
+                
+                if (!m_HouseholdMemberLookup.TryGetComponent(citizenEntity, out var householdMember) ||
+                    !m_HouseholdLookup.TryGetComponent(householdMember.m_Household, out var household) ||
+                    !m_PropertyRenterLookup.TryGetComponent(householdMember.m_Household, out var propertyRenter) ||
+                    !m_CurrentDistrictLookup.TryGetComponent(propertyRenter.m_Property, out var currentDistrict))
+                    return false;
+
+                // Skip invalid citizens
+                if (CitizenUtils.IsDead(citizenEntity, ref m_HealthProblemLookup) ||
+                    (household.m_Flags & HouseholdFlags.MovedIn) == 0 ||
+                    (household.m_Flags & HouseholdFlags.Tourist) != 0 ||
+                    m_MovingAwayLookup.HasComponent(householdMember.m_Household))
+                    return false;
+
+                return m_DistrictIndexMap.TryGetValue(currentDistrict.m_District, out districtIndex);
+            }
+
+            private void ProcessSchoolEligibility(Citizen citizen, Entity citizenEntity, int districtIndex, 
+                                                Game.Citizens.Student student, bool hasWorker, 
+                                                DynamicBuffer<CityModifier> cityModifiers)
+            {
+                CitizenAge age = citizen.GetAge();
+                
+                if (student.m_School != Entity.Null) // Current student
+                {
+                    int eligibilityIndex = districtIndex * 4 + (student.m_Level - 1);
+                    if (eligibilityIndex >= 0 && eligibilityIndex < m_EligibilityData.Length)
+                        m_EligibilityData[eligibilityIndex]++;
+                }
+                else // Potential student
+                {
+                    float willingness = citizen.GetPseudoRandom(CitizenPseudoRandom.StudyWillingness).NextFloat();
+                    
+                    if (age == CitizenAge.Child)
                     {
-                        for (int k = 0; k < renters.Length; k++)
-                        {
-                            Entity household = renters[k].m_Renter;
-                            if (TryProcessHousehold(ref entry, household) &&
-                                m_HouseholdCitizenFromEntity.TryGetBuffer(household, out var citizens))
-                            {
-                                // Additional household processing could be done here.
-                            }
-                        }
+                        m_EligibilityData[districtIndex * 4]++; // Elementary
                     }
-                    m_Districts[districtIndex] = entry;
+                    else if (citizen.GetEducationLevel() == 1 && age <= CitizenAge.Adult)
+                    {
+                        float probability = ApplyToSchoolSystem.GetEnteringProbability(
+                            age, hasWorker, 2, (int)citizen.m_WellBeing, willingness, cityModifiers, ref m_EducationParameterData);
+                        m_EligibilityData[districtIndex * 4 + 1] += (int)math.ceil(probability); // High School
+                    }
+                    else if (citizen.GetEducationLevel() == 2 && citizen.GetFailedEducationCount() < 3)
+                    {
+                        float universityProb = ApplyToSchoolSystem.GetEnteringProbability(
+                            age, hasWorker, 4, (int)citizen.m_WellBeing, willingness, cityModifiers, ref m_EducationParameterData);
+                        m_EligibilityData[districtIndex * 4 + 3] += (int)math.ceil(universityProb); // University
+
+                        float collegeProb = (1f - universityProb) * ApplyToSchoolSystem.GetEnteringProbability(
+                            age, hasWorker, 3, (int)citizen.m_WellBeing, willingness, cityModifiers, ref m_EducationParameterData);
+                        m_EligibilityData[districtIndex * 4 + 2] += (int)math.ceil(collegeProb); // College
+                    }
                 }
             }
         }
 
-        // Combined job to process service buildings and employees in one pass
+        // Unified job that processes all building data in one pass
         [BurstCompile]
-        private struct ProcessBuildingsJob : IJobChunk
+        private struct ProcessBuildingDataJob : IJobChunk
         {
             [ReadOnly] public EntityTypeHandle m_EntityHandle;
             [ReadOnly] public ComponentTypeHandle<PrefabRef> m_PrefabRefHandle;
             [ReadOnly] public ComponentTypeHandle<CurrentDistrict> m_CurrentDistrictHandle;
-            [ReadOnly] public BufferTypeHandle<ServiceDistrict> m_ServiceDistrictHandle;
             [ReadOnly] public BufferTypeHandle<Renter> m_RenterHandle;
             [ReadOnly] public BufferTypeHandle<Employee> m_EmployeeHandle;
+            [ReadOnly] public BufferTypeHandle<ServiceDistrict> m_ServiceDistrictHandle;
+            [ReadOnly] public BufferTypeHandle<Game.Buildings.Student> m_StudentHandle;
+            [ReadOnly] public BufferTypeHandle<Efficiency> m_EfficiencyHandle;
             [ReadOnly] public ComponentTypeHandle<WorkProvider> m_WorkProviderHandle;
-            [ReadOnly] public BufferLookup<Employee> m_EmployeeLookup;
+            
+            [ReadOnly] public ComponentLookup<Abandoned> m_AbandonedLookup;
+            [ReadOnly] public ComponentLookup<BuildingPropertyData> m_PropertyDataLookup;
+            [ReadOnly] public ComponentLookup<Household> m_HouseholdLookup;
             [ReadOnly] public ComponentLookup<WorkProvider> m_WorkProviderLookup;
             [ReadOnly] public ComponentLookup<CompanyData> m_CompanyDataLookup;
             [ReadOnly] public ComponentLookup<WorkplaceData> m_WorkplaceDataLookup;
             [ReadOnly] public ComponentLookup<SpawnableBuildingData> m_SpawnableDataLookup;
-            [ReadOnly] public ComponentLookup<Game.Buildings.Park> m_ParkLookup;
             [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenterLookup;
             [ReadOnly] public ComponentLookup<PrefabRef> m_PrefabRefLookup;
+            [ReadOnly] public ComponentLookup<SchoolData> m_SchoolDataLookup;
+            [ReadOnly] public BufferLookup<HouseholdCitizen> m_HouseholdCitizenLookup;
+            [ReadOnly] public BufferLookup<HouseholdAnimal> m_HouseholdAnimalLookup;
+            [ReadOnly] public BufferLookup<Employee> m_EmployeeLookup;
+            [ReadOnly] public BufferLookup<InstalledUpgrade> m_InstalledUpgradeLookup;
             [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap;
-            
+
             public NativeArray<DistrictEntry> m_Districts;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -156,323 +228,270 @@ namespace InfoLoomTwo.Systems.DistrictData
                 NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
                 NativeArray<PrefabRef> prefabs = chunk.GetNativeArray(ref m_PrefabRefHandle);
                 NativeArray<CurrentDistrict> districts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
-                
-                bool hasServiceDistrict = chunk.Has(ref m_ServiceDistrictHandle);
-                bool hasRenter = chunk.Has(ref m_RenterHandle);
-                bool hasEmployee = chunk.Has(ref m_EmployeeHandle);
-                bool hasWorkProvider = chunk.Has(ref m_WorkProviderHandle);
 
-                // Process service buildings if chunk has ServiceDistrict component
-                if (hasServiceDistrict)
-                {
-                    BufferAccessor<ServiceDistrict> serviceDistricts = chunk.GetBufferAccessor(ref m_ServiceDistrictHandle);
-                    
-                    for (int i = 0; i < chunk.Count; i++)
-                    {
-                        Entity building = entities[i];
-                        Entity prefabEntity = prefabs[i].m_Prefab;
-                        var serviceDistrictBuffer = serviceDistricts[i];
-                        
-                        for (int j = 0; j < serviceDistrictBuffer.Length; j++)
-                        {
-                            Entity districtEntity = serviceDistrictBuffer[j].m_District;
-                            
-                            if (m_DistrictIndexMap.TryGetValue(districtEntity, out int districtIndex))
-                            {
-                                var district = m_Districts[districtIndex];
-                                district.serviceBuildings.Add(building);
-                                district.servicePrefabs.Add(prefabEntity);
-                                m_Districts[districtIndex] = district;
-                            }
-                        }
-                    }
-                }
-
-                // Process employee data
-                bool isParkChunk = chunk.Has<Game.Buildings.Park>();
-                
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     Entity building = entities[i];
-                    Entity prefabEntity = prefabs[i].m_Prefab;
+                    Entity prefab = prefabs[i].m_Prefab;
                     Entity districtEntity = districts[i].m_District;
+
+                    if (m_AbandonedLookup.HasComponent(building) ||
+                        !m_DistrictIndexMap.TryGetValue(districtEntity, out int districtIndex))
+                        continue;
+
+                    var district = m_Districts[districtIndex];
+
+                    // Process residential properties
+                    ProcessResidentialBuilding(building, prefab, ref district, chunk, i);
                     
+                    // Process service buildings
+                    ProcessServiceBuilding(building, prefab, districtEntity, ref district, chunk, i);
+                    
+                    // Process employment buildings
+                    ProcessEmploymentBuilding(building, prefab, ref district, chunk, i);
+                    
+                    // Process schools
+                    ProcessSchoolBuilding(building, prefab, ref district, chunk, i);
+
+                    m_Districts[districtIndex] = district;
+                }
+            }
+
+            private void ProcessResidentialBuilding(Entity building, Entity prefab, ref DistrictEntry district, 
+                                                  in ArchetypeChunk chunk, int index)
+            {
+                if (!m_PropertyDataLookup.TryGetComponent(prefab, out var propertyData) ||
+                    propertyData.m_ResidentialProperties <= 0 ||
+                    !chunk.Has(ref m_RenterHandle))
+                    return;
+
+                district.maxHouseholds += propertyData.m_ResidentialProperties;
+                
+                var renters = chunk.GetBufferAccessor(ref m_RenterHandle)[index];
+                for (int k = 0; k < renters.Length; k++)
+                {
+                    Entity household = renters[k].m_Renter;
+                    if (ProcessHousehold(household, ref district))
+                    {
+                        district.households.Add(household);
+                    }
+                }
+            }
+
+            private bool ProcessHousehold(Entity household, ref DistrictEntry district)
+            {
+                if (!m_HouseholdLookup.HasComponent(household) ||
+                    !m_HouseholdCitizenLookup.TryGetBuffer(household, out var citizens))
+                    return false;
+
+                district.householdCount++;
+                district.residentCount += citizens.Length;
+
+                if (m_HouseholdAnimalLookup.TryGetBuffer(household, out var animals))
+                    district.petCount += animals.Length;
+
+                return true;
+            }
+
+            private void ProcessServiceBuilding(Entity building, Entity prefab, Entity districtEntity, 
+                                              ref DistrictEntry district, in ArchetypeChunk chunk, int index)
+            {
+                if (!chunk.Has(ref m_ServiceDistrictHandle))
+                    return;
+
+                var serviceDistricts = chunk.GetBufferAccessor(ref m_ServiceDistrictHandle)[index];
+                for (int j = 0; j < serviceDistricts.Length; j++)
+                {
+                    if (serviceDistricts[j].m_District == districtEntity)
+                    {
+                        district.serviceBuildings.Add(building);
+                        district.servicePrefabs.Add(prefab);
+                        break;
+                    }
+                }
+            }
+
+            private void ProcessEmploymentBuilding(Entity building, Entity prefab, ref DistrictEntry district, 
+                                                 in ArchetypeChunk chunk, int index)
+            {
+                Entity employeeEntity = building;
+                bool hasEmployees = false;
+
+                // Check for direct employees
+                if (chunk.Has(ref m_EmployeeHandle) && chunk.Has(ref m_WorkProviderHandle))
+                {
+                    hasEmployees = true;
+                }
+                // Check for company renters
+                else if (chunk.Has(ref m_RenterHandle))
+                {
+                    var renters = chunk.GetBufferAccessor(ref m_RenterHandle)[index];
+                    for (int j = 0; j < renters.Length; j++)
+                    {
+                        Entity renter = renters[j].m_Renter;
+                        if (m_CompanyDataLookup.HasComponent(renter) &&
+                            m_EmployeeLookup.HasBuffer(renter) &&
+                            m_WorkProviderLookup.HasComponent(renter))
+                        {
+                            employeeEntity = renter;
+                            hasEmployees = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasEmployees)
+                    return;
+
+                ProcessEmployeeData(employeeEntity, prefab, building, ref district, chunk, index);
+            }
+
+            private void ProcessEmployeeData(Entity employeeEntity, Entity prefab, Entity building, 
+                                           ref DistrictEntry district, in ArchetypeChunk chunk, int index)
+            {
+                if (!m_WorkProviderLookup.TryGetComponent(employeeEntity, out var workProvider) ||
+                    !m_PrefabRefLookup.TryGetComponent(employeeEntity, out var employeePrefabRef) ||
+                    !m_WorkplaceDataLookup.TryGetComponent(employeePrefabRef.m_Prefab, out var workplaceData))
+                    return;
+
+                int buildingLevel = GetBuildingLevel(prefab, building);
+                var employees = m_EmployeeLookup.HasBuffer(employeeEntity) ? m_EmployeeLookup[employeeEntity] : default;
+
+                EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
+                    workProvider.m_MaxWorkers, buildingLevel, workplaceData.m_Complexity);
+
+                district.employeeCount += employees.IsCreated ? employees.Length : 0;
+                district.maxEmployees += workplacesData.total;
+                district.educationDataWorkplaces += workplacesData;
+                
+                if (employees.IsCreated)
+                {
+                    district.educationDataEmployees += EmploymentData.GetEmployeesData(
+                        employees, workplacesData.total - employees.Length);
+                }
+            }
+
+            private void ProcessSchoolBuilding(Entity building, Entity prefab, ref DistrictEntry district, 
+                                             in ArchetypeChunk chunk, int index)
+            {
+                if (!chunk.Has(ref m_StudentHandle) || !chunk.Has(ref m_EfficiencyHandle) ||
+                    !m_SchoolDataLookup.TryGetComponent(prefab, out var schoolData))
+                    return;
+
+                // Check efficiency
+                if (BuildingUtils.GetEfficiency(chunk.GetBufferAccessor(ref m_EfficiencyHandle), index) == 0.0)
+                    return;
+
+                // Handle upgrades
+                if (m_InstalledUpgradeLookup.TryGetBuffer(building, out var upgrades))
+                {
+                    UpgradeUtils.CombineStats(ref schoolData, upgrades, ref m_PrefabRefLookup, ref m_SchoolDataLookup);
+                }
+
+                var students = chunk.GetBufferAccessor(ref m_StudentHandle)[index];
+                
+                switch (schoolData.m_EducationLevel)
+                {
+                    case 1:
+                        district.elementaryStudents += students.Length;
+                        district.elementaryCapacity += schoolData.m_StudentCapacity;
+                        break;
+                    case 2:
+                        district.highSchoolStudents += students.Length;
+                        district.highSchoolCapacity += schoolData.m_StudentCapacity;
+                        break;
+                    case 3:
+                        district.collegeStudents += students.Length;
+                        district.collegeCapacity += schoolData.m_StudentCapacity;
+                        break;
+                    case 4:
+                        district.universityStudents += students.Length;
+                        district.universityCapacity += schoolData.m_StudentCapacity;
+                        break;
+                }
+            }
+
+            private int GetBuildingLevel(Entity prefab, Entity building)
+            {
+                if (m_SpawnableDataLookup.TryGetComponent(prefab, out var spawnableData))
+                    return spawnableData.m_Level;
+                    
+                if (m_PropertyRenterLookup.TryGetComponent(building, out var propertyRenter) &&
+                    m_PrefabRefLookup.TryGetComponent(propertyRenter.m_Property, out var propertyPrefabRef) &&
+                    m_SpawnableDataLookup.TryGetComponent(propertyPrefabRef.m_Prefab, out var propertySpawnableData))
+                    return propertySpawnableData.m_Level;
+                    
+                return 1;
+            }
+        }
+
+        // Simple job for policies
+        [BurstCompile]
+        private struct ProcessDistrictPoliciesJob : IJobChunk
+        {
+            [ReadOnly] public EntityTypeHandle m_EntityHandle;
+            [ReadOnly] public BufferTypeHandle<Policy> m_PolicyHandle;
+            [ReadOnly] public NativeArray<Entity> PolicyEntities;
+            [ReadOnly] public NativeHashMap<Entity, int> m_DistrictIndexMap;
+            public NativeArray<DistrictEntry> Districts;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
+                BufferAccessor<Policy> policyAccessor = chunk.GetBufferAccessor(ref m_PolicyHandle);
+
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    Entity districtEntity = entities[i];
                     if (!m_DistrictIndexMap.TryGetValue(districtEntity, out int districtIndex))
                         continue;
 
-                    // Determine if this building has employees
-                    bool hasEmployees = false;
-                    Entity employeeEntity = building;
-                    
-                    if (!isParkChunk && hasRenter)
+                    var district = Districts[districtIndex];
+                    district.policies.Clear();
+
+                    var activePolicies = policyAccessor[i];
+                    for (int j = 0; j < activePolicies.Length; j++)
                     {
-                        // Handle buildings with renters
-                        var renterBuffer = chunk.GetBufferAccessor(ref m_RenterHandle)[i];
-                        
-                        if (renterBuffer.Length == 0 && m_SpawnableDataLookup.HasComponent(prefabEntity))
-                        {
-                            // Skip empty commercial or industrial buildings - handled by zone check logic
+                        Policy policy = activePolicies[j];
+                        if ((policy.m_Flags & PolicyFlags.Active) == 0)
                             continue;
-                        }
-                        
-                        for (int j = 0; j < renterBuffer.Length; j++)
+
+                        // Check if it's a district policy
+                        for (int k = 0; k < PolicyEntities.Length; k++)
                         {
-                            Entity renter = renterBuffer[j].m_Renter;
-                            
-                            if (m_CompanyDataLookup.HasComponent(renter) && 
-                                m_EmployeeLookup.HasBuffer(renter) && 
-                                m_WorkProviderLookup.HasComponent(renter))
+                            if (PolicyEntities[k] == policy.m_Policy)
                             {
-                                employeeEntity = renter;
-                                hasEmployees = true;
+                                district.policies.Add(policy.m_Policy);
                                 break;
                             }
                         }
                     }
-                    else if (hasEmployee && hasWorkProvider)
-                    {
-                        // Direct employee and work provider
-                        hasEmployees = true;
-                    }
-                    
-                    if (!hasEmployees)
-                        continue;
-                    
-                    // Process employee data for this building
-                    var district = m_Districts[districtIndex];
-                    
-                    int buildingLevel = 1;
-                    if (m_SpawnableDataLookup.TryGetComponent(prefabEntity, out var spawnableData))
-                    {
-                        buildingLevel = spawnableData.m_Level;
-                    }
-                    else if (m_PropertyRenterLookup.TryGetComponent(building, out var propertyRenter) && 
-                             m_PrefabRefLookup.TryGetComponent(propertyRenter.m_Property, out var propertyPrefabRef) && 
-                             m_SpawnableDataLookup.TryGetComponent(propertyPrefabRef.m_Prefab, out var propertySpawnableData))
-                    {
-                        buildingLevel = propertySpawnableData.m_Level;
-                    }
-                    
-                    if (hasEmployee && hasWorkProvider)
-                    {
-                        var employees = chunk.GetBufferAccessor(ref m_EmployeeHandle)[i];
-                        var workProvider = chunk.GetNativeArray(ref m_WorkProviderHandle)[i];
-                        Entity employeePrefab = m_PrefabRefLookup[employeeEntity].m_Prefab;
-                        
-                        if (m_WorkplaceDataLookup.TryGetComponent(employeePrefab, out var workplaceData))
-                        {
-                            WorkplaceComplexity complexity = workplaceData.m_Complexity;
-                            EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
-                                workProvider.m_MaxWorkers, buildingLevel, complexity);
-                                
-                            district.employeeCount += employees.Length;
-                            district.maxEmployees += workplacesData.total;
-                            district.educationDataWorkplaces += workplacesData;
-                            district.educationDataEmployees += EmploymentData.GetEmployeesData(
-                                employees, workplacesData.total - employees.Length);
-                                
-                            m_Districts[districtIndex] = district;
-                        }
-                    }
-                    else if (m_EmployeeLookup.HasBuffer(employeeEntity) && 
-                             m_WorkProviderLookup.TryGetComponent(employeeEntity, out var workProviderData))
-                    {
-                        Entity employeePrefab = m_PrefabRefLookup[employeeEntity].m_Prefab;
-                        
-                        if (m_WorkplaceDataLookup.TryGetComponent(employeePrefab, out var workplaceData))
-                        {
-                            var employees = m_EmployeeLookup[employeeEntity];
-                            WorkplaceComplexity complexity = workplaceData.m_Complexity;
-                            EmploymentData workplacesData = EmploymentData.GetWorkplacesData(
-                                workProviderData.m_MaxWorkers, buildingLevel, complexity);
-                                
-                            district.employeeCount += employees.Length;
-                            district.maxEmployees += workplacesData.total;
-                            district.educationDataWorkplaces += workplacesData;
-                            district.educationDataEmployees += EmploymentData.GetEmployeesData(
-                                employees, workplacesData.total - employees.Length);
-                                
-                            m_Districts[districtIndex] = district;
-                        }
-                    }
+                    Districts[districtIndex] = district;
                 }
             }
         }
-        
-        [BurstCompile]
-        private struct ProcessDistrictDataJob : IJobParallelFor
-        {
-            public NativeArray<DistrictEntry> Districts;
 
-            // Lookup for household citizens (job-safe).
-            [ReadOnly] public BufferLookup<HouseholdCitizen> HouseholdCitizenLookup;
-
-            // Lookup for citizen data.
-            [ReadOnly] public ComponentLookup<Citizen> CitizenDataLookup;
-
-            public void Execute(int index)
-            {
-                
-                int children = 0, teens = 0, adults = 0, elders = 0;
-                int uneducated = 0, poorlyEducated = 0, educated = 0, wellEducated = 0, highlyEducated = 0;
-
-                DistrictEntry district = Districts[index];
-                for (int j = 0; j < district.households.Length; j++)
-                {
-                    Entity household = district.households[j];
-                    if (!HouseholdCitizenLookup.HasBuffer(household))
-                        continue;
-
-                    DynamicBuffer<HouseholdCitizen> citizens = HouseholdCitizenLookup[household];
-                    for (int k = 0; k < citizens.Length; k++)
-                    {
-                        Entity citizenEntity = citizens[k].m_Citizen;
-                        if (!CitizenDataLookup.HasComponent(citizenEntity))
-                            continue;
-                        Citizen citizen = CitizenDataLookup[citizenEntity];
-
-                        // Accumulate AgeData values.
-                        switch (citizen.GetAge())
-                        {
-                            case CitizenAge.Child:
-                                children++;
-                                break;
-                            case CitizenAge.Teen:
-                                teens++;
-                                break;
-                            case CitizenAge.Adult:
-                                adults++;
-                                break;
-                            case CitizenAge.Elderly:
-                                elders++;
-                                break;
-                        }
-
-                        
-                        switch (citizen.GetEducationLevel())
-                        {
-                            case 0:
-                                uneducated++;
-                                break;
-                            case 1:
-                                poorlyEducated++;
-                                break;
-                            case 2:
-                                educated++;
-                                break;
-                            case 3:
-                                wellEducated++;
-                                break;
-                            case 4:
-                                highlyEducated++;
-                                break;
-                        }
-                    }
-                }
-
-               
-                district.ageData = new AgeData(children, teens, adults, elders);
-                district.educationData = new EducationData(uneducated, poorlyEducated, educated, wellEducated, highlyEducated);
-                Districts[index] = district;
-            }
-        }
-
-        [BurstCompile]
-        private struct ProcessDistrictPoliciesJob : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<Entity> PolicyEntities;
-            [ReadOnly] public BufferLookup<Policy> PolicyBufferLookup;
-            [ReadOnly] public EntityCommandBuffer.ParallelWriter CommandBuffer;
-            public NativeArray<DistrictEntry> Districts;
-
-            public void Execute(int index)
-            {
-                var district = Districts[index];
-                district.policies.Clear();
-                
-                Entity districtEntity = district.district;
-                
-                if (!PolicyBufferLookup.HasBuffer(districtEntity))
-                {
-                    Districts[index] = district;
-                    return;
-                }
-                
-                var activePolicies = PolicyBufferLookup[districtEntity];
-                if (activePolicies.Length == 0)
-                {
-                    Districts[index] = district;
-                    return;
-                }
-                
-                for (int j = 0; j < activePolicies.Length; j++)
-                {
-                    Policy policy = activePolicies[j];
-                    
-                    if ((policy.m_Flags & PolicyFlags.Active) == 0)
-                        continue;
-                        
-                    Entity policyEntity = policy.m_Policy;
-                    
-                    bool isDistrictPolicy = false;
-                    for (int k = 0; k < PolicyEntities.Length; k++)
-                    {
-                        if (PolicyEntities[k] == policyEntity)
-                        {
-                            isDistrictPolicy = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!isDistrictPolicy)
-                        continue;
-                    
-                    district.policies.Add(policyEntity);
-                }
-                
-                Districts[index] = district;
-            }
-        }
-
-        // Combined query for buildings that might have employees or be service buildings
-        private EntityQuery m_CombinedBuildingQuery;
-        private EntityQuery m_DistrictBuildingQuery;
-        private EntityQuery m_HappinessParameterQuery;
+        private EntityQuery m_BuildingQuery;
         private EntityQuery m_DistrictQuery;
+        private EntityQuery m_CitizenQuery;
+        private EntityQuery m_EducationParameterQuery;
         private EntityQuery m_DistrictPoliciesQuery;
+        
         private PrefabSystem m_PrefabSystem;
         private ImageSystem m_ImageSystem;
-        private PrefabUISystem m_PrefabUISystem;
-        private PoliciesUISystem m_PoliciesUISystem;
-        private SelectedInfoUISystem m_SelectedInfoUISystem;
         private NameSystem m_NameSystem;
-        private NativeList<DistrictEntry> m_Districts;
+        private CitySystem m_CitySystem;
         private SimulationSystem m_SimulationSystem;
-        public bool IsPanelVisible { get; set; }
+        private NativeList<DistrictEntry> m_Districts;
         
+        public static readonly int kUpdatesPerDay = 1;
+        public bool IsPanelVisible { get; set; }
+
         protected override void OnCreate()
         {
             base.OnCreate();
 
-            m_DistrictBuildingQuery = GetEntityQuery(new EntityQueryDesc
-            {
-                All = new ComponentType[]
-                {
-                    typeof(Building),
-                    typeof(ResidentialProperty),
-                    typeof(PrefabRef),
-                    typeof(Renter),
-                    typeof(CurrentDistrict)
-                },
-                None = new ComponentType[]
-                {
-                    typeof(Temp),
-                    typeof(Deleted)
-                }
-            });
-
-            // Create a combined query for service buildings and employee buildings
-            m_CombinedBuildingQuery = GetEntityQuery(new EntityQueryDesc
+            m_BuildingQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[]
                 {
@@ -480,23 +499,11 @@ namespace InfoLoomTwo.Systems.DistrictData
                     typeof(PrefabRef),
                     typeof(CurrentDistrict)
                 },
-                Any = new ComponentType[]
-                {
-                    typeof(ServiceDistrict),
-                    typeof(Renter),
-                    typeof(Employee),
-                    typeof(WorkProvider)
-                },
                 None = new ComponentType[]
                 {
                     typeof(Temp),
                     typeof(Deleted)
                 }
-            });
-
-            m_HappinessParameterQuery = GetEntityQuery(new EntityQueryDesc
-            {
-                All = new ComponentType[] { typeof(CitizenHappinessParameterData) }
             });
 
             m_DistrictQuery = GetEntityQuery(new EntityQueryDesc
@@ -504,6 +511,22 @@ namespace InfoLoomTwo.Systems.DistrictData
                 All = new ComponentType[] { typeof(District) },
                 None = new ComponentType[] { typeof(Temp) }
             });
+
+            m_CitizenQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[]
+                {
+                    typeof(Citizen),
+                    typeof(HouseholdMember)
+                },
+                None = new ComponentType[]
+                {
+                    typeof(Temp),
+                    typeof(Deleted)
+                }
+            });
+
+            m_EducationParameterQuery = GetEntityQuery(typeof(EducationParameterData));
             
             m_DistrictPoliciesQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -514,141 +537,132 @@ namespace InfoLoomTwo.Systems.DistrictData
                     ComponentType.ReadOnly<DistrictModifierData>()
                 }
             });
-            
-            m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
+
+            InitializeSystems();
             m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
-            m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
+            RequireForUpdate<District>();
+        }
+
+        private void InitializeSystems()
+        {
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
-            m_PoliciesUISystem = World.GetOrCreateSystemManaged<PoliciesUISystem>();
-            m_PrefabUISystem = World.GetOrCreateSystemManaged<PrefabUISystem>();
-
-            RequireForUpdate<District>();
+            m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
+            m_CitySystem = World.GetOrCreateSystemManaged<CitySystem>();
+            m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
         }
 
         protected override void OnDestroy()
         {
+            if (m_Districts.IsCreated)
+            {
+                DisposeDistricts();
+                m_Districts.Dispose();
+            }
+            base.OnDestroy();
+        }
+
+        private void DisposeDistricts()
+        {
+            if (!m_Districts.IsCreated) return;
+
             for (int i = 0; i < m_Districts.Length; i++)
             {
-                if (m_Districts[i].households.IsCreated)
-                    m_Districts[i].households.Dispose();
-                if (m_Districts[i].serviceBuildings.IsCreated)
-                    m_Districts[i].serviceBuildings.Dispose();
-                if (m_Districts[i].servicePrefabs.IsCreated)
-                    m_Districts[i].servicePrefabs.Dispose();
-                if (m_Districts[i].policies.IsCreated)
-                    m_Districts[i].policies.Dispose();
+                var district = m_Districts[i];
+                if (district.households.IsCreated) district.households.Dispose();
+                if (district.serviceBuildings.IsCreated) district.serviceBuildings.Dispose();
+                if (district.servicePrefabs.IsCreated) district.servicePrefabs.Dispose();
+                if (district.policies.IsCreated) district.policies.Dispose();
             }
-            if (m_Districts.IsCreated)
-                m_Districts.Dispose();
+            
+            // Don't dispose the main list here since we want to reuse it
+            // Only dispose in OnDestroy
         }
-        
+
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {
-           
-           return 1024;
+            return 262144 / (kUpdatesPerDay * 128);
         }
-        
+
         protected override void OnUpdate()
         {
-            if (!IsPanelVisible)
-                return;
+            if (!IsPanelVisible) return;
+
+            InitializeDistricts();
             
-            ResetDistrictEntries();
-            BuildDistrictEntries();
-
-            using (var districtMap = BuildDistrictMap())
-            {
-                // Schedule the stats job for residential buildings
-                ScheduleStatsJob(districtMap);
-                
-                // Process service buildings and employees in one pass with a chunk job
-                var districtsArray = m_Districts.AsArray();
-                var processBuildingsJob = new ProcessBuildingsJob
-                {
-                    m_EntityHandle = GetEntityTypeHandle(),
-                    m_PrefabRefHandle = GetComponentTypeHandle<PrefabRef>(true),
-                    m_CurrentDistrictHandle = GetComponentTypeHandle<CurrentDistrict>(true),
-                    m_ServiceDistrictHandle = GetBufferTypeHandle<ServiceDistrict>(true),
-                    m_RenterHandle = GetBufferTypeHandle<Renter>(true),
-                    m_EmployeeHandle = GetBufferTypeHandle<Employee>(true),
-                    m_WorkProviderHandle = GetComponentTypeHandle<WorkProvider>(true),
-                    m_EmployeeLookup = GetBufferLookup<Employee>(true),
-                    m_WorkProviderLookup = GetComponentLookup<WorkProvider>(true),
-                    m_CompanyDataLookup = GetComponentLookup<CompanyData>(true),
-                    m_WorkplaceDataLookup = GetComponentLookup<WorkplaceData>(true),
-                    m_SpawnableDataLookup = GetComponentLookup<SpawnableBuildingData>(true),
-                    m_ParkLookup = GetComponentLookup<Game.Buildings.Park>(true),
-                    m_PropertyRenterLookup = GetComponentLookup<PropertyRenter>(true),
-                    m_PrefabRefLookup = GetComponentLookup<PrefabRef>(true),
-                    m_DistrictIndexMap = districtMap,
-                    m_Districts = districtsArray
-                };
-                
-                Dependency = processBuildingsJob.Schedule(m_CombinedBuildingQuery, Dependency);
-                
-                // Process household and citizen data in parallel
-                var processDataJob = new ProcessDistrictDataJob
-                {
-                    Districts = districtsArray,
-                    HouseholdCitizenLookup = GetBufferLookup<HouseholdCitizen>(true),
-                    CitizenDataLookup = GetComponentLookup<Citizen>(true)
-                };
-                
-                Dependency = processDataJob.Schedule(districtsArray.Length, 32, Dependency);
-                Dependency.Complete();
-            }
-
-            ProcessWealthData();
-            ProcessDistrictPoliciesParallel();
+            using var districtMap = BuildDistrictMap();
+            
+            // Process all citizen data in one job
+            ProcessCitizenData(districtMap);
+            
+            // Process all building data in one job
+            ProcessBuildingData(districtMap);
+            
+            // Process policies
+            ProcessPolicies(districtMap);
+            
+            // Calculate wealth and availability indicators
+            FinalizeDistrictData();
         }
 
-        // Clears and disposes existing district entries.
-        private void ResetDistrictEntries()
+        private void InitializeDistricts()
         {
-            for (int i = 0; i < m_Districts.Length; i++)
+            // Ensure m_Districts is created if it doesn't exist
+            if (!m_Districts.IsCreated)
             {
-                if (m_Districts[i].households.IsCreated)
-                    m_Districts[i].households.Dispose();
-                if (m_Districts[i].serviceBuildings.IsCreated)
-                    m_Districts[i].serviceBuildings.Dispose();
-                if (m_Districts[i].servicePrefabs.IsCreated)
-                    m_Districts[i].servicePrefabs.Dispose();
-                if (m_Districts[i].policies.IsCreated)
-                    m_Districts[i].policies.Dispose();
+                m_Districts = new NativeList<DistrictEntry>(64, Allocator.Persistent);
             }
+
+            DisposeDistricts();
             m_Districts.Clear();
-        }
 
-        private void BuildDistrictEntries()
-        {
-            using (var districts = m_DistrictQuery.ToEntityArray(Allocator.Temp))
+            using var districts = m_DistrictQuery.ToEntityArray(Allocator.Temp);
+            for (int i = 0; i < districts.Length; i++)
             {
-                for (int i = 0; i < districts.Length; i++)
-                {
-                    m_Districts.Add(new DistrictEntry
-                    {
-                        district = districts[i],
-                        households = new NativeList<Entity>(32, Allocator.Persistent),
-                        residentCount = 0,
-                        petCount = 0,
-                        householdCount = 0,
-                        maxHouseholds = 0,
-                        ageData = new AgeData(0, 0, 0, 0),
-                        educationData = new EducationData(0, 0, 0, 0, 0),
-                        wealthKey = default(HouseholdWealthKey),
-                        employeeCount = 0,
-                        maxEmployees = 0,
-                        educationDataEmployees = default(EmploymentData),
-                        educationDataWorkplaces = default(EmploymentData),
-                        serviceBuildings = new NativeList<Entity>(16, Allocator.Persistent),
-                        servicePrefabs = new NativeList<Entity>(16, Allocator.Persistent),
-                        policies = new NativeList<Entity>(8, Allocator.Persistent)
-                    });
-                }
+                m_Districts.Add(CreateDistrictEntry(districts[i]));
             }
         }
-        
+
+        private DistrictEntry CreateDistrictEntry(Entity district)
+        {
+            return new DistrictEntry
+            {
+                district = district,
+                households = new NativeList<Entity>(32, Allocator.Persistent),
+                serviceBuildings = new NativeList<Entity>(16, Allocator.Persistent),
+                servicePrefabs = new NativeList<Entity>(16, Allocator.Persistent),
+                policies = new NativeList<Entity>(8, Allocator.Persistent),
+                residentCount = 0,
+                petCount = 0,
+                householdCount = 0,
+                maxHouseholds = 0,
+                ageData = new AgeData(0, 0, 0, 0),
+                educationData = new EducationData(0, 0, 0, 0, 0),
+                wealthKey = new HouseholdWealthKey(),
+                employeeCount = 0,
+                maxEmployees = 0,
+                educationDataEmployees = new EmploymentData(0, 0, 0, 0, 0, 0),
+                educationDataWorkplaces = new EmploymentData(0, 0, 0, 0, 0, 0),
+                elementaryEligible = 0,
+                highSchoolEligible = 0,
+                collegeEligible = 0,
+                universityEligible = 0,
+                elementaryCapacity = 0,
+                highSchoolCapacity = 0,
+                collegeCapacity = 0,
+                universityCapacity = 0,
+                elementaryStudents = 0,
+                highSchoolStudents = 0,
+                collegeStudents = 0,
+                universityStudents = 0,
+                elementaryAvailability = new IndicatorValue(),
+                highSchoolAvailability = new IndicatorValue(),
+                collegeAvailability = new IndicatorValue(),
+                universityAvailability = new IndicatorValue()
+                // All other fields default to zero/empty
+            };
+        }
+
         private NativeHashMap<Entity, int> BuildDistrictMap()
         {
             var districtMap = new NativeHashMap<Entity, int>(m_Districts.Length, Allocator.TempJob);
@@ -659,60 +673,137 @@ namespace InfoLoomTwo.Systems.DistrictData
             return districtMap;
         }
 
-        private void ScheduleStatsJob(NativeHashMap<Entity, int> districtMap)
+        private void ProcessCitizenData(NativeHashMap<Entity, int> districtMap)
         {
-            var jobData = new CountDistrictStatsJob
+            int districtCount = m_Districts.Length;
+            using var ageData = new NativeArray<int>(districtCount * 4, Allocator.TempJob);
+            using var educationData = new NativeArray<int>(districtCount * 5, Allocator.TempJob);
+            using var eligibilityData = new NativeArray<int>(districtCount * 4, Allocator.TempJob);
+
+            var job = new ProcessCitizenDataJob
             {
-                m_EntityHandle = SystemAPI.GetEntityTypeHandle(),
-                m_CurrentDistrictHandle = SystemAPI.GetComponentTypeHandle<CurrentDistrict>(true),
-                m_PrefabRefHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
-                m_AbandonedFromEntity = SystemAPI.GetComponentLookup<Abandoned>(true),
-                m_PropertyDataFromEntity = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
-                m_HouseholdFromEntity = SystemAPI.GetComponentLookup<Household>(true),
-                m_HouseholdCitizenFromEntity = SystemAPI.GetBufferLookup<HouseholdCitizen>(true),
-                m_HouseholdAnimalFromEntity = SystemAPI.GetBufferLookup<HouseholdAnimal>(true),
-                m_RenterFromEntity = SystemAPI.GetBufferLookup<Renter>(true),
-                m_HappinessData = SystemAPI.GetSingleton<CitizenHappinessParameterData>(),
-                m_Districts = m_Districts,
-                m_DistrictIndexMap = districtMap
+                m_EntityHandle = GetEntityTypeHandle(),
+                m_CitizenHandle = GetComponentTypeHandle<Citizen>(true),
+                m_StudentHandle = GetComponentTypeHandle<Game.Citizens.Student>(true),
+                m_WorkerHandle = GetComponentTypeHandle<Worker>(true),
+                m_HouseholdMemberLookup = GetComponentLookup<HouseholdMember>(true),
+                m_HouseholdLookup = GetComponentLookup<Household>(true),
+                m_PropertyRenterLookup = GetComponentLookup<PropertyRenter>(true),
+                m_CurrentDistrictLookup = GetComponentLookup<CurrentDistrict>(true),
+                m_HealthProblemLookup = GetComponentLookup<HealthProblem>(true),
+                m_MovingAwayLookup = GetComponentLookup<MovingAway>(true),
+                m_CityModifierLookup = GetBufferLookup<CityModifier>(true),
+                m_City = m_CitySystem.City,
+                m_EducationParameterData = m_EducationParameterQuery.GetSingleton<EducationParameterData>(),
+                m_DistrictIndexMap = districtMap,
+                m_AgeData = ageData,
+                m_EducationData = educationData,
+                m_EligibilityData = eligibilityData
             };
 
-            Dependency = JobChunkExtensions.Schedule(jobData, m_DistrictBuildingQuery, Dependency);
+            Dependency = job.Schedule(m_CitizenQuery, Dependency);
             Dependency.Complete();
-        }
 
-        private void ProcessWealthData()
-        {
-            for (int i = 0; i < m_Districts.Length; i++)
+            // Copy results back to districts
+            for (int i = 0; i < districtCount; i++)
             {
                 var district = m_Districts[i];
-                district.wealthKey = CitizenUIUtils.GetAverageHouseholdWealth(EntityManager, district.households, SystemAPI.GetSingleton<CitizenHappinessParameterData>());
+                
+                district.ageData = new AgeData(
+                    ageData[i * 4 + 0], ageData[i * 4 + 1],
+                    ageData[i * 4 + 2], ageData[i * 4 + 3]);
+                    
+                district.educationData = new EducationData(
+                    educationData[i * 5 + 0], educationData[i * 5 + 1],
+                    educationData[i * 5 + 2], educationData[i * 5 + 3], educationData[i * 5 + 4]);
+                    
+                district.elementaryEligible = eligibilityData[i * 4 + 0];
+                district.highSchoolEligible = eligibilityData[i * 4 + 1];
+                district.collegeEligible = eligibilityData[i * 4 + 2];
+                district.universityEligible = eligibilityData[i * 4 + 3];
+
                 m_Districts[i] = district;
             }
         }
 
-        private void ProcessDistrictPoliciesParallel()
+        private void ProcessBuildingData(NativeHashMap<Entity, int> districtMap)
         {
-            var policyEntities = m_DistrictPoliciesQuery.ToEntityArray(Allocator.TempJob);
-            var districtsArray = m_Districts.AsArray();
-            
-            var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+            var job = new ProcessBuildingDataJob
+            {
+                m_EntityHandle = GetEntityTypeHandle(),
+                m_PrefabRefHandle = GetComponentTypeHandle<PrefabRef>(true),
+                m_CurrentDistrictHandle = GetComponentTypeHandle<CurrentDistrict>(true),
+                m_RenterHandle = GetBufferTypeHandle<Renter>(true),
+                m_EmployeeHandle = GetBufferTypeHandle<Employee>(true),
+                m_ServiceDistrictHandle = GetBufferTypeHandle<ServiceDistrict>(true),
+                m_StudentHandle = GetBufferTypeHandle<Game.Buildings.Student>(true),
+                m_EfficiencyHandle = GetBufferTypeHandle<Efficiency>(true),
+                m_WorkProviderHandle = GetComponentTypeHandle<WorkProvider>(true),
+                
+                m_AbandonedLookup = GetComponentLookup<Abandoned>(true),
+                m_PropertyDataLookup = GetComponentLookup<BuildingPropertyData>(true),
+                m_HouseholdLookup = GetComponentLookup<Household>(true),
+                m_WorkProviderLookup = GetComponentLookup<WorkProvider>(true),
+                m_CompanyDataLookup = GetComponentLookup<CompanyData>(true),
+                m_WorkplaceDataLookup = GetComponentLookup<WorkplaceData>(true),
+                m_SpawnableDataLookup = GetComponentLookup<SpawnableBuildingData>(true),
+                m_PropertyRenterLookup = GetComponentLookup<PropertyRenter>(true),
+                m_PrefabRefLookup = GetComponentLookup<PrefabRef>(true),
+                m_SchoolDataLookup = GetComponentLookup<SchoolData>(true),
+                m_HouseholdCitizenLookup = GetBufferLookup<HouseholdCitizen>(true),
+                m_HouseholdAnimalLookup = GetBufferLookup<HouseholdAnimal>(true),
+                m_EmployeeLookup = GetBufferLookup<Employee>(true),
+                m_InstalledUpgradeLookup = GetBufferLookup<InstalledUpgrade>(true),
+                m_DistrictIndexMap = districtMap,
+                m_Districts = m_Districts.AsArray()
+            };
+
+            Dependency = job.Schedule(m_BuildingQuery, Dependency);
+            Dependency.Complete();
+        }
+
+        private void ProcessPolicies(NativeHashMap<Entity, int> districtMap)
+        {
+            using var policyEntities = m_DistrictPoliciesQuery.ToEntityArray(Allocator.TempJob);
             
             var job = new ProcessDistrictPoliciesJob
             {
+                m_EntityHandle = GetEntityTypeHandle(),
+                m_PolicyHandle = GetBufferTypeHandle<Policy>(true),
                 PolicyEntities = policyEntities,
-                PolicyBufferLookup = GetBufferLookup<Policy>(true),
-                CommandBuffer = commandBuffer.AsParallelWriter(),
-                Districts = districtsArray
+                m_DistrictIndexMap = districtMap,
+                Districts = m_Districts.AsArray()
             };
-            
-            Dependency = job.Schedule(districtsArray.Length, 32, Dependency);
+
+            Dependency = job.Schedule(m_DistrictQuery, Dependency);
             Dependency.Complete();
-            
-            commandBuffer.Dispose();
-            policyEntities.Dispose();
         }
-        
+
+        private void FinalizeDistrictData()
+        {
+            for (int i = 0; i < m_Districts.Length; i++)
+            {
+                var district = m_Districts[i];
+                
+                // Calculate wealth
+                district.wealthKey = CitizenUIUtils.GetAverageHouseholdWealth(
+                    EntityManager, district.households, SystemAPI.GetSingleton<CitizenHappinessParameterData>());
+                
+                // Calculate availability indicators
+                district.elementaryAvailability = IndicatorValue.Calculate(
+                    district.elementaryCapacity, district.elementaryEligible);
+                district.highSchoolAvailability = IndicatorValue.Calculate(
+                    district.highSchoolCapacity, district.highSchoolEligible);
+                district.collegeAvailability = IndicatorValue.Calculate(
+                    district.collegeCapacity, district.collegeEligible);
+                district.universityAvailability = IndicatorValue.Calculate(
+                    district.universityCapacity, district.universityEligible);
+
+                m_Districts[i] = district;
+            }
+        }
+
+        // Keep all your existing WriteDistricts and related methods unchanged
         public void WriteDistricts(IJsonWriter writer)
         {
             writer.ArrayBegin(m_Districts.Length);
@@ -736,7 +827,7 @@ namespace InfoLoomTwo.Systems.DistrictData
                 WriteEducationData(writer, district.educationData);
                 writer.PropertyName("ageData");
                 WriteAgeData(writer, district.ageData);
-                
+
                 // Employee data
                 writer.PropertyName("employeeCount");
                 writer.Write(district.employeeCount);
@@ -750,12 +841,48 @@ namespace InfoLoomTwo.Systems.DistrictData
                 WriteServiceData(writer, district.serviceBuildings, district.servicePrefabs);
                 writer.PropertyName("entity");
                 writer.Write(district.district);
-                
+
                 writer.PropertyName("policyCount");
                 writer.Write(district.policies.Length);
                 writer.PropertyName("policies");
                 WritePolicyData(writer, district.policies);
-                
+
+                writer.PropertyName("elementaryEligible");
+                writer.Write(district.elementaryEligible);
+                writer.PropertyName("highSchoolEligible");
+                writer.Write(district.highSchoolEligible);
+                writer.PropertyName("collegeEligible");
+                writer.Write(district.collegeEligible);
+                writer.PropertyName("universityEligible");
+                writer.Write(district.universityEligible);
+
+                writer.PropertyName("elementaryCapacity");
+                writer.Write(district.elementaryCapacity);
+                writer.PropertyName("highSchoolCapacity");
+                writer.Write(district.highSchoolCapacity);
+                writer.PropertyName("collegeCapacity");
+                writer.Write(district.collegeCapacity);
+                writer.PropertyName("universityCapacity");
+                writer.Write(district.universityCapacity);
+
+                writer.PropertyName("elementaryStudents");
+                writer.Write(district.elementaryStudents);
+                writer.PropertyName("highSchoolStudents");
+                writer.Write(district.highSchoolStudents);
+                writer.PropertyName("collegeStudents");
+                writer.Write(district.collegeStudents);
+                writer.PropertyName("universityStudents");
+                writer.Write(district.universityStudents);
+
+                writer.PropertyName("elementaryAvailability");
+                district.elementaryAvailability.Write(writer);
+                writer.PropertyName("highSchoolAvailability");
+                district.highSchoolAvailability.Write(writer);
+                writer.PropertyName("collegeAvailability");
+                district.collegeAvailability.Write(writer);
+                writer.PropertyName("universityAvailability");
+                district.universityAvailability.Write(writer);
+
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
@@ -814,7 +941,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             writer.Write(employmentData.total);
             writer.TypeEnd();
         }
-        
+
         private void WriteServiceData(IJsonWriter writer, NativeList<Entity> serviceBuildings, NativeList<Entity> servicePrefabs)
         {
             writer.ArrayBegin(serviceBuildings.Length);
@@ -831,6 +958,7 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
             writer.ArrayEnd();
         }
+
         private void WritePolicyData(IJsonWriter writer, NativeList<Entity> policies)
         {
             writer.ArrayBegin(policies.Length);
@@ -838,24 +966,24 @@ namespace InfoLoomTwo.Systems.DistrictData
             {
                 writer.TypeBegin("DistrictPolicy");
                 writer.PropertyName("name");
-                
+
                 if (m_PrefabSystem.TryGetPrefab<PolicyPrefab>(policies[i], out var prefab))
                 {
                     string policyName = prefab.name;
                     string localizedName = policyName;
-                    
+
                     if (GameManager.instance.localizationManager.activeDictionary.TryGetValue($"Policy.TITLE[{policyName}]", out var localizedValue))
                     {
                         localizedName = localizedValue;
                     }
-                    
+
                     writer.Write(localizedName);
                 }
                 else
                 {
                     m_NameSystem.BindName(writer, policies[i]);
                 }
-                
+
                 writer.PropertyName("icon");
                 writer.Write(m_ImageSystem.GetIconOrGroupIcon(policies[i]));
                 writer.PropertyName("entity");
@@ -864,6 +992,5 @@ namespace InfoLoomTwo.Systems.DistrictData
             }
             writer.ArrayEnd();
         }
-        
     }
 }

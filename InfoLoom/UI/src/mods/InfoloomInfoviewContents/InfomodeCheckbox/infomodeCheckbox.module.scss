@@ -1,0 +1,35 @@
+﻿.buildingUseInfomodeCheckBoxContainer {
+    padding-top:                    4rem;
+    padding-left:                   0rem;
+    padding-right:                  4rem;
+    padding-bottom:                 3rem;
+    border-top-left-radius:         4rem 4rem;
+    border-top-right-radius:        4rem 4rem;
+    border-bottom-left-radius:      4rem 4rem;
+    border-bottom-right-radius:     4rem 4rem;
+    line-height:                    110%;
+    display:                        flex;
+    flex-direction:                 row;
+    flex-grow:                      1;
+    margin-left:                    10rem;
+    margin-right:                   10rem;
+    width:                          0%;     // Forces both check box containers to be same width.
+}
+
+.buildingUseInfomodeCheckBoxContainer:hover {
+    background-color:               rgba(64, 64, 64, 1);
+}
+
+.buildingUseInfomodeCheckBox {
+    margin-left:                    0rem;
+}
+
+.buildingUseInfomodeCheckBoxLabel {
+    // Adjust top margin according to font size to better align the label text with the check box.
+    margin-top:                     calc(0rem - 18rem * (let(--fontScale) - 1));
+    flex-grow:                      1;
+    padding-top:                    2rem;
+    margin-left:                    4rem;
+    font-size:                      var(--fontSizeS);
+    color:                          var(--textColorDim);
+}

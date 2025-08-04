@@ -21,6 +21,7 @@ import {
 import {InfoRadioButton} from "../../components/InfoRadioButton/InfoRadioButton";
 import {getModule} from "cs2/modding";
 import { ChartDataset } from 'chart.js';
+import { DistrictSelector } from 'mods/InfoloomInfoviewContents/DistrictSelector/districtSelector';
 
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
@@ -711,6 +712,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
       >
         <div className={styles.container}>
           <div className={styles.toggleContainer}>
+            <DistrictSelector/>
             <InfoCheckbox
                 label={translate('InfoLoomTwo.DemographicsPanel[Toggle]', "Show Statistics")}
                 isChecked={demoStatsToggledOn}

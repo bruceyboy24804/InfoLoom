@@ -1,5 +1,5 @@
 .panel {
-  width: 1100rem; // Increased width for better spacing
+  width: 1100rem;
   max-width: 1200rem;
 }
 
@@ -37,15 +37,15 @@
 }
 
 .nameColumn {
-  flex: 2 1 0; // Adjusted flex for better spacing
-  min-width: 150rem; // Increased minimum width
+  flex: 2 1 0;
+  min-width: 150rem;
   margin-right: 10rem;
   text-align: center;
 }
 
 .householdColumn {
   flex: 1.5 1 0;
-  min-width: 120rem; // Ensure enough space for numbers
+  min-width: 120rem;
   margin-left: 10rem;
   text-align: right;
 }
@@ -58,7 +58,7 @@
 }
 
 .petsColumn {
-  flex: 1 1 0; // Adjusted flex for balance
+  flex: 1 1 0;
   min-width: 80rem;
   margin-left: 10rem;
   text-align: right;
@@ -138,8 +138,8 @@
 }
 
 .tooltipContent {
-  z-index: 10; // Ensure tooltips appear above other elements
-  max-width: 300rem; // Prevent tooltips from being too wide
+  z-index: 10;
+  max-width: 300rem;
 }
 
 .tooltipText {
@@ -202,11 +202,6 @@
   margin-bottom: 10rem;
 }
 
-.boldText {
-  margin: 0 0.25em; // Adds spacing before and after
-  font-weight: bold;
-}
-
 .chartBar {
   display: flex;
   height: 20rem;
@@ -241,102 +236,85 @@
   line-height: 1.5;
 }
 
-.occupancyRate {
-  margin-top: 6px;
+.householdCountText {
   text-align: right;
-  font-weight: bold;
 }
 
-.statsRow {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-top: 10rem;
-  border-top: 1rem solid #ffffff1a;
-  padding-top: 8rem;
+.educationDetailsTable {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
 }
 
-.statItem {
+.educationDetailsHeader,
+.educationDetailsRow {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-right: 12rem;
 }
 
-.statLabel {
-  font-size: 12rem;
-  margin-right: 5rem;
-  color: #ffffffcc;
-}
-
-.statValue {
+.educationDetailsHeader {
   font-weight: bold;
-  font-size: 12rem;
-}
-.chartLegend {
-  display: flex;
-  margin-bottom: 10rem;
-  justify-content: center;
-  font-size: 12rem;
+  border-bottom: 0.07rem solid #ccc;
+  margin-bottom: 0.2rem;
+  padding-bottom: 0.1rem;
 }
 
-.legendItem {
-  display: flex;
-  align-items: center;
+.educationDetailsRow {
+  margin-bottom: 0.15rem;
 }
 
-.employeeIndicator,
-.workplaceIndicator {
-  width: 12rem;
-  height: 12rem;
-  margin-right: 5rem;
-}
-
-.employeeIndicator {
-  background-color: #368a2e;
-}
-
-.workplaceIndicator {
-  border: 2rem solid #368a2e;
-  background: transparent;
-}
-
-.educationRow {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8rem;
-}
-
-.barContainer {
-  flex-grow: 1;
-  position: relative;
-  height: 20rem;
-  margin: 0 10rem;
-}
-
-.employeeBar {
-  position: absolute;
-  top: 5rem;
-  height: 10rem;
-  z-index: 2;
-}
-
-.workplaceBar {
-  position: absolute;
-  top: 2rem;
-  height: 16rem;
-  border: 2rem solid;
-  border-radius: 2rem;
-  background-color: transparent;
-  z-index: 1;
-}
-
-.valueLabel {
-  width: 80rem;
+.educationDetailsHeader span,
+.educationDetailsRow span {
+  flex: 1 1 0;
   text-align: right;
-  font-size: 13rem;
+  padding-right: 0.5rem;
+  font-size: 10rem;
 }
-.householdCountText {
+
+.educationDetailsHeader span:first-child,
+.educationDetailsRow span:first-child {
+  text-align: left;
+  padding-right: 0.5rem;
+}
+
+.educationDetailsHeader span:last-child,
+.educationDetailsRow span:last-child {
+  padding-right: 0;
+}
+.availabilitySection {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 0.05rem solid #444;
+}
+
+.availabilityTitle {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 11rem;
+}
+
+.availabilityRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  font-size: 10rem;
+}
+
+.availabilityLabel {
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+.gameIndicatorContainer {
+  flex: 0 0 180rem;
+  position: relative;
+}
+
+.availabilityValue {
+  margin-left: 0.5rem;
+  font-size: 10rem;
+  min-width: 30rem;
   text-align: right;
 }

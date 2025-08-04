@@ -69,13 +69,83 @@ interface DistrictLineProps {
 const formatCombinedTooltip = (data: {
   ageData: AgeData;
   educationData: EducationData;
+  district: District;
 }): JSX.Element => {
   const { translate } = useLocalization();
   const getPercentage = (value: number, total: number) => ((value / total) * 100).toFixed(1);
 
+  // Use the availability data directly from the district - these are already calculated IndicatorValue structs
+  // Structure: { min: capacity, max: eligible, current: availability_value }
+  const elementaryAvailability = data.district.elementaryAvailability || { min: -1, max: 1, current: 0 };
+  const highSchoolAvailability = data.district.highSchoolAvailability || { min: -1, max: 1, current: 0 };
+  const collegeAvailability = data.district.collegeAvailability || { min: -1, max: 1, current: 0 };
+  const universityAvailability = data.district.universityAvailability || { min: -1, max: 1, current: 0 };
+
   const ColorIndicator: FC<{ color: string }> = ({ color }) => (
     <div className={styles.colorIndicator} style={{ backgroundColor: color }} />
   );
+
+  // Helper function to format availability percentage
+  // Since min=capacity and max=eligible, availability = capacity/eligible ratio
+  const getAvailabilityPercentage = (indicator: { min: number; max: number; current: number }) => {
+  if (!indicator) return 0;
+  
+  // Debug: log the actual values to see the range
+  console.log('IndicatorValue range:', `min: ${indicator.min}, max: ${indicator.max}, current: ${indicator.current}`);
+  
+  // This formula works for any range [min, max] → [0, 100]
+  const percentage = ((indicator.current - indicator.min) / (indicator.max - indicator.min)) * 100;
+  return Math.round(Math.max(-100, Math.min(100, percentage)));
+};
+
+  const AvailabilityIndicator: FC<{ 
+    label: string; 
+    indicator: { min: number; max: number; current: number } 
+  }> = ({ label, indicator }) => {
+    const percentage = getAvailabilityPercentage(indicator);
+    const displayPercentage = Math.round(indicator.current * 100);
+
+    return (
+      <div className={styles.availabilityRow}>
+        <span className={styles.availabilityLabel}>{label}</span>
+        <div className={styles.gameIndicatorContainer}>
+          <div 
+            className="gradient_P8C"
+            style={{
+              backgroundImage: 'linear-gradient(to right,rgba(255, 78, 24, 1) 0%, rgba(255, 78, 24, 1) 40%, rgba(255, 131, 27, 1) 40%, rgba(255, 131, 27, 1) 50%, rgba(99, 181, 6, 1) 50%, rgba(99, 181, 6, 1) 60%, rgba(71, 148, 54, 1) 60%, rgba(71, 148, 54, 1) 100%)',
+              width: '100%',
+              height: '8rem',
+              borderRadius: '2rem',
+              position: 'relative'
+            }}
+          >
+            <div 
+              className="pointer_SV2"
+              style={{ 
+                left: `${percentage}%`,
+                width: '0px',
+                height: '12rem',
+                position: 'absolute',
+                top: '-4rem',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <img 
+                className="pointerIcon_i8i"
+                src="Media/Misc/IndicatorBarPointer.svg"
+                style={{
+                  height: '12rem',
+                  width: '18rem'
+                }}
+                alt="indicator pointer"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const ageColors = {
     children: '#808080',
@@ -182,13 +252,82 @@ const formatCombinedTooltip = (data: {
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.chartSection}>
-        <div className={styles.chartTitle}>{translate("InfoLoomTwo.DistrictPanel[ChartAgeDistribution]", "Age Distribution")}</div>
+        <div className={styles.chartTitle}>Age Distribution</div>
         <AgeChart />
       </div>
 
       <div className={styles.chartSection}>
-        <div className={styles.chartTitle}>{translate("InfoLoomTwo.DistrictPanel[ChartEducationLevels]", "Education Levels")}</div>
+        <div className={styles.chartTitle}>Education Levels</div>
         <EducationChart />
+        {/* Eligible, Capacity, and Students Table */}
+        <div className={styles.educationDetailsTable}>
+          <div className={styles.educationDetailsHeader}>
+            <span>Level</span>
+            <span>Eligible</span>
+            <span>Capacity</span>
+            <span>Students</span>
+          </div>
+          {[
+            {
+              key: "elementary",
+              label: "Elementary",
+              eligible: data.district.elementaryEligible,
+              capacity: data.district.elementaryCapacity,
+              students: data.district.elementaryStudents,
+            },
+            {
+              key: "highSchool",
+              label: "High School",
+              eligible: data.district.highSchoolEligible,
+              capacity: data.district.highSchoolCapacity,
+              students: data.district.highSchoolStudents,
+            },
+            {
+              key: "college",
+              label: "College",
+              eligible: data.district.collegeEligible,
+              capacity: data.district.collegeCapacity,
+              students: data.district.collegeStudents,
+            },
+            {
+              key: "university",
+              label: "University",
+              eligible: data.district.universityEligible,
+              capacity: data.district.universityCapacity,
+              students: data.district.universityStudents,
+            },
+          ].map((row) => (
+            <div key={row.key} className={styles.educationDetailsRow}>
+              <span>{row.label}</span>
+              <span>{formatNumber(row.eligible)}</span>
+              <span>{formatNumber(row.capacity)}</span>
+              <span>{formatNumber(row.students)}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Add availability section here - below the education details table */}
+        <div className={styles.availabilitySection}>
+          <div className={styles.availabilityTitle}>
+            {translate("InfoLoomTwo.DistrictPanel[EducationAvailability]", "Education Availability")}
+          </div>
+          <AvailabilityIndicator
+            label={"Elementary"}
+            indicator={elementaryAvailability}
+          />
+          <AvailabilityIndicator 
+            label={"High School"}
+            indicator={highSchoolAvailability}
+          />
+          <AvailabilityIndicator 
+            label={"College"}
+            indicator={collegeAvailability}
+          />
+          <AvailabilityIndicator 
+            label={"University"}
+            indicator={universityAvailability}
+          />
+        </div>
       </div>
     </div>
   );
@@ -383,6 +522,7 @@ const DistrictLine: FC<DistrictLineProps> = ({ data }) => {
         tooltip={formatCombinedTooltip({
           ageData: data.ageData,
           educationData: data.educationData,
+          district: data,
         })}
       >
         <div className={styles.residentColumn}>{formatNumber(data.residentCount)}</div>

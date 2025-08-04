@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Colossal.UI.Binding;
 using Game;
+using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Companies;
@@ -64,7 +65,8 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
             public NativeArray<WorkplacesInfo> m_Results;
             private const int ResultsCount = 7;
-
+            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup; 
+            public Entity m_SelectedDistrict; 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<Entity> nativeArray = chunk.GetNativeArray(m_EntityHandle);
@@ -77,6 +79,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                 bool isIndustrial = chunk.Has(ref m_IndustrialCompanyHandle);
                 bool isCommercial = chunk.Has(ref m_CommercialCompanyHandle);
                 bool isService = !(isIndustrial || isCommercial);
+                bool hasPropertyRenter = nativeArray3.IsCreated && nativeArray3.Length > 0;
 
                 WorkplacesInfo count = m_Results[6];
                 for (int i = 0; i < nativeArray.Length; i++)
@@ -86,7 +89,15 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                     DynamicBuffer<Employee> employees = bufferAccessor[i];
                     PrefabRef prefabRef = nativeArray2[i];
                     WorkplaceData workplaceData = m_WorkplaceDataFromEntity[prefabRef.m_Prefab];
-
+                    // Then use it safely
+                    Entity workplace = Entity.Null;
+                    if (hasPropertyRenter)
+                    {
+                        workplace = nativeArray3[i].m_Property;
+                    }
+                    if (!IsInSelectedDistrict(workplace))
+                        continue;
+                    
                     if (chunk.Has(ref m_PropertyRenterHandle))
                     {
                         buildingLevel = m_PrefabRefFromEntity.TryGetComponent(nativeArray3[i].m_Property, out PrefabRef prefabRef2)
@@ -171,7 +182,25 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                     m_Results[6] = count;
                 }
             }
+           private bool IsInSelectedDistrict(Entity buildingEntity)
+            {
+                // If no district selected, show entire city
+                if (m_SelectedDistrict == Entity.Null)
+                    return true;
 
+                // If no building entity, skip this workplace when district filtering is active
+                if (buildingEntity == Entity.Null)
+                    return false;
+
+                // Check if the building has a district component directly
+                if (m_CurrentDistrictLookup.HasComponent(buildingEntity))
+                {
+                    var currentDistrict = m_CurrentDistrictLookup[buildingEntity];
+                    return currentDistrict.m_District == m_SelectedDistrict;
+                }
+
+                return false;
+            }
             void IJobChunk.Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 Execute(in chunk, unfilteredChunkIndex, useEnabledMask, in chunkEnabledMask);
@@ -185,7 +214,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
         private SimulationSystem m_SimulationSystem;
 
         private EntityQuery m_WorkplaceQuery;
-
+        public Entity SelectedDistrict { get; set; } = Entity.Null;
 
 
         public NativeArray<WorkplacesInfo> m_Results;
@@ -259,6 +288,8 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             jobData.m_SpawnableBuildingFromEntity = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
             jobData.m_IndustrialProcessDataFromEntity = SystemAPI.GetComponentLookup<IndustrialProcessData>(isReadOnly: true);
             jobData.m_CitizenFromEntity = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true);
+            jobData.m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true);
+            jobData.m_SelectedDistrict = SelectedDistrict;
             jobData.m_Results = m_Results;
 
             JobChunkExtensions.Schedule(jobData, m_WorkplaceQuery, base.Dependency).Complete();
@@ -294,7 +325,10 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             }
             m_Results[6] = new WorkplacesInfo(-2);
         }
-
+        public void SetSelectedDistrict(Entity district)
+        {
+            SelectedDistrict = district;
+        }
 
 
 

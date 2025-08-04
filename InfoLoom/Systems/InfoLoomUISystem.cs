@@ -4,6 +4,7 @@ using System.Linq;
 using Colossal.Logging;
 using Colossal.UI.Binding;
 using Game;
+using Game.Areas;
 using Game.Economy;
 using Game.Rendering;
 using Game.Simulation;
@@ -25,6 +26,7 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 using InfoLoomTwo.Systems.TradeCostData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
@@ -55,7 +57,11 @@ namespace InfoLoomTwo.Systems
         private const string CommercialCompanyDebugOpen = "CommercialCompanyDebugOpen";
         private const string IndustrialCompanyDebugOpen = "IndustrialCompanyDebugOpen";
         private const string HouseholdsDataOpen = "HouseholdsDataOpen";
-        
+        public static Entity CityWide { get; } = Entity.Null;
+        public Entity selectedDistrict { get; set; } = CityWide;
+        private EntityQuery m_DistrictQuery;
+        private DistrictInfos _DistrictInfos;
+        private RawValueBinding m_DistrictInfos;
         
         private CommercialCompanyDTO[] m_SortedCompanyData = Array.Empty<CommercialCompanyDTO>();
         private bool m_NeedSort = true;
@@ -137,8 +143,8 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> m_DemoStatsToggledOnBinding;
         private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
         private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
-        //private ValueBindingHelper<Demographics.PopulationGroupData[]> m_GroupedPopulationBinding;  
-        //private ValueBindingHelper<Demographics.GroupStrategyInfo[]> m_GroupStrategiesBinding;
+         private ValueBinding<Entity> m_SelectedDistrict;
+        private RawValueBinding m_DistrictInfosBinding;
 //DistrictDataUI
         private RawValueBinding m_uiDistricts;
         private RawValueBinding m_uiResidents;
@@ -178,11 +184,18 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<ResourceNameEnum> m_ResourceNameSortingBinding;
         
         
-        
         //WorkforceUI
         private ValueBindingHelper<WorkforcesInfo[]> m_WorkforcesBinder;
+        //private ValueBindingHelper<int> hideColumnsBindingWF;
+       
+        
+        
+        
         //WorkplacesUI
         private ValueBindingHelper<WorkplacesInfo[]> m_WorkplacesBinder;
+        //private ValueBindingHelper<int> hideColumnsBindingWP;
+        
+        
         
         //Historical data
         private ValueBindingHelper<List<float>> m_ResourceHistoricalDataBinding;
@@ -217,6 +230,7 @@ namespace InfoLoomTwo.Systems
             base.OnCreate();
             m_Log = Mod.log;
             _uiUpdateState = UIUpdateState.Create(World, 512);
+            m_DistrictQuery = GetEntityQuery(ComponentType.ReadOnly<District>());
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_ResidentialDemandSystem = base.World.GetOrCreateSystemManaged<ResidentialDemandSystem>();
@@ -235,7 +249,8 @@ namespace InfoLoomTwo.Systems
             m_WorkplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
             m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
             m_IndustrialCompanySystem = World.GetOrCreateSystemManaged<IndustrialCompanySystem>();
-            
+            _DistrictInfos = new DistrictInfos();
+
             
             //InfoLoomMenu
             _panelVisibleBinding = new ValueBinding<bool>(ModID, InfoLoomMenuOpen, false);
@@ -353,9 +368,10 @@ namespace InfoLoomTwo.Systems
              AddBinding(m_DemoAgeGroupingToggledOnBinding);
              AddBinding(new TriggerBinding<bool>(ModID, "DemoAgeGroupingToggledOn", SetDemoAgeGroupingVisibility));
              m_DemoGroupingStrategyBinding = CreateBinding("DemoGroupingStrategy", "SetDemoGroupingStrategy",  GroupingStrategy.None);
-            //m_GroupedPopulationBinding = CreateBinding("PopulationGroupDatas", new Demographics.PopulationGroupData[0]);
+            AddBinding(m_SelectedDistrict = new ValueBinding<Entity>(ModID, "selectedDistrict", CityWide));
 
-            
+            AddBinding(new TriggerBinding<Entity>(ModID, "selectedDistrictChanged", SelectedDistrictChanged));
+            AddBinding(m_DistrictInfos = new RawValueBinding(ModID, "districtInfos", UpdateDistrictInfos));
             //DistrictDataUI
             // First binding: Basic district information
             AddBinding(m_uiDistricts = new RawValueBinding("InfoLoomTwo", "DistrictData", m_DistrictDataSystem.WriteDistricts));
@@ -403,9 +419,10 @@ namespace InfoLoomTwo.Systems
 
             //WorkforceUI
             m_WorkforcesBinder = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
-
+                
             //WorkplacesUI
             m_WorkplacesBinder = CreateBinding("WorkplacesData", new WorkplacesInfo[0]);
+            //hideColumnsBindingWP = CreateBinding("ShowExtraWorkplaces", 0);
 
             //Historical data
             
@@ -415,6 +432,7 @@ namespace InfoLoomTwo.Systems
 
         protected override void OnUpdate()
         {
+            CheckForDistrictChange();
             if (_bDPVBinding.value )
             {
                 
@@ -622,22 +640,10 @@ namespace InfoLoomTwo.Systems
                 var demographics = World.GetExistingSystemManaged<Demographics>();
 
                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-
-                // Get current grouping strategy
-
                 GroupingStrategy currentStrategy = m_DemoGroupingStrategyBinding.Value;
-
-                // Update the grouped population data binding
-
-                //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} getting population by age group");
-                //m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(currentStrategy).ToArray();
-                
-                //m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
                 m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
-                
                 if (m_DemoStatsToggledOnBinding.value)
                 {
-                    //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} totals binding");
                     m_TotalsBinding.Value = demographics.m_Totals.ToArray();
                     m_OldCitizenBinding.Update();
                 }
@@ -729,9 +735,9 @@ namespace InfoLoomTwo.Systems
                 
                 m_WorkforceSystem.IsPanelVisible = true;
                 m_WorkforceSystem.ForceUpdateOnce();
-                
+               
             }
-        
+            
             if (_wPPVBinding.value )
             {
                 var workplacesSystem = base.World.GetOrCreateSystemManaged<WorkplacesSystem>();
@@ -740,7 +746,7 @@ namespace InfoLoomTwo.Systems
                 
                 m_WorkplacesSystem.IsPanelVisible = true;
                 m_WorkplacesSystem.ForceUpdateOnce();
-                
+                //hideColumnsBindingWP.Value = Mod.setting.hideNoColumnsWP;
             }
             
             
@@ -843,8 +849,8 @@ namespace InfoLoomTwo.Systems
             if (open)
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
-                 m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
-                 m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
+                m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
+                m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
                 if (m_DemoStatsToggledOnBinding.value)
                 {
                     m_TotalsBinding.Value = m_Demographics.m_Totals.ToArray();
@@ -1056,22 +1062,6 @@ namespace InfoLoomTwo.Systems
 
             return excludedResourceNames.ToArray();
         }
-        private void SetDemoGroupingStrategy(GroupingStrategy strategy)
-        {
-            m_DemoGroupingStrategyBinding.Value = strategy;
-            
-            // Apply the selected strategy in the Demographics system
-            var demographics = World.GetExistingSystemManaged<Demographics>();
-            demographics.UpdateStrategy(strategy);
-            
-            // Update UI with grouped data (needs a new binding)
-            UpdateGroupedDemographicsData(strategy);
-        }
-        private void UpdateGroupedDemographicsData(GroupingStrategy strategy)
-        {
-            var demographics = World.GetExistingSystemManaged<Demographics>();
-            //m_GroupedPopulationBinding.Value = demographics.GetPopulationByAgeGroups(strategy).ToArray();
-        }
         public void NavigateTo(Entity entity)
         {
             if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
@@ -1087,6 +1077,97 @@ namespace InfoLoomTwo.Systems
             if (open)
             {
                 m_uiTrafficData.Update();
+            }
+        }
+        private void CheckForDistrictChange()
+        {
+            // Get district infos and check for changes
+            bool foundSelectedDistrict = (selectedDistrict == CityWide);
+            DistrictInfos districtInfos = new DistrictInfos();
+
+            NativeArray<Entity> districtEntities = m_DistrictQuery.ToEntityArray(Allocator.Temp);
+            foreach (Entity districtEntity in districtEntities)
+            {
+                string districtName = m_NameSystem.GetRenderedLabelName(districtEntity);
+                if (districtName != "Assets.DISTRICT_NAME")
+                {
+                    districtInfos.Add(new DistrictInfo(districtEntity, districtName));
+                    if (districtEntity == selectedDistrict)
+                    {
+                        foundSelectedDistrict = true;
+                    }
+                }
+            }
+
+            if (!foundSelectedDistrict)
+            {
+                selectedDistrict = CityWide;
+                m_SelectedDistrict.Update(selectedDistrict);
+            }
+
+            districtInfos.Sort();
+            districtInfos.Insert(0, new DistrictInfo(CityWide, "City Wide"));
+
+            // Check if district infos have changed
+            bool districtsChanged = false;
+            if (districtInfos.Count != _DistrictInfos.Count)
+            {
+                districtsChanged = true;
+            }
+            else
+            {
+                for (int i = 0; i < districtInfos.Count; i++)
+                {
+                    if (districtInfos[i].entity != _DistrictInfos[i].entity || districtInfos[i].name != _DistrictInfos[i].name)
+                    {
+                        districtsChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (districtsChanged)
+            {
+                _DistrictInfos = districtInfos;
+                m_DistrictInfos.Update();
+            }
+
+            districtEntities.Dispose();
+        }
+        
+        
+        
+        
+        
+        private void UpdateDistrictInfos(IJsonWriter writer)
+        {
+            _DistrictInfos.Write(writer);
+        }
+        private void SelectedDistrictChanged(Entity newDistrict)
+        {
+            selectedDistrict = newDistrict;
+            m_SelectedDistrict.Update(selectedDistrict);
+            if (_dPVBinding.value)
+            {var demographics = World.GetExistingSystemManaged<Demographics>();
+                demographics.SetSelectedDistrict(newDistrict);
+                m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
+                if (m_DemoStatsToggledOnBinding.value)
+                {
+                    m_TotalsBinding.Value = demographics.m_Totals.ToArray();
+                    m_OldCitizenBinding.Update();
+                }
+            }
+            if (_wFPVBinding.value)
+            {
+                 var workforceSystem = World.GetOrCreateSystemManaged<WorkforceSystem>();
+                workforceSystem.SetSelectedDistrict(newDistrict);
+                m_WorkforcesBinder.Value = workforceSystem.m_Results.ToArray();
+            }
+            if (_wPPVBinding.value)
+            {
+                var workplacesSystem = World.GetOrCreateSystemManaged<WorkplacesSystem>();
+                workplacesSystem.SetSelectedDistrict(newDistrict);
+                m_WorkplacesBinder.Value = workplacesSystem.m_Results.ToArray();
             }
         }
     }

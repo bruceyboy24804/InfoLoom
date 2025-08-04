@@ -162,19 +162,26 @@ namespace InfoLoomTwo.Systems.Sections
             }
 	        
         }
+        private Dictionary<int, int> overeducatedByEducationLevel = new();
+        private Dictionary<int, int> commuterByEducationLevel = new();
+        private Dictionary<int, Dictionary<int, int>> overeducatedByWorkplaceAndEducationLevel = new();
+        private Dictionary<int, Dictionary<int, int>> commuterByWorkplaceAndEducationLevel = new();
 
         protected override void OnProcess()
         {
+            overeducatedByEducationLevel.Clear();
+            commuterByEducationLevel.Clear();
+            overeducatedByWorkplaceAndEducationLevel.Clear();
+            commuterByWorkplaceAndEducationLevel.Clear();
+
             if (EntityManager.TryGetBuffer<Renter>(selectedEntity, isReadOnly: true, out var renterBuffer))
             {
-                // Loop through all renters in the building
                 for (int renterIndex = 0; renterIndex < renterBuffer.Length; renterIndex++)
                 {
                     var companyEntity = renterBuffer[renterIndex].m_Renter;
-                    
+
                     if (EntityManager.TryGetBuffer<Employee>(companyEntity, isReadOnly: true, out var employeeBuffer))
                     {
-                        // Loop through ALL employees for this company
                         for (int i = 0; i < employeeBuffer.Length; i++)
                         {
                             var employee = employeeBuffer[i];
@@ -185,17 +192,35 @@ namespace InfoLoomTwo.Systems.Sections
                             {
                                 int educationLevel = citizen.GetEducationLevel();
                                 int workerLevel = worker.m_Level;
-                                
-                                // Count overeducated employees (education level higher than job level)
+
+                                // Overeducated
                                 if (workerLevel < educationLevel)
                                 {
                                     overeductedEmployees++;
+                                    if (!overeducatedByEducationLevel.ContainsKey(educationLevel))
+                                        overeducatedByEducationLevel[educationLevel] = 0;
+                                    overeducatedByEducationLevel[educationLevel]++;
+
+                                    if (!overeducatedByWorkplaceAndEducationLevel.ContainsKey(workerLevel))
+                                        overeducatedByWorkplaceAndEducationLevel[workerLevel] = new Dictionary<int, int>();
+                                    if (!overeducatedByWorkplaceAndEducationLevel[workerLevel].ContainsKey(educationLevel))
+                                        overeducatedByWorkplaceAndEducationLevel[workerLevel][educationLevel] = 0;
+                                    overeducatedByWorkplaceAndEducationLevel[workerLevel][educationLevel]++;
                                 }
 
-                                // Count commuter employees
+                                // Commuter
                                 if ((citizen.m_State & CitizenFlags.Commuter) != CitizenFlags.None)
                                 {
                                     commuterEmployees++;
+                                    if (!commuterByEducationLevel.ContainsKey(educationLevel))
+                                        commuterByEducationLevel[educationLevel] = 0;
+                                    commuterByEducationLevel[educationLevel]++;
+
+                                    if (!commuterByWorkplaceAndEducationLevel.ContainsKey(workerLevel))
+                                        commuterByWorkplaceAndEducationLevel[workerLevel] = new Dictionary<int, int>();
+                                    if (!commuterByWorkplaceAndEducationLevel[workerLevel].ContainsKey(educationLevel))
+                                        commuterByWorkplaceAndEducationLevel[workerLevel][educationLevel] = 0;
+                                    commuterByWorkplaceAndEducationLevel[workerLevel][educationLevel]++;
                                 }
                             }
                         }
@@ -304,7 +329,6 @@ namespace InfoLoomTwo.Systems.Sections
         }
         public override void OnWriteProperties(IJsonWriter writer)
         {
-            
             writer.PropertyName("TradePartnerName");
             m_NameSystem.BindName(writer, tradePartnerName);
             writer.PropertyName("TradePartnerEntity");
@@ -321,16 +345,94 @@ namespace InfoLoomTwo.Systems.Sections
             writer.Write(educationDataEmployees);
             writer.PropertyName("EducationDataWorkplaces");
             writer.Write(educationDataWorkplaces);
+
             writer.PropertyName("OvereductedEmployees");
             writer.Write(overeductedEmployees);
-            writer.PropertyName("CommuterEmployees");
-            writer.Write(commuterEmployees);
+            writer.PropertyName("OvereductedByEducationLevel");
+            writer.ArrayBegin((uint)overeducatedByEducationLevel.Count);
+            foreach (var kvp in overeducatedByEducationLevel)
+            {
+                writer.TypeBegin("OvereducatedLevelData");
+                writer.PropertyName("EducationLevel");
+                writer.Write(kvp.Key);
+                writer.PropertyName("Count");
+                writer.Write(kvp.Value);
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
             
+            writer.PropertyName("OvereductedByWorkplaceAndEducationLevel");
+            
+            writer.ArrayBegin((uint)overeducatedByWorkplaceAndEducationLevel.Count);
+            foreach (var workplaceKvp in overeducatedByWorkplaceAndEducationLevel)
+            {
+                writer.TypeBegin("OvereducatedWorkplaceLevelData");
+                writer.PropertyName("WorkplaceLevel");
+                writer.Write(workplaceKvp.Key);
+                writer.PropertyName("EducationLevels");
+                writer.ArrayBegin((uint)workplaceKvp.Value.Count);
+                foreach (var eduKvp in workplaceKvp.Value)
+                {
+                    writer.TypeBegin("OvereducatedEducationLevelData");
+                    writer.PropertyName("EducationLevel");
+                    writer.Write(eduKvp.Key);
+                    writer.PropertyName("Count");
+                    writer.Write(eduKvp.Value);
+                    writer.TypeEnd();
+                }
+                writer.ArrayEnd();
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
+            
+
+            writer.PropertyName("CommuterEmployees");
+            
+            writer.Write(commuterEmployees);
+            writer.PropertyName("CommuterByEducationLevel");
+            
+            writer.ArrayBegin((uint)commuterByEducationLevel.Count);
+            foreach (var kvp in commuterByEducationLevel)
+            {
+                writer.TypeBegin("CommuterLevelData");
+                writer.PropertyName("EducationLevel");
+                writer.Write(kvp.Key);
+                writer.PropertyName("Count");
+                writer.Write(kvp.Value);
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
+
+            writer.PropertyName("CommuterByWorkplaceAndEducationLevel");
+            
+            writer.ArrayBegin((uint)commuterByWorkplaceAndEducationLevel.Count);
+            foreach (var workplaceKvp in commuterByWorkplaceAndEducationLevel)
+            {
+                writer.TypeBegin("CommuterWorkplaceLevelData");
+                writer.PropertyName("WorkplaceLevel");
+                writer.Write(workplaceKvp.Key);
+                writer.PropertyName("EducationLevels");
+                writer.ArrayBegin((uint)workplaceKvp.Value.Count);
+                foreach (var eduKvp in workplaceKvp.Value)
+                {
+                    writer.TypeBegin("CommuterEducationLevelData");
+                    writer.PropertyName("EducationLevel");
+                    writer.Write(eduKvp.Key);
+                    writer.PropertyName("Count");
+                    writer.Write(eduKvp.Value);
+                    writer.TypeEnd();
+                }
+                writer.ArrayEnd();
+                writer.TypeEnd();
+            }
+            writer.ArrayEnd();
+            
+
             writer.PropertyName("TradeCosts");
             writer.ArrayBegin((uint)TradeCosts.Count);
             foreach (var tradeCost in TradeCosts)
             {
-                writer.TypeBegin("TradeCostData"); // or use a generic type name
+                writer.TypeBegin("TradeCostData");
                 writer.PropertyName("Resource");
                 writer.Write(Enum.GetName(typeof(Resource), tradeCost.Resource));
                 writer.PropertyName("BuyCost");
@@ -341,6 +443,7 @@ namespace InfoLoomTwo.Systems.Sections
             }
             writer.ArrayEnd();
         }
+        
         public static class UnitConversionUtils
         {
             private const float KilogramsPerTon = 1000f;

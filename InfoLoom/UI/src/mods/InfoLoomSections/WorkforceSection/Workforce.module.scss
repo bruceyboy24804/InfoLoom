@@ -1,9 +1,18 @@
 .panel {
-  width: 1200rem; /* Increased width to accommodate new column */
+  width: 630rem; /* Increased width to accommodate new column */
   display: flex;
   flex-direction: column; /* Ensure proper layout */
-  background-color: var(--panelColorNormal);
+  background-color: var(--panelColorDark);
+
+  .panel1 { width: 560rem; }
+  .panel2 { width: 490rem; }
+  .panel3 { width: 440rem; }
+  .panel4 { width: 390rem; }
+  .panel5 { width: 340rem; }
+  .panel6 { width: 290rem; }
+  .panel7 { width: 240rem; }
 }
+
 
 .header {
   display: flex;
@@ -68,58 +77,38 @@
 }
 
 .levelNameContainer {
-  display: flex;
-  align-items: center;
-  width: 20%; /* Reduced to make room for new column */
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: auto;
+    line-height: 110%;
 }
 
 .levelSymbol {
-  width: 1.2em;
+    width: 1.2em;
+    height: 1.2em;
+    border-top-left-radius: 4rem 4rem;
+    border-top-right-radius: 4rem 4rem;
+    border-bottom-left-radius: 4rem 4rem;
+    border-bottom-right-radius: 4rem 4rem;
+    margin-right: 0.5em;
 }
 
-.dataColumn {
-  width: 10%; /* Reduced slightly to fit new column */
-  justify-content: center;
-}
 
-.percentColumn {
-  width: 7%; /* Reduced slightly to fit new column */
-  justify-content: center;
-}
-
-.unemployedColumn {
-  width: 10%; /* Reduced slightly to fit new column */
-  justify-content: center;
-}
-
-.employableColumn {
-  width: 10%;
-  justify-content: center;
-}
-
-.smallColumn {
-  width: 8%; /* Reduced slightly to fit new column */
-  justify-content: center;
-}
-
-.spacingTop {
-  height: 10rem;
-}
-
-.spacingSmall {
-  height: 5rem;
-}
 
 /* Stacked Bar Chart Styles */
 .chartSection {
   margin-top: 20rem;
-  padding: 0 10rem;
+  padding: 0rem;
 }
 
 .chartTitle {
   font-size: 105%;
   font-weight: bold;
-  margin-bottom: 10rem;
   text-align: center;
 }
 
@@ -256,4 +245,120 @@
 }
 
 
-
+.col1{
+  width: 130rem;
+  text-align: left;
+  margin-left: 15rem;
+  font-size:  var(--fontSizeS) ;
+}
+.col2{
+  width: 55rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col3{
+  width: 55rem; 
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col4{
+  width: 55rem; 
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col5{
+  width: 75rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col6{
+  width: 55rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col7{
+  width: 55rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col8{
+  width: 60rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col9{
+  width: 60rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.row_S2v {
+    display: flex;
+  align-items: center;
+  padding: 8px 0;
+  top: 0;
+  z-index: 1;
+}
+.symbol{
+     width: 1.2em;
+    height: 1.2em;
+    border-top-left-radius: 4rem 4rem;
+    border-top-right-radius: 4rem 4rem;
+    border-bottom-left-radius: 4rem 4rem;
+    border-bottom-right-radius: 4rem 4rem;
+    margin-right: 0.5em;
+}
+.label{
+    flex-shrink: 1;
+    margin-right: 0.4em;
+}
+.value{
+  margin-left: 0.4em;
+  display: flex;
+}
+.colorLegend{
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: auto;
+    line-height: 110%;
+}
+.headerRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--accentColorNormal);
+  top: 0;
+  z-index: 1;
+}
+.sliderContainer {
+  width: 200rem;
+  height: 5rem;
+}
+.sliderValue{
+  display: flex;
+  width: 20rem;
+  margin-left: 220rem;
+  margin-bottom: 100rem;
+}
+.sliderLabel{
+    flex-shrink: 1;
+    margin-right: 0.4em;
+    width: 200rem;
+}
+.sliderValue{
+  margin-left: 0.4em;
+  display: flex;
+}
+.toggleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 15rem;
+}

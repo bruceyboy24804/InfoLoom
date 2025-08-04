@@ -135,3 +135,26 @@
 margin-left: 0.4em;
 display: flex;
 }
+.educationLevelRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+.educationLabel {
+    min-width: 7rem;
+    margin-right: 0.3rem;
+    font-weight: 500;
+}
+.educationCount {
+    font-variant-numeric: tabular-nums;
+}
+.panelSectionRow {
+    background-color:  var(--progressTrackColor) ;
+    border-top-left-radius: 5rem 5rem;
+    border-top-right-radius: 5rem 5rem;
+    border-bottom-left-radius: 5rem 5rem;
+    border-bottom-right-radius: 5rem 5rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    margin-bottom: 8rem;
+}

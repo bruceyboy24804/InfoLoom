@@ -1,4 +1,5 @@
-import { Entity, Name, Typed } from 'cs2/bindings';
+import { Entity, Name, Typed, IndicatorValue } from 'cs2/bindings';
+import { ValueBinding } from 'cs2/api';
 
 export interface LocalServiceBuilding extends Typed<''> {
   name: Name;
@@ -56,4 +57,25 @@ export interface District extends Typed<''> {
   entity: Entity;
   policyCount: number;
   policies: DistrictPolicy[];
+  
+  elementaryEligible: number;
+  highSchoolEligible: number;
+  collegeEligible: number;
+  universityEligible: number;
+  
+  elementaryCapacity: number;
+  highSchoolCapacity: number;
+  collegeCapacity: number;
+  universityCapacity: number;
+  
+  elementaryStudents: number;
+  highSchoolStudents: number;
+  collegeStudents: number;
+  universityStudents: number;
+
+  elementaryAvailability: IndicatorValue;
+  highSchoolAvailability: IndicatorValue;
+  collegeAvailability: IndicatorValue;
+  universityAvailability: IndicatorValue;
+
 }

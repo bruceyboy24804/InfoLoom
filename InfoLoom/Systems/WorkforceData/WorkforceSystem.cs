@@ -1,18 +1,22 @@
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Colossal;
 using Colossal.Collections;
 using Game;
 using Game.Agents;
+using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Objects;
 using Game.Simulation;
 using Game.Tools;
+using Game.UI;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using InfoLoomTwo.Domain;
+using InfoLoomTwo.Domain.DataDomain;
 
 namespace InfoLoomTwo.Systems.WorkforceData
 {
@@ -35,8 +39,9 @@ namespace InfoLoomTwo.Systems.WorkforceData
             [ReadOnly] public ComponentLookup<HomelessHousehold> m_HomelessHouseholds;
             [ReadOnly] public ComponentLookup<MovingAway> m_MovingAways;
             [ReadOnly] public ComponentLookup<Household> m_Households;
-
+            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup; // Add this
             public NativeArray<WorkforcesInfo> m_Results;
+            public Entity m_SelectedDistrict; 
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -50,20 +55,19 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    var citizen = citizenArray[i];
-                    var age = citizen.GetAge();
                     
-                    // Skip children and seniors
+                    Citizen citizen = citizenArray[i];
+                    Entity household = householdMemberArray[i].m_Household;
+                    
+                    
+                    if (!IsInSelectedDistrict(household))
+                        continue;
+                    
+                    var age = citizen.GetAge();
                     if (age == CitizenAge.Child || age == CitizenAge.Elderly)
                         continue;
-                    
-                    var household = householdMemberArray[i].m_Household;
-                    
-                    // Skip invalid citizens
                     if (ShouldSkipCitizen(citizen, household, hasHealthProblems ? healthProblemArray[i] : default, hasHealthProblems))
                         continue;
-                    
-                    // Process valid citizen
                     ProcessCitizen(citizen, household, isWorkerChunk ? workerArray[i] : default, isWorkerChunk);
                 }
             }
@@ -128,7 +132,31 @@ namespace InfoLoomTwo.Systems.WorkforceData
                     info.Employable++;
                 }
             }
+            private bool IsInSelectedDistrict(Entity household)
+            {
+                // If no district selected, show entire city
+                if (m_SelectedDistrict == Entity.Null)
+                    return true;
 
+                // Get the household's property
+                if (!m_PropertyRenters.HasComponent(household))
+                    return false;
+
+                var propertyRenter = m_PropertyRenters[household];
+                Entity buildingEntity = propertyRenter.m_Property;
+
+                if (buildingEntity == Entity.Null)
+                    return false;
+
+                // Check if the building has a district component
+                if (m_CurrentDistrictLookup.HasComponent(buildingEntity))
+                {
+                    var currentDistrict = m_CurrentDistrictLookup[buildingEntity];
+                    return currentDistrict.m_District == m_SelectedDistrict;
+                }
+
+                return false;
+            }
             void IJobChunk.Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 Execute(in chunk, unfilteredChunkIndex, useEnabledMask, in chunkEnabledMask);
@@ -137,7 +165,10 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
         private SimulationSystem m_SimulationSystem;
         private EntityQuery m_AllAdultGroup;
-        
+        public Entity SelectedDistrict { get; set; } = Entity.Null;
+
+        private EntityQuery m_DistrictQuery;
+        private NameSystem m_NameSystem;
         // InfoLoom results
         public NativeArray<WorkforcesInfo> m_Results;
         
@@ -152,20 +183,24 @@ namespace InfoLoomTwo.Systems.WorkforceData
         protected override void OnCreate()
         {
             base.OnCreate();
-            
+
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
-            
+            m_NameSystem = base.World.GetOrCreateSystemManaged<NameSystem>();
+            m_DistrictQuery = GetEntityQuery(ComponentType.ReadOnly<District>());
             m_AllAdultGroup = GetEntityQuery(new EntityQueryDesc
             {
-                All = new ComponentType[] { ComponentType.ReadOnly<Citizen>() },
+                All = new ComponentType[]
+                {
+                    ComponentType.ReadOnly<Citizen>(),
+                    ComponentType.ReadOnly<HouseholdMember>()
+                },
                 None = new ComponentType[]
                 {
-                    ComponentType.ReadOnly<Game.Citizens.Student>(),
                     ComponentType.ReadOnly<Deleted>(),
                     ComponentType.ReadOnly<Temp>()
                 }
             });
-            
+
             m_Results = new NativeArray<WorkforcesInfo>(RESULTS_SIZE, Allocator.Persistent);
         }
 
@@ -203,6 +238,8 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true),
                 m_OutsideConnections = SystemAPI.GetComponentLookup<OutsideConnection>(isReadOnly: true),
                 m_Households = SystemAPI.GetComponentLookup<Household>(isReadOnly: true),
+                m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true),
+                m_SelectedDistrict = SelectedDistrict,
                 m_Results = m_Results
             };
             
@@ -236,6 +273,10 @@ namespace InfoLoomTwo.Systems.WorkforceData
             }
             
             m_Results[TOTAL_INDEX] = totals;
+        }
+        public void SetSelectedDistrict(Entity district)
+        {
+            SelectedDistrict = district;
         }
     }
 }

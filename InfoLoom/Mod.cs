@@ -8,6 +8,7 @@ using Game.SceneFlow;
 using HarmonyLib;
 using InfoLoomTwo.Systems;
 using System.Linq;
+using System.Reflection;
 using Game.UI.InGame;
 using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.ResidentialData;
@@ -22,9 +23,6 @@ using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 using InfoLoomTwo.Systems.Sections;
-/*using InfoLoomTwo.Systems.ResidentialData;
-using InfoLoomTwo.Systems.ResidentialData.ResidentialHouseholdData;
-using InfoLoomTwo.Systems.ResidentialData.ResidentialInfoSection;*/
 using InfoLoomTwo.Systems.TradeCostData; using Unity.Entities;
 
 // Mod namespace
@@ -37,11 +35,13 @@ namespace InfoLoomTwo
         // Static fields and properties
        //public static Setting setting;
         public static Mod Instance { get; private set; }
-     
-        public static ExecutableAsset modAsset { get; private set; }    
+         public static string Version => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
+        public static string Name => Assembly.GetExecutingAssembly().GetName().Name;
+        public static string InformationalVersion => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        
         internal ILog Log { get; private set; }
-        public static string ID => nameof(InfoLoomTwo);
-
+        public static string modName => nameof(InfoLoomTwo);
+        
         // Static logger instance with custom logger name and settings
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
             .SetShowsErrorsInUI(false);
@@ -62,16 +62,16 @@ namespace InfoLoomTwo
 #endif
             //Try to fetch the mod asset from the mod manager
             //setting = new Setting(this);
-            //if (setting == null)
+            /*if (setting == null)
             {
-            //    Log.Error("Failed to initialize settings.");
-            //    return;
+                Log.Error("Failed to initialize settings.");
+                return;
             }
-            //setting.RegisterInOptionsUI();
-           //AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
+            setting.RegisterInOptionsUI();
+           AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
              //Load localization
-            //GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));*/
 
             var harmony = new Harmony(harmonyId);
             harmony.PatchAll(typeof(Mod).Assembly);
@@ -106,11 +106,11 @@ namespace InfoLoomTwo
         {
             //Log entry for debugging purposes
             log.Info(nameof(OnDispose));
-            //if (setting != null)
-           // {
-            //  setting.UnregisterInOptionsUI();
-            //   setting = null;
-           // }
+            /*if (setting != null)
+            {
+              setting.UnregisterInOptionsUI();
+               setting = null;
+            }*/
 
             var harmony = new Harmony(harmonyId);
             harmony.UnpatchAll(harmonyId);

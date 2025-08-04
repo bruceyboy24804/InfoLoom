@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System;
 using Game.Buildings;
 using Game;
+using Game.Areas;
+using Game.UI;
 using Game.UI.InGame;
 using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Extensions;
@@ -60,8 +62,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
             [ReadOnly]
             public ComponentLookup<HomelessHousehold> m_HomelessHouseholds;
 
-            [ReadOnly]
-            public ComponentLookup<PropertyRenter> m_PropertyRenters;
+            [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenters;
+            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup; 
 
             public TimeData m_TimeData;
 
@@ -71,6 +73,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
             public NativeArray<PopulationAtAgeInfo> m_Results;
             public int day;
+            public Entity m_SelectedDistrict; 
 
             // this job is based on AgingJob
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -97,7 +100,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
                     {
                         continue;
                     }
-
+                    if (!IsInSelectedDistrict(entity, household))
+                        continue;
                     // skip but count dead citizens
                     if (isHealthProblem && CitizenUtils.IsDead(healthProblemArray[i]))
                     {
@@ -124,12 +128,9 @@ namespace InfoLoomTwo.Systems.DemographicsData
                         m_Totals[7]++; // moving aways
                         continue;
                     }
-
-                    // finally, count local population
-                    if (isMovedIn) m_Totals[1]++; // locals; game Population is: MovedIn, not Tourist & Commuter, not dead
+                    if (isMovedIn) m_Totals[1]++; 
                     else
                     {
-                        // skip glitches e.g. there is a case with Tourist household, but citizen is NOT Tourist
                         continue;
                     }
 
@@ -150,8 +151,6 @@ namespace InfoLoomTwo.Systems.DemographicsData
                     {
                         // Retrieve the struct from the array
                         PopulationAtAgeInfo info = m_Results[ageInDays];
-
-                        // Modify the fields
                         info.Age = ageInDays;
                         info.Total++;
                         if (ageInDays <= 20)
@@ -268,13 +267,40 @@ namespace InfoLoomTwo.Systems.DemographicsData
                     }
                 }
             }
-        }
+            private bool IsInSelectedDistrict(Entity citizenEntity, Entity household)
+            {
+                // If no district selected, show entire city
+                if (m_SelectedDistrict == Entity.Null)
+                    return true;
 
+                // Get the household's property
+                if (!m_PropertyRenters.HasComponent(household))
+                    return false;
+
+                var propertyRenter = m_PropertyRenters[household];
+                Entity buildingEntity = propertyRenter.m_Property;
+                
+                if (buildingEntity == Entity.Null)
+                    return false;
+
+                // Check if the building has a district component
+                if (m_CurrentDistrictLookup.HasComponent(buildingEntity))
+                {
+                    var currentDistrict = m_CurrentDistrictLookup[buildingEntity];
+                    return currentDistrict.m_District == m_SelectedDistrict;
+                }
+
+                return false;
+            }
+        }
+        
         private SimulationSystem m_SimulationSystem;
         private CountHouseholdDataSystem m_CountHouseholdDataSystem; // Add reference to CountHouseholdDataSystem
         private EntityQuery m_TimeDataQuery;
         private EntityQuery m_CitizenQuery;
-
+        public Entity SelectedDistrict { get; set; } = Entity.Null;
+        private EntityQuery m_DistrictQuery;
+        private NameSystem m_NameSystem;
         public NativeArray<int> m_Totals; // final results, totals at city level
         // 0 - num citizens in the city 0 = 1+2+3
         // 1 - num locals
@@ -304,6 +330,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
             
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_CountHouseholdDataSystem = base.World.GetOrCreateSystemManaged<CountHouseholdDataSystem>(); // Get the system
+            m_NameSystem = base.World.GetOrCreateSystemManaged<NameSystem>(); // Add this
             
             m_TimeDataQuery = GetEntityQuery(ComponentType.ReadOnly<TimeData>());
 
@@ -312,6 +339,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 All = new ComponentType[1] { ComponentType.ReadOnly<Citizen>() },
                 None = new ComponentType[2] { ComponentType.ReadOnly<Deleted>(), ComponentType.ReadOnly<Temp>() }
             });
+            m_DistrictQuery = GetEntityQuery(ComponentType.ReadOnly<District>()); // Add this
+
             RequireForUpdate(m_CitizenQuery);
 
             // allocate memory for results
@@ -353,9 +382,12 @@ namespace InfoLoomTwo.Systems.DemographicsData
             structureJob.m_Households = SystemAPI.GetComponentLookup<Household>(isReadOnly: true);
             structureJob.m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
             structureJob.m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true);
+            structureJob.m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true); // Add this
+
             structureJob.m_SimulationFrame = m_SimulationSystem.frameIndex;
             structureJob.m_TimeData = m_TimeDataQuery.GetSingleton<TimeData>();
             structureJob.day = TimeSystem.GetDay(m_SimulationSystem.frameIndex, m_TimeDataQuery.GetSingleton<Game.Common.TimeData>());
+            structureJob.m_SelectedDistrict = SelectedDistrict; // Add this
 
             structureJob.m_Totals = m_Totals;
             structureJob.m_Results = m_Results;
@@ -532,10 +564,11 @@ namespace InfoLoomTwo.Systems.DemographicsData
             };
             
         }
-        public class GroupStrategyInfo
+        public void SetSelectedDistrict(Entity district)
         {
-            public string Label { get; set; }
-            public GroupingStrategy Strategy { get; set; }
+            SelectedDistrict = district;
         }
+        
     }
 }    
+    

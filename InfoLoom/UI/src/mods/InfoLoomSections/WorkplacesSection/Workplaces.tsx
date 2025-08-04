@@ -1,10 +1,21 @@
 import React, { FC, useState } from 'react';
-import { useValue } from 'cs2/api';
+import { bindLocalValue, useValue } from 'cs2/api';
 import { WorkplacesData } from 'mods/bindings';
 import { DraggablePanelProps, Panel, Tooltip, Button, PanelFoldout } from 'cs2/ui';
 import styles from './Workplaces.module.scss';
 import { workplacesInfo } from '../../domain/WorkplacesInfo';
 import { useLocalization } from 'cs2/l10n';
+import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
+import {DistrictSelector} from "../../InfoloomInfoviewContents/DistrictSelector/districtSelector";
+
+
+export const hideColumnsBinding = bindLocalValue(false);
+export const panelTrigger = (state: boolean) => {
+    hideColumnsBinding.update(state);
+};
+
+
+
 
 interface WorkplaceLevelProps {
   levelColor?: string;
@@ -38,6 +49,7 @@ interface WorkplaceLevelProps {
     openTooltip?: string | null;
     filledTooltip?: string | null;
   };
+  people?: Array<{ id: number; isEmployee: boolean; isCommuter: boolean }>;
 }
 
 interface StackedBarProps {
@@ -56,189 +68,144 @@ interface StackedBarProps {
     barTooltipPercentage: string | null;
   };
 }
+const WorkplaceTableHeader: React.FC<{ translations: any; }> = ({ translations }) => {
+  const hideColumns = useValue(hideColumnsBinding);
+  return (  
+      <div className={styles.headerRow}>
+        <div className={styles.col1}>
+          <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
+            <span>Education</span>
+          </Tooltip>
+        </div>
+        <div className={styles.col2}>
+          <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
+            <span>Total</span>
+          </Tooltip>
+        </div>
+          <div className={styles.col3}>
+            <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
+              <span>%</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col4}>
+            <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
+              <span>Employee</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col5}>
+            <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+              <span>Commuter</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col6}>
+            <span>Open</span>
+          </div>
+          <div className={styles.col7}>
+            <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+              <span>Filled</span>
+            </Tooltip>
+          </div>
+          { !hideColumns  && (
+            <>
+              <div className={styles.col8}>
+                <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+                  <span>Service</span>
+                </Tooltip>
+              </div>
+              <div className={styles.col9}>
+                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+                  <span>Commercial</span>
+                </Tooltip>
+              </div>
+              <div className={styles.col10}>
+                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+                  <span>Leisure</span>
+                </Tooltip>
+              </div>
+            <div className={styles.col11}>
+                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+                  <span>Extractor</span>
+                </Tooltip>
+              </div>
+              <div className={styles.col12}>
+                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+                  <span>Industrial</span>
+                </Tooltip>
+              </div>
+              <div className={styles.col13}>
+                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+                  <span>Office</span>
+                </Tooltip>
+              </div>
+            </>
+          )}
+      </div>
+    );
+}  
+
+
+
+
 
 const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({
   levelColor,
   levelName,
   levelValues,
   total,
-  isHeader = false,
-  translations,
+  people,  
 }) => {
+  const hideColumns = useValue(hideColumnsBinding);
   const percent = total > 0 ? ((100 * levelValues.Total) / total).toFixed(1) + '%' : '';
+  
+  // Count unique employees and commuters
+  const counted = new Set<number>();
+  let employeeCount = 0;
+  let commuterCount = 0;
+
+  if (people) {
+    for (const person of people) {
+      if (!counted.has(person.id)) {
+        if (person.isEmployee) {
+          employeeCount++;
+        } else if (person.isCommuter) {
+          commuterCount++;
+        }
+        counted.add(person.id);
+      }
+    }
+  } else {
+    employeeCount = levelValues.Employee;
+    commuterCount = levelValues.Commuter;
+  }
+
   const filledRate =
     levelValues.Total > 0
-      ? ((100 * (levelValues.Employee + levelValues.Commuter)) / levelValues.Total).toFixed(1) + '%'
+      ? Math.min(100, (100 * (employeeCount + commuterCount)) / levelValues.Total).toFixed(1) + '%'
       : '';
-
   return (
-    <div className={`labels_L7Q row_S2v ${styles.workplaceLevel}`}>
-      <div className={styles.spacer1}></div>
-      <div className={styles.levelNameContainer}>
-        {levelColor && (
-          <div
-            className={`symbol_aAH ${styles.levelSymbol}`}
-            style={{ backgroundColor: levelColor }}
-          ></div>
-        )}
-        <div>{levelName}</div>
+   <div className={styles.row_S2v}>
+      <div className={styles.col1}>
+          <div className={styles.colorLegend}>
+              <div className={styles.symbol} style={{ backgroundColor: levelColor }} />
+              <div className={styles.label}>{levelName}</div>
+          </div>
       </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.totalTooltip ? (
-            <Tooltip tooltip={translations.totalTooltip} direction="down" alignment="center">
-              <span>{translations.total}</span>
-            </Tooltip>
-          ) : (
-            translations?.total
-          )
-        ) : (
-          levelValues.Total.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.percentColumn}`}>
-        {isHeader ? (
-          translations?.percentTooltip ? (
-            <Tooltip tooltip={translations.percentTooltip} direction="down" alignment="center">
-              <span>{translations.percent}</span>
-            </Tooltip>
-          ) : (
-            translations?.percent
-          )
-        ) : (
-          percent
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.serviceTooltip ? (
-            <Tooltip tooltip={translations.serviceTooltip} direction="down" alignment="center">
-              <span>{translations.service}</span>
-            </Tooltip>
-          ) : (
-            translations?.service
-          )
-        ) : (
-          levelValues.Service.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.commercialTooltip ? (
-            <Tooltip tooltip={translations.commercialTooltip} direction="down" alignment="center">
-              <span>{translations.commercial}</span>
-            </Tooltip>
-          ) : (
-            translations?.commercial
-          )
-        ) : (
-          levelValues.Commercial.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.leisureTooltip ? (
-            <Tooltip tooltip={translations.leisureTooltip} direction="down" alignment="center">
-              <span>{translations.leisure}</span>
-            </Tooltip>
-          ) : (
-            translations?.leisure
-          )
-        ) : (
-          levelValues.Leisure.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.extractorTooltip ? (
-            <Tooltip tooltip={translations.extractorTooltip} direction="down" alignment="center">
-              <span>{translations.extractor}</span>
-            </Tooltip>
-          ) : (
-            translations?.extractor
-          )
-        ) : (
-          levelValues.Extractor.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.industrialTooltip ? (
-            <Tooltip tooltip={translations.industrialTooltip} direction="down" alignment="center">
-              <span>{translations.industrial}</span>
-            </Tooltip>
-          ) : (
-            translations?.industrial
-          )
-        ) : (
-          levelValues.Industrial.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.dataColumn}`}>
-        {isHeader ? (
-          translations?.officeTooltip ? (
-            <Tooltip tooltip={translations.officeTooltip} direction="down" alignment="center">
-              <span>{translations.office}</span>
-            </Tooltip>
-          ) : (
-            translations?.office
-          )
-        ) : (
-          levelValues.Office.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.employeeColumn}`}>
-        {isHeader ? (
-          translations?.employeeTooltip ? (
-            <Tooltip tooltip={translations.employeeTooltip} direction="down" alignment="center">
-              <span>{translations.employee}</span>
-            </Tooltip>
-          ) : (
-            translations?.employee
-          )
-        ) : (
-          levelValues.Employee.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.commuterColumn}`}>
-        {isHeader ? (
-          translations?.commuterTooltip ? (
-            <Tooltip tooltip={translations.commuterTooltip} direction="down" alignment="center">
-              <span>{translations.commuter}</span>
-            </Tooltip>
-          ) : (
-            translations?.commuter
-          )
-        ) : (
-          levelValues.Commuter.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v ${styles.openColumn}`}>
-        {isHeader ? (
-          translations?.openTooltip ? (
-            <Tooltip tooltip={translations.openTooltip} direction="down" alignment="center">
-              <span>{translations.open}</span>
-            </Tooltip>
-          ) : (
-            translations?.open
-          )
-        ) : (
-          levelValues.Open.toLocaleString()
-        )}
-      </div>
-      <div className={`row_S2v small_ExK ${styles.percentColumn}`}>
-        {isHeader ? (
-          translations?.filledTooltip ? (
-            <Tooltip tooltip={translations.filledTooltip} direction="down" alignment="center">
-              <span>{translations.filled}</span>
-            </Tooltip>
-          ) : (
-            translations?.filled
-          )
-        ) : (
-          filledRate
-        )}
-      </div>
+      <div className={styles.col2}><span>{levelValues.Total.toLocaleString()}</span></div>
+      <div className={styles.col3}><span>{percent}</span></div>
+      <div className={styles.col4}><span>{levelValues.Employee}</span></div>
+      <div className={styles.col5}><span>{levelValues.Commuter}</span></div>
+      <div className={styles.col6}><span>{levelValues.Open}</span></div>
+      <div className={styles.col7}><span>{filledRate}</span></div>
+      {!hideColumns && (
+        <>
+          <div className={styles.col8}><span>{levelValues.Service}</span></div>
+          <div className={styles.col9}><span>{levelValues.Commercial}</span></div>
+          <div className={styles.col10}><span>{levelValues.Leisure}</span></div>
+          <div className={styles.col11}><span>{levelValues.Extractor}</span></div>
+          <div className={styles.col12}><span>{levelValues.Industrial}</span></div>
+          <div className={styles.col13}><span>{levelValues.Office}</span></div>
+        </>
+      )}
     </div>
   );
 };
@@ -448,31 +415,40 @@ const WorkplaceChart: React.FC<WorkplaceChartProps> = ({
     </PanelFoldout>
   );
 };
+const HideColumnsToggle: FC = () => {
+  const hideColumns = useValue(hideColumnsBinding);
+
+  return (
+    <InfoCheckbox
+      label="Hide Columns"
+      isChecked={hideColumns}
+      onToggle={(newVal) => {
+        hideColumnsBinding.update(newVal);
+      }}
+      className={styles.hideColumnsToggle}
+    />
+  );
+}
+
+
+
+
+
+
+
+
 
 const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   const { translate } = useLocalization();
   const [chartType, setChartType] = useState<'sector' | 'employment'>('sector');
   const workplaces = useValue(WorkplacesData);
-  const headers: workplacesInfo = {
-    Total: 0,
-    Service: 0,
-    Commercial: 0,
-    Leisure: 0,
-    Extractor: 0,
-    Industrial: 0,
-    Office: 0,
-    Employee: 0,
-    Commuter: 0,
-    Open: 0,
-    Name: '',
-  };
-
+  const hideColumns = useValue(hideColumnsBinding);
   return (
     <Panel
       draggable={true}
       onClose={onClose}
       initialPosition={{ x: 0.038, y: 0.15 }}
-      className={styles.panel}
+      className={hideColumns ? styles.compactPanel : styles.panel}
       header={
         <div className={styles.header}>
           <span className={styles.headerText}>{translate("InfoLoomTwo.WorkplacesPanel[Title]", "Workplaces")}</span>
@@ -483,40 +459,19 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
         <p>Waiting...</p>
       ) : (
         <div>
-          <div className={styles.spacingTop}></div>
-          <WorkplaceLevel 
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[HeaderItem1]", "Education")} 
-            levelValues={headers} 
-            total={0} 
-            isHeader={true}
-            translations={{
-              total: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem2]", "Total"),
-              percent: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem3]", "%"),
-              service: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem4]", "Service"),
-              commercial: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem5]", "Commercial"),
-              leisure: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem6]", "Leisure"),
-              extractor: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem7]", "Extractor"),
-              industrial: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem8]", "Industrial"),
-              office: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem9]", "Office"),
-              employee: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem10]", "Employee"),
-              commuter: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem11]", "Commuter"),
-              open: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem12]", "Open"),
-              filled: translate("InfoLoomTwo.WorkplacesPanel[HeaderItem13]", "Filled"),
-              totalTooltip: translate("InfoLoomTwo.WorkplacesPanel[TotalTooltip]", "Total workplaces at this education level"),
-              percentTooltip: translate("InfoLoomTwo.WorkplacesPanel[PercentTooltip]", "Percentage of total workplaces"),
-              serviceTooltip: translate("InfoLoomTwo.WorkplacesPanel[ServiceTooltip]", "Service sector workplaces"),
-              commercialTooltip: translate("InfoLoomTwo.WorkplacesPanel[CommercialTooltip]", "Commercial sector workplaces"),
-              leisureTooltip: translate("InfoLoomTwo.WorkplacesPanel[LeisureTooltip]", "Leisure sector workplaces"),
-              extractorTooltip: translate("InfoLoomTwo.WorkplacesPanel[ExtractorTooltip]", "Extractor sector workplaces"),
-              industrialTooltip: translate("InfoLoomTwo.WorkplacesPanel[IndustrialTooltip]", "Industrial sector workplaces"),
-              officeTooltip: translate("InfoLoomTwo.WorkplacesPanel[OfficeTooltip]", "Office sector workplaces"),
-              employeeTooltip: translate("InfoLoomTwo.WorkplacesPanel[EmployeeTooltip]", "Workplaces filled by city residents"),
-              commuterTooltip: translate("InfoLoomTwo.WorkplacesPanel[CommuterTooltip]", "Workplaces filled by commuters from outside the city"),
-              openTooltip: translate("InfoLoomTwo.WorkplacesPanel[OpenTooltip]", "Unfilled workplace positions"),
-              filledTooltip: translate("InfoLoomTwo.WorkplacesPanel[FilledTooltip]", "Percentage of workplace positions that are filled"),
-            }}
-          />
-          <div className={styles.spacingSmall}></div>
+          <div className={styles.toggleContainer}>
+            <DistrictSelector />
+            <HideColumnsToggle />
+          </div>
+          <WorkplaceTableHeader translations={{
+            totalTooltip: translate("InfoLoomTwo.WorkplacesPanel[TotalTooltip]", "Total workplaces at this education level"),
+            percentTooltip: translate("InfoLoomTwo.WorkplacesPanel[PercentTooltip]", "Percentage of total workplaces"),
+            workerTooltip: translate("InfoLoomTwo.WorkplacesPanel[WorkerTooltip]", "Workplaces filled by city residents"),
+            unemployedTooltip: translate("InfoLoomTwo.WorkplacesPanel[UnemployedTooltip]", "Workplaces filled by commuters from outside the city"),
+            unemploymentTooltip: translate("InfoLoomTwo.WorkplacesPanel[UnemploymentTooltip]", "Unfilled workplace positions"),
+            outsideTooltip: translate("InfoLoomTwo.WorkplacesPanel[OutsideTooltip]", "Percentage of workplace positions that are filled"),
+            homelessTooltip: translate("InfoLoomTwo.WorkplacesPanel[HomelessTooltip]", "Sector breakdown of workplaces"),
+          }} /> 
           <WorkplaceLevel
             levelColor="#808080"
             levelName={translate("InfoLoomTwo.WorkplacesPanel[Row1EL]", "Uneducated")}

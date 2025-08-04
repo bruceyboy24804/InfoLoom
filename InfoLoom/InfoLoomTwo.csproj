@@ -21,6 +21,9 @@
 	  <None Remove="Systems\BuildingDemandData\**" />
 	  <None Include="UI\src\mods\bindings.ts" />
 	  <Compile Remove="Setting.cs" />
+	  <Compile Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
+	  <EmbeddedResource Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
+	  <None Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />

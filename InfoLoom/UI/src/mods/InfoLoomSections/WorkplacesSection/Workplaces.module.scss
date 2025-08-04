@@ -1,10 +1,17 @@
 .panel {
-  width: 1400rem;
+  width: 900rem;
   display: flex;
   flex-direction: column;
-  background-color: var(--panelColorNormal);
-}
+  background-color: var(--panelColorDark);
 
+  
+}
+.compactPanel{
+    width: 500rem;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panelColorDark);
+  }
 .header {
   display: flex;
   flex-direction: row;
@@ -17,55 +24,6 @@
 .headerText {
   margin-left: -5rem;
   font-size: 110%;
-}
-
-.workplaceLevel {
-  width: 99%;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-
-.spacer1 {
-  width: 1%;
-}
-
-.levelNameContainer {
-  display: flex;
-  align-items: center;
-  width: 14%;
-}
-
-.levelSymbol {
-  width: 1.2em;
-}
-
-.dataColumn {
-  width: 7%;
-  justify-content: center;
-}
-
-.percentColumn {
-  width: 5%;
-  justify-content: center;
-}
-
-.employeeColumn {
-  width: 7%;
-  justify-content: center;
-}
-
-.commuterColumn {
-  width: 7%;
-  justify-content: center;
-}
-
-.openColumn {
-  width: 6%;
-  justify-content: center;
-}
-
-.spacingTop {
-  height: 10rem;
 }
 
 .spacingSmall {
@@ -119,7 +77,6 @@
   font-size: 105%;
   font-weight: bold;
   text-align: center;
-  padding: 0 10rem;
 }
 
 .stackedBarContainer {
@@ -240,70 +197,118 @@
   margin: 6rem 0;
 }
 
-/* Legacy styles for compatibility - can be removed if not needed */
-.scrollable {
-  max-height: 550rem;
-  overflow-y: auto;
-  width: 100%;
-  padding: 8rem;
+.col1{
+  width: 130rem;
+  text-align: left;
+  margin-left: 15rem;
+  font-size:  var(--fontSizeS) ;
 }
-
-.loadingText {
+.col2{
+  width: 55rem;
   text-align: center;
-  padding: 1rem;
-  color: white;
+  font-size:  var(--fontSizeS);
 }
-
-.container {
-  padding: 12rem;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+.col3{
+  width: 55rem; 
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
 }
-
-.sectionTitle {
-  font-size: 14rem;
-  margin: 10rem 0 5rem;
-  font-weight: 500;
+.col4{
+  width: 55rem; 
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
 }
-
-/* Total row highlighting */
-.totalRow {
-  font-weight: bold;
-  background-color: #ffffff0d;
-  border-radius: 3rem;
-  margin-top: 5rem;
+.col5{
+  width: 75rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
 }
-
-/* Summary section */
-.summarySection {
-  margin-bottom: 20rem;
-  padding-bottom: 12rem;
-  border-bottom: 1rem solid #ffffff1a;
+.col6{
+  width: 55rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
 }
-
-.summaryTitle {
-  font-size: 14rem;
-  margin-bottom: 5rem;
+.col7{
+  width: 55rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
 }
-
-.summaryGrid {
+.col8{
+  width: 70rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col9{
+  width: 70rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col10{
+  width: 70rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col11{
+  width: 60rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col12{
+  width: 60rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.col13{
+  width: 60rem;
+  text-align: center;
+  font-size:  var(--fontSizeS) ;
+}
+.row_S2v {
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 0;
+  top: 0;
+  z-index: 1;
 }
-
-.summaryItem {
-  text-align: center;
-  padding: 4rem;
-  flex: 1 0 22%;
-  min-width: 100rem;
+.symbol{
+  width: 1.2em;
+  height: 1.2em;
+  border-top-left-radius: 4rem 4rem;
+  border-top-right-radius: 4rem 4rem;
+  border-bottom-left-radius: 4rem 4rem;
+  border-bottom-right-radius: 4rem 4rem;
+  margin-right: 0.5em;
 }
-
-.summaryValue {
-  font-size: 12rem;
-  font-weight: bold;
+.label{
+  flex-shrink: 1;
+  margin-right: 0.4em;
 }
+.value{
+  margin-left: 0.4em;
+  display: flex;
+}
+.colorLegend{
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  line-height: 110%;
+}
+.headerRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--accentColorNormal);
+  top: 0;
+  z-index: 1;
+}
+  
 
 .summaryLabel {
   font-size: 11rem;
@@ -423,4 +428,19 @@
   font-weight: 500;
   margin: 15rem 0 5rem;
   color: #ffffffcc;
+}
+.sliderContainer {
+  display: flex;
+  justify-content: center;
+  margin: 15rem 0;
+}
+.toggleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 15rem;
+}
+.hideColumnsToggle {
+  font-size: 25rem;
 }
