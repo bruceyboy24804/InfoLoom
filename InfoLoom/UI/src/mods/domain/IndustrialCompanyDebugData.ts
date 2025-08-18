@@ -34,4 +34,10 @@ export interface IndustrialCompanyDebug {
   Concentration: number;
   OutputResourceName: string;
   IsExtractor: boolean;
+  
+  MoneyAmount: number;
+  Input1Resources: ResourceInfo[];
+  Input2Resources: ResourceInfo[];
+  OutputResources: ResourceInfo[];
+  MaintenanceResources: ResourceInfo[];
 }

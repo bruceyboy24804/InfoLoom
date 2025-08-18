@@ -132,10 +132,10 @@ NEW - summary statistics for each age group.
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>## Version 1.14.0
-- Fixed a small bug where commuters were counted as commuters and employees this meant that commuters where counted twice in the workplace Filled column and wouldnt be mutaully exclusive and would lead to being over 100% filled rate .
-- Addeed requested feature to show eligible, school capacity and students in residents tooltip in the districts panel.
-- Added education availability in the reisents tooltip in the districts panel.		
-- Added ability to filter Demographics, Workplace and Workforce  data by District, this will allow you to see the data for a specific district.		
+- Fixed a small bug where commuters were counted as commuters and employees this meant that commuters where counted twice in the workplace Filled column and wouldn't be mutually exclusive and would lead to being over 100% filled rate .
+- Added requested feature to show eligible, school capacity and students in residents' tooltip in the districts panel.
+- Added education availability in the residents tooltip in the districts panel.		
+- Added the ability to filter Demographics, Workplace and Workforce data by District, this will allow you to see the data for a specific district.		
 </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />

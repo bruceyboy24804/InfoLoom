@@ -1,4 +1,4 @@
-namespace InfoLoomTwo.Domain.DataDomain
+namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
 {
     public class ResourceTradeCost
     {

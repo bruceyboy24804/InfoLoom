@@ -269,42 +269,42 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
 
           <div className={styles.tableBody}>
             {tradeCosts.map((row) => {
-              const isImmaterial = isImmaterialResource(row);
-              
-              return (
-                <div className={styles.row} key={row.Resource}>
-                  <div className={styles.iconColumn}>
-                    <Icon src={row.ResourceIcon} className={styles.resourceIcon} />
-                  </div>
+  const isImmaterial = isImmaterialResource(row);
 
-                  <div className={styles.resourceColumn}>{row.Resource}</div>
+  return (
+    <div className={styles.row} key={row.Resource}>
+      <div className={styles.iconColumn}>
+        <Icon src={row.ResourceIcon} className={styles.resourceIcon} />
+      </div>
 
-                  <div className={styles.buyCostColumn}>
-                    {isImmaterial ? "N/A" : row.BuyCost.toFixed(2)}
-                  </div>
+      <div className={styles.resourceColumn}>{row.Resource}</div>
 
-                  <div className={styles.sellCostColumn}>
-                    {isImmaterial ? "N/A" : row.SellCost.toFixed(2)}
-                  </div>
+      <div className={styles.buyCostColumn}>
+        {row.BuyCost.toFixed(2)}
+      </div>
 
-                  <div className={`${styles.profitColumn} ${isImmaterial ? '' : getProfitClass(calculateProfit(row))}`}>
-                    {isImmaterial ? "N/A" : calculateProfit(row).toFixed(2)}
-                  </div>
+      <div className={styles.sellCostColumn}>
+        {row.SellCost.toFixed(2)}
+      </div>
 
-                  <div className={`${styles.profitMarginColumn} ${isImmaterial ? '' : getProfitClass(calculateProfitMargin(row))}`}>
-                    {isImmaterial ? "N/A" : calculateProfitMargin(row).toFixed(2) + "%"}
-                  </div>
-                  
-                  <div className={styles.importAmountColumn}>
-                    {isImmaterial ? formatImmaterialAmount(row.ImportAmount) : formatAmountInTons(row.ImportAmount)}
-                  </div>
-                  
-                  <div className={styles.exportAmountColumn}>
-                    {isImmaterial ? formatImmaterialAmount(row.ExportAmount) : formatAmountInTons(row.ExportAmount)}
-                  </div>
-                </div>
-              );
-            })}
+      <div className={`${styles.profitColumn} ${getProfitClass(calculateProfit(row))}`}>
+        {calculateProfit(row).toFixed(2)}
+      </div>
+
+      <div className={`${styles.profitMarginColumn} ${getProfitClass(calculateProfitMargin(row))}`}>
+        {calculateProfitMargin(row).toFixed(2) + "%"}
+      </div>
+
+      <div className={styles.importAmountColumn}>
+        {isImmaterial ? formatImmaterialAmount(row.ImportAmount) : formatAmountInTons(row.ImportAmount)}
+      </div>
+
+      <div className={styles.exportAmountColumn}>
+        {isImmaterial ? formatImmaterialAmount(row.ExportAmount) : formatAmountInTons(row.ExportAmount)}
+      </div>
+    </div>
+  );
+})}
           </div>
 
           <DataDivider />

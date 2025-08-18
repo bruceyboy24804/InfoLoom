@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
@@ -23,7 +22,9 @@ using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 using InfoLoomTwo.Systems.Sections;
-using InfoLoomTwo.Systems.TradeCostData; using Unity.Entities;
+using InfoLoomTwo.Systems.TradeCostData; 
+using Unity.Entities;
+using Game.Settings;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -45,6 +46,11 @@ namespace InfoLoomTwo
         // Static logger instance with custom logger name and settings
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
             .SetShowsErrorsInUI(false);
+
+        // RealLife settings integration
+        
+
+    
 
         // Method that runs when the mod is loaded
         public void OnLoad(UpdateSystem updateSystem)
@@ -92,14 +98,17 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.UIUpdate);
+
+            
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
             ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
             ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
-            
+
+            // Register RealLife settings updater to initialize after all mods are loaded
         }
         // Method that runs when the mod is disposed of
         public void OnDispose()
@@ -111,6 +120,8 @@ namespace InfoLoomTwo
               setting.UnregisterInOptionsUI();
                setting = null;
             }*/
+
+            // Cleanup RealLife integration
 
             var harmony = new Harmony(harmonyId);
             harmony.UnpatchAll(harmonyId);

@@ -1,4 +1,4 @@
-namespace InfoLoomTwo.Domain.DataDomain.Enums.TradeCostEnums
+namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
 {
     public enum ProfitMarginEnum
     {

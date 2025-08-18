@@ -416,20 +416,20 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             var job = new ProcessCommercialCompaniesJob
             {
                 // Required component type handles
-                EntityType = GetEntityTypeHandle(),
-                CompanyDataType = GetComponentTypeHandle<Game.Companies.CompanyData>(true),
-                WorkProviderType = GetComponentTypeHandle<WorkProvider>(true),
-                PrefabRefType = GetComponentTypeHandle<PrefabRef>(true),
-                ServiceAvailableType = GetComponentTypeHandle<ServiceAvailable>(true),
+                EntityType = SystemAPI.GetEntityTypeHandle(),
+                CompanyDataType = SystemAPI.GetComponentTypeHandle<Game.Companies.CompanyData>(true),
+                WorkProviderType = SystemAPI.GetComponentTypeHandle<WorkProvider>(true),
+                PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
+                ServiceAvailableType = SystemAPI.GetComponentTypeHandle<ServiceAvailable>(true),
                 
                 // Optional component type handles
-                PropertyRenterType = GetComponentTypeHandle<PropertyRenter>(true),
-                ProfitabilityType = GetComponentTypeHandle<Profitability>(true),
+                PropertyRenterType = SystemAPI.GetComponentTypeHandle<PropertyRenter>(true),
+                ProfitabilityType = SystemAPI.GetComponentTypeHandle<Profitability>(true),
                 
                 // Buffer type handles
-                EmployeeBufferType = GetBufferTypeHandle<Employee>(true),
-                OwnedVehicleBufferType = GetBufferTypeHandle<OwnedVehicle>(true),
-                ResourcesBufferType = GetBufferTypeHandle<Resources>(true),
+                EmployeeBufferType = SystemAPI.GetBufferTypeHandle<Employee>(true),
+                OwnedVehicleBufferType = SystemAPI.GetBufferTypeHandle<OwnedVehicle>(true),
+                ResourcesBufferType = SystemAPI.GetBufferTypeHandle<Resources>(true),
                 
                 // Component lookups
                 ServiceCompanyDataLookup = GetComponentLookup<ServiceCompanyData>(true),

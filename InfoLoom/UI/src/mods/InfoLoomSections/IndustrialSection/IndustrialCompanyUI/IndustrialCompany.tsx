@@ -22,13 +22,21 @@ import {
   SetIndustrialCompanyNameSorting,
   SetIndustrialCompanyIndexSorting,
   SetIndustrialCompanyProfitability,
-  SetIndustrialCompanyResourceAmount,
+  SetIndustrialMoneySorting,
+  SetIndustrialInput1Sorting,
+  SetIndustrialInput2Sorting,
+  SetIndustrialOutputSorting,
+  SetIndustrialMaintenanceSorting,
   IndustrialCompanyEmployee,
   IndustrialCompanyIndexSorting,
   IndustrialCompanyNameSorting,
   IndustrialCompanyProfitability,
-  IndustrialCompanyResourceAmount,
   IndustrialCompanyEfficiency,
+  IndustrialMoneySorting,
+  IndustrialInput1Sorting,
+  IndustrialInput2Sorting,
+  IndustrialOutputSorting,
+  IndustrialMaintenanceSorting
 } from 'mods/bindings';
 import { getModule } from 'cs2/modding';
 import { Entity, useCssLength } from 'cs2/utils';
@@ -40,7 +48,11 @@ import {
   EmployeesEnum2,
   IndexSortingEnum2,
   ProfitabilityEnum2,
-  ResourceAmountEnum2,
+  MoneyEnum2,
+  Input1Enum2,
+  Input2Enum2,
+  OutputEnum2,
+  MaintenanceEnum2
 } from 'mods/domain/IndustrialCompanyEnums';
 
 // Import VirtualList components
@@ -193,7 +205,11 @@ interface SortableHeaderProps {
     | EmployeesEnum2
     | EfficiencyEnum2
     | ProfitabilityEnum2
-    | ResourceAmountEnum2;
+    | MoneyEnum2
+    | Input1Enum2
+    | Input2Enum2
+    | OutputEnum2
+    | MaintenanceEnum2
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
 }
@@ -247,7 +263,11 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
   const employeeSortingOptions = useValue(IndustrialCompanyEmployee);
   const efficiencySortingOptions = useValue(IndustrialCompanyEfficiency);
   const profitabilitySortingOptions = useValue(IndustrialCompanyProfitability);
-  const resourceAmountSortingOptions = useValue(IndustrialCompanyResourceAmount);
+  const moneySortingOptions = useValue(IndustrialMoneySorting);
+  const input1SortingOptions = useValue(IndustrialInput1Sorting);
+  const input2SortingOptions = useValue(IndustrialInput2Sorting);
+  const outputSortingOptions = useValue(IndustrialOutputSorting);
+  const maintenanceSortingOptions = useValue(IndustrialMaintenanceSorting);
 
   // Helper function to get efficiency class
   const getEfficiencyClass = (efficiency: number) => {
@@ -262,28 +282,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
   };
 
   // Component with translations
-  const ResourcesToolTipWithTranslation = ({ resources }: { resources: ResourceInfo[] }) => {
-    return (
-      <div className={styles.tooltipContent}>
-        <div className={styles.tooltipText}>
-          <p>
-            <strong>{translate("InfoLoomTwo.IndustrialCompanyPanel[ResourcesTitle]", "Resources") || "Resources"}</strong>
-          </p>
-          {resources && resources.length > 0 ? (
-            resources.map((resource, index) => (
-              <div key={index} className={styles.resourceItem}>
-                <p cohinline="cohinline">
-                  {resource.ResourceName}: {resource.Amount}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p>{translate("InfoLoomTwo.IndustrialCompanyPanel[NoResources]", "No resources") || "No resources"}</p>
-          )}
-        </div>
-      </div>
-    );
-  };
+  
 
   const ProcessingInfoTooltipWithTranslation = ({ inputResources, outputResources }: { inputResources: ProcessResourceInfo[], outputResources: ProcessResourceInfo[] }) => {
     return (
@@ -322,7 +321,10 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
     );
   };
 
-  const ProfitabilityTooltipWithTranslation = ({ company }: { company: IndustrialCompanyDebug }) => {
+  interface ProfitabilityTooltipProps {
+    company: IndustrialCompanyDebug;
+  }
+const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
     return (
       <div className={styles.tooltipContent}>
         <div className={styles.tooltipText}>
@@ -353,12 +355,6 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
       [company.ProcessResources]
     );
 
-    // Memoized tooltips to prevent recreation
-    const resourcesTooltip = useMemo(() => 
-      <ResourcesToolTipWithTranslation resources={company.Resources || []} />, 
-      [company.Resources]
-    );
-
     const processingTooltip = useMemo(() => 
       <ProcessingInfoTooltipWithTranslation
         inputResources={inputResources}
@@ -373,7 +369,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
     );
 
     const profitabilityTooltip = useMemo(() => 
-      <ProfitabilityTooltipWithTranslation company={company} />, 
+      <ProfitabilityTooltip company={company} />, 
       [company]
     );
 
@@ -393,21 +389,74 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
         <div className={styles.vehicleColumn}>
           {`${formatNumber(company.VehicleCount)}/${formatNumber(company.VehicleCapacity)}`}
         </div>
-
-        {/* Resources Column */}
-        <Tooltip tooltip={resourcesTooltip}>
-          <div className={styles.resourcesColumn}>
-            {company.Resources && company.Resources.length > 0 ? (
-              <div className={styles.resourceGroup}>
-                {company.Resources.map((r, i) => (
-                  <Icon key={`resource-${i}`} src={r.Icon} className={styles.resourceIcon} />
-                ))}
-              </div>
-            ) : (
-              <Icon src={company.ResourceIcon} className={styles.resourceIcon} />
-            )}
+        {/* Money Column */}
+        <div className={styles.moneyColumn}>
+          <div className={styles.resourceGroup}>
+            <span className={styles.resourceAmount}>{formatNumber(company.MoneyAmount)}</span>
           </div>
-        </Tooltip>
+        </div>
+        {/* Input 1 Column */}
+        <div className={styles.input1Column}>
+          {company.Input1Resources && company.Input1Resources.length > 0 ? (
+            <div className={styles.resourceGroup}>
+              {company.Input1Resources.map((r, i) => (
+                <div key={`input1-${i}`} className={styles.resourceItem}>
+                <Icon src={r.Icon} className={styles.resourceIcon} />
+                <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyGroup}></div>
+          )}
+        </div>
+        {/* Input 2 Column */}
+        <div className={styles.input2Column}>
+            {company.Input2Resources && company.Input2Resources.length > 0 ? (
+              <div className={styles.resourceGroup}>
+                {company.Input2Resources.map((r, i) => (
+                  <div key={`input2-${i}`} className={styles.resourceItem}>
+                  <Icon src={r.Icon} className={styles.resourceIcon} />
+                  <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyGroup}></div>
+          )}
+        </div>
+        {/* Output Column */}
+        <div className={styles.outputColumn}>
+          {company.OutputResources && company.OutputResources.length > 0 ? (
+            <div className={styles.resourceGroup}>
+              {company.OutputResources.map((r, i) => (
+                <div key={`output-${i}`} className={styles.resourceItem}>
+                  <Icon src={r.Icon} className={styles.resourceIcon} />
+                  <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyGroup}></div>
+          )}
+        </div>
+        {/* Maintenance Column */}
+        <div className={styles.maintenanceColumn}>
+          {company.MaintenanceResources && company.MaintenanceResources.length > 0 ? (
+            <div className={styles.resourceGroup}>
+              {company.MaintenanceResources.map((r, i) => (
+                <div key={`maint-${i}`} className={styles.resourceItem}>
+                  <Icon src={r.Icon} className={styles.resourceIcon} />
+                  <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyGroup}></div>
+          )}
+        </div>
+        
+        
 
         {/* Processing Column - Simplified */}
         <Tooltip tooltip={processingTooltip}>
@@ -454,13 +503,13 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
         </Tooltip>
 
         {/* Profitability Column */}
-        <Tooltip tooltip={profitabilityTooltip}>
-          <div className={styles.profitabilityColumn}>
-            <span className={getProfitabilityClass(company.Profitability)}>
-              {formatPercentage2(company.Profitability)}
-            </span>
-          </div>
-        </Tooltip>
+        <Tooltip tooltip={<ProfitabilityTooltip company={company} />}>
+        <div className={styles.profitabilityColumn}>
+          <span className={getProfitabilityClass(company.Profitability)}>
+            {formatPercentage2(company.Profitability)}
+          </span>
+        </div>
+      </Tooltip>
 
         {/* Location Column */}
         <div className={styles.locationColumn}>
@@ -592,16 +641,57 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               </Tooltip>
               
               <SortableHeader
-                title={translate("InfoLoomTwo.IndustrialCompanyPanel[Resources]", "Resources") || "Resources"}
-                sortState={resourceAmountSortingOptions}
+                title={"Money"}
+                sortState={moneySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc')
-                    SetIndustrialCompanyResourceAmount(ResourceAmountEnum2.Ascending);
-                  else if (direction === 'desc')
-                    SetIndustrialCompanyResourceAmount(ResourceAmountEnum2.Descending);
-                  else SetIndustrialCompanyResourceAmount(ResourceAmountEnum2.Off);
+                  if (direction === 'asc') SetIndustrialMoneySorting(MoneyEnum2.Ascending);
+                  else if (direction === 'desc') SetIndustrialMoneySorting(MoneyEnum2.Descending);
+                  else SetIndustrialMoneySorting(MoneyEnum2.Off);
                 }}
-                className={styles.resourcesColumn}
+                className={styles.moneyColumn}
+              />
+              <SortableHeader
+                title={"Input 1"}
+                sortState={input1SortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetIndustrialInput1Sorting(Input1Enum2.Ascending);
+                  else if (direction === 'desc') SetIndustrialInput1Sorting(Input1Enum2.Descending);
+                  else SetIndustrialInput1Sorting(Input1Enum2.Off);
+                }}
+                className={styles.input1Column}
+              />
+
+              <SortableHeader
+                title={"Input 2"}
+                sortState={input2SortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetIndustrialInput2Sorting(Input2Enum2.Ascending);
+                  else if (direction === 'desc') SetIndustrialInput2Sorting(Input2Enum2.Descending);
+                  else SetIndustrialInput2Sorting(Input2Enum2.Off);
+                }}
+                className={styles.input2Column}
+              />
+
+              <SortableHeader
+                title={"Output"}
+                sortState={outputSortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetIndustrialOutputSorting(OutputEnum2.Ascending);
+                  else if (direction === 'desc') SetIndustrialOutputSorting(OutputEnum2.Descending);
+                  else SetIndustrialOutputSorting(OutputEnum2.Off);
+                }}
+                className={styles.outputColumn}
+              />
+
+              <SortableHeader
+                title={"Maintenance"}
+                sortState={maintenanceSortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetIndustrialMaintenanceSorting(MaintenanceEnum2.Ascending);
+                  else if (direction === 'desc') SetIndustrialMaintenanceSorting(MaintenanceEnum2.Descending);
+                  else SetIndustrialMaintenanceSorting(MaintenanceEnum2.Off);
+                }}
+                className={styles.maintenanceColumn}
               />
               
               <Tooltip tooltip={translate("InfoLoomTwo.IndustrialCompanyPanel[ProcessingTooltip]", "Input and output resources processed by this company in the production chain") || "Input/output resources processed by this industrial company"}>

@@ -21,7 +21,16 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 {
     public partial class WorkplacesSystem : GameSystemBase
     {
-
+        private enum EducationIndex
+        {
+            Uneducated = 0,
+            PoorlyEducated = 1,
+            Educated = 2,
+            WellEducated = 3,
+            HighlyEducated = 4,
+            Totals = 5,
+            ProviderCounts = 6 
+        }
         private struct CalculateWorkplaceDataJob : IJobChunk
         {
             [ReadOnly]
@@ -81,7 +90,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                 bool isService = !(isIndustrial || isCommercial);
                 bool hasPropertyRenter = nativeArray3.IsCreated && nativeArray3.Length > 0;
 
-                WorkplacesInfo count = m_Results[6];
+                WorkplacesInfo count = m_Results[(int)EducationIndex.ProviderCounts];
                 for (int i = 0; i < nativeArray.Length; i++)
                 {
                     int buildingLevel = 1;
@@ -90,12 +99,13 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                     PrefabRef prefabRef = nativeArray2[i];
                     WorkplaceData workplaceData = m_WorkplaceDataFromEntity[prefabRef.m_Prefab];
                     // Then use it safely
-                    Entity workplace = Entity.Null;
-                    if (hasPropertyRenter)
+                    Entity workplace = nativeArray[i];
+                    if (hasPropertyRenter && nativeArray3.Length > i)
                     {
                         workplace = nativeArray3[i].m_Property;
                     }
-                    if (!IsInSelectedDistrict(workplace))
+
+                    if (m_SelectedDistrict != Entity.Null && !IsInSelectedDistrict(nativeArray[i], workplace))
                         continue;
                     
                     if (chunk.Has(ref m_PropertyRenterHandle))
@@ -120,7 +130,7 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                     }
 
                     // Count Commuters among Employees
-                    int[] commuters = new int[5]; // by level
+                    int[] commuters = new int[(int)EducationIndex.Totals]; // by level
                     for (int k = 0; k < employees.Length; k++)
                     {
                         Entity worker = employees[k].m_Worker;
@@ -153,17 +163,15 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                         info.Commuter += commuters;
                         return info;
                     }
-
-                    // uneducated
-                    m_Results[0] = ProcessLevel(m_Results[0], workplacesData.uneducated, employeesData.uneducated, commuters[0]);
+                    m_Results[(int)EducationIndex.Uneducated] = ProcessLevel(m_Results[(int)EducationIndex.Uneducated], workplacesData.uneducated, employeesData.uneducated, commuters[(int)EducationIndex.Uneducated]);
                     // poorlyEducated
-                    m_Results[1] = ProcessLevel(m_Results[1], workplacesData.poorlyEducated, employeesData.poorlyEducated, commuters[1]);
+                    m_Results[(int)EducationIndex.PoorlyEducated] = ProcessLevel(m_Results[(int)EducationIndex.PoorlyEducated], workplacesData.poorlyEducated, employeesData.poorlyEducated, commuters[(int)EducationIndex.PoorlyEducated]);
                     // educated
-                    m_Results[2] = ProcessLevel(m_Results[2], workplacesData.educated, employeesData.educated, commuters[2]);
+                    m_Results[(int)EducationIndex.Educated] = ProcessLevel(m_Results[(int)EducationIndex.Educated], workplacesData.educated, employeesData.educated, commuters[(int)EducationIndex.Educated]);
                     // wellEducated
-                    m_Results[3] = ProcessLevel(m_Results[3], workplacesData.wellEducated, employeesData.wellEducated, commuters[3]);
+                    m_Results[(int)EducationIndex.WellEducated] = ProcessLevel(m_Results[(int)EducationIndex.WellEducated], workplacesData.wellEducated, employeesData.wellEducated, commuters[(int)EducationIndex.WellEducated]);
                     // highlyEducated
-                    m_Results[4] = ProcessLevel(m_Results[4], workplacesData.highlyEducated, employeesData.highlyEducated, commuters[4]);
+                    m_Results[(int)EducationIndex.HighlyEducated] = ProcessLevel(m_Results[(int)EducationIndex.HighlyEducated], workplacesData.highlyEducated, employeesData.highlyEducated, commuters[(int)EducationIndex.HighlyEducated]);
 
                     // Count work providers
                     count.Total++;
@@ -179,24 +187,24 @@ namespace InfoLoomTwo.Systems.WorkplacesData
                         else if (isOffice) count.Office++;
                         else count.Industrial++; // Changed from 'Industrial' to 'Industry'
                     }
-                    m_Results[6] = count;
+                    m_Results[(int)EducationIndex.ProviderCounts] = count;
                 }
             }
-           private bool IsInSelectedDistrict(Entity buildingEntity)
+            private bool IsInSelectedDistrict(Entity companyEntity, Entity buildingEntity)
             {
-                // If no district selected, show entire city
                 if (m_SelectedDistrict == Entity.Null)
                     return true;
 
-                // If no building entity, skip this workplace when district filtering is active
-                if (buildingEntity == Entity.Null)
-                    return false;
-
-                // Check if the building has a district component directly
-                if (m_CurrentDistrictLookup.HasComponent(buildingEntity))
+                // Try building first
+                if (buildingEntity != Entity.Null && m_CurrentDistrictLookup.HasComponent(buildingEntity))
                 {
-                    var currentDistrict = m_CurrentDistrictLookup[buildingEntity];
-                    return currentDistrict.m_District == m_SelectedDistrict;
+                    return m_CurrentDistrictLookup[buildingEntity].m_District == m_SelectedDistrict;
+                }
+
+                // Fallback to company entity
+                if (m_CurrentDistrictLookup.HasComponent(companyEntity))
+                {
+                    return m_CurrentDistrictLookup[companyEntity].m_District == m_SelectedDistrict;
                 }
 
                 return false;
@@ -298,20 +306,21 @@ namespace InfoLoomTwo.Systems.WorkplacesData
 
             // Calculate totals
             WorkplacesInfo totals = new WorkplacesInfo(-1);
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < (int)EducationIndex.Totals; i++)
             {
-                totals.Total += m_Results[i].Total;
-                totals.Service += m_Results[i].Service;
-                totals.Commercial += m_Results[i].Commercial;
-                totals.Leisure += m_Results[i].Leisure;
-                totals.Extractor += m_Results[i].Extractor;
-                totals.Industrial += m_Results[i].Industrial;
-                totals.Office += m_Results[i].Office;
-                totals.Employee += m_Results[i].Employee;
-                totals.Commuter += m_Results[i].Commuter;
-                totals.Open += m_Results[i].Open;
+                var educationLevel = (EducationIndex)i;
+                totals.Total += m_Results[(int)educationLevel].Total;
+                totals.Service += m_Results[(int)educationLevel].Service;
+                totals.Commercial += m_Results[(int)educationLevel].Commercial;
+                totals.Leisure += m_Results[(int)educationLevel].Leisure;
+                totals.Extractor += m_Results[(int)educationLevel].Extractor;
+                totals.Industrial += m_Results[(int)educationLevel].Industrial;
+                totals.Office += m_Results[(int)educationLevel].Office;
+                totals.Employee += m_Results[(int)educationLevel].Employee;
+                totals.Commuter += m_Results[(int)educationLevel].Commuter;
+                totals.Open += m_Results[(int)educationLevel].Open;
             }
-            m_Results[5] = totals;
+            m_Results[(int)EducationIndex.Totals] = totals;
 
             // Update UI bindings
 

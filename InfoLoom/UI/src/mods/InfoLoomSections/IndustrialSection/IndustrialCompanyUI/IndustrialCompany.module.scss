@@ -1,6 +1,6 @@
 .panel {
-  width: 1100rem;
-  max-width: 1300rem;
+  width: 1550rem;
+  
 }
 
 .header {
@@ -48,6 +48,7 @@
   align-items: center;
   justify-content: flex-start;
   font-weight: 500;
+  font-size: 13rem;
 }
 
 .employeeColumn {
@@ -74,14 +75,56 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 13rem;
 }
-
-.processingColumn {
-  width: 220rem;
-  min-width: 220rem;
+.moneyColumn {
+  width: 200rem;
+  min-width: 200rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 13rem;
+}
+.input1Column {
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
+}
+.input2Column {
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
+}
+.outputColumn {
+  width: 120rem;
+  min-width: 120rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
+}
+.maintenanceColumn {
+  width: 200rem;
+  min-width: 200rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
+}
+
+.processingColumn {
+  width: 100rem;
+  min-width: 100rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
 }
 
 .efficiencyColumn {

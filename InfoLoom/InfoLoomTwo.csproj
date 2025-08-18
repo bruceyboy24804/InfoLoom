@@ -75,6 +75,9 @@
 		<Reference Include="Colossal.Localization">
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="Colossal.AssetPipeline">
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="mscorlib">
 		  <Private>False</Private>
 		  <HintPath>$(ManagedPath)\mscorlib.dll</HintPath>

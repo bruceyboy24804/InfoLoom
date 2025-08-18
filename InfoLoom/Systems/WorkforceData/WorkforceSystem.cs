@@ -26,7 +26,15 @@ namespace InfoLoomTwo.Systems.WorkforceData
         private const int TOTAL_INDEX = 5;
         private const int RESULTS_SIZE = 6; // 5 education levels + 1 totals
         private const int UPDATE_INTERVAL = 512;
-
+        private enum EducationLevel
+        {
+            Uneducated = 0,
+            PoorlyEducated = 1,
+            Educated = 2,
+            WellEducated = 3,
+            HighlyEducated = 4,
+            Totals = 5
+        }
         private struct CountEmploymentJob : IJobChunk
         {
             [ReadOnly] public ComponentTypeHandle<Citizen> m_CitizenType;
@@ -49,22 +57,26 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 var citizenArray = chunk.GetNativeArray(ref m_CitizenType);
                 var workerArray = chunk.GetNativeArray(ref m_WorkerType);
                 var healthProblemArray = chunk.GetNativeArray(ref m_HealthProblemType);
-                
+                var studentArray = chunk.GetNativeArray(ref m_StudentType); // Add this line
+
                 bool isWorkerChunk = workerArray.IsCreated;
                 bool hasHealthProblems = healthProblemArray.IsCreated;
+                bool hasStudents = studentArray.IsCreated; // Add this line
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     
-                    Citizen citizen = citizenArray[i];
                     Entity household = householdMemberArray[i].m_Household;
-                    
-                    
-                    if (!IsInSelectedDistrict(household))
+
+                    if (m_SelectedDistrict != Entity.Null && !IsInSelectedDistrict(household))
                         continue;
+
+                    Citizen citizen = citizenArray[i];
                     
                     var age = citizen.GetAge();
                     if (age == CitizenAge.Child || age == CitizenAge.Elderly)
+                        continue;
+                    if (hasStudents && i < studentArray.Length)
                         continue;
                     if (ShouldSkipCitizen(citizen, household, hasHealthProblems ? healthProblemArray[i] : default, hasHealthProblems))
                         continue;
@@ -134,11 +146,11 @@ namespace InfoLoomTwo.Systems.WorkforceData
             }
             private bool IsInSelectedDistrict(Entity household)
             {
-                // If no district selected, show entire city
+                // If no district selected, include all households (even those without property)
                 if (m_SelectedDistrict == Entity.Null)
                     return true;
 
-                // Get the household's property
+                // For district filtering, exclude households without property (can't determine their district)
                 if (!m_PropertyRenters.HasComponent(household))
                     return false;
 
@@ -148,7 +160,6 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 if (buildingEntity == Entity.Null)
                     return false;
 
-                // Check if the building has a district component
                 if (m_CurrentDistrictLookup.HasComponent(buildingEntity))
                 {
                     var currentDistrict = m_CurrentDistrictLookup[buildingEntity];
@@ -259,10 +270,10 @@ namespace InfoLoomTwo.Systems.WorkforceData
         private void CalculateTotals()
         {
             var totals = new WorkforcesInfo(-1);
-            
-            for (int i = 0; i < EDUCATION_LEVELS; i++)
+
+            for (EducationLevel level = EducationLevel.Uneducated; level <= EducationLevel.HighlyEducated; level++)
             {
-                var levelData = m_Results[i];
+                var levelData = m_Results[(int)level];
                 totals.Total += levelData.Total;
                 totals.Worker += levelData.Worker;
                 totals.Unemployed += levelData.Unemployed;
@@ -271,8 +282,8 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 totals.Outside += levelData.Outside;
                 totals.Under += levelData.Under;
             }
-            
-            m_Results[TOTAL_INDEX] = totals;
+
+            m_Results[(int)EducationLevel.Totals] = totals;
         }
         public void SetSelectedDistrict(Entity district)
         {
