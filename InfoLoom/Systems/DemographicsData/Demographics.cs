@@ -143,7 +143,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
                         PopulationAtAgeInfo info = m_Results[ageInDays];
                         info.Age = ageInDays;
                         info.Total++;
-                        if (ageInDays <= 20)
+                        if (age == CitizenAge.Child)
                         {
                             info.ChildCount++; // Count in child demographic
                             if (isStudent && chunk.Has(ref m_StudentType))
