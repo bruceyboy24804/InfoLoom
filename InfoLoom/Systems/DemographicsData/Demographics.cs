@@ -143,36 +143,6 @@ namespace InfoLoomTwo.Systems.DemographicsData
                         PopulationAtAgeInfo info = m_Results[ageInDays];
                         info.Age = ageInDays;
                         info.Total++;
-                        if (age == CitizenAge.Child)
-                        {
-                            info.ChildCount++; // Count in child demographic
-                            if (isStudent && chunk.Has(ref m_StudentType))
-                            {
-                                for (int j = 0; j < studentArray.Length; j++)
-                                {
-                                    if (entities[i].Index == entities[j].Index)
-                                    {
-                                        byte level = studentArray[j].m_Level;
-                                        switch (level)
-                                        {
-                                            case 1: info.School1++; break;
-                                            case 2: info.School2++; break;
-                                            default: info.School1++; break; 
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                info.School1++;
-                            }
-                            m_Totals[(int)Totals.Students]++; // Increment total students count
-                            if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
-                                m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
-                            m_Results[ageInDays] = info;
-                            continue; 
-                        }
                         switch (age)
                         {
                             case CitizenAge.Child:
@@ -239,9 +209,11 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 info.Unemployed++;
                             }
                         }
-                        if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
-                            m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
-                        m_Results[ageInDays] = info;
+                        
+                            if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
+                                m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
+                            m_Results[ageInDays] = info;
+                            continue; 
                     }
                 }
             }
