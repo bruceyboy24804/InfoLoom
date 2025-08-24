@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import { useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { Button, FloatingButton, Tooltip, Icon } from "cs2/ui";
+import {trigger} from "cs2/api"
 import icon from "images/Statistics.svg";
 import styles from "./InfoLoomMenu.module.scss";
 import Demographics from "mods/InfoLoomSections/DemographicsSection/Demographics";
@@ -25,7 +26,10 @@ interface SectionItem {
 }
 
 type SectionsType = Record<string, SectionItem>;
-
+enum InfoLoomState {
+    Open,
+    Closed
+}
 function InfoLoomButton(): JSX.Element {
     const { translate } = useLocalization();
     
@@ -67,11 +71,12 @@ function InfoLoomButton(): JSX.Element {
             displayName: null, // Will be set at render time
             src: "Media/Glyphs/FilledArrowRight.svg"
         },
-        Demand: {
-            component: <Demand />,
-            isOpen: buildingDemandOpen,
-            toggle: bindings.SetBuildingDemandOpen,
-            displayName: null // Will be set at render time
+        "Commercial Menu" : {
+            component: <CommercialMenuButton />,
+            isOpen: commercialMenuOpen,
+            toggle: bindings.SetCommercialMenuOpen,
+            displayName: null, // Will be set at render time
+            src: "Media/Glyphs/FilledArrowRight.svg"
         },
         "Industrial Menu": {
             component: <IndustrialMenuButton/>,
@@ -79,6 +84,12 @@ function InfoLoomButton(): JSX.Element {
             toggle: bindings.SetIndustrialMenuOpen,
             displayName: null, // Will be set at render time
             src: "Media/Glyphs/FilledArrowRight.svg"
+        },
+        Demand: {
+            component: <Demand />,
+            isOpen: buildingDemandOpen,
+            toggle: bindings.SetBuildingDemandOpen,
+            displayName: null // Will be set at render time
         },
         "Trade Cost": {
             component: <TradeCost />,
@@ -93,13 +104,7 @@ function InfoLoomButton(): JSX.Element {
             displayName: null, // Will be set at render time
             src: "Media/Glyphs/FilledArrowRight.svg"
         },
-        "Commercial Menu" : {
-            component: <CommercialMenuButton />,
-            isOpen: commercialMenuOpen,
-            toggle: bindings.SetCommercialMenuOpen,
-            displayName: null, // Will be set at render time
-            src: "Media/Glyphs/FilledArrowRight.svg"
-        }
+        
     }), [demographicsOpen, workforceOpen, workplacesOpen, residentialMenuOpen,
         buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, districtMenuOpen, commercialMenuOpen ]);
 
@@ -154,10 +159,14 @@ function InfoLoomButton(): JSX.Element {
     return (
         <div>
             <Tooltip tooltip={translate("InfoLoomTwo.FloatingButtonTooltip", "Info Loom")}>
-                <FloatingButton
-                    onClick={handleInfoLoomToggle}
+                <Button
+                    
+                    variant="floating"
                     src={icon}
-                />
+                    selected={infoLoomMenuOpen}
+                    onSelect={() => handleInfoLoomToggle()}>
+                    
+                </Button>    
             </Tooltip>
 
             {infoLoomMenuOpen && (

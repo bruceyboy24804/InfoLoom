@@ -199,7 +199,7 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
                   className="negative_YWY"
                   style={{
                     fontSize: 'var(--fontSizeS)',
-                    display: 'inline-block'
+                    display: 'flex'
                   }}
                 >
                   {item.weight}
@@ -209,7 +209,7 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
                   className="positive_zrK"
                   style={{
                     fontSize: 'var(--fontSizeS)',
-                    display: 'inline-block'
+                    display: 'flex'
                   }}
                 >
                   {item.weight}
@@ -268,7 +268,7 @@ const $DemandFactors: FC<DraggablePanelProps> = ({ onClose, initialPosition }) =
         </div>
       }
     >
-      <Scrollable vertical={true} trackVisibility={'scrollable'} smooth={true}>
+
         <DemandSection2 title="BUILDING DEMAND" value={-1} factors={buildingDemandFactors} />
         <DemandSection2
           title="RESIDENTIAL LOW"
@@ -288,7 +288,7 @@ const $DemandFactors: FC<DraggablePanelProps> = ({ onClose, initialPosition }) =
         <DemandSection2 title="COMMERCIAL" value={commercialDemand} factors={commercialFactors} />
         <DemandSection2 title="INDUSTRIAL" value={industrialDemand} factors={industrialFactors} />
         <DemandSection2 title="OFFICE" value={officeDemand} factors={officeFactors} />
-      </Scrollable>
+      
     </Panel>
   );
 };

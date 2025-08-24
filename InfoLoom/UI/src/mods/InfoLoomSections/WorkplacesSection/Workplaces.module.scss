@@ -33,7 +33,7 @@
 .chartToggle {
   display: flex;
   justify-content: center;
-  margin: 15rem 0 10rem 0;
+  margin: 15rem;
   padding: 3rem 6rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4rem;
@@ -43,11 +43,11 @@
   width: 130rem;
   padding: 4rem 8rem;
   border-radius: 4rem;
-  margin: 10rem 0;
+  margin: 10rem;
   border: none;
   background-color: var(--dividerColor);
   color: var(--menuText1Normal);
-  font-size: var(--fontSizeM);
+  font-size: var(--fontSizeS);
   cursor: pointer;
   position: relative;
   overflow: hidden;

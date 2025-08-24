@@ -20,10 +20,10 @@
 	  <EmbeddedResource Remove="Systems\BuildingDemandData\**" />
 	  <None Remove="Systems\BuildingDemandData\**" />
 	  <None Include="UI\src\mods\bindings.ts" />
-	  <Compile Remove="Setting.cs" />
 	  <Compile Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
 	  <EmbeddedResource Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
 	  <None Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
+	  <Compile Remove="Setting.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />
@@ -181,9 +181,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="UI\src\mods\components\" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Content Include="UI\src\mods\InfoLoomSections\ResidentialSection\ResidentialHouseholdUI\ResidentialHousehold.module.scss" />
 	</ItemGroup>
 	<ItemGroup>
         <EmbeddedResource Include="Locale.json" />

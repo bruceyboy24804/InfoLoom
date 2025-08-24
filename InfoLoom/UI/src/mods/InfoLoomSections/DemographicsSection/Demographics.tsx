@@ -3,9 +3,9 @@ import styles from './Demographics.module.scss';
 import Chart from 'chart.js/auto';
 import { useLocalization } from 'cs2/l10n';
 // Local or app-level imports
-import {useValue} from 'cs2/api';
+import {bindLocalValue, bindValue, useValue} from 'cs2/api';
 import {InfoCheckbox} from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable, DropdownItem} from "cs2/ui";
+import {DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable, DropdownItem, Button} from "cs2/ui";
 import {populationAtAge} from "../../domain/populationAtAge";
 import {GroupingStrategy} from "../../domain/GroupingStrategy";
 import {
@@ -22,16 +22,22 @@ import {InfoRadioButton} from "../../components/InfoRadioButton/InfoRadioButton"
 import {getModule} from "cs2/modding";
 import { ChartDataset } from 'chart.js';
 import { DistrictSelector } from 'mods/InfoloomInfoviewContents/DistrictSelector/districtSelector';
-
+import mod from 'mod.json';
 const DropdownStyle = getModule("game-ui/menu/themes/dropdown.module.scss", "classes");
 
+enum DemographicsType {
+  Employment,
+  Education
+}
+const ChartSwitch = bindLocalValue<DemographicsType>(DemographicsType.Employment);
+const SetChartSwitch = (switchTo: DemographicsType) => { ChartSwitch.update(switchTo) };
 
-interface AlignedParagraphProps {
+
+  interface AlignedParagraphProps {
   left: string | null;
   right: number;
 }
 
-type ChartOrientation = 'horizontal'; // we only have horizontal
 
 interface AgeRange {
   label: string;
@@ -39,61 +45,6 @@ interface AgeRange {
   max: number;
 }
 
-interface GroupingOption {
-  label: string | null;
-  value: GroupingStrategy;
-  ranges: AgeRange[];
-}
-
-interface AggregatedInfo {
-  label: string;
-  work: number;
-  elementary: number;
-  highSchool: number;
-  college: number;
-  university: number;
-  Unemployed: number;
-  Retired: number;
-  total: number;
-}
-
-interface StatisticsSummaryProps {
-  StructureTotals: number[];
-  OldestCitizen: number;
-}
-
-interface GroupingOptionsProps {
-  groupingStrategy: GroupingStrategy;
-  setGroupingStrategy: React.Dispatch<React.SetStateAction<GroupingStrategy>>;
-  totalEntries: number;
-}
-
-// === Constants & helper functions ===
-
-/** Common font settings used in chart options and UI elements. */
-const commonFont = {
-  family: 'Arial, sans-serif',
-  size: 14,
-  weight: 'normal' as const,
-};
-
-const yaxisfont = {
-  family: 'Arial, sans-serif',
-  size: 11,
-  weight: 'normal' as const,
-};
-
-/**  
- * Hardcoded orientation properties because we only have a horizontal chart.
- */
-function getOrientationProps() {
-  return {
-    indexAxis: 'y' as const,
-    mainAxisTitle: 'Age in Days',
-    crossAxisTitle: 'Number of People',
-    minChartHeight: '400px',
-  };
-}
 
 /** Utility to generate AgeRange[] for grouping. */
 function generateRanges(step: number): AgeRange[] {
@@ -138,52 +89,7 @@ const GROUP_STRATEGIES_BASE = [
   },
 ];
 
-/**
- * Helper function to group raw population data based on the selected grouping strategy.
- */
-function aggregatePopulationData(
-  details: populationAtAge[],
-  grouping: GroupingOption
-): AggregatedInfo[] {
-  // Initialize aggregated data structure
-  const aggregated = grouping.ranges.map((range) => ({
-    label: range.label,
-    work: 0,
-    elementary: 0,
-    highSchool: 0,
-    college: 0,
-    university: 0,
-    Unemployed: 0,
-    Retired: 0,
-    total: 0,
-  }));
 
-  details.forEach((info) => {
-    if (info.Age > 120) return;
-    const idx = grouping.ranges.findIndex(
-      (range) => info.Age >= range.min && info.Age <= range.max
-    );
-    if (idx !== -1) {
-      const agg = aggregated[idx];
-      agg.work += info.Work;
-      agg.elementary += info.School1;
-      agg.highSchool += info.School2;
-      agg.college += info.School3;
-      agg.university += info.School4;
-      agg.Unemployed += info.Unemployed;
-      agg.Retired += info.Retired;
-      agg.total += info.Total;
-    }
-  });
-
-  return aggregated;
-}
-
-// === Reusable sub-components ===
-
-/**
- * A simple row displaying "left" label and "right" numeric value, aligned and spaced.
- */
 const AlignedParagraph = ({ left, right }: AlignedParagraphProps): JSX.Element => {
   return (
     <div className={styles.alignedParagraph}>
@@ -193,29 +99,26 @@ const AlignedParagraph = ({ left, right }: AlignedParagraphProps): JSX.Element =
   );
 };
 
-/**
- * Checkbox UI for selecting a grouping strategy.
- */
-/*const GroupingOptions = ({
-  groupingStrategy,
-  setGroupingStrategy,
-  totalEntries,
-}: GroupingOptionsProps): JSX.Element => {
+// ToggleButton wrapper: exposes `selected` + `onSelected` (maps to ui Button's onSelect).
+const ToggleButton: React.FC<{
+  selected: boolean;
+  onSelected: () => void;
+  children?: React.ReactNode;
+  className?: string;
+}> = ({ selected, onSelected, children, className }) => {
   return (
-    <div className={styles.groupingOptions}>
-      <div className={styles.label}>Age Grouping</div>
-      {GROUP_STRATEGIES.map((strategy) => (
-        <InfoRadioButton
-          key={strategy.value}
-          label={strategy.label}
-          isSelected={groupingStrategy === strategy.value}
-          onSelect={() => setGroupingStrategy(strategy.value)}
-          count={strategy.ranges.length || totalEntries}
-        />
-      ))}
-    </div>
+    <Button
+      selected={selected}
+      onSelect={onSelected} // ui Button uses onSelect; we expose onSelected to caller
+      className={`${styles.toggleButton} ${selected ? styles.buttonSelected : ''} ${className ?? ''}`}
+      variant="flat"
+      type="button"
+    >
+      {children}
+    </Button>
   );
-};*/
+};
+
 
 /**
  * Replace the custom canvas DemographicsChart with Chart.js implementation
@@ -236,12 +139,20 @@ const DemographicsChart = memo(({
     university: string;
     retired: string;
     unemployed: string;
+    uneducated: string;
+    poorlyEducated: string;
+    educated: string;
+    wellEducated: string;
+    highlyEducated: string;
   };
   lifecycleLabels?: string[]; // <-- add this prop
 }): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Read the shared chart switch so we can conditionally show datasets
+  const chartSwitch = useValue(ChartSwitch);
 
   // Define chart colors with clear names
   const chartColors = {
@@ -252,9 +163,14 @@ const DemographicsChart = memo(({
     university: '#2462FF',
     Retired: '#A1A1A1',
     Unemployed: '#FF0000',
+    Uneducated: '#808080',
+    PoorlyEducated: '#B09868',
+    Educated: '#368A2E',
+    WellEducated: '#B981C0',
+    HighlyEducated: '#5796D1',
   };
 
-  // Build chart data from StructureDetails based on groupingStrategy
+  // Build chart data from StructureDetails based on groupingStrategy and chartSwitch
   const chartData = useMemo(() => {
     if (!StructureDetails.length) {
       return {
@@ -272,16 +188,11 @@ const DemographicsChart = memo(({
       label: string;
       data: number[];
       backgroundColor: string;
-    }> = [
-      { label: legendLabels.work, data: [] as number[], backgroundColor: chartColors.work },
-      { label: legendLabels.elementary, data: [] as number[], backgroundColor: chartColors.elementary },
-      { label: legendLabels.highSchool, data: [] as number[], backgroundColor: chartColors.highSchool },
-      { label: legendLabels.college, data: [] as number[], backgroundColor: chartColors.college },
-      { label: legendLabels.university, data: [] as number[], backgroundColor: chartColors.university },
-      { label: legendLabels.retired, data: [] as number[], backgroundColor: chartColors.Retired },
-      { label: legendLabels.unemployed, data: [] as number[], backgroundColor: chartColors.Unemployed },
-    ];
+    }> = [];
 
+    
+
+    // We'll create datasets with known keys then select by chartSwitch via explicit key check
     if (groupingStrategy === GroupingStrategy.None) {
       // Generate detailed view from age 0 to 120
       const age_range = Array.from({ length: 121 }, (_, i) => i);
@@ -292,44 +203,42 @@ const DemographicsChart = memo(({
         return StructureDetails.filter(d => d.Age === age)
           .reduce((sum, d) => sum + (d[attr] || 0), 0);
       };
-      
-      datasets = [
-        { 
-          label: legendLabels.work, 
-          data: age_range.map(age => get_value('Work', age)), 
-          backgroundColor: chartColors.work 
-        },
-        { 
-          label: legendLabels.elementary, 
-          data: age_range.map(age => get_value('School1', age)), 
-          backgroundColor: chartColors.elementary 
-        },
-        { 
-          label: legendLabels.highSchool, 
-          data: age_range.map(age => get_value('School2', age)), 
-          backgroundColor: chartColors.highSchool 
-        },
-        { 
-          label: legendLabels.college, 
-          data: age_range.map(age => get_value('School3', age)), 
-          backgroundColor: chartColors.college 
-        },
-        { 
-          label: legendLabels.university, 
-          data: age_range.map(age => get_value('School4', age)), 
-          backgroundColor: chartColors.university 
-        },
-        { 
-          label: legendLabels.retired, 
-          data: age_range.map(age => get_value('Retired', age)), 
-          backgroundColor: chartColors.Retired 
-        },
-        { 
-          label: legendLabels.unemployed, 
-          data: age_range.map(age => get_value('Unemployed', age)), 
-          backgroundColor: chartColors.Unemployed 
-        },
-      ];
+
+      // Build all possible series first, then filter according to chartSwitch.
+      const allSeries = {
+        work: { label: legendLabels.work, data: age_range.map(age => get_value('Work', age)), backgroundColor: chartColors.work },
+        elementary: { label: legendLabels.elementary, data: age_range.map(age => get_value('School1', age)), backgroundColor: chartColors.elementary },
+        highSchool: { label: legendLabels.highSchool, data: age_range.map(age => get_value('School2', age)), backgroundColor: chartColors.highSchool },
+        college: { label: legendLabels.college, data: age_range.map(age => get_value('School3', age)), backgroundColor: chartColors.college },
+        university: { label: legendLabels.university, data: age_range.map(age => get_value('School4', age)), backgroundColor: chartColors.university },
+        retired: { label: legendLabels.retired, data: age_range.map(age => get_value('Retired', age)), backgroundColor: chartColors.Retired },
+        unemployed: { label: legendLabels.unemployed, data: age_range.map(age => get_value('Unemployed', age)), backgroundColor: chartColors.Unemployed },
+        uneducated: { label: legendLabels.uneducated, data: age_range.map(age => get_value('Uneducated', age)), backgroundColor: chartColors.Uneducated },
+        poorlyEducated: { label: legendLabels.poorlyEducated, data: age_range.map(age => get_value('PoorlyEducated', age)), backgroundColor: chartColors.PoorlyEducated },
+        educated: { label: legendLabels.educated, data: age_range.map(age => get_value('Educated', age)), backgroundColor: chartColors.Educated },
+        wellEducated: { label: legendLabels.wellEducated, data: age_range.map(age => get_value('WellEducated', age)), backgroundColor: chartColors.WellEducated },
+        highlyEducated: { label: legendLabels.highlyEducated, data: age_range.map(age => get_value('HighlyEducated', age)), backgroundColor: chartColors.HighlyEducated },
+      };
+
+      if (chartSwitch === DemographicsType.Employment) {
+        datasets = [
+          allSeries.work,
+          allSeries.elementary,
+          allSeries.highSchool,
+          allSeries.college,
+          allSeries.university,
+          allSeries.retired,
+          allSeries.unemployed,
+        ];
+      } else {
+        datasets = [
+          allSeries.uneducated,
+          allSeries.poorlyEducated,
+          allSeries.educated,
+          allSeries.wellEducated,
+          allSeries.highlyEducated,
+        ];
+      }
     } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
       // Use the predefined lifecycle ranges
       const lifecycleRanges = GROUP_STRATEGIES_BASE.find(s => s.value === GroupingStrategy.LifeCycle)?.ranges || [];
@@ -341,41 +250,75 @@ const DemographicsChart = memo(({
         college: 0,
         university: 0,
         Unemployed: 0,
-        Retired: 0
+        Retired: 0,
+        Uneducated: 0,
+        PoorlyEducated: 0,
+        Educated: 0,
+        WellEducated: 0,
+        HighlyEducated: 0,
       }));
 
       StructureDetails.forEach(d => {
-        if (d.Age > 120) return;
-        const idx = lifecycleRanges.findIndex(range => d.Age >= range.min && d.Age <= range.max);
-        if (idx !== -1) {
-          groups[idx].work += d.Work;
-          groups[idx].elementary += d.School1;
-          groups[idx].highSchool += d.School2;
-          groups[idx].college += d.School3;
-          groups[idx].university += d.School4;
-          groups[idx].Unemployed += d.Unemployed;
-          groups[idx].Retired += d.Retired;
-        }
-      });
+  if (d.Age > 120) return;
+  const idx = lifecycleRanges.findIndex(range => d.Age >= range.min && d.Age <= range.max);
+  if (idx !== -1) {
+    groups[idx].work += d.Work;
+    groups[idx].elementary += d.School1;
+    groups[idx].highSchool += d.School2;
+    groups[idx].college += d.School3;
+    groups[idx].university += d.School4;
+    groups[idx].Unemployed += d.Unemployed;
+    groups[idx].Retired += d.Retired;
+
+    groups[idx].Uneducated += d.Uneducated;
+    groups[idx].PoorlyEducated += d.PoorlyEducated;
+    groups[idx].Educated += d.Educated;
+    groups[idx].WellEducated += d.WellEducated;
+    groups[idx].HighlyEducated += d.HighlyEducated;
+  }
+});
 
       // Use translated labels if provided
       labels = lifecycleLabels && lifecycleLabels.length === groups.length
         ? lifecycleLabels
         : groups.map(g => g.label);
 
-      datasets = [
-        { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
-        { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
-        { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
-        { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
-        { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
-        { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
-        { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
-      ];
+      const allSeries = {
+        work: { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
+        elementary: { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+        highSchool: { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+        college: { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
+        university: { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
+        retired: { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
+        unemployed: { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
+        uneducated: { label: legendLabels.uneducated, data: groups.map(g => g.Uneducated), backgroundColor: chartColors.Uneducated },
+      };
+
+      // For lifecycle we prefer explicit selection as above
+      if (chartSwitch === DemographicsType.Employment) {
+        datasets = [
+          allSeries.work,
+          allSeries.elementary,
+          allSeries.highSchool,
+          allSeries.college,
+          allSeries.university,
+          allSeries.retired,
+          allSeries.unemployed,
+        ];
+      } else {
+        // Build education series from groups
+        datasets = [
+          { label: legendLabels.uneducated, data: groups.map(g => g.Uneducated), backgroundColor: chartColors.Uneducated },
+          { label: legendLabels.poorlyEducated, data: groups.map(g => g.PoorlyEducated), backgroundColor: chartColors.PoorlyEducated },
+          { label: legendLabels.educated, data: groups.map(g => g.Educated), backgroundColor: chartColors.Educated },
+          { label: legendLabels.wellEducated, data: groups.map(g => g.WellEducated), backgroundColor: chartColors.WellEducated },
+          { label: legendLabels.highlyEducated, data: groups.map(g => g.HighlyEducated), backgroundColor: chartColors.HighlyEducated },
+        ];
+      }
     } else {
       // Handle 5-year and 10-year grouping
       const step = groupingStrategy === GroupingStrategy.FiveYear ? 5 : 10;
-      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; Retired: number; Unemployed: number; }[] = [];
+      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; Retired: number; Unemployed: number; Uneducated: number; PoorlyEducated: number; Educated: number; WellEducated: number; HighlyEducated: number; }[] = [];
       for (let i = 0; i < 120; i += step) {
         groups.push({
           label: `${i}-${i + step}`,
@@ -386,6 +329,11 @@ const DemographicsChart = memo(({
           university: 0,
           Retired: 0,
           Unemployed: 0,
+          Uneducated: 0,
+          PoorlyEducated: 0,
+          Educated: 0,
+          WellEducated: 0,
+          HighlyEducated: 0
         });
       }
       
@@ -400,26 +348,42 @@ const DemographicsChart = memo(({
           groups[idx].university += d.School4;
           groups[idx].Unemployed += d.Unemployed;
           groups[idx].Retired += d.Retired;
+          groups[idx].Uneducated += d.Uneducated;
+          groups[idx].PoorlyEducated += d.PoorlyEducated;
+          groups[idx].Educated += d.Educated;
+          groups[idx].WellEducated += d.WellEducated;
+          groups[idx].HighlyEducated += d.HighlyEducated;
         }
       });
 
       labels = groups.map(g => g.label);
-      datasets = [
-        { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
-        { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
-        { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
-        { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
-        { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
-        { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
-        { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
-      ];
+
+      if (chartSwitch === DemographicsType.Employment) {
+        datasets = [
+          { label: legendLabels.work, data: groups.map(g => g.work), backgroundColor: chartColors.work },
+          { label: legendLabels.elementary, data: groups.map(g => g.elementary), backgroundColor: chartColors.elementary },
+          { label: legendLabels.highSchool, data: groups.map(g => g.highSchool), backgroundColor: chartColors.highSchool },
+          { label: legendLabels.college, data: groups.map(g => g.college), backgroundColor: chartColors.college },
+          { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
+          { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
+          { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
+        ];
+      } else {
+        datasets = [
+          { label: legendLabels.uneducated, data: groups.map(g => g.Uneducated), backgroundColor: chartColors.Uneducated },
+          { label: legendLabels.poorlyEducated, data: groups.map(g => g.PoorlyEducated), backgroundColor: chartColors.PoorlyEducated },
+          { label: legendLabels.educated, data: groups.map(g => g.Educated), backgroundColor: chartColors.Educated },
+          { label: legendLabels.wellEducated, data: groups.map(g => g.WellEducated), backgroundColor: chartColors.WellEducated },
+          { label: legendLabels.highlyEducated, data: groups.map(g => g.HighlyEducated), backgroundColor: chartColors.HighlyEducated },
+        ];
+      }
     }
 
     return {
       labels,
       datasets
     };
-  }, [StructureDetails, groupingStrategy, legendLabels, lifecycleLabels]);
+  }, [StructureDetails, groupingStrategy, legendLabels, lifecycleLabels, chartSwitch]); // added chartSwitch dependency
 
   // Initialize chart ONLY ONCE - based on TradeCost.tsx pattern
   useEffect(() => {
@@ -524,35 +488,35 @@ ctx.canvas.height = 200;
           }
         },
         datasets: {
-			bar: {
-				// Optimized barThickness for each view type
-				barThickness: 
-				  groupingStrategy === GroupingStrategy.None ? 8 :
-				  groupingStrategy === GroupingStrategy.FiveYear ? 15 :
-				  groupingStrategy === GroupingStrategy.TenYear ? 25 :
-				  80, // lifecycle
-				
-				// Optimized barPercentage for better spacing
-				barPercentage: 
-				  groupingStrategy === GroupingStrategy.None ? 0.98 :
-				  groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
-				  groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
-				  0.8, // lifecycle
-				
-				// Optimized categoryPercentage for each view type
-				categoryPercentage: 
-				  groupingStrategy === GroupingStrategy.None ? 0.95 :
-				  groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
-				  groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
-				  0.95, // lifecycle
-				
-				// Add maxBarThickness to prevent bars from becoming too large
-			 maxBarThickness: 
-				  groupingStrategy === GroupingStrategy.None ? 5 :
-				  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
-				  groupingStrategy === GroupingStrategy.TenYear ? 35 :
-				  120, // lifecycle
-			  }
+            bar: {
+                // Optimized barThickness for each view type
+                barThickness: 
+                  groupingStrategy === GroupingStrategy.None ? 8 :
+                  groupingStrategy === GroupingStrategy.FiveYear ? 15 :
+                  groupingStrategy === GroupingStrategy.TenYear ? 25 :
+                  80, // lifecycle
+                
+                // Optimized barPercentage for better spacing
+                barPercentage: 
+                  groupingStrategy === GroupingStrategy.None ? 0.98 :
+                  groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
+                  groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
+                  0.8, // lifecycle
+                
+                // Optimized categoryPercentage for each view type
+                categoryPercentage: 
+                  groupingStrategy === GroupingStrategy.None ? 0.95 :
+                  groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
+                  groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
+                  0.95, // lifecycle
+                
+                // Add maxBarThickness to prevent bars from becoming too large
+             maxBarThickness: 
+                  groupingStrategy === GroupingStrategy.None ? 5 :
+                  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
+                  groupingStrategy === GroupingStrategy.TenYear ? 35 :
+                  120, // lifecycle
+              }
         },
         animation: { duration: 0 } // Disable animations
       }
@@ -606,35 +570,35 @@ ctx.canvas.height = 200;
     
     // Update chart options to ensure bar sizes are applied correctly
     chartRef.current.options.datasets = {
-		bar: {
-			// Optimized barThickness for each view type
-			barThickness: 
-			  groupingStrategy === GroupingStrategy.None ? 8 :
-			  groupingStrategy === GroupingStrategy.FiveYear ? 15 :
-			  groupingStrategy === GroupingStrategy.TenYear ? 25 :
-			  80, // lifecycle
-			
-			// Optimized barPercentage for better spacing
-			barPercentage: 
-			  groupingStrategy === GroupingStrategy.None ? 0.98 :
-			  groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
-			  groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
-			  0.8, // lifecycle
-			
-			// Optimized categoryPercentage for each view type
-			categoryPercentage: 
-			  groupingStrategy === GroupingStrategy.None ? 0.95 :
-			  groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
-			  groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
-			  0.95, // lifecycle
-			
-			// Add maxBarThickness to prevent bars from becoming too large
-			maxBarThickness: 
-			  groupingStrategy === GroupingStrategy.None ? 5 :
-			  groupingStrategy === GroupingStrategy.FiveYear ? 25 :
-			  groupingStrategy === GroupingStrategy.TenYear ? 35 :
-			  120, // lifecycle
-		  }
+        bar: {
+            // Optimized barThickness for each view type
+            barThickness: 
+              groupingStrategy === GroupingStrategy.None ? 8 :
+              groupingStrategy === GroupingStrategy.FiveYear ? 15 :
+              groupingStrategy === GroupingStrategy.TenYear ? 25 :
+              80, // lifecycle
+            
+            // Optimized barPercentage for better spacing
+            barPercentage: 
+              groupingStrategy === GroupingStrategy.None ? 0.98 :
+              groupingStrategy === GroupingStrategy.FiveYear ? 0.9 :
+              groupingStrategy === GroupingStrategy.TenYear ? 0.85 :
+              0.8, // lifecycle
+            
+            // Optimized categoryPercentage for each view type
+            categoryPercentage: 
+              groupingStrategy === GroupingStrategy.None ? 0.95 :
+              groupingStrategy === GroupingStrategy.FiveYear ? 0.85 :
+              groupingStrategy === GroupingStrategy.TenYear ? 0.9 :
+              0.95, // lifecycle
+            
+            // Add maxBarThickness to prevent bars from becoming too large
+            maxBarThickness: 
+              groupingStrategy === GroupingStrategy.None ? 5 :
+              groupingStrategy === GroupingStrategy.FiveYear ? 25 :
+              groupingStrategy === GroupingStrategy.TenYear ? 35 :
+              120, // lifecycle
+          }
     };
 
     // Also update scale configurations for different grouping strategies
@@ -678,17 +642,15 @@ const INITIAL_CANVAS_STYLE = {height: `0`, width: '0', display: 'block'};
 });
 
 
-
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const {translate} = useLocalization();
-  const [groupingStrategy, setGroupingStrategy] = useState<GroupingStrategy>(GroupingStrategy.None);
   const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
   const demoStatsToggledOn = useValue(DemoStatsToggledOn);
-  const demoAgeGroupingToggledOn = useValue(DemoAgeGroupingToggledOn)
   const demoGroupingStrategy = useValue(DemoGroupingStrategy);
+  const chartSwitch = useValue(ChartSwitch);
 
   // Prepare translated lifecycle group labels, fallback to English if translation is null
   const lifecycleLabels = [
@@ -699,7 +661,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   ];
 
   return (
-      <Panel
+      <Panel 
           draggable
           onClose={onClose}
           className={styles.panel}
@@ -807,7 +769,21 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                 </div>
               </div>
           )}
+          <div className={styles.chartToggle}>
+            <ToggleButton
+              selected={chartSwitch === DemographicsType.Employment}
+              onSelected={() => SetChartSwitch(DemographicsType.Employment)}
+            >
+              {translate("InfoLoomTwo.DemographicsPanel[ToggleButton1]", "Employment")}
+            </ToggleButton>
 
+            <ToggleButton
+              selected={chartSwitch === DemographicsType.Education}
+              onSelected={() => SetChartSwitch(DemographicsType.Education)}
+            >
+              {translate("InfoLoomTwo.DemographicsPanel[ToggleButton2]", "Education")}
+            </ToggleButton>
+          </div>
           <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
             <div className={styles.chartContainer}>
               <DemographicsChart
@@ -821,6 +797,11 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                     university: translate('InfoLoomTwo.DemographicsPanel[LegendItem5]', 'University') || 'University',
                     retired: translate('InfoLoomTwo.DemographicsPanel[LegendItem6]', 'Retired') || 'Retired',
                     unemployed: translate('InfoLoomTwo.DemographicsPanel[LegendItem7]', 'Unemployed') || 'Unemployed',
+                    uneducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem8]', 'Uneducated') || 'Uneducated',
+                    poorlyEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem9]', 'Poorly Educated') || 'Poorly Educated',
+                    educated: translate('InfoLoomTwo.DemographicsPanel[LegendItem10]', 'Educated') || 'Educated',
+                    wellEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem11]', 'Well Educated') || 'Well Educated',
+                    highlyEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem12]', 'Highly Educated') || 'Highly Educated',
                   }}
                   lifecycleLabels={lifecycleLabels}
               />

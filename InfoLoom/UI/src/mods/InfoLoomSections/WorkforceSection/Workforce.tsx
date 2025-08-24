@@ -10,6 +10,7 @@ import { InfoRowSCSS } from "mods/InfoLoomSections/ILInfoSections/Modules/info-R
 import { getModule } from 'cs2/modding';
 import { hideColumnsBinding } from '../WorkplacesSection/Workplaces';
 import {DistrictSelector} from "../../InfoloomInfoviewContents/DistrictSelector/districtSelector";
+import {infoview} from "cs2/bindings";
 const ShowExtraWorkforce = bindValue<number>(mod.id, "ShowExtraWorkforce", 0);
 
 
@@ -56,18 +57,24 @@ interface StackedBarProps {
     barTooltipPercentage: string;
   };
 }
-
+enum SegmentsType {
+  Worker = 0,
+  Unemployed = 1,
+  Under = 2,
+  Outside = 3,
+  Homeless = 4,
+}
 
 
 const StackedBar: React.FC<StackedBarProps> = ({ levelName, levelColor, levelValues, total, translations }) => {
   if (total === 0 || levelValues.Total === 0) return null;
 
   const segments = [
-    { label: translations.segments[0].label, value: levelValues.Worker, color: '#4CAF50' },
-    { label: translations.segments[1].label, value: levelValues.Unemployed, color: '#F44336' },
-    { label: translations.segments[2].label, value: levelValues.Under, color: '#9C27B0' },
-    { label: translations.segments[3].label, value: levelValues.Outside, color: '#607D8B' },
-    { label: translations.segments[4].label, value: levelValues.Homeless, color: '#795548' },
+    { label: translations.segments[SegmentsType.Worker].label, value: levelValues.Worker, color: '#4CAF50' },
+    { label: translations.segments[SegmentsType.Unemployed].label, value: levelValues.Unemployed, color: '#F44336' },
+    { label: translations.segments[SegmentsType.Under].label, value: levelValues.Under, color: '#9C27B0' },
+    { label: translations.segments[SegmentsType.Outside].label, value: levelValues.Outside, color: '#607D8B' },
+    { label: translations.segments[SegmentsType.Homeless].label, value: levelValues.Homeless, color: '#795548' },
   ];
 
   const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
@@ -291,6 +298,8 @@ interface WorkforceLineProps {
   levelName: string | null;
   levelValues: workforceInfo;
   total: number;
+  useOverallTotalForUnemployment?: boolean;
+  unemploymentOverride?: number;
 }
 
 const WorkforceLine: React.FC<WorkforceLineProps> = ({
@@ -298,12 +307,19 @@ const WorkforceLine: React.FC<WorkforceLineProps> = ({
   levelName,
   levelValues,
   total,
+  useOverallTotalForUnemployment = false,
+  unemploymentOverride,
+
 }) => {
   const value = SliderRange.value[0];
+  const denominator = useOverallTotalForUnemployment ? total : levelValues.Total;
+
   const percent = total > 0 ? ((100 * levelValues.Total) / total).toFixed(1) + '%' : '';
   const unemployment =
-    levelValues.Total > 0
-      ? ((100 * levelValues.Unemployed) / levelValues.Total).toFixed(1) + '%'
+    typeof unemploymentOverride === 'number'
+      ? `${unemploymentOverride.toFixed(1)}%`
+      : denominator > 0
+      ? ((100 * levelValues.Unemployed) / denominator).toFixed(1) + '%'
       : '';
 
   return (
@@ -350,6 +366,7 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   const workforce = useValue(WorkforceData);
   const isPanelOpen = useValue(panelVisibleBinding);
   const showExtraWorkforce = useValue(ShowExtraWorkforce);
+  const unemployment = useValue(infoview.unemployment$)
   const headers: workforceInfo = {
     Total: 0,
     Worker: 0,
@@ -439,8 +456,9 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
           <WorkforceLine 
             levelName={translate("InfoLoomTwo.WorkforcePanel[Row6]", "TOTAL")} 
             levelValues={workforce[5]} 
-            total={0} 
-            
+            total={workforce[5].Total} 
+            useOverallTotalForUnemployment={true}
+            unemploymentOverride={unemployment}
           />
           <WorkforceChart 
             workforce={workforce}

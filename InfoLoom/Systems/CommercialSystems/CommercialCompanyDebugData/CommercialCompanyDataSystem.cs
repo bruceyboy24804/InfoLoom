@@ -39,7 +39,23 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             Icon = icon;
         }
     }
+    public struct ProcessResourceInfo : IJsonWritable
+    {
+        public string ResourceName;
+        public int Amount;
+        public string ResourceIcon;
+        public bool IsOutput;
 
+        public void Write(IJsonWriter writer)
+        {
+            writer.TypeBegin(typeof(ProcessResourceInfo).FullName);
+            writer.PropertyName("resourceName"); writer.Write(ResourceName);
+            writer.PropertyName("amount"); writer.Write(Amount);
+            writer.PropertyName("resourceIcon"); writer.Write(ResourceIcon);
+            writer.PropertyName("isOutput"); writer.Write(IsOutput);
+            writer.TypeEnd();
+        }
+    }
     public struct CommercialCompanyDTO
     {
         public Entity EntityId;
@@ -63,6 +79,12 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public string ResourceIcon; // For backward compatibility
         public string ResourceName; // For backward compatibility
         public ResourceInfo[] Resources; // New field to hold all resources
+        
+        public int MoneyAmount;
+        public ResourceInfo[] Input1Resources;
+        public ResourceInfo[] OutputResources;
+        public ResourceInfo[] MaintenanceResources;
+       public ProcessResourceInfo[] ProcessResources;
     }
 
     public struct EfficiencyFactorInfo
@@ -83,7 +105,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
     public struct CommercialCompanyJobData : IComponentData
     {
         public Entity EntityId;
-        public FixedString64Bytes CompanyName;
+        public Entity Brand;        
         public int ServiceAvailable;
         public int MaxService;
         public int TotalEmployees;
@@ -187,8 +209,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 Entity prefab = prefabRef.m_Prefab;
 
                 // Get company name from cache
-                var companyName = CompanyNames.TryGetValue(companyData.m_Brand, out var name) ? 
-                    name : DefaultCompanyName;
+                
 
                 // Calculate basic data
                 int serviceValue = serviceAvailable.m_ServiceAvailable;
@@ -227,12 +248,12 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
                 // Calculate production per day
                 int productionPerDay = CalculateProductionPerDay(prefab, efficiencyValue, employeeBuffer);
-
+                
                 // Create job data
                 var jobData = new CommercialCompanyJobData
                 {
                     EntityId = entity,
-                    CompanyName = companyName,
+                    Brand = companyData.m_Brand,
                     ServiceAvailable = serviceValue,
                     MaxService = maxService,
                     TotalEmployees = employeeBuffer.Length,
@@ -307,13 +328,18 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
     public partial class CommercialCompanyDataSystem : GameSystemBase
     {
-        public IndexSortingEnum m_CurrentIndexSorting = IndexSortingEnum.Off;
-        public CompanyNameEnum m_CurrentCompanyNameSorting = CompanyNameEnum.Off;
-        public ServiceUsageEnum m_CurrentServiceUsageSorting = ServiceUsageEnum.Off;
-        public EmployeesEnum m_CurrentEmployeesSorting = EmployeesEnum.Off;
-        public EfficiancyEnum m_CurrentEfficiencySorting = EfficiancyEnum.Off;
-        public ProfitabilityEnum m_CurrentProfitabilitySorting = ProfitabilityEnum.Off;
-        public ResourceAmountEnum m_CurrentResourceAmountSorting = ResourceAmountEnum.Off;
+        public SortingEnum m_CurrentIndexSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentCompanyNameSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentServiceUsageSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentEmployeesSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentEfficiencySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentProfitabilitySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentResourceAmountSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentMoneySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentInput1Sorting = SortingEnum.Off;
+        public SortingEnum m_CurrentInput2Sorting = SortingEnum.Off;
+        public SortingEnum m_CurrentOutputSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentMaintenanceSorting = SortingEnum.Off;
         public CommercialCompanyDTO[] m_SortedCommercialCompanyDTOs;
         private NameSystem m_NameSystem;
         private ImageSystem m_ImageSystem;
@@ -465,7 +491,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         {
             var entities = m_CommercialCompanyQuery.ToEntityArray(Allocator.Temp);
             var companyDataLookup = GetComponentLookup<Game.Companies.CompanyData>(true);
-
+            
             try
             {
                 for (int i = 0; i < entities.Length; i++)
@@ -494,29 +520,30 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             var resourcesBufferLookup = GetBufferLookup<Resources>(true);
             var efficiencyBufferLookup = GetBufferLookup<Efficiency>(true);
             var propertyRenterLookup = GetComponentLookup<PropertyRenter>(true);
-
+            var prefabRefLookup = GetComponentLookup<PrefabRef>(true);
+            var commercialProcessLookup = GetComponentLookup<IndustrialProcessData>(true);
             for (int i = 0; i < jobResults.Length; i++)
             {
                 var jobData = jobResults[i];
                 
-                // Get detailed resource information
-                var resources = new List<ResourceInfo>();
-                if (resourcesBufferLookup.HasBuffer(jobData.EntityId))
+                Resource processInput1 = Resource.NoResource;
+                Resource processInput2 = Resource.NoResource;
+                Resource processOutput = Resource.NoResource;
+                
+                
+                if (prefabRefLookup.TryGetComponent(jobData.EntityId, out var prefabRef) &&
+                    commercialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var proc))
                 {
-                    var resourceBuffer = resourcesBufferLookup[jobData.EntityId];
-                    for (int r = 0; r < resourceBuffer.Length; r++)
-                    {
-                        var resource = resourceBuffer[r];
-                        string resourceName = GetFormattedResourceName(resource.m_Resource);
-                        string resourceIcon = GetResourceIconPath(resource.m_Resource);
-                        
-                        resources.Add(new ResourceInfo(
-                            resourceName,
-                            resource.m_Amount,
-                            resourceIcon
-                        ));
-                    }
+                    processInput1 = proc.m_Input1.m_Resource;
+                    processInput2 = proc.m_Input2.m_Resource;
+                    processOutput = proc.m_Output.m_Resource;
                 }
+                
+                ClassifyResources(jobData.EntityId, resourcesBufferLookup,
+                    processInput1, processInput2, processOutput,
+                    out var input1Resources, out var input2Resources, out var outputResources, out var maintenanceResources, out int moneyAmount);
+                 var (processList, outputResourceName, outputResourceIcon) = GetProcessInfo(jobData.EntityId, prefabRefLookup, commercialProcessLookup);
+                
 
                 // Get efficiency factors
                 EfficiencyFactorInfo[] factors = Array.Empty<EfficiencyFactorInfo>();
@@ -525,12 +552,16 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     var targetEntity = propertyRenterLookup[jobData.EntityId].m_Property;
                     factors = GetEfficiencyFactors(targetEntity, efficiencyBufferLookup);
                 }
-
+                string companyNameString;
+                if (m_CompanyNameCache.TryGetValue(jobData.Brand, out var fixedName))
+                    companyNameString = fixedName.ToString();
+                else
+                    companyNameString = "Unknown Company";
                 // Create final DTO
                 var companyDTO = new CommercialCompanyDTO
                 {
                     EntityId = jobData.EntityId,
-                    CompanyName = jobData.CompanyName.ToString(),
+                    CompanyName = companyNameString,
                     ServiceAvailable = jobData.ServiceAvailable,
                     MaxService = jobData.MaxService,
                     TotalEmployees = jobData.TotalEmployees,
@@ -546,58 +577,216 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     ProductionPerDay = jobData.ProductionPerDay,
                     EfficiencyValue = jobData.EfficiencyValue,
                     Concentration = 0f, // Calculate if needed
-                    OutputResourceName = "", // Calculate if needed
-                    ResourceIcon = "",
+                    OutputResourceName = outputResourceName,
+                    ResourceIcon = outputResourceIcon,
                     ResourceName = "None", // Legacy field
-                    Resources = resources.ToArray()
+                    MoneyAmount = moneyAmount,
+                    Input1Resources = input1Resources,
+                    OutputResources = outputResources,
+                    MaintenanceResources = maintenanceResources,
+                    ProcessResources = processList,
                 };
                 companies.Add(companyDTO);
             }
+            ApplySorts(companies);
             m_CommercialCompanyDTOs = companies.ToArray();
         }
-        
+        private void ClassifyResources(Entity entity, BufferLookup<Resources> resourcesBufferLookup,
+    Resource input1, Resource input2, Resource output,
+    out ResourceInfo[] input1List, out ResourceInfo[] input2List, out ResourceInfo[] outputList, out ResourceInfo[] maintenanceList, out int money)
+{
+    var in1 = new List<ResourceInfo>();
+    var in2 = new List<ResourceInfo>();
+    var outL = new List<ResourceInfo>();
+    var maint = new List<ResourceInfo>();
+    money = 0;
 
+    if (!resourcesBufferLookup.HasBuffer(entity))
+    {
+        input1List = Array.Empty<ResourceInfo>();
+        input2List = Array.Empty<ResourceInfo>();
+        outputList = Array.Empty<ResourceInfo>();
+        maintenanceList = Array.Empty<ResourceInfo>();
+        return;
+    }
+
+    var buffer = resourcesBufferLookup[entity];
+    for (int r = 0; r < buffer.Length; r++)
+    {
+        var resource = buffer[r];
+        if (resource.m_Resource == Resource.Money)
+        {
+            money = resource.m_Amount;
+            continue;
+        }
+        string name = GetFormattedResourceName(resource.m_Resource);
+        string icon = m_ResourceIconCache.TryGetValue(resource.m_Resource, out var cached) ? cached : GetResourceIconPath(resource.m_Resource);
+        var info = new ResourceInfo(name, resource.m_Amount, icon);
+
+        bool added = false;
+        if (resource.m_Resource == input1 && input1 != Resource.NoResource) { in1.Add(info); added = true; }
+        if (resource.m_Resource == input2 && input2 != Resource.NoResource) { in2.Add(info); added = true; }
+        if (resource.m_Resource == output && output != Resource.NoResource) { outL.Add(info); added = true; }
+        if (!added) maint.Add(info);
+    }
+
+    input1List = in1.ToArray();
+    input2List = in2.ToArray();
+    outputList = outL.ToArray();
+    maintenanceList = maint.ToArray();
+}
+        private (ProcessResourceInfo[] list, string outputName, string outputIcon) GetProcessInfo(Entity entity,
+            ComponentLookup<PrefabRef> prefabRefLookup, ComponentLookup<IndustrialProcessData> industrialProcessLookup)
+        {
+            var list = new List<ProcessResourceInfo>();
+            string outName = "";
+            string outIcon = "";
+
+            if (prefabRefLookup.TryGetComponent(entity, out var prefabRef) &&
+                industrialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var processData))
+            {
+                if (processData.m_Output.m_Resource != Resource.NoResource)
+                {
+                    outName = EconomyUtils.GetName(processData.m_Output.m_Resource).ToString();
+                    outIcon = m_ResourceIconCache.TryGetValue(processData.m_Output.m_Resource, out var cached) ? cached : GetResourceIconPath(processData.m_Output.m_Resource);
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = outName,
+                        ResourceIcon = outIcon,
+                        Amount = processData.m_Output.m_Amount,
+                        IsOutput = true
+                    });
+                }
+
+                if (processData.m_Input1.m_Resource != Resource.NoResource)
+                {
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = EconomyUtils.GetName(processData.m_Input1.m_Resource),
+                        Amount = processData.m_Input1.m_Amount,
+                        ResourceIcon = m_ResourceIconCache.TryGetValue(processData.m_Input1.m_Resource, out var c1) ? c1 : GetResourceIconPath(processData.m_Input1.m_Resource),
+                        IsOutput = false
+                    });
+                }
+
+                if (processData.m_Input2.m_Resource != Resource.NoResource)
+                {
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = EconomyUtils.GetName(processData.m_Input2.m_Resource),
+                        Amount = processData.m_Input2.m_Amount,
+                        ResourceIcon = m_ResourceIconCache.TryGetValue(processData.m_Input2.m_Resource, out var c2) ? c2 : GetResourceIconPath(processData.m_Input2.m_Resource),
+                        IsOutput = false
+                    });
+                }
+            }
+
+            return (list.ToArray(), outName, outIcon);
+        }
 
         // Helper methods
-        private string GetResourceIconPath(Resource resource)
+       private void ApplySorts(List<CommercialCompanyDTO> companies)
         {
-            if (resource == Resource.Money)
-            {
-                return "Media/Game/Icons/Money.svg";
-            }
+            // C#
+            IOrderedEnumerable<CommercialCompanyDTO> ordered = null;
+
+            if (m_CurrentCompanyNameSorting == SortingEnum.Ascending)
+                ordered = companies.OrderBy(x => x.CompanyName);
+            else if (m_CurrentCompanyNameSorting == SortingEnum.Descending)
+                ordered = companies.OrderByDescending(x => x.CompanyName);
+
+            if (m_CurrentEmployeesSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.TotalEmployees) : ordered.ThenBy(x => x.TotalEmployees);
+            else if (m_CurrentEmployeesSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.TotalEmployees) : ordered.ThenByDescending(x => x.TotalEmployees);
+
+            if (m_CurrentMoneySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.MoneyAmount) : ordered.ThenBy(x => x.MoneyAmount);
+            else if (m_CurrentMoneySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.MoneyAmount) : ordered.ThenByDescending(x => x.MoneyAmount);
+
+            if (m_CurrentInput1Sorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.Input1Resources)) : ordered.ThenBy(x => SumResourceAmounts(x.Input1Resources));
+            else if (m_CurrentInput1Sorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.Input1Resources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.Input1Resources));
             
-            Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
-            string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
-            return icon;
+            if (m_CurrentOutputSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.OutputResources)) : ordered.ThenBy(x => SumResourceAmounts(x.OutputResources));
+            else if (m_CurrentOutputSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.OutputResources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.OutputResources));
+
+            if (m_CurrentMaintenanceSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.MaintenanceResources)) : ordered.ThenBy(x => SumResourceAmounts(x.MaintenanceResources));
+            else if (m_CurrentMaintenanceSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.MaintenanceResources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.MaintenanceResources));
+
+            if (m_CurrentEfficiencySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.EfficiencyValue) : ordered.ThenBy(x => x.EfficiencyValue);
+            else if (m_CurrentEfficiencySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.EfficiencyValue) : ordered.ThenByDescending(x => x.EfficiencyValue);
+
+            if (m_CurrentProfitabilitySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.Profitability) : ordered.ThenBy(x => x.Profitability);
+            else if (m_CurrentProfitabilitySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.Profitability) : ordered.ThenByDescending(x => x.Profitability);
+
+            if (m_CurrentIndexSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.EntityId.Index) : ordered.ThenBy(x => x.EntityId.Index);
+            else if (m_CurrentIndexSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.EntityId.Index) : ordered.ThenByDescending(x => x.EntityId.Index);
+
+            if (m_CurrentResourceAmountSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.ResourceAmount) : ordered.ThenBy(x => x.ResourceAmount);
+            else if (m_CurrentResourceAmountSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.ResourceAmount) : ordered.ThenByDescending(x => x.ResourceAmount);
+
+            if (ordered != null)
+            {
+                var sorted = ordered.ToList();
+                companies.Clear();
+                companies.AddRange(sorted);
+            }
+        }
+
+        private static int SumResourceAmounts(ResourceInfo[] arr)
+        {
+            if (arr == null || arr.Length == 0) return 0;
+            int s = 0;
+            for (int i = 0; i < arr.Length; i++) s += arr[i].Amount;
+            return s;
         }
 
         private string GetFormattedResourceName(Resource resource)
         {
-            if (resource == Resource.NoResource)
-                return string.Empty;
-                
-            string resourceName = EconomyUtils.GetName(resource);
-            if (string.IsNullOrEmpty(resourceName))
-                return string.Empty;
-                
-            return char.ToUpper(resourceName[0]) + resourceName.Substring(1);
+            if (m_ResourceNameCache.TryGetValue(resource, out var name)) return name;
+            var resourceName = EconomyUtils.GetName(resource).ToString();
+            m_ResourceNameCache[resource] = resourceName;
+            return resourceName;
         }
-        
-        private EfficiencyFactorInfo[] GetEfficiencyFactors(Entity entity, BufferLookup<Efficiency> efficiencyLookup)
+
+        private string GetResourceIconPath(Resource resource)
         {
-            if (!efficiencyLookup.HasBuffer(entity))
-                return Array.Empty<EfficiencyFactorInfo>();
-                
-            var buffer = efficiencyLookup[entity];
-            if (buffer.Length == 0)
-                return Array.Empty<EfficiencyFactorInfo>();
-                
+            if (resource == Resource.Money) return "Media/Game/Icons/Money.svg";
+            if (m_ResourceIconCache.TryGetValue(resource, out var cached)) return cached;
+            Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
+            string icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
+            m_ResourceIconCache[resource] = icon;
+            return icon;
+        }
+
+        private EfficiencyFactorInfo[] GetEfficiencyFactors(Entity targetEntity, BufferLookup<Efficiency> efficiencyBufferLookup)
+        {
+            if (!efficiencyBufferLookup.HasBuffer(targetEntity)) return Array.Empty<EfficiencyFactorInfo>();
+
+            var buffer = efficiencyBufferLookup[targetEntity];
+            if (buffer.Length == 0) return Array.Empty<EfficiencyFactorInfo>();
+
             using var sortedEfficiencies = buffer.ToNativeArray(Allocator.Temp);
             sortedEfficiencies.Sort();
-            
+
             var tempFactors = new List<EfficiencyFactorInfo>();
             var totalEfficiency = (int)math.round(100f * BuildingUtils.GetEfficiency(buffer));
-            
+
             if (totalEfficiency > 0)
             {
                 float cumulativeEffect = 100f;
@@ -606,10 +795,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     var item = sortedEfficiencies[i];
                     float efficiency = math.max(0f, item.m_Efficiency);
                     cumulativeEffect *= efficiency;
-                    
+
                     int percentageChange = math.max(-99, (int)math.round(100f * efficiency) - 100);
                     int result = math.max(1, (int)math.round(cumulativeEffect));
-                    
+
                     if (percentageChange != 0)
                     {
                         tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, result));
@@ -624,104 +813,12 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     if (math.max(0f, item.m_Efficiency) == 0f)
                     {
                         tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, -100, -100));
-                        if ((int)item.m_Factor <= 3)
-                        {
-                            break;
-                        }
+                        if ((int)item.m_Factor <= 3) break;
                     }
                 }
             }
-            
+
             return tempFactors.ToArray();
-        }
-        public int CompareByIndex(CommercialCompanyDTO x, CommercialCompanyDTO y)
-{
-    switch (m_CurrentIndexSorting)
-    {
-        case IndexSortingEnum.Ascending:
-            return x.EntityId.Index.CompareTo(y.EntityId.Index);
-        case IndexSortingEnum.Descending:
-            return y.EntityId.Index.CompareTo(x.EntityId.Index);
-        default:
-            return 0;
-    }
-}
-
-public int CompareByName(CommercialCompanyDTO x, CommercialCompanyDTO y)
-{
-    switch (m_CurrentCompanyNameSorting)
-    {
-        case CompanyNameEnum.Ascending:
-            return string.Compare(x.CompanyName, y.CompanyName, StringComparison.OrdinalIgnoreCase);
-        case CompanyNameEnum.Descending:
-            return string.Compare(y.CompanyName, x.CompanyName, StringComparison.OrdinalIgnoreCase);
-        default:
-            return 0;
-    }
-}
-
-public int CompareByServiceUsage(CommercialCompanyDTO x, CommercialCompanyDTO y)
-{
-    switch (m_CurrentServiceUsageSorting)
-    {
-        case ServiceUsageEnum.Ascending:
-            return x.ServiceAvailable.CompareTo(y.ServiceAvailable);
-        case ServiceUsageEnum.Descending:
-            return y.ServiceAvailable.CompareTo(x.ServiceAvailable);
-        default:
-            return 0;
-    }
-}
-
-public int CompareByEmployees(CommercialCompanyDTO x, CommercialCompanyDTO y)
-{
-    switch (m_CurrentEmployeesSorting)
-    {
-        case EmployeesEnum.Ascending:
-            return x.TotalEmployees.CompareTo(y.TotalEmployees);
-        case EmployeesEnum.Descending:
-            return y.TotalEmployees.CompareTo(x.TotalEmployees);
-        default:
-            return 0;
-    }
-}
-
-public int CompareByEfficiency(CommercialCompanyDTO x, CommercialCompanyDTO y)
-{
-    switch (m_CurrentEfficiencySorting)
-    {
-        case EfficiancyEnum.Ascending:
-            return x.TotalEfficiency.CompareTo(y.TotalEfficiency);
-        case EfficiancyEnum.Descending:
-            return y.TotalEfficiency.CompareTo(x.TotalEfficiency);
-        default:
-            return 0;
-    }
-}
-
-        public int CompareByProfitability(CommercialCompanyDTO x, CommercialCompanyDTO y)
-        {
-            switch (m_CurrentProfitabilitySorting)
-            {
-                case ProfitabilityEnum.Ascending:
-                    return x.Profitability.CompareTo(y.Profitability);
-                case ProfitabilityEnum.Descending:
-                    return y.Profitability.CompareTo(x.Profitability);
-                default:
-                    return 0;
-            }
-        }
-        public int CompareByResourceAmount(CommercialCompanyDTO x, CommercialCompanyDTO y)
-        {
-            switch (m_CurrentResourceAmountSorting)
-            {
-                case ResourceAmountEnum.Ascending:
-                    return x.ResourceAmount.CompareTo(y.ResourceAmount);
-                case ResourceAmountEnum.Descending:
-                    return y.ResourceAmount.CompareTo(x.ResourceAmount);
-                default:
-                    return 0;
-            }
         }
     }
     

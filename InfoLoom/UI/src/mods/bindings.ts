@@ -10,25 +10,7 @@ import { workplacesInfo } from './domain/WorkplacesInfo';
 import { GroupingStrategy } from './domain/GroupingStrategy';
 import { CommercialCompanyDebug } from './domain/CommercialCompanyDebugData';
 import { IndustrialCompanyDebug } from './domain/IndustrialCompanyDebugData';
-import { IndexSortingEnum } from 'mods/domain/CommercialCompanyEnums/IndexSortingEnum';
-import { EfficiencyEnum } from 'mods/domain/CommercialCompanyEnums/EfficiencyEnum';
-import { EmployeesEnum } from 'mods/domain/CommercialCompanyEnums/EmployeesEnum';
-import { CompanyNameEnum } from 'mods/domain/CommercialCompanyEnums/CompanyNameEnum';
-import { ProfitabilityEnum } from 'mods/domain/CommercialCompanyEnums/ProfitabilityEnum';
-import { ServiceUsageEnum } from 'mods/domain/CommercialCompanyEnums/ServiceUsageEnum';
-import { ResourceAmountEnum } from './domain/CommercialCompanyEnums/ResourceAmountEnum';
-import {
-  IndexSortingEnum2,
-  ProfitabilityEnum2,
-  CompanyNameEnum2,
-  EfficiencyEnum2,
-  EmployeesEnum2,
-  MoneyEnum2,
-  Input1Enum2,
-  Input2Enum2,
-  OutputEnum2,
-  MaintenanceEnum2
-} from 'mods/domain/IndustrialCompanyEnums';
+import { SortingEnum } from './domain/SortingEnum';
 import {
   BuyCostEnum,
   ExportAmountEnum,
@@ -38,6 +20,7 @@ import {
   SellCostEnum,
   ResourceNameEnum,
 } from 'mods/domain/TradeCostEnums';
+import { Demographics1, Demographics2 } from 'mods/domain/DemographicsEnums';
 
 const INFO_LOOM_MENU_OPEN = 'InfoLoomMenuOpen';
 const COMMERCIAL_MENU_OPEN = 'CommercialMenuOpen';
@@ -191,79 +174,50 @@ export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) =>
   trigger(mod.id, 'SetDemoGroupingStrategy', strategy);
 
 //Commercial Company Data sorting
-export const CommercialCompanyIndexSorting = bindValue<IndexSortingEnum>(
-  mod.id,
-  'CommercialIndexSorting',
-  IndexSortingEnum.Off
-);
-export const SetCommercialCompanyIndexSorting = (sorting: IndexSortingEnum) =>
-  trigger(mod.id, 'SetCommercialIndexSorting', sorting);
-export const CommercialCompanyNameSorting = bindValue<CompanyNameEnum>(
-  mod.id,
-  'CommercialNameSorting',
-  CompanyNameEnum.Off
-);
-export const SetCommercialCompanyNameSorting = (sorting: CompanyNameEnum) =>
-  trigger(mod.id, 'SetCommercialNameSorting', sorting);
-export const CommercialCompanyEfficiency = bindValue<EfficiencyEnum>(
-  mod.id,
-  'CommercialEfficiencySorting',
-  EfficiencyEnum.Off
-);
-export const SetCommercialCompanyEfficiency = (sorting: EfficiencyEnum) =>
-  trigger(mod.id, 'SetCommercialEfficiencySorting', sorting);
-export const CommercialCompanyEmployee = bindValue<EmployeesEnum>(
-  mod.id,
-  'CommercialEmployeesSorting',
-  EmployeesEnum.Off
-);
-export const SetCommercialCompanyEmployee = (sorting: EmployeesEnum) =>
-  trigger(mod.id, 'SetCommercialEmployeesSorting', sorting);
-export const CommercialCompanyProfitability = bindValue<ProfitabilityEnum>(
-  mod.id,
-  'CommercialProfitabilitySorting',
-  ProfitabilityEnum.Off
-);
-export const SetCommercialCompanyProfitability = (sorting: ProfitabilityEnum) =>
-  trigger(mod.id, 'SetCommercialProfitabilitySorting', sorting);
-export const CommercialCompanyServiceUsage = bindValue<ServiceUsageEnum>(
-  mod.id,
-  'CommercialServiceUsageSorting',
-  ServiceUsageEnum.Off
-);
-export const SetCommercialCompanyServiceUsage = (sorting: ServiceUsageEnum) =>
-  trigger(mod.id, 'SetCommercialServiceUsageSorting', sorting);
-export const CommercialCompannyResourceAmount = bindValue<ResourceAmountEnum>(
-  mod.id,
-  'CommercialResourceAmountSorting',
-  ResourceAmountEnum.Off
-);
-export const SetCommercialCompannyResourceAmount = (sorting: ResourceAmountEnum) =>
-  trigger(mod.id, 'SetCommercialResourceAmountSorting', sorting);
+export const CommercialCompanyIndexSorting = bindValue<SortingEnum>(mod.id,'CommercialIndexSorting',SortingEnum.Off);
+export const SetCommercialCompanyIndexSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialIndexSorting', sorting);
+export const CommercialCompanyNameSorting = bindValue<SortingEnum>(mod.id,'CommercialNameSorting',SortingEnum.Off);
+export const SetCommercialCompanyNameSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialNameSorting', sorting);
+export const CommercialCompanyEfficiency = bindValue<SortingEnum>(mod.id,'CommercialEfficiencySorting',SortingEnum.Off);
+export const SetCommercialCompanyEfficiency = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialEfficiencySorting', sorting);
+export const CommercialCompanyEmployee = bindValue<SortingEnum>(mod.id,'CommercialEmployeesSorting',SortingEnum.Off);
+export const SetCommercialCompanyEmployee = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialEmployeesSorting', sorting);
+export const CommercialCompanyProfitability = bindValue<SortingEnum>(mod.id,'CommercialProfitabilitySorting',SortingEnum.Off);
+export const SetCommercialCompanyProfitability = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialProfitabilitySorting', sorting);
+export const CommercialCompanyServiceUsage = bindValue<SortingEnum>(mod.id,'CommercialServiceUsageSorting', SortingEnum.Off);
+export const SetCommercialCompanyServiceUsage = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialServiceUsageSorting', sorting);
+export const CommercialMoneySorting = bindValue<SortingEnum>(mod.id,'CommercialMoneySorting',SortingEnum.Off);
+export const SetCommercialMoneySorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialMoneySorting', sorting);
+export const CommercialInput1Sorting = bindValue<SortingEnum>(mod.id,'CommercialInput1Sorting',SortingEnum.Off);
+export const SetCommercialInput1Sorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialInput1Sorting', sorting);
+export const CommercialOutputSorting = bindValue<SortingEnum>(mod.id,'CommercialOutputSorting',SortingEnum.Off);
+export const SetCommercialOutputSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialOutputSorting', sorting);
+export const CommercialMaintenanceSorting = bindValue<SortingEnum>(mod.id,'CommercialMaintenanceSorting',SortingEnum.Off);
+export const SetCommercialMaintenanceSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetCommercialMaintenanceSorting', sorting);
 
 
 
 //Industrial Company Data sorting
-export const IndustrialCompanyIndexSorting = bindValue<IndexSortingEnum2>( mod.id, 'IndustrialIndexSorting', IndexSortingEnum2.Off);
-export const SetIndustrialCompanyIndexSorting = (sorting: IndexSortingEnum2) =>trigger(mod.id, 'SetIndustrialIndexSorting', sorting);
-export const IndustrialCompanyNameSorting = bindValue<CompanyNameEnum2>(mod.id,'IndustrialNameSorting',CompanyNameEnum2.Off);
-export const SetIndustrialCompanyNameSorting = (sorting: CompanyNameEnum2) =>trigger(mod.id, 'SetIndustrialNameSorting', sorting);
-export const IndustrialCompanyEfficiency = bindValue<EfficiencyEnum2>(mod.id,'IndustrialEfficiencySorting',EfficiencyEnum2.Off);
-export const SetIndustrialCompanyEfficiency = (sorting: EfficiencyEnum2) =>trigger(mod.id, 'SetIndustrialEfficiencySorting', sorting);
-export const IndustrialCompanyEmployee = bindValue<EmployeesEnum2>(mod.id,'IndustrialEmployeesSorting',EmployeesEnum2.Off);
-export const SetIndustrialCompanyEmployee = (sorting: EmployeesEnum2) =>trigger(mod.id, 'SetIndustrialEmployeesSorting', sorting);
-export const IndustrialCompanyProfitability = bindValue<ProfitabilityEnum2>(mod.id,'IndustrialProfitabilitySorting',ProfitabilityEnum2.Off);
-export const SetIndustrialCompanyProfitability = (sorting: ProfitabilityEnum2) =>trigger(mod.id, 'SetIndustrialProfitabilitySorting', sorting);
-export const IndustrialMoneySorting = bindValue<MoneyEnum2>(mod.id,'IndustrialMoneySorting',MoneyEnum2.Off);
-export const SetIndustrialMoneySorting = (sorting: MoneyEnum2) =>trigger(mod.id, 'SetIndustrialMoneySorting', sorting);
-export const IndustrialInput1Sorting = bindValue<Input1Enum2>(mod.id,'IndustrialInput1Sorting',Input1Enum2.Off);
-export const SetIndustrialInput1Sorting = (sorting: Input1Enum2) =>trigger(mod.id, 'SetIndustrialInput1Sorting', sorting);
-export const IndustrialInput2Sorting = bindValue<Input2Enum2>(mod.id,'IndustrialInput2Sorting',Input2Enum2.Off);
-export const SetIndustrialInput2Sorting = (sorting: Input2Enum2) =>trigger(mod.id, 'SetIndustrialInput2Sorting', sorting);
-export const IndustrialOutputSorting = bindValue<OutputEnum2>(mod.id,'IndustrialOutputSorting',OutputEnum2.Off);
-export const SetIndustrialOutputSorting = (sorting: OutputEnum2) =>trigger(mod.id, 'SetIndustrialOutputSorting', sorting);
-export const IndustrialMaintenanceSorting = bindValue<MaintenanceEnum2>(mod.id,'IndustrialMaintenanceSorting',MaintenanceEnum2.Off);
-export const SetIndustrialMaintenanceSorting = (sorting: MaintenanceEnum2) =>trigger(mod.id, 'SetIndustrialMaintenanceSorting', sorting);
+export const IndustrialCompanyIndexSorting = bindValue<SortingEnum>( mod.id, 'IndustrialIndexSorting', SortingEnum.Off);
+export const SetIndustrialCompanyIndexSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialIndexSorting', sorting);
+export const IndustrialCompanyNameSorting = bindValue<SortingEnum>(mod.id,'IndustrialNameSorting',SortingEnum.Off);
+export const SetIndustrialCompanyNameSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialNameSorting', sorting);
+export const IndustrialCompanyEfficiency = bindValue<SortingEnum>(mod.id,'IndustrialEfficiencySorting',SortingEnum.Off);
+export const SetIndustrialCompanyEfficiency = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialEfficiencySorting', sorting);
+export const IndustrialCompanyEmployee = bindValue<SortingEnum>(mod.id,'IndustrialEmployeesSorting',SortingEnum.Off);
+export const SetIndustrialCompanyEmployee = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialEmployeesSorting', sorting);
+export const IndustrialCompanyProfitability = bindValue<SortingEnum>(mod.id,'IndustrialProfitabilitySorting',SortingEnum.Off);
+export const SetIndustrialCompanyProfitability = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialProfitabilitySorting', sorting);
+export const IndustrialMoneySorting = bindValue<SortingEnum>(mod.id,'IndustrialMoneySorting',SortingEnum.Off);
+export const SetIndustrialMoneySorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialMoneySorting', sorting);
+export const IndustrialInput1Sorting = bindValue<SortingEnum>(mod.id,'IndustrialInput1Sorting',SortingEnum.Off);
+export const SetIndustrialInput1Sorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialInput1Sorting', sorting);
+export const IndustrialInput2Sorting = bindValue<SortingEnum>(mod.id,'IndustrialInput2Sorting',SortingEnum.Off);
+export const SetIndustrialInput2Sorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialInput2Sorting', sorting);
+export const IndustrialOutputSorting = bindValue<SortingEnum>(mod.id,'IndustrialOutputSorting',SortingEnum.Off);
+export const SetIndustrialOutputSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialOutputSorting', sorting);
+export const IndustrialMaintenanceSorting = bindValue<SortingEnum>(mod.id,'IndustrialMaintenanceSorting',SortingEnum.Off);
+export const SetIndustrialMaintenanceSorting = (sorting: SortingEnum) =>trigger(mod.id, 'SetIndustrialMaintenanceSorting', sorting);
 
 
 
@@ -287,3 +241,7 @@ export const SetResourceNameSorting = (sorting: ResourceNameEnum) => trigger(mod
 export const HistoricalData = bindValue<number[]>(mod.id, 'ResourceHistoricalData', []);
 export const SetHistoricalData = (resourceName: string) => trigger(mod.id, 'GetResourceHistoricalData', resourceName);
 
+export const DemographicsOne = bindValue<Demographics1>(mod.id, 'Demographics1', Demographics1.All);
+export const SetDemographicsOne = (demographics: Demographics1) =>trigger(mod.id, 'SetDemographics1', demographics);
+export const DemographicsTwo = bindValue<Demographics2>(mod.id, 'Demographics2', Demographics2.All);
+export const SetDemographicsTwo = (demographics: Demographics2) =>trigger(mod.id, 'SetDemographics2', demographics);

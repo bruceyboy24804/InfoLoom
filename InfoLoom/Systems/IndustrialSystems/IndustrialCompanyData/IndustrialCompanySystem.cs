@@ -30,6 +30,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
+using Unity.Jobs.LowLevel.Unsafe;
 using DeliveryTruck = Game.Vehicles.DeliveryTruck;
 using ExtractorCompany = Game.Companies.ExtractorCompany;
 using ProcessingCompany = Game.Companies.ProcessingCompany;
@@ -58,17 +59,17 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
     public partial class IndustrialCompanySystem : GameSystemBase
     {
-        public IndexSortingEnum2 m_CurrentIndexSorting = IndexSortingEnum2.Off;
-        public CompanyNameEnum2 m_CurrentCompanyNameSorting = CompanyNameEnum2.Off;
-        public EmployeesEnum2 m_CurrentEmployeesSorting = EmployeesEnum2.Off;
-        public EfficiancyEnum2 m_CurrentEfficiencySorting = EfficiancyEnum2.Off;
-        public ProfitabilityEnum2 m_CurrentProfitabilitySorting = ProfitabilityEnum2.Off;
-        public ResourceAmountEnum2 m_CurrentResourceAmountSorting = ResourceAmountEnum2.Off;
-        public MoneyEnum2 m_CurrentMoneySorting = MoneyEnum2.Off;
-        public Input1Enum2 m_CurrentInput1Sorting = Input1Enum2.Off;
-        public Input2Enum2 m_CurrentInput2Sorting = Input2Enum2.Off;
-        public OutputEnum2 m_CurrentOutputSorting = OutputEnum2.Off;
-        public MaintenanceEnum2 m_CurrentMaintenanceSorting = MaintenanceEnum2.Off;
+        public SortingEnum m_CurrentIndexSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentCompanyNameSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentEmployeesSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentEfficiencySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentProfitabilitySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentResourceAmountSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentMoneySorting = SortingEnum.Off;
+        public SortingEnum m_CurrentInput1Sorting = SortingEnum.Off;
+        public SortingEnum m_CurrentInput2Sorting = SortingEnum.Off;
+        public SortingEnum m_CurrentOutputSorting = SortingEnum.Off;
+        public SortingEnum m_CurrentMaintenanceSorting = SortingEnum.Off;
         public ResourceFilter m_CurrentResourceFilter = ResourceFilter.ShowAll;
 
         private NameSystem m_NameSystem;
@@ -85,7 +86,6 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         private Dictionary<Resource, string> m_ResourceNameCache;
         private Dictionary<Resource, string> m_ResourceIconCache;
         private bool m_CacheInitialized;
-        private bool m_JobScheduled = false;
         public Resource SelectedResource { get; set; } = Resource.NoResource;
         private JobHandle m_JobHandle;
         private NativeList<IndustrialCompanyJobData> m_JobResults;
@@ -112,21 +112,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         }
 
        protected override void OnDestroy()
-        {
-            if (m_JobScheduled)
-            {
-                try { m_JobHandle.Complete(); }
-                catch { /* ignore completion errors during shutdown */ }
-
-                if (m_JobResults.IsCreated)
-                {
-                    ConvertJobResultsToDTO(m_JobResults);
-                    m_JobResults.Dispose();
-                }
-
-                m_JobScheduled = false;
-            }
-
+        { 
             if (m_JobResults.IsCreated) m_JobResults.Dispose();
             base.OnDestroy();
         }
@@ -136,7 +122,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
         protected override void OnUpdate()
         {
             if (!IsPanelVisible) return;
-            if (m_JobScheduled)
+            
+            /*if (m_JobScheduled)
             {
                 if (m_JobHandle.IsCompleted)
                 {
@@ -152,7 +139,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                     }
                 }
                 return;
-            }
+            }*/
             UpdateIndustrialStatsWithBurstJob();
         }
 
@@ -186,12 +173,12 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             int estimatedCount = m_IndustrialCompanyQuery.CalculateEntityCount();
             if (m_JobResults.IsCreated)
             {
-                if (m_JobScheduled) return;
+                
                 m_JobResults.Dispose();
             }
             m_JobResults = new NativeList<IndustrialCompanyJobData>(Math.Max(1, estimatedCount), Allocator.TempJob);
 
-            m_JobHandle = new ProcessIndustrialCompaniesJob()
+            ProcessIndustrialCompaniesJob job = new ProcessIndustrialCompaniesJob
             {
                 EntityType = SystemAPI.GetEntityTypeHandle(),
                 CompanyDataType = SystemAPI.GetComponentTypeHandle<Game.Companies.CompanyData>(true),
@@ -223,8 +210,11 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 ResourcePrefabs = m_ResourceSystem.GetPrefabs(),
                 
                 ResultWriter = m_JobResults.AsParallelWriter(),
-            }.ScheduleParallel(m_IndustrialCompanyQuery, Dependency);
-            m_JobScheduled = true;
+            };
+            var jobHandle = job.Schedule(m_IndustrialCompanyQuery, Dependency);
+            jobHandle.Complete();
+            ConvertJobResultsToDTO( m_JobResults);
+            m_JobResults.Dispose();
         }
 
         private void UpdateCompanyNameCache()
@@ -421,86 +411,70 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
         private void ApplySorts(List<IndustrialCompanyDTO> companies)
         {
-            var comparers = new List<Comparison<IndustrialCompanyDTO>>();
+            // C#
+            IOrderedEnumerable<IndustrialCompanyDTO> ordered = null;
 
-            if (m_CurrentIndexSorting != IndexSortingEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.EntityId.Index.CompareTo(b.EntityId.Index);
-                if (m_CurrentIndexSorting == IndexSortingEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentCompanyNameSorting != CompanyNameEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => string.Compare(a.CompanyName, b.CompanyName, StringComparison.Ordinal);                
-                if (m_CurrentCompanyNameSorting == CompanyNameEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentEmployeesSorting != EmployeesEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.TotalEmployees.CompareTo(b.TotalEmployees);
-                if (m_CurrentEmployeesSorting == EmployeesEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentEfficiencySorting != EfficiancyEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.EfficiencyValue.CompareTo(b.EfficiencyValue);
-                if (m_CurrentEfficiencySorting == EfficiancyEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentProfitabilitySorting != ProfitabilityEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.Profitability.CompareTo(b.Profitability);
-                if (m_CurrentProfitabilitySorting == ProfitabilityEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentResourceAmountSorting != ResourceAmountEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.ResourceAmount.CompareTo(b.ResourceAmount);
-                if (m_CurrentResourceAmountSorting == ResourceAmountEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentMoneySorting != MoneyEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => a.MoneyAmount.CompareTo(b.MoneyAmount);
-                if (m_CurrentMoneySorting == MoneyEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentInput1Sorting != Input1Enum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => SumResourceAmounts(a.Input1Resources).CompareTo(SumResourceAmounts(b.Input1Resources));
-                if (m_CurrentInput1Sorting == Input1Enum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentInput2Sorting != Input2Enum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => SumResourceAmounts(a.Input2Resources).CompareTo(SumResourceAmounts(b.Input2Resources));
-                if (m_CurrentInput2Sorting == Input2Enum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentOutputSorting != OutputEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => SumResourceAmounts(a.OutputResources).CompareTo(SumResourceAmounts(b.OutputResources));
-                if (m_CurrentOutputSorting == OutputEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
-            if (m_CurrentMaintenanceSorting != MaintenanceEnum2.Off)
-            {
-                Comparison<IndustrialCompanyDTO> c = (a, b) => SumResourceAmounts(a.MaintenanceResources).CompareTo(SumResourceAmounts(b.MaintenanceResources));
-                if (m_CurrentMaintenanceSorting == MaintenanceEnum2.Descending) c = (a, b) => -c(a, b);
-                comparers.Add(c);
-            }
+            if (m_CurrentCompanyNameSorting == SortingEnum.Ascending)
+                ordered = companies.OrderBy(x => x.CompanyName);
+            else if (m_CurrentCompanyNameSorting == SortingEnum.Descending)
+                ordered = companies.OrderByDescending(x => x.CompanyName);
 
-            if (comparers.Count == 0) return;
+            if (m_CurrentEmployeesSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.TotalEmployees) : ordered.ThenBy(x => x.TotalEmployees);
+            else if (m_CurrentEmployeesSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.TotalEmployees) : ordered.ThenByDescending(x => x.TotalEmployees);
 
-            companies.Sort((a, b) =>
+            if (m_CurrentMoneySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.MoneyAmount) : ordered.ThenBy(x => x.MoneyAmount);
+            else if (m_CurrentMoneySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.MoneyAmount) : ordered.ThenByDescending(x => x.MoneyAmount);
+
+            if (m_CurrentInput1Sorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.Input1Resources)) : ordered.ThenBy(x => SumResourceAmounts(x.Input1Resources));
+            else if (m_CurrentInput1Sorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.Input1Resources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.Input1Resources));
+
+            if (m_CurrentInput2Sorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.Input2Resources)) : ordered.ThenBy(x => SumResourceAmounts(x.Input2Resources));
+            else if (m_CurrentInput2Sorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.Input2Resources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.Input2Resources));
+
+            if (m_CurrentOutputSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.OutputResources)) : ordered.ThenBy(x => SumResourceAmounts(x.OutputResources));
+            else if (m_CurrentOutputSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.OutputResources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.OutputResources));
+
+            if (m_CurrentMaintenanceSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => SumResourceAmounts(x.MaintenanceResources)) : ordered.ThenBy(x => SumResourceAmounts(x.MaintenanceResources));
+            else if (m_CurrentMaintenanceSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => SumResourceAmounts(x.MaintenanceResources)) : ordered.ThenByDescending(x => SumResourceAmounts(x.MaintenanceResources));
+
+            if (m_CurrentEfficiencySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.EfficiencyValue) : ordered.ThenBy(x => x.EfficiencyValue);
+            else if (m_CurrentEfficiencySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.EfficiencyValue) : ordered.ThenByDescending(x => x.EfficiencyValue);
+
+            if (m_CurrentProfitabilitySorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.Profitability) : ordered.ThenBy(x => x.Profitability);
+            else if (m_CurrentProfitabilitySorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.Profitability) : ordered.ThenByDescending(x => x.Profitability);
+
+            if (m_CurrentIndexSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.EntityId.Index) : ordered.ThenBy(x => x.EntityId.Index);
+            else if (m_CurrentIndexSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.EntityId.Index) : ordered.ThenByDescending(x => x.EntityId.Index);
+
+            if (m_CurrentResourceAmountSorting == SortingEnum.Ascending)
+                ordered = ordered == null ? companies.OrderBy(x => x.ResourceAmount) : ordered.ThenBy(x => x.ResourceAmount);
+            else if (m_CurrentResourceAmountSorting == SortingEnum.Descending)
+                ordered = ordered == null ? companies.OrderByDescending(x => x.ResourceAmount) : ordered.ThenByDescending(x => x.ResourceAmount);
+
+            if (ordered != null)
             {
-                foreach (var cmp in comparers)
-                {
-                    int r = cmp(a, b);
-                    if (r != 0) return r;
-                }
-                return 0;
-            });
+                var sorted = ordered.ToList();
+                companies.Clear();
+                companies.AddRange(sorted);
+            }
         }
 
         private static int SumResourceAmounts(ResourceInfo[] arr)

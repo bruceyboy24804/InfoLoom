@@ -208,7 +208,6 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 15rem;
-  gap: 10rem;
 }
 
 .graphButton, .backButton {
@@ -236,7 +235,6 @@
 .graphViewContainer {
   display: flex;
   height: 580rem;
-  gap: 20rem;
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 8rem;
   padding: 15rem;
@@ -274,7 +272,6 @@
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 10rem;
   font-size: 14rem;
   color: rgba(255, 255, 255, 0.8);
 }
@@ -338,7 +335,6 @@
 
 .chartControls {
   display: flex;
-  gap: 10rem;
 }
 
 .chartTypeButton {

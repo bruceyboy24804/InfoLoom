@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿﻿using System.Runtime.CompilerServices;
 using Colossal.Collections;
 using Colossal.Entities;
 using Colossal.Serialization.Entities;

@@ -35,7 +35,7 @@ NEW - summary statistics for each age group.
 - Unemployment by education level and structure also shown as percentage.
 - Under: cims working on positions below their education level.
 - Outside: cims working outside of the city.
-- Homeless: unemployed cims with no home.
+- Homeless: cims with no home.
 
 ### Workplace distribution
 - Shows available workplaces split into: city services, commercial sales, commercial leisure, industry extractors, industry manufacturing, and office.
@@ -100,10 +100,7 @@ NEW - summary statistics for each age group.
 - employment data 
 - education data
 - district average wealth		
-
-### Option in settings 
-- control the tax strength for commercial products when taxing individual products.
-
+        
 ### Credit
 - Dava787: screenshot of the Workplace distribution UI
 - Nullpinter: Improved UI
@@ -125,17 +122,25 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.14.0" />
+	<ModVersion Value="1.15.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.3.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.14.0
-- Fixed a small bug where commuters were counted as commuters and employees this meant that commuters where counted twice in the workplace Filled column and wouldn't be mutually exclusive and would lead to being over 100% filled rate .
-- Added requested feature to show eligible, school capacity and students in residents' tooltip in the districts panel.
-- Added education availability in the residents tooltip in the districts panel.		
-- Added the ability to filter Demographics, Workplace and Workforce data by District, this will allow you to see the data for a specific district.		
+	<ChangeLog>## Version 1.15.0
+- Fixed small issue with workfocrce showing over % of unemployment
+- Increased height of Demand panel
+- Fixed some issues with the Industrial Company Panel and the Commercial Companies Panel 
+- Compatability with real life mod 
+- Improved readability of the Industrial companies panel
+- Improved readability of the Commercial companies panel
+- Improved Default sorting of trade costs panel using the vanilla sorting for resources 
+- Re-arranged some of the buttons in the infoloom menu
+- When the InfoLoom menu is displayed/active, the infoloom button will now be highlighted    
+- Cleaned up Residential Demand Panel, Industrial Demand Panel and Commercial Demand Panel    
+- Added Education to the demographics panel
+- Synced a couple of numbers in some panels         
 </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />

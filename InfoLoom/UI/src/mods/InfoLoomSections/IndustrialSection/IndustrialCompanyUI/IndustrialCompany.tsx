@@ -42,18 +42,7 @@ import { getModule } from 'cs2/modding';
 import { Entity, useCssLength } from 'cs2/utils';
 import mod from 'mod.json';
 import { ResourceInfo } from '../../../domain/CommercialCompanyDebugData';
-import {
-  CompanyNameEnum2,
-  EfficiencyEnum2,
-  EmployeesEnum2,
-  IndexSortingEnum2,
-  ProfitabilityEnum2,
-  MoneyEnum2,
-  Input1Enum2,
-  Input2Enum2,
-  OutputEnum2,
-  MaintenanceEnum2
-} from 'mods/domain/IndustrialCompanyEnums';
+import {SortingEnum} from '../../../domain/SortingEnum';
 
 // Import VirtualList components
 type SizeProvider = {
@@ -200,16 +189,7 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) =
 interface SortableHeaderProps {
   title: string;
   sortState:
-    | IndexSortingEnum2
-    | CompanyNameEnum2
-    | EmployeesEnum2
-    | EfficiencyEnum2
-    | ProfitabilityEnum2
-    | MoneyEnum2
-    | Input1Enum2
-    | Input2Enum2
-    | OutputEnum2
-    | MaintenanceEnum2
+    | SortingEnum
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
 }
@@ -222,16 +202,20 @@ const SortableHeader: FC<SortableHeaderProps> = ({ title, sortState, onSort, cla
     // Cycle through sort states based on actual enum values:
     // Off = 0, Ascending = 1, Descending = 2
     // Cycle: Off -> Ascending -> Descending -> Off
-    if (sortState === 0) {
-      // Off
-      onSort('asc');
-    } else if (sortState === 1) {
-      // Ascending
-      onSort('desc');
-    } else {
-      // Descending
-      onSort('off');
-    }
+    switch (sortState) {
+  case 0: // Off
+    onSort('asc');
+    break;
+  case 1: // Ascending
+    onSort('desc');
+    break;
+  case 2: // Descending
+    onSort('off');
+    break;
+  default:
+    onSort('off');
+    break;
+}
   };
 
   return (
@@ -615,10 +599,10 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={translate("InfoLoomTwo.IndustrialCompanyPanel[Name]", "Name") || "Name"}
                 sortState={nameSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyNameSorting(CompanyNameEnum2.Ascending);
+                  if (direction === 'asc') SetIndustrialCompanyNameSorting(SortingEnum.Ascending);
                   else if (direction === 'desc')
-                    SetIndustrialCompanyNameSorting(CompanyNameEnum2.Descending);
-                  else SetIndustrialCompanyNameSorting(CompanyNameEnum2.Off);
+                    SetIndustrialCompanyNameSorting(SortingEnum.Descending);
+                  else SetIndustrialCompanyNameSorting(SortingEnum.Off);
                 }}
                 className={styles.nameColumn}
               />
@@ -627,9 +611,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={translate("InfoLoomTwo.IndustrialCompanyPanel[Employees]", "Employees") || "Employees"}
                 sortState={employeeSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyEmployee(EmployeesEnum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialCompanyEmployee(EmployeesEnum2.Descending);
-                  else SetIndustrialCompanyEmployee(EmployeesEnum2.Off);
+                  if (direction === 'asc') SetIndustrialCompanyEmployee(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialCompanyEmployee(SortingEnum.Descending);
+                  else SetIndustrialCompanyEmployee(SortingEnum.Off);
                 }}
                 className={styles.employeeColumn}
               />
@@ -644,9 +628,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={"Money"}
                 sortState={moneySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialMoneySorting(MoneyEnum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialMoneySorting(MoneyEnum2.Descending);
-                  else SetIndustrialMoneySorting(MoneyEnum2.Off);
+                  if (direction === 'asc') SetIndustrialMoneySorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialMoneySorting(SortingEnum.Descending);
+                  else SetIndustrialMoneySorting(SortingEnum.Off);
                 }}
                 className={styles.moneyColumn}
               />
@@ -654,9 +638,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={"Input 1"}
                 sortState={input1SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialInput1Sorting(Input1Enum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialInput1Sorting(Input1Enum2.Descending);
-                  else SetIndustrialInput1Sorting(Input1Enum2.Off);
+                  if (direction === 'asc') SetIndustrialInput1Sorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialInput1Sorting(SortingEnum.Descending);
+                  else SetIndustrialInput1Sorting(SortingEnum.Off);
                 }}
                 className={styles.input1Column}
               />
@@ -665,9 +649,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={"Input 2"}
                 sortState={input2SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialInput2Sorting(Input2Enum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialInput2Sorting(Input2Enum2.Descending);
-                  else SetIndustrialInput2Sorting(Input2Enum2.Off);
+                  if (direction === 'asc') SetIndustrialInput2Sorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialInput2Sorting(SortingEnum.Descending);
+                  else SetIndustrialInput2Sorting(SortingEnum.Off);
                 }}
                 className={styles.input2Column}
               />
@@ -676,9 +660,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={"Output"}
                 sortState={outputSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialOutputSorting(OutputEnum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialOutputSorting(OutputEnum2.Descending);
-                  else SetIndustrialOutputSorting(OutputEnum2.Off);
+                  if (direction === 'asc') SetIndustrialOutputSorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialOutputSorting(SortingEnum.Descending);
+                  else SetIndustrialOutputSorting(SortingEnum.Off);
                 }}
                 className={styles.outputColumn}
               />
@@ -687,9 +671,9 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={"Maintenance"}
                 sortState={maintenanceSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialMaintenanceSorting(MaintenanceEnum2.Ascending);
-                  else if (direction === 'desc') SetIndustrialMaintenanceSorting(MaintenanceEnum2.Descending);
-                  else SetIndustrialMaintenanceSorting(MaintenanceEnum2.Off);
+                  if (direction === 'asc') SetIndustrialMaintenanceSorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetIndustrialMaintenanceSorting(SortingEnum.Descending);
+                  else SetIndustrialMaintenanceSorting(SortingEnum.Off);
                 }}
                 className={styles.maintenanceColumn}
               />
@@ -704,10 +688,10 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 title={translate("InfoLoomTwo.IndustrialCompanyPanel[Efficiency]", "Efficiency") || "Efficiency"}
                 sortState={efficiencySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyEfficiency(EfficiencyEnum2.Ascending);
+                  if (direction === 'asc') SetIndustrialCompanyEfficiency(SortingEnum.Ascending);
                   else if (direction === 'desc')
-                    SetIndustrialCompanyEfficiency(EfficiencyEnum2.Descending);
-                  else SetIndustrialCompanyEfficiency(EfficiencyEnum2.Off);
+                    SetIndustrialCompanyEfficiency(SortingEnum.Descending);
+                  else SetIndustrialCompanyEfficiency(SortingEnum.Off);
                 }}
                 className={styles.efficiencyColumn}
               />
@@ -717,10 +701,10 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
                 sortState={profitabilitySortingOptions}
                 onSort={direction => {
                   if (direction === 'asc')
-                    SetIndustrialCompanyProfitability(ProfitabilityEnum2.Ascending);
+                    SetIndustrialCompanyProfitability(SortingEnum.Ascending);
                   else if (direction === 'desc')
-                    SetIndustrialCompanyProfitability(ProfitabilityEnum2.Descending);
-                  else SetIndustrialCompanyProfitability(ProfitabilityEnum2.Off);
+                    SetIndustrialCompanyProfitability(SortingEnum.Descending);
+                  else SetIndustrialCompanyProfitability(SortingEnum.Off);
                 }}
                 className={styles.profitabilityColumn}
               />

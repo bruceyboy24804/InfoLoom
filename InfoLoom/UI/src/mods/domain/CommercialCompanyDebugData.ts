@@ -6,7 +6,12 @@ export interface ResourceInfo {
   Amount: number;
   Icon: string;
 }
-
+export interface ProcessResourceInfo {
+  resourceName: string;
+  amount: number;
+  resourceIcon: string;
+  isOutput: boolean;
+}
 export interface CommercialCompanyDebug {
   EntityId: Entity;
   CompanyName: string;
@@ -21,7 +26,7 @@ export interface CommercialCompanyDebug {
   ResourceAmount: number;
   TotalEfficiency: number;
   Factors: EfficiencyFactorInfo[];
-
+  ProcessResources: ProcessResourceInfo[];  
   Profitability: number;
   LastTotalWorth: number;
   TotalWages: number;
@@ -29,5 +34,9 @@ export interface CommercialCompanyDebug {
   EfficiencyValue: number;
   Concentration: number;
   OutputResourceName: string;
-  Resources: ResourceInfo[]; // Array of all resources associated with the company
+  MoneyAmount: number;
+  Input1Resources: ResourceInfo[];
+  OutputResources: ResourceInfo[];
+  MaintenanceResources: ResourceInfo[];
+  
 }

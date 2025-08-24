@@ -34,7 +34,7 @@ namespace InfoLoomTwo
     {
         public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
         // Static fields and properties
-       //public static Setting setting;
+       public static Setting setting;
         public static Mod Instance { get; private set; }
          public static string Version => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
         public static string Name => Assembly.GetExecutingAssembly().GetName().Name;
@@ -47,7 +47,7 @@ namespace InfoLoomTwo
         public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
             .SetShowsErrorsInUI(false);
 
-        // RealLife settings integration
+       
         
 
     
@@ -67,8 +67,8 @@ namespace InfoLoomTwo
             log.effectivenessLevel = Level.Debug;
 #endif
             //Try to fetch the mod asset from the mod manager
-            //setting = new Setting(this);
-            /*if (setting == null)
+            /*setting = new Setting(this);
+            if (setting == null)
             {
                 Log.Error("Failed to initialize settings.");
                 return;

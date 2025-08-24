@@ -8,4 +8,9 @@ export interface populationAtAge {
   Unemployed: number;
   Retired: number;
   Total: number;
+  Uneducated: number;
+  PoorlyEducated: number;
+  Educated: number;
+  WellEducated: number;
+  HighlyEducated: number;
 }

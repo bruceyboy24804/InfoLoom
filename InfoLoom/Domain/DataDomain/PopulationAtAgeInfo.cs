@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace InfoLoomTwo.Domain.DataDomain
 {
@@ -17,6 +18,15 @@ namespace InfoLoomTwo.Domain.DataDomain
         public int TeenCount { get; set; }
         public int AdultCount { get; set; }
         public int ElderlyCount { get; set; }
+        
+        public int Uneducated { get; set; }
+        public int PoorlyEducated { get; set; }
+        public int Educated { get; set; }
+        public int WellEducated { get; set; }
+        public int HighlyEducated { get; set; }
+        
+        
+        
 
         public PopulationAtAgeInfo(int age)
         {
@@ -33,6 +43,12 @@ namespace InfoLoomTwo.Domain.DataDomain
             TeenCount = 0;
             AdultCount = 0;
             ElderlyCount = 0;
+            Uneducated = 0;
+            PoorlyEducated = 0;
+            Educated = 0;
+            WellEducated = 0;
+            HighlyEducated = 0;
+            
         }
     }
 }

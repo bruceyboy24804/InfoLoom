@@ -6,30 +6,27 @@ using Game.Settings;
 using Game.UI;
 using System.Collections.Generic;
 using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
-using InfoLoomTwo.Domain.DataDomain.Enums.TradeCostEnums;
+using Unity.Mathematics;
 
 
 namespace InfoLoomTwo
 {
     
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(PanelViewGroup)]
-    [SettingsUIShowGroupName(PanelViewGroup)]
+    [SettingsUIGroupOrder(PanelPositionReset)]
+    [SettingsUIShowGroupName(PanelPositionReset)]
     [SettingsUITabOrder(GeneralTab)]
     public class Setting : ModSetting
     {
-        public const string PanelViewGroup = "Panel View";
+        public const string PanelPositionReset = "Reset Panel Position";
         
         
         public const string GeneralTab = "General";
+        public float2 PanelLocation;
         
-       
-        [SettingsUISection(GeneralTab, PanelViewGroup)]
-        [SettingsUISlider(min = 0, max = 7, step = 1, unit = Unit.kInteger)]
-        public int hideNoColumnsWF { get; set; }
-        [SettingsUISection(GeneralTab, PanelViewGroup)]
-        [SettingsUISlider(min = 0, max = 12, step = 1, unit = Unit.kInteger)]
-        public int  hideNoColumnsWP { get; set; }
+        
+        
+        
         
         public Setting(IMod mod) : base(mod)
         {
@@ -38,8 +35,7 @@ namespace InfoLoomTwo
 
         public override void SetDefaults()
         {
-           hideNoColumnsWF = 0;
-           hideNoColumnsWP = 0;
+           
         } 
     }
     
@@ -58,12 +54,9 @@ namespace InfoLoomTwo
             {
                 { m_Setting.GetSettingsLocaleID(), "Info Loom" },
                 { m_Setting.GetOptionTabLocaleID(Setting.GeneralTab), "General" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.PanelViewGroup), "General" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.PanelPositionReset), "General" },
                 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideNoColumnsWF)), "Hide Workforce Columns" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideNoColumnsWF)), "Set the number of columns to hide from right to left" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideNoColumnsWP)), "Hide Workplace Columns" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideNoColumnsWP)), "Set the number of columns to hide from right to left" },
+                
             };
         }
 

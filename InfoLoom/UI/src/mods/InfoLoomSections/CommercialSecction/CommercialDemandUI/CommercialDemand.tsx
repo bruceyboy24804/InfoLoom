@@ -64,7 +64,7 @@ const RowWithTwoColumns = ({ left, right, tooltip }: RowWithTwoColumnsProps): JS
 
 interface RowWithThreeColumnsProps {
   left: string | null;
-  leftSmall: string | null;
+  leftSmall?: string | null;
   right1: number;
   flag1: boolean;
   right2?: number;
@@ -123,16 +123,12 @@ interface ColumnCommercialDataProps {
   propertylessCompaniesLabel: string | null;
   propertylessCompaniesTooltip: string | null;
   averageTaxRateLabel: string | null;
-  averageTaxRateSmall: string | null;
   averageTaxRateTooltip: string | null;
   serviceUtilizationLabel: string | null;
-  serviceUtilizationSmall: string | null;
   serviceUtilizationTooltip: string | null;
   productionCapacityLabel: string | null;
-  productionCapacitySmall: string | null;
   productionCapacityTooltip: string  | null;
   employeeCapacityLabel: string | null;
-  employeeCapacitySmall: string | null;
   employeeCapacityTooltip: string | null;
   availableWorkforceLabel: string | null;
   availableWorkforceTooltip: string | null;
@@ -149,16 +145,12 @@ const ColumnCommercialData = ({
   propertylessCompaniesLabel,
   propertylessCompaniesTooltip,
   averageTaxRateLabel,
-  averageTaxRateSmall,
   averageTaxRateTooltip,
   serviceUtilizationLabel,
-  serviceUtilizationSmall,
   serviceUtilizationTooltip,
   productionCapacityLabel,
-  productionCapacitySmall,
   productionCapacityTooltip,
   employeeCapacityLabel,
-  employeeCapacitySmall,
   employeeCapacityTooltip,
   availableWorkforceLabel,
   availableWorkforceTooltip,
@@ -182,7 +174,6 @@ const ColumnCommercialData = ({
       <DataDivider />
       <RowWithThreeColumns
         left={averageTaxRateLabel}
-        leftSmall={averageTaxRateSmall}
         right1={data[2] / 10}
         flag1={data[2] > 100}
         tooltip={averageTaxRateTooltip}
@@ -199,7 +190,6 @@ const ColumnCommercialData = ({
       </div>
       <RowWithThreeColumns
         left={serviceUtilizationLabel}
-        leftSmall={serviceUtilizationSmall}
         right1={data[3]}
         flag1={data[3] < 30}
         right2={data[4]}
@@ -208,7 +198,6 @@ const ColumnCommercialData = ({
       />
       <RowWithThreeColumns
         left={productionCapacityLabel}
-        leftSmall={productionCapacitySmall}
         right1={data[5]}
         flag1={data[5] > 100}
         right2={data[6]}
@@ -218,7 +207,6 @@ const ColumnCommercialData = ({
       <DataDivider />
       <RowWithThreeColumns
         left={employeeCapacityLabel}
-        leftSmall={employeeCapacitySmall}
         right1={data[7] / 10}
         flag1={data[7] < 750}
         tooltip={employeeCapacityTooltip}
@@ -285,16 +273,12 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
   const propertylessCompaniesLabel = translate("InfoLoomTwo.CommercialDemandPanel[PropertylessCompanies]", "PROPERTYLESS COMPANIES");
   const propertylessCompaniesTooltip = translate("InfoLoomTwo.CommercialDemandPanel[PropertylessCompaniesTooltip]", "Number of commercial companies without properties. More propertyless companies increases demand for new commercial buildings.");
   const averageTaxRateLabel = translate("InfoLoomTwo.CommercialDemandPanel[AverageTaxRate]", "AVERAGE TAX RATE");
-  const averageTaxRateSmall = translate("InfoLoomTwo.CommercialDemandPanel[AverageTaxRateNeutral]", "10% is the neutral rate");
   const averageTaxRateTooltip = translate("InfoLoomTwo.CommercialDemandPanel[TaxRateTooltip]", "Average commercial tax rate across all resources. Higher tax rates reduce commercial demand. 10% is considered neutral.");
   const serviceUtilizationLabel = translate("InfoLoomTwo.CommercialDemandPanel[ServiceUtilization]", "SERVICE UTILIZATION");
-  const serviceUtilizationSmall = translate("InfoLoomTwo.CommercialDemandPanel[ServiceUtilizationNeutral]", "30% is the neutral ratio");
   const serviceUtilizationTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ServiceUtilizationTooltip]", "Percentage of service capacity currently utilized. Higher utilization increases demand for more commercial services. Below 30% is considered insufficient demand.");
   const productionCapacityLabel = translate("InfoLoomTwo.CommercialDemandPanel[ProductionCapacity]", "PRODUCTION CAPACITY");
-  const productionCapacitySmall = translate("InfoLoomTwo.CommercialDemandPanel[ProductionCapacityNeutral]", "100% when production capacity = resources needs");
   const productionCapacityTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ProductionCapacityTooltip]", "Current production capacity relative to resource needs. 100% means supply matches demand. Above 100% indicates oversupply which reduces demand for new commercial businesses.");
   const employeeCapacityLabel = translate("InfoLoomTwo.CommercialDemandPanel[EmployeeCapacity]", "EMPLOYEE CAPACITY RATIO");
-  const employeeCapacitySmall = translate("InfoLoomTwo.CommercialDemandPanel[EmployeeCapacityNeutral]", "75% is the neutral ratio");
   const employeeCapacityTooltip = translate("InfoLoomTwo.CommercialDemandPanel[EmployeeCapacityTooltip]", "Percentage of maximum worker positions currently filled. Below 75% indicates labor shortage which reduces demand for new commercial businesses.");
   const availableWorkforceLabel = translate("InfoLoomTwo.CommercialDemandPanel[AvailableWorkforce]", "AVAILABLE WORKFORCE");
   const availableWorkforceTooltip = translate("InfoLoomTwo.CommercialDemandPanel[AvailableWorkforceTooltip]", "Number of citizens available for work in commercial businesses. More available workers increases demand for new businesses.");
@@ -328,16 +312,12 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
             propertylessCompaniesLabel={propertylessCompaniesLabel}
             propertylessCompaniesTooltip={propertylessCompaniesTooltip}
             averageTaxRateLabel={averageTaxRateLabel}
-            averageTaxRateSmall={averageTaxRateSmall}
             averageTaxRateTooltip={averageTaxRateTooltip}
             serviceUtilizationLabel={serviceUtilizationLabel}
-            serviceUtilizationSmall={serviceUtilizationSmall}
             serviceUtilizationTooltip={serviceUtilizationTooltip}
             productionCapacityLabel={productionCapacityLabel}
-            productionCapacitySmall={productionCapacitySmall}
             productionCapacityTooltip={productionCapacityTooltip}
             employeeCapacityLabel={employeeCapacityLabel}
-            employeeCapacitySmall={employeeCapacitySmall}
             employeeCapacityTooltip={employeeCapacityTooltip}
             availableWorkforceLabel={availableWorkforceLabel}
             availableWorkforceTooltip={availableWorkforceTooltip}

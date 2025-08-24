@@ -4,7 +4,7 @@ import { DraggablePanelProps, Panel, PanelProps, Tooltip } from "cs2/ui";
 import { useLocalization } from 'cs2/l10n';
 import styles from "./residential.module.scss";
 import { ResidentialData } from "../../../bindings";
-
+import {LocalizedFraction} from "cs2/l10n";
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
   right: React.ReactNode;
@@ -262,7 +262,6 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
                     <span>{translate("InfoLoomTwo.ResidentialPanel[Happiness]", "HAPPINESS")}</span>
                   </Tooltip>
                 }
-                leftSmall={`${ilResidential[8]} ${translate("InfoLoomTwo.ResidentialPanel[HappinessNeutral]", "is neutral")}`}
                 right1={ilResidential[7]}
                 flag1={ilResidential[7] < ilResidential[8]}
               />
@@ -273,8 +272,7 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
                       <span>{translate("InfoLoomTwo.ResidentialPanel[Unemployment]", "UNEMPLOYMENT")}</span>
                     </Tooltip>
                   }
-                  leftSmall={`${ilResidential[10]/10}${translate("InfoLoomTwo.ResidentialPanel[UnemploymentNeutral]", "% is neutral")}`} 
-                  right1={ilResidential[9]} 
+                  right1={Number(ilResidential[9]).toFixed(1)}
                   flag1={ilResidential[9]>ilResidential[10]/10} 
               />
               <DataDivider />
@@ -314,7 +312,6 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
                     <span>{translate("InfoLoomTwo.ResidentialPanel[Homeless]", "HOMELESS")}</span>
                   </Tooltip>
                 }
-                leftSmall={`${homelessThreshold} ${translate("InfoLoomTwo.ResidentialPanel[HomelessNeutral]", "is neutral")}`}
                 right1={ilResidential[11]}
                 flag1={ilResidential[11] > homelessThreshold}
               />
@@ -325,7 +322,6 @@ const Residential = ({onClose, initialPosition}: DraggablePanelProps): JSX.Eleme
                     <span>{translate("InfoLoomTwo.ResidentialPanel[TaxRate]", "TAX RATE (weighted)")}</span>
                   </Tooltip>
                 }
-                leftSmall={translate("InfoLoomTwo.ResidentialPanel[TaxNeutral]", "10% is neutral")}
                 right1={ilResidential[15] / 10}
                 flag1={ilResidential[15] > 100}
               />

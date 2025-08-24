@@ -8,7 +8,7 @@ import {
   formatPercentage2,
   formatPercentage1,
 } from 'mods/InfoLoomSections/utils/formatText';
-import { CommercialCompanyDebug, ResourceInfo } from '../../../domain/CommercialCompanyDebugData';
+import { CommercialCompanyDebug, ResourceInfo, ProcessResourceInfo } from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
 import {
   CommercialCompanyDebugData,
@@ -25,21 +25,21 @@ import {
   SetCommercialCompanyEfficiency,
   CommercialCompanyProfitability,
   SetCommercialCompanyProfitability,
-  CommercialCompannyResourceAmount,
-  SetCommercialCompannyResourceAmount,
+  CommercialMoneySorting,
+  SetCommercialMoneySorting,
+  CommercialInput1Sorting,
+  SetCommercialInput1Sorting,
+  CommercialOutputSorting,
+  SetCommercialOutputSorting,
+  CommercialMaintenanceSorting,
+  SetCommercialMaintenanceSorting
 } from 'mods/bindings';
 import { getModule } from 'cs2/modding';
 import { Entity, useCssLength } from 'cs2/utils';
 import mod from 'mod.json';
 import { useLocalization } from 'cs2/l10n';
 import { EfficiencyFactorEnum } from 'mods/domain/EfficiencyFactorInfo';
-import { IndexSortingEnum } from 'mods/domain/CommercialCompanyEnums/IndexSortingEnum';
-import { CompanyNameEnum } from 'mods/domain/CommercialCompanyEnums/CompanyNameEnum';
-import { ServiceUsageEnum } from '../../../domain/CommercialCompanyEnums/ServiceUsageEnum';
-import { EmployeesEnum } from '../../../domain/CommercialCompanyEnums/EmployeesEnum';
-import { EfficiencyEnum } from '../../../domain/CommercialCompanyEnums/EfficiencyEnum';
-import { ProfitabilityEnum } from '../../../domain/CommercialCompanyEnums/ProfitabilityEnum';
-import { ResourceAmountEnum } from '../../../domain/CommercialCompanyEnums/ResourceAmountEnum';
+import { SortingEnum } from 'mods/domain/SortingEnum';
 
 // Import VirtualList components
 type SizeProvider = {
@@ -82,80 +82,79 @@ interface EfficiencyTooltipProps {
 }
 
 const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) => {
-  const getFactorName = (factor: EfficiencyFactorEnum): string | null => {
+  const getFactorName = (factor: EfficiencyFactorEnum): string => {
     switch (factor) {
       case EfficiencyFactorEnum.Destroyed:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDestroyed]", "Destroyed");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDestroyed]", "Destroyed") || "Destroyed";
       case EfficiencyFactorEnum.Abandoned:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyAbandoned]", "Abandoned");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyAbandoned]", "Abandoned") || "Abandoned";
       case EfficiencyFactorEnum.Disabled:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDisabled]", "Disabled");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDisabled]", "Disabled") || "Disabled";
       case EfficiencyFactorEnum.Fire:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyFire]", "Fire");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyFire]", "Fire") || "Fire";
       case EfficiencyFactorEnum.ServiceBudget:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyServiceBudget]", "Service Budget");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyServiceBudget]", "Service Budget") || "Service Budget";
       case EfficiencyFactorEnum.NotEnoughEmployees:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNotEnoughEmployees]", "Not Enough Employees");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNotEnoughEmployees]", "Not Enough Employees") || "Not Enough Employees";
       case EfficiencyFactorEnum.SickEmployees:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySickEmployees]", "Sick Employees");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySickEmployees]", "Sick Employees") || "Sick Employees";
       case EfficiencyFactorEnum.EmployeeHappiness:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyEmployeeHappiness]", "Employee Happiness");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyEmployeeHappiness]", "Employee Happiness") || "Employee Happiness";
       case EfficiencyFactorEnum.ElectricitySupply:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricitySupply]", "Lack of electricity");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricitySupply]", "Lack of electricity") || "Lack of electricity";
       case EfficiencyFactorEnum.ElectricityFee:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricityFee]", "Electricity fee");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyElectricityFee]", "Electricity fee") || "Electricity fee";
       case EfficiencyFactorEnum.WaterSupply:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterSupply]", "Lack of water");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterSupply]", "Lack of water") || "Lack of water";
       case EfficiencyFactorEnum.DirtyWater:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDirtyWater]", "Polluted water");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyDirtyWater]", "Polluted water") || "Polluted water";
       case EfficiencyFactorEnum.SewageHandling:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySewageHandling]", "Backed up sewer");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySewageHandling]", "Backed up sewer") || "Backed up sewer";
       case EfficiencyFactorEnum.WaterFee:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterFee]", "Water fee");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterFee]", "Water fee") || "Water fee";
       case EfficiencyFactorEnum.Garbage:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyGarbage]", "Piled up garbage");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyGarbage]", "Piled up garbage") || "Piled up garbage";
       case EfficiencyFactorEnum.Telecom:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyTelecom]", "Network Quality");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyTelecom]", "Network Quality") || "Network Quality";
       case EfficiencyFactorEnum.Mail:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMail]", "Mail Handling");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMail]", "Mail Handling") || "Mail Handling";
       case EfficiencyFactorEnum.MaterialSupply:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMaterialSupply]", "Lack of resources");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyMaterialSupply]", "Lack of resources") || "Lack of resources";
       case EfficiencyFactorEnum.WindSpeed:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWindSpeed]", "Low wind speed");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWindSpeed]", "Low wind speed") || "Low wind speed";
       case EfficiencyFactorEnum.WaterDepth:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterDepth]", "Low water depth");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyWaterDepth]", "Low water depth") || "Low water depth";
       case EfficiencyFactorEnum.SunIntensity:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySunIntensity]", "Lack of sunlight");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySunIntensity]", "Lack of sunlight") || "Lack of sunlight";
       case EfficiencyFactorEnum.NaturalResources:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNaturalResources]", "Natural Resources");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyNaturalResources]", "Natural Resources") || "Natural Resources";
       case EfficiencyFactorEnum.CityModifierSoftware:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierSoftware]", "City Effect");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierSoftware]", "City Effect") || "City Effect";
       case EfficiencyFactorEnum.CityModifierElectronics:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierElectronics]", "City Effect");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierElectronics]", "City Effect") || "City Effect";
       case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierIndustrial]", "Industrial Efficiency");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierIndustrial]", "Industrial Efficiency") || "Industrial Efficiency";
       case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierOffice]", "Office Efficiency");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierOffice]", "Office Efficiency") || "Office Efficiency";
       case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierHospital]", "Hospital Efficiency");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCityModifierHospital]", "Hospital Efficiency") || "Hospital Efficiency";
       case EfficiencyFactorEnum.SpecializationBonus:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySpecializationBonus]", "City Production Specialization");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencySpecializationBonus]", "City Production Specialization") || "City Production Specialization";
       case EfficiencyFactorEnum.Count:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCount]", "Count");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyCount]", "Count") || "Count";
       default:
-        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyUnknown]", "Unknown Factor");
+        return translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyUnknown]", "Unknown Factor") || "Unknown Factor";
     }
   };
 
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
-        <p>Factors affecting efficiency:</p>
+        <p>{translate("InfoLoomTwo.CommercialCompanyPanel[EfficiencyFactorsTitle]", "Factors affecting efficiency:") || "Factors affecting efficiency:"}</p>
         {company.Factors &&
           company.Factors.map((factor, index) => {
             if (!factor) return null;
 
-            // Get a readable name for the factor from the enum value
             const factorName = getFactorName(factor.Factor);
 
             return (
@@ -253,13 +252,7 @@ const ProfitabilityTooltip: FC<ProfitabilityTooltipProps> = ({ company }) => {
 interface SortableHeaderProps {
   title: string | null;
   sortState:
-    | IndexSortingEnum
-    | CompanyNameEnum
-    | ServiceUsageEnum
-    | EmployeesEnum
-    | EfficiencyEnum
-    | ProfitabilityEnum
-    | ResourceAmountEnum;
+    | SortingEnum
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
 }
@@ -272,16 +265,20 @@ const SortableHeader: FC<SortableHeaderProps> = ({ title, sortState, onSort, cla
     // Cycle through sort states based on actual enum values:
     // Off = 0, Ascending = 1, Descending = 2
     // Cycle: Off -> Ascending -> Descending -> Off
-    if (sortState === 0) {
-      // Off
-      onSort('asc');
-    } else if (sortState === 1) {
-      // Ascending
-      onSort('desc');
-    } else {
-      // Descending
-      onSort('off');
-    }
+     switch (sortState) {
+  case 0: // Off
+    onSort('asc');
+    break;
+  case 1: // Ascending
+    onSort('desc');
+    break;
+  case 2: // Descending
+    onSort('off');
+    break;
+  default:
+    onSort('off');
+    break;
+}
   };
 
   return (
@@ -308,15 +305,52 @@ interface CompanyRowProps {
 }
 
 // Memoize the CompanyRow component to prevent re-renders when props haven't changed
-const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
-  const totalEfficiency = company.TotalEfficiency;
+const CompanyRowWithTranslation = React.memo(({ company }: { company: CommercialCompanyDebug }) => {
   const { translate } = useLocalization();
-  // Calculate service usage (inverted from availability)
-  const serviceUsagePercentage =
-    company.MaxService > 0 ? 1 - company.ServiceAvailable / company.MaxService : 0;
-  const serviceUsage = formatPercentage1(serviceUsagePercentage);
+  const totalEfficiency = company.TotalEfficiency;
 
-  // Helper functions for color classes
+  // Pre-calculate processing resources to avoid inline filtering
+  const inputResources = useMemo(() => company.ProcessResources?.filter(r => !r.isOutput) || [], [company.ProcessResources]);
+  const outputResources = useMemo(() => company.ProcessResources?.filter(r => r.isOutput) || [], [company.ProcessResources]);
+
+  const processingTooltip = useMemo(() =>
+    <div className={styles.tooltipContent}>
+      <div className={styles.tooltipText}>
+        <p>
+          <strong>{translate("InfoLoomTwo.IndustrialCompanyPanel[ProcessingResourcesTitle]", "Processing Resources") || "Processing Resources"}</strong>
+        </p>
+        {outputResources.length > 0 ? (
+          <div>
+            {outputResources.map((resource, index) => (
+              <p cohinline="cohinline" key={`output-${index}`}>
+                {index === 0 ? (translate("InfoLoomTwo.IndustrialCompanyPanel[Output]", "Output:") || "Output:") + " " : ''}
+                {resource.resourceName}: {resource.amount}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p>{translate("InfoLoomTwo.IndustrialCompanyPanel[NoOutputResources]", "No output resources") || "No output resources"}</p>
+        )}
+
+        {inputResources.length > 0 ? (
+          <div>
+            {inputResources.map((resource, index) => (
+              <p key={`input-${index}`} cohinline="cohinline">
+                {index === 0 ? (translate("InfoLoomTwo.IndustrialCompanyPanel[Input]", "Input:") || "Input:") + " " : ''}
+                {resource.resourceName}: {resource.amount}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p>{translate("InfoLoomTwo.IndustrialCompanyPanel[NoInputResources]", "No input resources") || "No input resources"}</p>
+        )}
+      </div>
+    </div>
+  , [inputResources, outputResources, translate]);
+
+  const efficiencyTooltip = useMemo(() => <EfficiencyTooltip company={company} translate={translate} />, [company, translate]);
+  const profitabilityTooltip = useMemo(() => <ProfitabilityTooltip company={company} />, [company]);
+
   const getEfficiencyClass = (efficiency: number) => {
     if (efficiency >= 0.8) return styles.efficiencyHigh;
     if (efficiency >= 0.5) return styles.efficiencyMedium;
@@ -327,9 +361,11 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
     return profitability >= 0 ? styles.profitabilityPositive : styles.profitabilityNegative;
   };
 
-  const getServiceClass = (serviceUsage: number) => {
-    if (serviceUsage >= 0.8) return styles.serviceHigh;
-    if (serviceUsage >= 0.5) return styles.serviceMedium;
+  const serviceUsagePercentage = company.MaxService > 0 ? 1 - company.ServiceAvailable / company.MaxService : 0;
+  const serviceUsage = formatPercentage1(serviceUsagePercentage);
+  const getServiceClass = (service: number) => {
+    if (service >= 0.8) return styles.serviceHigh;
+    if (service >= 0.5) return styles.serviceMedium;
     return styles.serviceLow;
   };
 
@@ -339,18 +375,9 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
       <div className={styles.nameColumn}>{company.CompanyName}</div>
 
       {/* Service Usage Column */}
-      <Tooltip
-        tooltip={
-          <ServiceTooltip
-            serviceAvailable={company.ServiceAvailable}
-            maxService={company.MaxService}
-          />
-        }
-      >
+      <Tooltip tooltip={<ServiceTooltip serviceAvailable={company.ServiceAvailable} maxService={company.MaxService} />}>
         <div className={styles.serviceColumn}>
-          <span className={getServiceClass(serviceUsagePercentage)}>
-            {serviceUsage}
-          </span>
+          <span className={getServiceClass(serviceUsagePercentage)}>{serviceUsage}</span>
         </div>
       </Tooltip>
 
@@ -364,47 +391,101 @@ const CompanyRow: FC<CompanyRowProps> = React.memo(({ company }) => {
         {`${formatNumber(company.VehicleCount)}/${formatNumber(company.VehicleCapacity)}`}
       </div>
 
-      {/* Resources Column */}
-      <Tooltip tooltip={<ResourcesToolTip resources={company.Resources || []} />}>
-        <div className={styles.resourcesColumn}>
-          {company.Resources && company.Resources.length > 0 ? (
-            <div className={styles.resourceGroup}>
-              {company.Resources.map((r, i) => (
-                <Icon key={`resource-${i}`} src={r.Icon} className={styles.resourceIcon} />
-              ))}
+      {/* Money Column */}
+      <div className={styles.moneyColumn}>
+        <div className={styles.resourceGroup}>
+          <span className={styles.resourceAmount}>{formatNumber(company.MoneyAmount)}</span>
+        </div>
+      </div>
+
+      {/* Input 1 Column */}
+      <div className={styles.input1Column}>
+        {company.Input1Resources && company.Input1Resources.length > 0 ? (
+          <div className={styles.resourceGroup}>
+            {company.Input1Resources.map((r, i) => (
+              <div key={`input1-${i}`} className={styles.resourceItem}>
+                <Icon src={r.Icon} className={styles.resourceIcon} />
+                <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : <div className={styles.emptyGroup}></div>}
+      </div>
+
+      {/* Output Column */}
+      <div className={styles.outputColumn}>
+        {company.OutputResources && company.OutputResources.length > 0 ? (
+          <div className={styles.resourceGroup}>
+            {company.OutputResources.map((r, i) => (
+              <div key={`output-${i}`} className={styles.resourceItem}>
+                <Icon src={r.Icon} className={styles.resourceIcon} />
+                <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : <div className={styles.emptyGroup}></div>}
+      </div>
+
+      {/* Maintenance Column */}
+      <div className={styles.maintenanceColumn}>
+        {company.MaintenanceResources && company.MaintenanceResources.length > 0 ? (
+          <div className={styles.resourceGroup}>
+            {company.MaintenanceResources.map((r, i) => (
+              <div key={`maint-${i}`} className={styles.resourceItem}>
+                <Icon src={r.Icon} className={styles.resourceIcon} />
+                <span className={styles.resourceAmount}>{formatNumber(r.Amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : <div className={styles.emptyGroup}></div>}
+      </div>
+
+      {/* Processing Column - Simplified */}
+      <Tooltip tooltip={processingTooltip}>
+        <div className={styles.processingColumn}>
+          {company.ProcessResources ? (
+            <div className={styles.processingWrapper}>
+              <div className={styles.processContainer}>
+                {inputResources.length > 0 ? (
+                  <div className={styles.resourceGroup}>
+                    {inputResources.map((r, i) => (
+                      <Icon key={`input-${i}`} src={r.resourceIcon} className={styles.resourceIcon} />
+                    ))}
+                  </div>
+                ) : <div className={styles.emptyGroup}></div>}
+
+                <div className={styles.divider}>→</div>
+
+                {outputResources.length > 0 ? (
+                  <div className={styles.resourceGroup}>
+                    {outputResources.map((r, i) => (
+                      <Icon key={`output-${i}`} src={r.resourceIcon} className={styles.resourceIcon} />
+                    ))}
+                  </div>
+                ) : <div className={styles.emptyGroup}></div>}
+              </div>
             </div>
-          ) : (
-            <Icon src={company.ResourceIcon} className={styles.resourceIcon} />
-          )}
+          ) : (translate("InfoLoomTwo.IndustrialCompanyPanel[None]", "None") || "None")}
         </div>
       </Tooltip>
-          
+
       {/* Efficiency Column */}
-      <Tooltip tooltip={<EfficiencyTooltip company={company} translate={translate} />}>
+      <Tooltip tooltip={efficiencyTooltip}>
         <div className={styles.efficiencyColumn}>
-          <span className={getEfficiencyClass(totalEfficiency)}>
-            {formatPercentage2(totalEfficiency)}
-          </span>
+          <span className={getEfficiencyClass(totalEfficiency)}>{formatPercentage2(totalEfficiency)}</span>
         </div>
       </Tooltip>
 
       {/* Profitability Column */}
-      <Tooltip tooltip={<ProfitabilityTooltip company={company} />}>
+      <Tooltip tooltip={profitabilityTooltip}>
         <div className={styles.profitabilityColumn}>
-          <span className={getProfitabilityClass(company.Profitability)}>
-            {formatPercentage2(company.Profitability)}
-          </span>
+          <span className={getProfitabilityClass(company.Profitability)}>{formatPercentage2(company.Profitability)}</span>
         </div>
       </Tooltip>
 
       {/* Location Column */}
       <div className={styles.locationColumn}>
-        <Button
-          variant={'icon'}
-          src={'Media/Game/Icons/MapMarker.svg'}
-          onSelect={() => focusEntity(company.EntityId)}
-          className={styles.magnifierIcon}
-        />
+        <Button variant={'icon'} src={'Media/Game/Icons/MapMarker.svg'} onSelect={() => focusEntity(company.EntityId)} className={styles.magnifierIcon} />
       </div>
     </div>
   );
@@ -421,8 +502,11 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
   const employeeSortingOptions = useValue(CommercialCompanyEmployee);
   const efficiencySortingOptions = useValue(CommercialCompanyEfficiency);
   const profitabilitySortingOptions = useValue(CommercialCompanyProfitability);
-  const resourceAmountSortingOptions = useValue(CommercialCompannyResourceAmount);
-  
+  const moneySortingOptions = useValue(CommercialMoneySorting);  
+  const input1SortingOptions = useValue(CommercialInput1Sorting);
+  const outputSortingOptions = useValue(CommercialOutputSorting);
+  const maintenanceSortingOptions = useValue(CommercialMaintenanceSorting);
+
   // Dynamic height calculation
   const calculateHeights = useCallback(() => {
     const wrapperElement = document.querySelector('.info-layout_BVk') as HTMLElement | null;
@@ -444,18 +528,11 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
     return () => observer.disconnect();
   }, [calculateHeights]);
 
-  // Improved memoization with dynamic height
-  const [visibleCompanies, maxListHeight] = useMemo(() => {
-    const bufferSize = 5;
-    const start = Math.max(0, visibleRange.startIndex - bufferSize);
-    const end = Math.min(companiesData.length, visibleRange.endIndex + bufferSize);
-    const companies = companiesData.slice(start, end);
-
-    // Calculate max height: reserve 250px for header, footer, and padding
+  // Simplified height calculation similar to IndustrialCompany.tsx
+  const maxListHeight = useMemo(() => {
     const calculatedHeight = Math.min(32 * companiesData.length, heightFull - 250);
-
-    return [companies, Math.max(200, calculatedHeight)]; // Minimum 200px
-  }, [companiesData, visibleRange.startIndex, visibleRange.endIndex, heightFull]);
+    return Math.max(200, calculatedHeight);
+  }, [companiesData.length, heightFull]);
 
   // Size provider using proper CSS units
   const sizeProvider = useUniformSizeProvider(useCssLength('32rem'), companiesData.length, 5);
@@ -467,18 +544,14 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
   const renderItem: RenderItemFn = useCallback(
     (itemIndex: number, indexInRange: number) => {
       if (itemIndex < 0 || itemIndex >= companiesData.length) return null;
-
-      const bufferSize = 5;
-      const adjustedIndex = itemIndex - Math.max(0, visibleRange.startIndex - bufferSize);
-
-      if (adjustedIndex < 0 || adjustedIndex >= visibleCompanies.length) return null;
-
-      return <CompanyRow key={`company-${itemIndex}`} company={visibleCompanies[adjustedIndex]} />;
+      const company = companiesData[itemIndex];
+      if (!company) return null;
+      return <CompanyRowWithTranslation key={`company-${itemIndex}`} company={company} />;
     },
-    [companiesData.length, visibleRange.startIndex, visibleCompanies]
+    [companiesData]
   );
 
-  // Early return for no data
+  // Early return for no data (use translate + fallback)
   if (!companiesData.length) {
     return (
       <Portal>
@@ -489,11 +562,11 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
           className={styles.panel}
           header={
             <div className={styles.header}>
-              <span className={styles.headerText}>Commercial Companies</span>
+              <span className={styles.headerText}>{translate("InfoLoomTwo.CommercialCompanyPanel[Title]", "Commercial Companies")}</span>
             </div>
           }
         >
-          <p className={styles.loadingText}>No Commercial Companies Found</p>
+          <p className={styles.loadingText}>{translate("InfoLoomTwo.CommercialCompanyPanel[NoCompanies]", "No Commercial Companies Found") || "No Commercial Companies Found"}</p>
         </Panel>
       </Portal>
     );
@@ -521,9 +594,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate("InfoLoomTwo.CommercialCompanyPanel[Name]", "Name")}
                 sortState={nameSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyNameSorting(CompanyNameEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyNameSorting(CompanyNameEnum.Descending);
-                  else SetCommercialCompanyNameSorting(CompanyNameEnum.Off);
+                  if (direction === 'asc') SetCommercialCompanyNameSorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialCompanyNameSorting(SortingEnum.Descending);
+                  else SetCommercialCompanyNameSorting(SortingEnum.Off);
                 }}
                 className={styles.nameColumn}
               />
@@ -532,9 +605,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate("InfoLoomTwo.CommercialCompanyPanel[ServiceUsage]", "Service Usage")}
                 sortState={serviceUsageSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyServiceUsage(ServiceUsageEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyServiceUsage(ServiceUsageEnum.Descending);
-                  else SetCommercialCompanyServiceUsage(ServiceUsageEnum.Off);
+                  if (direction === 'asc') SetCommercialCompanyServiceUsage(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialCompanyServiceUsage(SortingEnum.Descending);
+                  else SetCommercialCompanyServiceUsage(SortingEnum.Off);
                 }}
                 className={styles.serviceColumn}
               />
@@ -543,9 +616,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate("InfoLoomTwo.CommercialCompanyPanel[Employees]", "Employees")}
                 sortState={employeeSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyEmployee(EmployeesEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyEmployee(EmployeesEnum.Descending);
-                  else SetCommercialCompanyEmployee(EmployeesEnum.Off);
+                  if (direction === 'asc') SetCommercialCompanyEmployee(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialCompanyEmployee(SortingEnum.Descending);
+                  else SetCommercialCompanyEmployee(SortingEnum.Off);
                 }}
                 className={styles.employeeColumn}
               />
@@ -555,25 +628,60 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                   <b>{translate("InfoLoomTwo.CommercialCompanyPanel[Vehicles]", "Vehicles")}</b>
                 </div>
               </Tooltip>
+              <SortableHeader
+                title={translate("InfoLoomTwo.CommercialCompanyPanel[Money]", "Money")}
+                sortState={moneySortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetCommercialMoneySorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialMoneySorting(SortingEnum.Descending);
+                  else SetCommercialMoneySorting(SortingEnum.Off);
+                }}
+                className={styles.moneyColumn}
+              />
 
               <SortableHeader
-                title={translate("InfoLoomTwo.CommercialCompanyPanel[Resources]", "Resources")}
-                sortState={resourceAmountSortingOptions}
+                title={translate("InfoLoomTwo.CommercialCompanyPanel[Input1]", "Input")}
+                sortState={input1SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompannyResourceAmount(ResourceAmountEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompannyResourceAmount(ResourceAmountEnum.Descending);
-                  else SetCommercialCompannyResourceAmount(ResourceAmountEnum.Off);
+                  if (direction === 'asc') SetCommercialInput1Sorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialInput1Sorting(SortingEnum.Descending);
+                  else SetCommercialInput1Sorting(SortingEnum.Off);
                 }}
-                className={styles.resourcesColumn}
+                className={styles.input1Column}
               />
+              <SortableHeader
+                title={translate("InfoLoomTwo.CommercialCompanyPanel[Output]", "Output")}
+                sortState={outputSortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetCommercialOutputSorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialOutputSorting(SortingEnum.Descending);
+                  else SetCommercialOutputSorting(SortingEnum.Off);
+                }}
+                className={styles.outputColumn}
+              />
+              <SortableHeader
+                title={translate("InfoLoomTwo.CommercialCompanyPanel[Maintenance]", "Maintenance")}
+                sortState={maintenanceSortingOptions}
+                onSort={direction => {
+                  if (direction === 'asc') SetCommercialMaintenanceSorting(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialMaintenanceSorting(SortingEnum.Descending);
+                  else SetCommercialMaintenanceSorting(SortingEnum.Off);
+                }}
+                className={styles.maintenanceColumn}
+              />
+              <Tooltip tooltip={translate("InfoLoomTwo.IndustrialCompanyPanel[ProcessingTooltip]", "Input and output resources processed by this company in the production chain") || "Input/output resources processed by this industrial company"}>
+                <div className={`${styles.headerCell} ${styles.processingColumn}`}>
+                  <b>{translate("InfoLoomTwo.IndustrialCompanyPanel[Processing]", "Processing") || "Processing"}</b>
+                </div>
+              </Tooltip>
 
               <SortableHeader
                 title={translate("InfoLoomTwo.CommercialCompanyPanel[Efficiency]", "Efficiency")}
                 sortState={efficiencySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyEfficiency(EfficiencyEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyEfficiency(EfficiencyEnum.Descending);
-                  else SetCommercialCompanyEfficiency(EfficiencyEnum.Off);
+                  if (direction === 'asc') SetCommercialCompanyEfficiency(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialCompanyEfficiency(SortingEnum.Descending);
+                  else SetCommercialCompanyEfficiency(SortingEnum.Off);
                 }}
                 className={styles.efficiencyColumn}
               />
@@ -582,9 +690,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate("InfoLoomTwo.CommercialCompanyPanel[Profitability]", "Profitability")}
                 sortState={profitabilitySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyProfitability(ProfitabilityEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyProfitability(ProfitabilityEnum.Descending);
-                  else SetCommercialCompanyProfitability(ProfitabilityEnum.Off);
+                  if (direction === 'asc') SetCommercialCompanyProfitability(SortingEnum.Ascending);
+                  else if (direction === 'desc') SetCommercialCompanyProfitability(SortingEnum.Descending);
+                  else SetCommercialCompanyProfitability(SortingEnum.Off);
                 }}
                 className={styles.profitabilityColumn}
               />

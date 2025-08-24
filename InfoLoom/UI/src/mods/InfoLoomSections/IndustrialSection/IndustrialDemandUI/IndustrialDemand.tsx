@@ -169,7 +169,6 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
             <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[TaxRateTooltip]", "Average tax rate across all resource types. Higher taxes reduce company demand. 10% is neutral.")}>
               <p>{translate("InfoLoomTwo.IndustrialPanel[TaxRate]", "AVERAGE TAX RATE")}</p>
             </Tooltip>
-            <p style={{ fontSize: '80%' }}>{translate("InfoLoomTwo.IndustrialPanel[TaxRateNeutral]", "10% is the neutral rate")}</p>
           </div>
           <div className={`row_S2v ${data[2] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
             {(data[2] / 10).toFixed(1)} %
@@ -186,7 +185,6 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
             <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[LocalDemandTooltip]", "Production capacity compared to local demand. 100% means production equals demand. Higher values indicate overproduction.")}>
               <p>{translate("InfoLoomTwo.IndustrialPanel[LocalDemand]", "LOCAL DEMAND (ind)")}</p>
             </Tooltip>
-            <p style={{ fontSize: '80%' }}>{translate("InfoLoomTwo.IndustrialPanel[LocalDemandNeutral]", "100% when production = demand")}</p>
           </div>
           <div className={`row_S2v ${data[3] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
             {data[3]} %
@@ -198,7 +196,6 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
             <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[InputUtilizationTooltip]", "How well input resources are being utilized by manufacturing. 110% is neutral, values capped at 400%.")}>
               <p>{translate("InfoLoomTwo.IndustrialPanel[InputUtilization]", "INPUT UTILIZATION (ind)")}</p>
             </Tooltip>
-            <p style={{ fontSize: '80%' }}>{translate("InfoLoomTwo.IndustrialPanel[InputUtilizationNeutral]", "110% is the neutral ratio, capped at 400%")}</p>
           </div>
           <div className={`row_S2v ${data[7] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
             {data[7]} %
@@ -212,7 +209,6 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
             <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacityTooltip]", "Ratio of current employees to maximum employee capacity. 72% industrial and 75% office are neutral ratios.")}>
               <p>{translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacity]", "EMPLOYEE CAPACITY RATIO")}</p>
             </Tooltip>
-            <p style={{ fontSize: '80%' }}>{translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacityNeutral]", "72% is the neutral ratio")}</p>
           </div>
           <div className={`row_S2v ${data[4] < 720 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
             {(data[4] / 10).toFixed(1)} %

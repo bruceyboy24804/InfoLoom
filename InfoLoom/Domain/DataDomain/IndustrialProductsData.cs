@@ -13,5 +13,6 @@ namespace InfoLoomTwo.Domain
         public int CapPerCompany;
         public int WrkPercent;
         public int TaxFactor;
+        public int Consumption;
     }
 }

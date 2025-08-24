@@ -1,6 +1,6 @@
 namespace InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums
 {
-    public enum MaintenanceEnum1
+    public enum SortingEnum
     {
         Off = 0,
         Ascending = 1,

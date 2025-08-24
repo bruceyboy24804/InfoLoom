@@ -156,11 +156,29 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 break;
                             case CitizenAge.Elderly:
                                 info.ElderlyCount++;
+                                info.Retired++;
                                 break;
                         }
-
-                        bool isActuallyStudent = false;
-                        if (isStudent && chunk.Has(ref m_StudentType))
+                        switch (value.GetEducationLevel())
+                        {
+                            case 0:
+                                info.Uneducated++;
+                                break;
+                            case 1:
+                                info.PoorlyEducated++;
+                                break;
+                            case 2:
+                                info.Educated++;
+                                break;
+                            case 3:
+                                info.WellEducated++;
+                                break;
+                            case 4:
+                                info.HighlyEducated++;
+                                break;
+                        }
+                        
+                        if (isStudent)
                         {
                             for (int j = 0; j < studentArray.Length; j++)
                             {
@@ -168,11 +186,12 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 if (entities[i].Index == entities[j].Index)
                                 {
                                     m_Totals[(int)Totals.Students]++;
-                                    isActuallyStudent = true;
                                     byte level = studentArray[j].m_Level;
                                     switch (level)
                                     {
-                                        case 1: info.School1++; break;
+                                        case 1: info.School1++; 
+                                            
+                                            break;
                                         case 2: info.School2++; break;
                                         case 3: info.School3++; break;
                                         case 4: info.School4++; break;
@@ -181,39 +200,28 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 }
                             }
                         }
-
-                        bool isActuallyWorker = false;
-                        if (isWorker && chunk.Has(ref m_WorkerType))
+                        bool isCitizenWorker = false;
+                        if (isWorker)
                         {
                             for (int j = 0; j < workerArray.Length; j++)
                             {
-                                // Find matching entity in worker array
-                                if (entities[i].Index == entities[j].Index)
-                                {
-                                    m_Totals[(int)Totals.Workers]++;
-                                    info.Work++;
-                                    isActuallyWorker = true;
-                                    break;
-                                }
+                                isCitizenWorker = true;
+                                m_Totals[(int)Totals.Workers]++;
+                                info.Work++;
+                                break;
                             }
                         }
-
-                        if (!isActuallyStudent && !isActuallyWorker)
+                        if (!isCitizenWorker)
                         {
-                            if (age == CitizenAge.Elderly)
-                            {
-                                info.Retired++;
-                            }
-                            else
-                            {
-                                info.Unemployed++;
-                            }
+                            info.Unemployed++;
                         }
                         
-                            if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
-                                m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
-                            m_Results[ageInDays] = info;
-                            continue; 
+                        
+                        
+                        if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
+                            m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
+                        m_Results[ageInDays] = info;
+                        continue; 
                     }
                 }
             }
