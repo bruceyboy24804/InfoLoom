@@ -22,7 +22,6 @@ using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
-using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.IndustrialCompanyDomain;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
@@ -117,7 +116,6 @@ namespace InfoLoomTwo.Systems
         private CommercialCompanyDataSystem m_CommercialCompanyDataSystem;
         private CameraUpdateSystem m_CameraUpdateSystem;
         private Demographics m_Demographics;
-        private DistrictDataSystem m_DistrictDataSystem;
         private IndustrialSystem m_IndustrialSystem;
         private IndustrialProductsSystem m_IndustrialProductsSystem;
         private IndustrialCompanySystem m_IndustrialCompanySystem;
@@ -257,7 +255,6 @@ namespace InfoLoomTwo.Systems
             m_CommercialDemandSystem = base.World.GetOrCreateSystemManaged<CommercialDemandSystem>();
             m_IndustrialDemandSystem = base.World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
             m_CommercialCompanyDataSystem = base.World.GetOrCreateSystemManaged<CommercialCompanyDataSystem>();
-            m_DistrictDataSystem = base.World.GetOrCreateSystemManaged<DistrictDataSystem>();
             m_CommercialSystem = base.World.GetOrCreateSystemManaged<CommercialSystem>();
             m_CommercialProductsSystem = base.World.GetOrCreateSystemManaged<CommercialProductsSystem>();
             m_Demographics = base.World.GetOrCreateSystemManaged<Demographics>();
@@ -490,10 +487,6 @@ namespace InfoLoomTwo.Systems
                         Free = d.Free,
                         Companies = d.Companies,
                         Workers = d.Workers,
-                        SvcFactor = d.SvcFactor,
-                        SvcPercent = d.SvcPercent,
-                        ResourceNeedPercent = d.ResourceNeedPercent,
-                        ResourceNeedPerCompany = d.ResourceNeedPerCompany,
                         WrkPercent = d.WrkPercent,
                         TaxFactor = d.TaxFactor,
                         CurrentTourists = d.CurrentTourists,
@@ -514,10 +507,6 @@ namespace InfoLoomTwo.Systems
                             Free = 0,
                             Companies = 0,
                             Workers = 0,
-                            SvcFactor = 0,
-                            SvcPercent = 0,
-                            ResourceNeedPercent = 0,
-                            ResourceNeedPerCompany = 0,
                             WrkPercent = 0,
                             TaxFactor = 0,
                             CurrentTourists = 0,
@@ -668,11 +657,8 @@ namespace InfoLoomTwo.Systems
                         Free = d.Free,
                         Companies = d.Companies,
                         Workers = d.Workers,
-                        SvcPercent = d.SvcPercent,
                         WrkPercent = d.WrkPercent,
                         TaxFactor = d.TaxFactor,
-                        CapPercent = d.CapPercent,
-                        CapPerCompany = d.CapPerCompany,
                     }).ToArray();
                 if (m_IndustrialProductBinding.Value.Length == 0 && IndustrialProductsSystem.m_DemandData.Length > 0)
                 {
@@ -686,9 +672,6 @@ namespace InfoLoomTwo.Systems
                             Free = 0,
                             Companies = 0,
                             Workers = 0,
-                            SvcPercent = 0,
-                            CapPercent = 0,
-                            CapPerCompany = 0,
                             WrkPercent = 0,
                             TaxFactor = 0,
                         }
@@ -806,10 +789,6 @@ namespace InfoLoomTwo.Systems
                         Free = d.Free,
                         Companies = d.Companies,
                         Workers = d.Workers,
-                        SvcFactor = d.SvcFactor,
-                        SvcPercent = d.SvcPercent,
-                        ResourceNeedPercent = d.ResourceNeedPercent,
-                        ResourceNeedPerCompany = d.ResourceNeedPerCompany,
                         WrkPercent = d.WrkPercent,
                         TaxFactor = d.TaxFactor,
                         CurrentTourists = d.CurrentTourists,
@@ -873,11 +852,8 @@ namespace InfoLoomTwo.Systems
                         Free = d.Free,
                         Companies = d.Companies,
                         Workers = d.Workers,
-                        SvcPercent = d.SvcPercent,
                         WrkPercent = d.WrkPercent,
                         TaxFactor = d.TaxFactor,
-                        CapPercent = d.CapPercent,
-                        CapPerCompany = d.CapPerCompany,
                     }).ToArray();
             }
         }

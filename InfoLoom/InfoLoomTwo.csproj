@@ -23,7 +23,6 @@
 	  <Compile Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
 	  <EmbeddedResource Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
 	  <None Remove="UI\src\mods\InfoloomInfoviewContents\InfomodeItem\**" />
-	  <Compile Remove="Setting.cs" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Patches\CommercialDemandSystem.cs" />

@@ -25,6 +25,7 @@ namespace InfoLoomTwo.Domain.DataDomain
         public int WellEducated { get; set; }
         public int HighlyEducated { get; set; }
         
+        public int ChildOrTeenWithNoSchool { get; set; }
         
         
 
@@ -48,6 +49,7 @@ namespace InfoLoomTwo.Domain.DataDomain
             Educated = 0;
             WellEducated = 0;
             HighlyEducated = 0;
+            ChildOrTeenWithNoSchool = 0;
             
         }
     }

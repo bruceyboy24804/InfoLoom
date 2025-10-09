@@ -45,7 +45,18 @@ interface AgeRange {
   max: number;
 }
 
-
+enum Totals{
+  AllCitizens, // 0 - num citizens in the city 0 = 1+2+3
+  Locals, // 1 - num locals
+  Tourists, // 2 - num tourists
+  Commuters, // 3 - num commuters
+  Students, // 4 - num students (in locals) 4 <= 1
+  Workers, // 5 - num workers (in locals) 5 <= 1
+  OldestCitizenAge, // 6 - oldest cim
+  MovingAways, // 7 - moving aways
+  DeadCitizens, // 8 - dead cims
+  HomelessCitizens // 9 - homeless citizens (will now be set from CountHouseholdDataSystem)
+}
 /** Utility to generate AgeRange[] for grouping. */
 function generateRanges(step: number): AgeRange[] {
   const ranges: AgeRange[] = [];
@@ -144,6 +155,7 @@ const DemographicsChart = memo(({
     educated: string;
     wellEducated: string;
     highlyEducated: string;
+    childOrTeenWithNoSchool: string;
   };
   lifecycleLabels?: string[]; // <-- add this prop
 }): JSX.Element => {
@@ -168,6 +180,7 @@ const DemographicsChart = memo(({
     Educated: '#368A2E',
     WellEducated: '#B981C0',
     HighlyEducated: '#5796D1',
+    ChildOrTeenWithNoSchool: '#ff5e00ff',
   };
 
   // Build chart data from StructureDetails based on groupingStrategy and chartSwitch
@@ -218,6 +231,7 @@ const DemographicsChart = memo(({
         educated: { label: legendLabels.educated, data: age_range.map(age => get_value('Educated', age)), backgroundColor: chartColors.Educated },
         wellEducated: { label: legendLabels.wellEducated, data: age_range.map(age => get_value('WellEducated', age)), backgroundColor: chartColors.WellEducated },
         highlyEducated: { label: legendLabels.highlyEducated, data: age_range.map(age => get_value('HighlyEducated', age)), backgroundColor: chartColors.HighlyEducated },
+        childOrTeenWithNoSchool: { label: legendLabels.childOrTeenWithNoSchool, data: age_range.map(age => get_value('ChildOrTeenWithNoSchool', age)), backgroundColor: chartColors.ChildOrTeenWithNoSchool },
       };
 
       if (chartSwitch === DemographicsType.Employment) {
@@ -229,6 +243,7 @@ const DemographicsChart = memo(({
           allSeries.university,
           allSeries.retired,
           allSeries.unemployed,
+          allSeries.childOrTeenWithNoSchool,
         ];
       } else {
         datasets = [
@@ -251,6 +266,7 @@ const DemographicsChart = memo(({
         university: 0,
         Unemployed: 0,
         Retired: 0,
+        ChildOrTeenWithNoSchool: 0,
         Uneducated: 0,
         PoorlyEducated: 0,
         Educated: 0,
@@ -269,6 +285,7 @@ const DemographicsChart = memo(({
     groups[idx].university += d.School4;
     groups[idx].Unemployed += d.Unemployed;
     groups[idx].Retired += d.Retired;
+    groups[idx].ChildOrTeenWithNoSchool += d.ChildOrTeenWithNoSchool;
 
     groups[idx].Uneducated += d.Uneducated;
     groups[idx].PoorlyEducated += d.PoorlyEducated;
@@ -292,6 +309,7 @@ const DemographicsChart = memo(({
         retired: { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
         unemployed: { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
         uneducated: { label: legendLabels.uneducated, data: groups.map(g => g.Uneducated), backgroundColor: chartColors.Uneducated },
+        childOrTeenWithNoSchool: { label: legendLabels.childOrTeenWithNoSchool, data: groups.map(g => g.ChildOrTeenWithNoSchool), backgroundColor: chartColors.ChildOrTeenWithNoSchool },
       };
 
       // For lifecycle we prefer explicit selection as above
@@ -304,6 +322,7 @@ const DemographicsChart = memo(({
           allSeries.university,
           allSeries.retired,
           allSeries.unemployed,
+          allSeries.childOrTeenWithNoSchool
         ];
       } else {
         // Build education series from groups
@@ -318,7 +337,7 @@ const DemographicsChart = memo(({
     } else {
       // Handle 5-year and 10-year grouping
       const step = groupingStrategy === GroupingStrategy.FiveYear ? 5 : 10;
-      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; Retired: number; Unemployed: number; Uneducated: number; PoorlyEducated: number; Educated: number; WellEducated: number; HighlyEducated: number; }[] = [];
+      const groups: { label: string; work: number; elementary: number; highSchool: number; college: number; university: number; Retired: number; Unemployed: number; Uneducated: number; PoorlyEducated: number; Educated: number; WellEducated: number; HighlyEducated: number; ChildOrTeenWithNoSchool: number; }[] = [];
       for (let i = 0; i < 120; i += step) {
         groups.push({
           label: `${i}-${i + step}`,
@@ -333,7 +352,8 @@ const DemographicsChart = memo(({
           PoorlyEducated: 0,
           Educated: 0,
           WellEducated: 0,
-          HighlyEducated: 0
+          HighlyEducated: 0,
+          ChildOrTeenWithNoSchool: 0
         });
       }
       
@@ -353,6 +373,7 @@ const DemographicsChart = memo(({
           groups[idx].Educated += d.Educated;
           groups[idx].WellEducated += d.WellEducated;
           groups[idx].HighlyEducated += d.HighlyEducated;
+          groups[idx].ChildOrTeenWithNoSchool += d.ChildOrTeenWithNoSchool;
         }
       });
 
@@ -367,6 +388,7 @@ const DemographicsChart = memo(({
           { label: legendLabels.university, data: groups.map(g => g.university), backgroundColor: chartColors.university },
           { label: legendLabels.retired, data: groups.map(g => g.Retired), backgroundColor: chartColors.Retired },
           { label: legendLabels.unemployed, data: groups.map(g => g.Unemployed), backgroundColor: chartColors.Unemployed },
+          { label: legendLabels.childOrTeenWithNoSchool, data: groups.map(g => g.ChildOrTeenWithNoSchool), backgroundColor: chartColors.ChildOrTeenWithNoSchool },
         ];
       } else {
         datasets = [
@@ -746,24 +768,24 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
           {demoStatsToggledOn && (
               <div className={styles.statisticsContainer}>
                 <div className={`${styles.statisticsColumn} ${styles.left}`}>
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem1]', "All Citizens")} right={demographicsDataStructureTotals[0]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem1]', "All Citizens")} right={demographicsDataStructureTotals[Totals.AllCitizens]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem2]', "- Tourists")} right={demographicsDataStructureTotals[2]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem2]', "- Tourists")} right={demographicsDataStructureTotals[Totals.Tourists]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem3]', "- Commuters")} right={demographicsDataStructureTotals[3]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem3]', "- Commuters")} right={demographicsDataStructureTotals[Totals.Commuters]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem4]', "- Moving Away")} right={demographicsDataStructureTotals[7]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem4]', "- Moving Away")} right={demographicsDataStructureTotals[Totals.MovingAways]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem5]', "Population")} right={demographicsDataStructureTotals[1]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem5]', "Population")} right={demographicsDataStructureTotals[Totals.Locals]} />
                 </div>
                 <div className={`${styles.statisticsColumn} ${styles.right}`}>
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem6]', "Dead")} right={demographicsDataStructureTotals[8]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem6]', "Dead")} right={demographicsDataStructureTotals[Totals.DeadCitizens]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem7]', "Students")} right={demographicsDataStructureTotals[4]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem7]', "Students")} right={demographicsDataStructureTotals[Totals.Students]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem8]', "Workers")} right={demographicsDataStructureTotals[5]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem8]', "Workers")} right={demographicsDataStructureTotals[Totals.Workers]} />
                   <div className={styles.spacer} />
-                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem9]', "Homeless")} right={demographicsDataStructureTotals[9]} />
+                  <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem9]', "Homeless")} right={demographicsDataStructureTotals[Totals.HomelessCitizens]} />
                   <div className={styles.spacer} />
                   <AlignedParagraph left={translate('InfoLoomTwo.DemographicsPanel[StatItem10]', "Oldest Citizen")} right={demographicsDataOldestCitizen} />
                 </div>
@@ -802,6 +824,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
                     educated: translate('InfoLoomTwo.DemographicsPanel[LegendItem10]', 'Educated') || 'Educated',
                     wellEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem11]', 'Well Educated') || 'Well Educated',
                     highlyEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem12]', 'Highly Educated') || 'Highly Educated',
+                    childOrTeenWithNoSchool: translate('InfoLoomTwo.DemographicsPanel[LegendItem13]', 'Child/Teen with No School') || 'Child/Teen with No School'
                   }}
                   lifecycleLabels={lifecycleLabels}
               />

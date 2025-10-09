@@ -1,6 +1,6 @@
 import React from 'react';
 import { useValue } from 'cs2/api';
-import { DraggablePanelProps, PanelProps, Panel, Tooltip } from 'cs2/ui';
+import { DraggablePanelProps, PanelProps, Panel, Tooltip, Scrollable } from 'cs2/ui';
 import { CommercialData, CommercialDataExRes } from '../../../bindings';
 import styles from './CommercialDemand.module.scss';
 import { useLocalization } from 'cs2/l10n';
@@ -243,7 +243,7 @@ interface ColumnExcludedResourcesProps {
 
 const ColumnExcludedResources = ({ resources, noDemandForLabel, excludedResourcesTooltip }: ColumnExcludedResourcesProps): JSX.Element => {
   return (
-    <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray' }}>
+    <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray', display: 'flex', flexDirection: 'column' }}>
       <Tooltip tooltip={excludedResourcesTooltip}>
         <div className="labels_L7Q row_S2v">
           <div className="row_S2v" style={{ width: '100%' }}>
@@ -251,13 +251,15 @@ const ColumnExcludedResources = ({ resources, noDemandForLabel, excludedResource
           </div>
         </div>
       </Tooltip>
-      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-        {resources.map((item, index) => (
-          <li key={index}>
-            <div className="row_S2v small_ExK">{item}</div>
-          </li>
-        ))}
-      </ul>
+      <Scrollable vertical={true} style={{ maxHeight: '280rem', flex: 1 }}>
+        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          {resources.map((item, index) => (
+            <li key={index}>
+              <div className="row_S2v small_ExK">{item}</div>
+            </li>
+          ))}
+        </ul>
+      </Scrollable>
     </div>
   );
 };
@@ -286,7 +288,7 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
   const educatedTooltip = translate("InfoLoomTwo.CommercialDemandPanel[EducatedWorkforceTooltip]", "Number of educated citizens (high school or higher) available for work.");
   const uneducatedLabel = translate("InfoLoomTwo.CommercialDemandPanel[Uneducated]", "Uneducated");
   const uneducatedTooltip = translate("InfoLoomTwo.CommercialDemandPanel[UneducatedWorkforceTooltip]", "Number of uneducated citizens available for work.");
-  const noDemandForLabel = translate("InfoLoomTwo.CommercialDemandPanel[NoDemandFor]", "NO DEMAND FOR");
+  const noDemandForLabel = translate("InfoLoomTwo.CommercialDemandPanel[NoDemandFor]", "DEMAND FOR");
   const excludedResourcesTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ExcludedResourcesTooltip]", "Resources that currently have no commercial demand in your city. This may be due to oversupply, lack of customers, or economic factors.");
   
   return (

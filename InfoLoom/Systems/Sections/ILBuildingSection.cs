@@ -11,6 +11,7 @@ using Game.Companies;
 using Game.Economy;
 using Game.Prefabs;
 using Game.Rendering;
+using Game.Simulation;
 using Game.UI;
 using Game.UI.InGame;
 using Game.Vehicles;
@@ -20,6 +21,7 @@ using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 using DeliveryTruck = Game.Prefabs.DeliveryTruck;
 
 namespace InfoLoomTwo.Systems.Sections
@@ -29,372 +31,450 @@ namespace InfoLoomTwo.Systems.Sections
         public Resource Resource { get; set; }
         public float BuyCost { get; set; }
         public float SellCost { get; set; }
-        
-        
     }
+
     public partial class ILBuildingSection : ExtendedInfoSectionBase
     {
-        protected override string group => nameof(ILBuildingSection);
-        private bool isCompany { get; set; }
+        // Private fields following naming conventions
+        private Entity _BuildingEntity;
+        private Entity _CompanyEntity;
+        private Entity _TradePartnerEntity;
+
+        private int _EmployeeCount;
+        private int _MaxEmployees;
+        private int _OvereducatedEmployees;
+        private int _CommuterEmployees;
+        private Resource _Resource;
+        private int _ResourceAmount;
+        private float _TransportCost;
+        private bool _IsStorageTransfer;
+        private Entity _CostPayer;
+        private float _MeanInputTripLength;
+        private Entity _VehicleTarget;
+        private DeliveryTruckFlags _TruckState;
+        private Resource _Input1;
+        private Resource _Input2;
+        private Resource _Output;
+
+        private List<TradeCostData> _TradeCosts;
+        private EmploymentData _EducationDataEmployees;
+        private EmploymentData _EducationDataWorkplaces;
+
+        // Systems
         private CameraUpdateSystem m_CameraUpdateSystem;
-        private ValueBinding<Entity> m_CameraBinding;
-        public Entity tradePartnerName;
-        public Resource resource;
-        public int resourceAmount;
-        public int employeeCount;
-        public int maxEmployees;
-        public int overeductedEmployees;
-        public int commuterEmployees;
-        public float transportCost;
-        private NameSystem m_NameSystem;
         private PrefabSystem m_PrefabSystem;
         private ResourceSystem m_ResourceSystem;
-        public List<TradeCostData> TradeCosts { get; set; } = new List<TradeCostData>();
-        public EmploymentData educationDataEmployees { get; set; }
-        public EmploymentData educationDataWorkplaces { get; set; }
+
+        // Tracking dictionaries
+        private Dictionary<int, int> m_OvereducatedByEducationLevel;
+        private Dictionary<int, int> m_CommuterByEducationLevel;
+        private Dictionary<int, Dictionary<int, int>> m_OvereducatedByWorkplaceAndEducationLevel;
+        private Dictionary<int, Dictionary<int, int>> m_CommuterByWorkplaceAndEducationLevel;
+
+        protected override string group => nameof(ILBuildingSection);
+
         protected override void OnCreate()
         {
             base.OnCreate();
             m_InfoUISystem.AddMiddleSection(this);
-            m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
+
+            // Initialize systems
             m_CameraUpdateSystem = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<CameraUpdateSystem>();
-            AddBinding(new TriggerBinding<Entity>(group, "GoTo", NavigateTo));
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_ResourceSystem = World.GetOrCreateSystemManaged<ResourceSystem>();
-        }
 
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
+            // Initialize collections
+            _TradeCosts = new List<TradeCostData>();
+            m_OvereducatedByEducationLevel = new Dictionary<int, int>();
+            m_CommuterByEducationLevel = new Dictionary<int, int>();
+            m_OvereducatedByWorkplaceAndEducationLevel = new Dictionary<int, Dictionary<int, int>>();
+            m_CommuterByWorkplaceAndEducationLevel = new Dictionary<int, Dictionary<int, int>>();
+
+            AddBinding(new TriggerBinding<Entity>(group, "GoTo", NavigateTo));
         }
 
         protected override void Reset()
         {
-            employeeCount = 0;
-            maxEmployees = 0;
-            overeductedEmployees = 0;
-            commuterEmployees = 0;
-            resourceAmount = 0;
-            transportCost = 0f;
-            tradePartnerName = Entity.Null;
-            educationDataEmployees = default(EmploymentData);
-            educationDataWorkplaces = default(EmploymentData);
-            TradeCosts.Clear();
+            _BuildingEntity = Entity.Null;
+            _CompanyEntity = Entity.Null;
+            _TradePartnerEntity = Entity.Null;
+
+            _EmployeeCount = 0;
+            _MaxEmployees = 0;
+            _OvereducatedEmployees = 0;
+            _CommuterEmployees = 0;
+            _Resource = Resource.NoResource;
+            _ResourceAmount = 0;
+            _TransportCost = 0f;
+            _IsStorageTransfer = false;
+            _CostPayer = Entity.Null;
+            _MeanInputTripLength = 0f;
+            _VehicleTarget = Entity.Null;
+            _TruckState = (DeliveryTruckFlags)0;
+            _Input1 = Resource.NoResource;
+            _Input2 = Resource.NoResource;
+            _Output = Resource.NoResource;
+
+            _TradeCosts.Clear();
+            _EducationDataEmployees = default(EmploymentData);
+            _EducationDataWorkplaces = default(EmploymentData);
+
+            m_OvereducatedByEducationLevel.Clear();
+            m_CommuterByEducationLevel.Clear();
+            m_OvereducatedByWorkplaceAndEducationLevel.Clear();
+            m_CommuterByWorkplaceAndEducationLevel.Clear();
+        }
+
+        private bool Visible()
+        {
+            _BuildingEntity = selectedEntity;
+            return HasEmployees(_BuildingEntity, selectedPrefab) && !Mod.setting.hideBuildingSection;;
         }
 
         protected override void OnUpdate()
         {
-	        visible = Visible();
-	        if (visible)
-            {
-                TradeCosts.Clear(); // Move this outside the loop
-                
-                if (EntityManager.HasComponent<Renter>(selectedEntity))
-                {
-                    if (EntityManager.TryGetBuffer<Renter>(selectedEntity, isReadOnly: true, out var renterBuffer))
-                        if (renterBuffer.Length > 0)
-                        {
-                            for (int i = 0; i < renterBuffer.Length; i++)
-                            {
-                                var companyEntity = renterBuffer[i].m_Renter;
-                                
-                                // Get trade partner
-                                if (EntityManager.HasComponent<BuyingCompany>(companyEntity))
-                                {
-                                    var buyingCompany = EntityManager.GetComponentData<BuyingCompany>(companyEntity);
-                                    tradePartnerName = buyingCompany.m_LastTradePartner;
-                                }
-                                
-                                // Process vehicles
-                                if (EntityManager.HasComponent<OwnedVehicle>(companyEntity))
-                                {
-                                    if (EntityManager.TryGetBuffer<OwnedVehicle>(companyEntity, isReadOnly: true, out var vehicleBuffer))
-                                    {
-                                        foreach (var ownedVehicle in vehicleBuffer)
-                                        {
-                                            var vehicleEntity = ownedVehicle.m_Vehicle;
-                                            if (EntityManager.HasComponent<Game.Vehicles.DeliveryTruck>(vehicleEntity))
-                                            {
-                                                var deliveryTruck = EntityManager.GetComponentData<Game.Vehicles.DeliveryTruck>(vehicleEntity);
-                                                
-                                                // Set resource from delivery truck
-                                                resource = deliveryTruck.m_Resource;
-                                                resourceAmount = deliveryTruck.m_Amount;
-                                                
-                                                float distance = 0f;
-                                                if (EntityManager.HasComponent<Game.Pathfind.PathInformation>(vehicleEntity))
-                                                {
-                                                    var pathInfo = EntityManager.GetComponentData<Game.Pathfind.PathInformation>(vehicleEntity);
-                                                    distance = pathInfo.m_Distance;
-                                                }
-                                                
-                                                ResourcePrefabs resourcePrefabs = m_ResourceSystem.GetPrefabs();
-                                                float weight = EconomyUtils.GetWeight(EntityManager, resource, resourcePrefabs);
-                                                transportCost = EconomyUtils.GetTransportCost(distance, resourceAmount, weight, StorageTransferFlags.Car);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            
-                                // Add trade costs (don't clear here)
-                                if (EntityManager.HasComponent<TradeCost>(companyEntity))
-                                {
-                                    if (EntityManager.TryGetBuffer<TradeCost>(companyEntity, isReadOnly: true, out var tradeCostBuffer))
-                                    {
-                                        for (int j = 0; j < tradeCostBuffer.Length; j++)
-                                        {
-                                            var tradeCost = tradeCostBuffer[j];
-                                            TradeCosts.Add(new TradeCostData
-                                            {
-                                                Resource = tradeCost.m_Resource,
-                                                BuyCost = tradeCost.m_BuyCost,
-                                                SellCost = tradeCost.m_SellCost
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                }
-                AddEmployees();
-                visible = maxEmployees > 0;
-            }
-	        
+            visible = Visible();
         }
-        private Dictionary<int, int> overeducatedByEducationLevel = new();
-        private Dictionary<int, int> commuterByEducationLevel = new();
-        private Dictionary<int, Dictionary<int, int>> overeducatedByWorkplaceAndEducationLevel = new();
-        private Dictionary<int, Dictionary<int, int>> commuterByWorkplaceAndEducationLevel = new();
 
         protected override void OnProcess()
         {
-            overeducatedByEducationLevel.Clear();
-            commuterByEducationLevel.Clear();
-            overeducatedByWorkplaceAndEducationLevel.Clear();
-            commuterByWorkplaceAndEducationLevel.Clear();
+            if (!visible) return;
 
-            if (EntityManager.TryGetBuffer<Renter>(selectedEntity, isReadOnly: true, out var renterBuffer))
+            ProcessCompanyData();
+            ProcessEmploymentData();
+        }
+
+        private void ProcessCompanyData()
+        {
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            if (!renterLookup.TryGetBuffer(_BuildingEntity, out var renterBuffer)) return;
+
+            for (int i = 0; i < renterBuffer.Length; i++)
             {
-                for (int renterIndex = 0; renterIndex < renterBuffer.Length; renterIndex++)
+                _CompanyEntity = renterBuffer[i].m_Renter;
+
+                ProcessCompanyInputsOutputs();
+                ProcessTradePartner();
+                ProcessVehicleData();
+                ProcessTradeCosts();
+            }
+        }
+
+        private void ProcessCompanyInputsOutputs()
+        {
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+            var processDataLookup = SystemAPI.GetComponentLookup<IndustrialProcessData>(isReadOnly: true);
+
+            if (!prefabRefLookup.TryGetComponent(_CompanyEntity, out var prefabRef)) return;
+
+            if (processDataLookup.TryGetComponent(prefabRef.m_Prefab, out var processData))
+            {
+                _Input1 = processData.m_Input1.m_Resource;
+                _Input2 = processData.m_Input2.m_Resource;
+                _Output = processData.m_Output.m_Resource;
+            }
+        }
+
+        private void ProcessTradePartner()
+        {
+            var buyingCompanyLookup = SystemAPI.GetComponentLookup<BuyingCompany>(isReadOnly: true);
+            
+            if (buyingCompanyLookup.TryGetComponent(_CompanyEntity, out var buyingCompany))
+            {
+                _TradePartnerEntity = buyingCompany.m_LastTradePartner;
+                _MeanInputTripLength = buyingCompany.m_MeanInputTripLength;
+            }
+        }
+
+        private void ProcessVehicleData()
+        {
+            
+            var vehicleLookup = SystemAPI.GetBufferLookup<OwnedVehicle>(isReadOnly: true);
+            var deliveryTruckLookup = SystemAPI.GetComponentLookup<Game.Vehicles.DeliveryTruck>(isReadOnly: true);
+
+            if (!vehicleLookup.TryGetBuffer(_CompanyEntity, out var vehicleBuffer)) return;
+
+            for (int i = 0; i < vehicleBuffer.Length; i++)
+            {
+                var vehicleEntity = vehicleBuffer[i].m_Vehicle;
+
+                if (deliveryTruckLookup.TryGetComponent(vehicleEntity, out var deliveryTruck))
                 {
-                    var companyEntity = renterBuffer[renterIndex].m_Renter;
+                    _Resource = deliveryTruck.m_Resource;
+                    _ResourceAmount = deliveryTruck.m_Amount;
+                    _TruckState = deliveryTruck.m_State;
+                    _IsStorageTransfer = (deliveryTruck.m_State & DeliveryTruckFlags.StorageTransfer) != 0;
+                    _CostPayer = _CompanyEntity;
 
-                    if (EntityManager.TryGetBuffer<Employee>(companyEntity, isReadOnly: true, out var employeeBuffer))
-                    {
-                        for (int i = 0; i < employeeBuffer.Length; i++)
-                        {
-                            var employee = employeeBuffer[i];
-                            var workerEntity = employee.m_Worker;
-
-                            if (EntityManager.TryGetComponent<Worker>(workerEntity, out var worker) &&
-                                EntityManager.TryGetComponent<Citizen>(workerEntity, out var citizen))
-                            {
-                                int educationLevel = citizen.GetEducationLevel();
-                                int workerLevel = worker.m_Level;
-
-                                // Overeducated
-                                if (workerLevel < educationLevel)
-                                {
-                                    overeductedEmployees++;
-                                    if (!overeducatedByEducationLevel.ContainsKey(educationLevel))
-                                        overeducatedByEducationLevel[educationLevel] = 0;
-                                    overeducatedByEducationLevel[educationLevel]++;
-
-                                    if (!overeducatedByWorkplaceAndEducationLevel.ContainsKey(workerLevel))
-                                        overeducatedByWorkplaceAndEducationLevel[workerLevel] = new Dictionary<int, int>();
-                                    if (!overeducatedByWorkplaceAndEducationLevel[workerLevel].ContainsKey(educationLevel))
-                                        overeducatedByWorkplaceAndEducationLevel[workerLevel][educationLevel] = 0;
-                                    overeducatedByWorkplaceAndEducationLevel[workerLevel][educationLevel]++;
-                                }
-
-                                // Commuter
-                                if ((citizen.m_State & CitizenFlags.Commuter) != CitizenFlags.None)
-                                {
-                                    commuterEmployees++;
-                                    if (!commuterByEducationLevel.ContainsKey(educationLevel))
-                                        commuterByEducationLevel[educationLevel] = 0;
-                                    commuterByEducationLevel[educationLevel]++;
-
-                                    if (!commuterByWorkplaceAndEducationLevel.ContainsKey(workerLevel))
-                                        commuterByWorkplaceAndEducationLevel[workerLevel] = new Dictionary<int, int>();
-                                    if (!commuterByWorkplaceAndEducationLevel[workerLevel].ContainsKey(educationLevel))
-                                        commuterByWorkplaceAndEducationLevel[workerLevel][educationLevel] = 0;
-                                    commuterByWorkplaceAndEducationLevel[workerLevel][educationLevel]++;
-                                }
-                            }
-                        }
-                    }
+                    ProcessTransportCost(vehicleEntity);
+                    break;
                 }
             }
         }
-        
-        private bool Visible()
+
+        private void ProcessTransportCost(Entity vehicleEntity)
         {
-            return HasEmployees(selectedEntity, selectedPrefab);
+            var pathInfoLookup = SystemAPI.GetComponentLookup<Game.Pathfind.PathInformation>(isReadOnly: true);
+            var resourceDatas = SystemAPI.GetComponentLookup<ResourceData>(isReadOnly: true);
+
+            if (!pathInfoLookup.TryGetComponent(vehicleEntity, out var pathInfo)) return;
+
+            _VehicleTarget = pathInfo.m_Destination;
+
+            var resourcePrefabs = m_ResourceSystem.GetPrefabs();
+            if (resourcePrefabs[_Resource] == Entity.Null) return;
+
+            float weight = EconomyUtils.GetWeight(_Resource, resourcePrefabs, ref resourceDatas);
+            _TransportCost = EconomyUtils.GetTransportCost(pathInfo.m_Distance, _Resource, _ResourceAmount, weight);
         }
+
+        private void ProcessTradeCosts()
+        {
+            var tradeCostLookup = SystemAPI.GetBufferLookup<TradeCost>(isReadOnly: true);
+            
+            if (!tradeCostLookup.TryGetBuffer(_CompanyEntity, out var tradeCostBuffer)) return;
+
+            for (int i = 0; i < tradeCostBuffer.Length; i++)
+            {
+                var tradeCost = tradeCostBuffer[i];
+                _TradeCosts.Add(new TradeCostData
+                {
+                    Resource = tradeCost.m_Resource,
+                    BuyCost = tradeCost.m_BuyCost,
+                    SellCost = tradeCost.m_SellCost
+                });
+            }
+        }
+
+        private void ProcessEmploymentData()
+        {
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            
+            if (!renterLookup.TryGetBuffer(_BuildingEntity, out var renterBuffer)) return;
+
+            for (int renterIndex = 0; renterIndex < renterBuffer.Length; renterIndex++)
+            {
+                var companyEntity = renterBuffer[renterIndex].m_Renter;
+                ProcessCompanyEmployees(companyEntity);
+            }
+
+            AddEmployees();
+            visible = _MaxEmployees > 0;
+        }
+
+        private void ProcessCompanyEmployees(Entity companyEntity)
+        {
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
+            var workerLookup = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true);
+            var citizenLookup = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true);
+
+            if (!employeeLookup.TryGetBuffer(companyEntity, out var employeeBuffer)) return;
+
+            for (int i = 0; i < employeeBuffer.Length; i++)
+            {
+                var workerEntity = employeeBuffer[i].m_Worker;
+
+                if (workerLookup.TryGetComponent(workerEntity, out var worker) &&
+                    citizenLookup.TryGetComponent(workerEntity, out var citizen))
+                {
+                    ProcessWorkerData(worker, citizen);
+                }
+            }
+        }
+
+        private void ProcessWorkerData(Worker worker, Citizen citizen)
+        {
+            int educationLevel = citizen.GetEducationLevel();
+            int workerLevel = worker.m_Level;
+
+            // Process overeducated workers
+            if (workerLevel < educationLevel)
+            {
+                _OvereducatedEmployees++;
+                UpdateEducationLevelCount(m_OvereducatedByEducationLevel, educationLevel);
+                UpdateWorkplaceEducationCount(m_OvereducatedByWorkplaceAndEducationLevel, workerLevel, educationLevel);
+            }
+
+            // Process commuter workers
+            if ((citizen.m_State & CitizenFlags.Commuter) != CitizenFlags.None)
+            {
+                _CommuterEmployees++;
+                UpdateEducationLevelCount(m_CommuterByEducationLevel, educationLevel);
+                UpdateWorkplaceEducationCount(m_CommuterByWorkplaceAndEducationLevel, workerLevel, educationLevel);
+            }
+        }
+
+        private void UpdateEducationLevelCount(Dictionary<int, int> dictionary, int educationLevel)
+        {
+            if (!dictionary.ContainsKey(educationLevel))
+                dictionary[educationLevel] = 0;
+            dictionary[educationLevel]++;
+        }
+
+        private void UpdateWorkplaceEducationCount(Dictionary<int, Dictionary<int, int>> dictionary, int workerLevel, int educationLevel)
+        {
+            if (!dictionary.ContainsKey(workerLevel))
+                dictionary[workerLevel] = new Dictionary<int, int>();
+            if (!dictionary[workerLevel].ContainsKey(educationLevel))
+                dictionary[workerLevel][educationLevel] = 0;
+            dictionary[workerLevel][educationLevel]++;
+        }
+
         private bool HasEmployees(Entity entity, Entity prefab)
         {
-            if (!base.EntityManager.TryGetBuffer(entity, isReadOnly: true, out DynamicBuffer<Renter> buffer))
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
+            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(isReadOnly: true);
+            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
+            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(isReadOnly: true);
+
+            if (!renterLookup.TryGetBuffer(entity, out var buffer))
             {
-                if (base.EntityManager.HasComponent<Employee>(entity) && base.EntityManager.HasComponent<WorkProvider>(entity))
+                return employeeLookup.HasBuffer(entity) && workProviderLookup.HasComponent(entity);
+            }
+
+            if (buffer.Length == 0 && spawnableBuildingLookup.TryGetComponent(prefab, out var component))
+            {
+                if (m_PrefabSystem.TryGetPrefab<ZonePrefab>(component.m_ZonePrefab, out var prefab2))
                 {
-                    return base.Enabled;
+                    return prefab2.m_AreaType == Game.Zones.AreaType.Commercial ||
+                           prefab2.m_AreaType == Game.Zones.AreaType.Industrial;
                 }
                 return false;
             }
-            if (buffer.Length == 0 && base.EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var component))
-            {
-                m_PrefabSystem.TryGetPrefab<ZonePrefab>(component.m_ZonePrefab, out var prefab2);
-                if (prefab2 != null)
-                {
-                    if (prefab2.m_AreaType != Game.Zones.AreaType.Commercial)
-                    {
-                        return prefab2.m_AreaType == Game.Zones.AreaType.Industrial;
-                    }
-                    return true;
-                }
-                return false;
-            }
+
             for (int i = 0; i < buffer.Length; i++)
             {
                 Entity renter = buffer[i].m_Renter;
-                if (base.EntityManager.HasComponent<CompanyData>(renter))
+                if (companyDataLookup.HasComponent(renter))
                 {
-                    if (base.EntityManager.HasComponent<Employee>(renter))
-                    {
-                        return base.EntityManager.HasComponent<WorkProvider>(renter);
-                    }
-                    return false;
+                    return employeeLookup.HasComponent(renter) && workProviderLookup.HasComponent(renter);
                 }
             }
             return false;
         }
+
         private void AddEmployees()
         {
-	        if (base.EntityManager.HasComponent<ServiceUsage>(selectedEntity))
-	        {
-		        base.tooltipKeys.Add("ServiceUsage");
-	        }
-	        else
-	        {
-		        AddEmployees(selectedEntity);
-	        }
+            var serviceUsageLookup = SystemAPI.GetComponentLookup<ServiceUsage>(isReadOnly: true);
+            
+            if (serviceUsageLookup.HasComponent(_BuildingEntity))
+            {
+                tooltipKeys.Add("ServiceUsage");
+            }
+            else
+            {
+                AddEmployees(_BuildingEntity);
+            }
         }
+
         private void AddEmployees(Entity entity)
         {
-            Entity prefab = base.EntityManager.GetComponentData<PrefabRef>(entity).m_Prefab;
-            Entity entity2 = GetEntity(entity);
-            Entity prefab2 = base.EntityManager.GetComponentData<PrefabRef>(entity2).m_Prefab;
-            int buildingLevel = 1;
-            PropertyRenter component2;
-            PrefabRef component3;
-            SpawnableBuildingData component4;
-            Worker component6;
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
+            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(isReadOnly: true);
+            var workplaceDataLookup = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true);
 
-            if (base.EntityManager.TryGetComponent<SpawnableBuildingData>(prefab, out var component))
-            {
-                buildingLevel = component.m_Level;
-            }
-            else if (base.EntityManager.TryGetComponent<PropertyRenter>(entity, out component2) && base.EntityManager.TryGetComponent<PrefabRef>(component2.m_Property, out component3) && base.EntityManager.TryGetComponent<SpawnableBuildingData>(component3.m_Prefab, out component4))
-            {
-                buildingLevel = component4.m_Level;
-            }
+            var prefab = prefabRefLookup[entity].m_Prefab;
+            var companyEntity = GetCompanyEntity(entity);
+            var companyPrefab = prefabRefLookup[companyEntity].m_Prefab;
 
-            if (base.EntityManager.TryGetBuffer(entity2, isReadOnly: true, out DynamicBuffer<Employee> buffer) && base.EntityManager.TryGetComponent<WorkProvider>(entity2, out var component5))
+            int buildingLevel = GetBuildingLevel(entity, prefab);
+
+            if (employeeLookup.TryGetBuffer(companyEntity, out var buffer) &&
+                workProviderLookup.TryGetComponent(companyEntity, out var workProvider))
             {
-                employeeCount += buffer.Length;
-                WorkplaceComplexity complexity = base.EntityManager.GetComponentData<WorkplaceData>(prefab2).m_Complexity;
-                EmploymentData workplacesData = EmploymentData.GetWorkplacesData(component5.m_MaxWorkers, buildingLevel, complexity);
-                maxEmployees += workplacesData.total;
-                educationDataWorkplaces += workplacesData;
-                var employeesData = EmploymentData.GetEmployeesData(buffer, workplacesData.total - buffer.Length);
-                educationDataEmployees += employeesData;
+                _EmployeeCount += buffer.Length;
+                var complexity = workplaceDataLookup[companyPrefab].m_Complexity;
+                var workplacesData = EmploymentData.GetWorkplacesData(workProvider.m_MaxWorkers, buildingLevel, complexity);
+                _MaxEmployees += workplacesData.total;
+                _EducationDataWorkplaces += workplacesData;
+                _EducationDataEmployees += EmploymentData.GetEmployeesData(buffer, workplacesData.total - buffer.Length);
             }
         }
-        private Entity GetEntity(Entity entity)
+
+        private int GetBuildingLevel(Entity entity, Entity prefab)
         {
-	        if (!base.EntityManager.HasComponent<Game.Buildings.Park>(entity) && base.EntityManager.TryGetBuffer(entity, isReadOnly: true, out DynamicBuffer<Renter> buffer))
-	        {
-		        for (int i = 0; i < buffer.Length; i++)
-		        {
-			        Entity renter = buffer[i].m_Renter;
-			        if (base.EntityManager.HasComponent<CompanyData>(renter))
-			        {
-				        return renter;
-			        }
-		        }
-	        }
-	        return entity;
+            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
+            var propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+
+            if (spawnableBuildingLookup.TryGetComponent(prefab, out var component))
+            {
+                return component.m_Level;
+            }
+
+            if (propertyRenterLookup.TryGetComponent(entity, out var propertyRenter) &&
+                prefabRefLookup.TryGetComponent(propertyRenter.m_Property, out var propertyPrefabRef) &&
+                spawnableBuildingLookup.TryGetComponent(propertyPrefabRef.m_Prefab, out var propertyComponent))
+            {
+                return propertyComponent.m_Level;
+            }
+
+            return 1;
         }
+
+        private Entity GetCompanyEntity(Entity entity)
+        {
+            var parkLookup = SystemAPI.GetComponentLookup<Game.Buildings.Park>(isReadOnly: true);
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(isReadOnly: true);
+
+            if (!parkLookup.HasComponent(entity) && renterLookup.TryGetBuffer(entity, out var buffer))
+            {
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    Entity renter = buffer[i].m_Renter;
+                    if (companyDataLookup.HasComponent(renter))
+                    {
+                        return renter;
+                    }
+                }
+            }
+            return entity;
+        }
+
+        // Rest of the methods remain the same...
         public override void OnWriteProperties(IJsonWriter writer)
         {
-            writer.PropertyName("TradePartnerName");
-            m_NameSystem.BindName(writer, tradePartnerName);
-            writer.PropertyName("TradePartnerEntity");
-            writer.Write(tradePartnerName);
+            writer.PropertyName("HideBuildingSection");
+            writer.Write(Mod.setting.hideBuildingSection);
             writer.PropertyName("ResourceAmount");
-            writer.Write(UnitConversionUtils.KilogramsToTons(resourceAmount));
+            writer.Write(UnitConversionUtils.KilogramsToTons(_ResourceAmount));
             writer.PropertyName("TransportCost");
-            writer.Write(transportCost);
+            writer.Write(_TransportCost);
             writer.PropertyName("EmployeeCount");
-            writer.Write(employeeCount);
+            writer.Write(_EmployeeCount);
             writer.PropertyName("MaxEmployees");
-            writer.Write(maxEmployees);
+            writer.Write(_MaxEmployees);
             writer.PropertyName("EducationDataEmployees");
-            writer.Write(educationDataEmployees);
+            writer.Write(_EducationDataEmployees);
             writer.PropertyName("EducationDataWorkplaces");
-            writer.Write(educationDataWorkplaces);
-
+            writer.Write(_EducationDataWorkplaces);
             writer.PropertyName("OvereductedEmployees");
-            writer.Write(overeductedEmployees);
-            writer.PropertyName("OvereductedByEducationLevel");
-            writer.ArrayBegin((uint)overeducatedByEducationLevel.Count);
-            foreach (var kvp in overeducatedByEducationLevel)
-            {
-                writer.TypeBegin("OvereducatedLevelData");
-                writer.PropertyName("EducationLevel");
-                writer.Write(kvp.Key);
-                writer.PropertyName("Count");
-                writer.Write(kvp.Value);
-                writer.TypeEnd();
-            }
-            writer.ArrayEnd();
-            
-            writer.PropertyName("OvereductedByWorkplaceAndEducationLevel");
-            
-            writer.ArrayBegin((uint)overeducatedByWorkplaceAndEducationLevel.Count);
-            foreach (var workplaceKvp in overeducatedByWorkplaceAndEducationLevel)
-            {
-                writer.TypeBegin("OvereducatedWorkplaceLevelData");
-                writer.PropertyName("WorkplaceLevel");
-                writer.Write(workplaceKvp.Key);
-                writer.PropertyName("EducationLevels");
-                writer.ArrayBegin((uint)workplaceKvp.Value.Count);
-                foreach (var eduKvp in workplaceKvp.Value)
-                {
-                    writer.TypeBegin("OvereducatedEducationLevelData");
-                    writer.PropertyName("EducationLevel");
-                    writer.Write(eduKvp.Key);
-                    writer.PropertyName("Count");
-                    writer.Write(eduKvp.Value);
-                    writer.TypeEnd();
-                }
-                writer.ArrayEnd();
-                writer.TypeEnd();
-            }
-            writer.ArrayEnd();
-            
+            writer.Write(_OvereducatedEmployees);
+
+            WriteEducationLevelData(writer, "OvereductedByEducationLevel", "OvereducatedLevelData", m_OvereducatedByEducationLevel);
+            WriteWorkplaceEducationData(writer, "OvereductedByWorkplaceAndEducationLevel", "OvereducatedWorkplaceLevelData", "OvereducatedEducationLevelData", m_OvereducatedByWorkplaceAndEducationLevel);
 
             writer.PropertyName("CommuterEmployees");
-            
-            writer.Write(commuterEmployees);
-            writer.PropertyName("CommuterByEducationLevel");
-            
-            writer.ArrayBegin((uint)commuterByEducationLevel.Count);
-            foreach (var kvp in commuterByEducationLevel)
+            writer.Write(_CommuterEmployees);
+
+            WriteEducationLevelData(writer, "CommuterByEducationLevel", "CommuterLevelData", m_CommuterByEducationLevel);
+            WriteWorkplaceEducationData(writer, "CommuterByWorkplaceAndEducationLevel", "CommuterWorkplaceLevelData", "CommuterEducationLevelData", m_CommuterByWorkplaceAndEducationLevel);
+
+            WriteTradeCosts(writer);
+            WriteVehicleData(writer);
+            WriteCompanyInputOutput(writer);
+        }
+
+        private void WriteEducationLevelData(IJsonWriter writer, string propertyName, string typeName, Dictionary<int, int> data)
+        {
+            writer.PropertyName(propertyName);
+            writer.ArrayBegin((uint)data.Count);
+            foreach (var kvp in data)
             {
-                writer.TypeBegin("CommuterLevelData");
+                writer.TypeBegin(typeName);
                 writer.PropertyName("EducationLevel");
                 writer.Write(kvp.Key);
                 writer.PropertyName("Count");
@@ -402,20 +482,22 @@ namespace InfoLoomTwo.Systems.Sections
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
+        }
 
-            writer.PropertyName("CommuterByWorkplaceAndEducationLevel");
-            
-            writer.ArrayBegin((uint)commuterByWorkplaceAndEducationLevel.Count);
-            foreach (var workplaceKvp in commuterByWorkplaceAndEducationLevel)
+        private void WriteWorkplaceEducationData(IJsonWriter writer, string propertyName, string workplaceTypeName, string educationTypeName, Dictionary<int, Dictionary<int, int>> data)
+        {
+            writer.PropertyName(propertyName);
+            writer.ArrayBegin((uint)data.Count);
+            foreach (var workplaceKvp in data)
             {
-                writer.TypeBegin("CommuterWorkplaceLevelData");
+                writer.TypeBegin(workplaceTypeName);
                 writer.PropertyName("WorkplaceLevel");
                 writer.Write(workplaceKvp.Key);
                 writer.PropertyName("EducationLevels");
                 writer.ArrayBegin((uint)workplaceKvp.Value.Count);
                 foreach (var eduKvp in workplaceKvp.Value)
                 {
-                    writer.TypeBegin("CommuterEducationLevelData");
+                    writer.TypeBegin(educationTypeName);
                     writer.PropertyName("EducationLevel");
                     writer.Write(eduKvp.Key);
                     writer.PropertyName("Count");
@@ -426,11 +508,13 @@ namespace InfoLoomTwo.Systems.Sections
                 writer.TypeEnd();
             }
             writer.ArrayEnd();
-            
+        }
 
+        private void WriteTradeCosts(IJsonWriter writer)
+        {
             writer.PropertyName("TradeCosts");
-            writer.ArrayBegin((uint)TradeCosts.Count);
-            foreach (var tradeCost in TradeCosts)
+            writer.ArrayBegin((uint)_TradeCosts.Count);
+            foreach (var tradeCost in _TradeCosts)
             {
                 writer.TypeBegin("TradeCostData");
                 writer.PropertyName("Resource");
@@ -443,7 +527,41 @@ namespace InfoLoomTwo.Systems.Sections
             }
             writer.ArrayEnd();
         }
-        
+
+        private void WriteVehicleData(IJsonWriter writer)
+        {
+            writer.PropertyName("IsStorageTransfer");
+            writer.Write(_IsStorageTransfer);
+            writer.PropertyName("CostPayer");
+            writer.Write(_CostPayer);
+            writer.PropertyName("MeanInputTripLength");
+            writer.Write(_MeanInputTripLength);
+            writer.PropertyName("VehicleTarget");
+            writer.Write(_VehicleTarget);
+            writer.PropertyName("TruckState");
+            writer.Write((int)_TruckState);
+        }
+
+        private void WriteCompanyInputOutput(IJsonWriter writer)
+        {
+            writer.PropertyName("Input1");
+            writer.Write(Enum.GetName(typeof(Resource), _Input1));
+            writer.PropertyName("Input2");
+            writer.Write(Enum.GetName(typeof(Resource), _Input2));
+            writer.PropertyName("Output");
+            writer.Write(Enum.GetName(typeof(Resource), _Output));
+        }
+
+        public void NavigateTo(Entity entity)
+        {
+            if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
+            {
+                m_CameraUpdateSystem.orbitCameraController.followedEntity = entity;
+                m_CameraUpdateSystem.orbitCameraController.TryMatchPosition(m_CameraUpdateSystem.activeCameraController);
+                m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
+            }
+        }
+
         public static class UnitConversionUtils
         {
             private const float KilogramsPerTon = 1000f;
@@ -456,15 +574,6 @@ namespace InfoLoomTwo.Systems.Sections
             public static float TonsToKilograms(float tons)
             {
                 return tons * KilogramsPerTon;
-            }
-        }
-        public void NavigateTo(Entity entity)
-        {
-            if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
-            {
-                m_CameraUpdateSystem.orbitCameraController.followedEntity = entity;
-                m_CameraUpdateSystem.orbitCameraController.TryMatchPosition(m_CameraUpdateSystem.activeCameraController);
-               m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
             }
         }
     }

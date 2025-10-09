@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using System.Runtime.CompilerServices;
+﻿﻿﻿﻿﻿using System.Runtime.CompilerServices;
 using Colossal.UI.Binding;
 using Game.Agents;
 using Game.Citizens;
@@ -76,17 +76,19 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
             [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenters;
             [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup; 
+            public NativeArray<int> m_OccupationCounts;
+            public ComponentTypeHandle<CitizenOccupationKey> m_OccupationType;
 
             public TimeData m_TimeData;
 
             public uint m_SimulationFrame;
 
             public NativeArray<int> m_Totals;
-
+            public EntityManager EntityManager;
             public NativeArray<PopulationAtAgeInfo> m_Results;
             public int day;
             public Entity m_SelectedDistrict; 
-
+            private CitizenOccupationKey occupationKey { get; set; }
             // this job is based on AgingJob
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -97,6 +99,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 NativeArray<Worker> workerArray = chunk.GetNativeArray(ref m_WorkerType);
                 NativeArray<HealthProblem> healthProblemArray = chunk.GetNativeArray(ref m_HealthProblemType);
                 NativeArray<HouseholdMember> householdMemberArray = chunk.GetNativeArray(ref m_HouseholdMemberType);
+                
                 bool isStudent = chunk.Has(ref m_StudentType); // are there students in this chunk?
                 bool isWorker = chunk.Has(ref m_WorkerType); // are there workers in this chunk?
                 bool isHealthProblem = chunk.Has(ref m_HealthProblemType); // for checking dead cims
@@ -156,7 +159,6 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 break;
                             case CitizenAge.Elderly:
                                 info.ElderlyCount++;
-                                info.Retired++;
                                 break;
                         }
                         switch (value.GetEducationLevel())
@@ -177,47 +179,72 @@ namespace InfoLoomTwo.Systems.DemographicsData
                                 info.HighlyEducated++;
                                 break;
                         }
-                        
-                        if (isStudent)
+
+                        // Use GetOccupation for classification
+                        CitizenOccupationKey occupation = CitizenUIUtils.GetOccupation(EntityManager, entity);
+                        switch (occupation)
                         {
-                            for (int j = 0; j < studentArray.Length; j++)
-                            {
-                                // Find matching entity in student array
-                                if (entities[i].Index == entities[j].Index)
+                            case CitizenOccupationKey.Student:
+                                if (age == CitizenAge.Child)
                                 {
-                                    m_Totals[(int)Totals.Students]++;
-                                    byte level = studentArray[j].m_Level;
-                                    switch (level)
+                                    for (int j = 0; j < studentArray.Length; j++)
                                     {
-                                        case 1: info.School1++; 
-                                            
-                                            break;
-                                        case 2: info.School2++; break;
-                                        case 3: info.School3++; break;
-                                        case 4: info.School4++; break;
+                                        m_Totals[(int)Totals.Students]++;
+                                        byte level = studentArray[j].m_Level;
+                                        switch (level)
+                                        {
+                                            case 1: info.School1++; break; 
+                                            case 2: info.School2++; break; 
+                                        }
+                                        break;
                                     }
-                                    break;
                                 }
-                            }
-                        }
-                        bool isCitizenWorker = false;
-                        if (isWorker)
-                        {
-                            for (int j = 0; j < workerArray.Length; j++)
-                            {
-                                isCitizenWorker = true;
-                                m_Totals[(int)Totals.Workers]++;
-                                info.Work++;
+                                else if (age == CitizenAge.Teen)
+                                {
+                                    for (int j = 0; j < studentArray.Length; j++)
+                                    {
+                                        m_Totals[(int)Totals.Students]++;
+                                        byte level = studentArray[j].m_Level;
+                                        switch (level)
+                                        {
+                                            case 2: info.School2++; break; 
+                                            case 3: info.School3++; break; 
+                                            case 4: info.School4++; break; 
+                                        }
+                                        break;
+                                        
+                                    }
+                                }
                                 break;
-                            }
+                            case CitizenOccupationKey.Worker:
+                                if (age == CitizenAge.Teen || age == CitizenAge.Adult)
+                                {
+                                    //for (int j = 0; j < workerArray.Length; j++)
+                                    //{
+                                        m_Totals[(int)Totals.Workers]++;
+                                        info.Work++;
+                                        break;
+                                   // }
+                                }
+                                break;
+                            case CitizenOccupationKey.Unemployed:
+                                if (age == CitizenAge.Adult)
+                                {
+                                    info.Unemployed++;
+                                }
+                                break;
+                            case CitizenOccupationKey.Retired:
+                               if (age == CitizenAge.Elderly)
+                               {
+                                   info.Retired++;
+                               }
+                                break;
+                            // Add other occupation cases if needed
                         }
-                        if (!isCitizenWorker)
+                        if ((age == CitizenAge.Child || age == CitizenAge.Teen) && occupation != CitizenOccupationKey.Student && occupation != CitizenOccupationKey.Worker)
                         {
-                            info.Unemployed++;
+                            info.ChildOrTeenWithNoSchool++;
                         }
-                        
-                        
-                        
                         if (ageInDays > m_Totals[(int)Totals.OldestCitizenAge])
                             m_Totals[(int)Totals.OldestCitizenAge] = ageInDays;
                         m_Results[ageInDays] = info;
@@ -253,7 +280,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
         private NameSystem m_NameSystem;
         public NativeArray<int> m_Totals; 
         public NativeArray<PopulationAtAgeInfo> m_Results; 
-
+        private CitizenOccupationKey occupationKey { get; set; }
         public int m_AgeCap;
         
         public bool IsPanelVisible { get; set; }
@@ -322,7 +349,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
             structureJob.m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
             structureJob.m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true);
             structureJob.m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true); // Add this
-
+            structureJob.EntityManager = EntityManager;
             structureJob.m_SimulationFrame = m_SimulationSystem.frameIndex;
             structureJob.m_TimeData = m_TimeDataQuery.GetSingleton<TimeData>();
             structureJob.day = TimeSystem.GetDay(m_SimulationSystem.frameIndex, m_TimeDataQuery.GetSingleton<Game.Common.TimeData>());
@@ -334,6 +361,8 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
             // Get homeless count from CountHouseholdDataSystem instead of calculating in the job
             m_Totals[(int)Totals.HomelessCitizens] = m_CountHouseholdDataSystem.HomelessCitizenCount;
+            
+
            
         }
         

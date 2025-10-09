@@ -66,7 +66,7 @@ function calculateProfit(data: ResourceTradeCost) {
 }
 
 function calculateProfitMargin(data: ResourceTradeCost) {
-  return data.BuyCost !== 0 ? ((data.SellCost - data.BuyCost) / data.BuyCost) * 100 : 0;
+  return data.BuyCost !== 0 ? ((data.SellCost - data.BuyCost) / data.BuyCost): 0;
 }
 
 interface SortableHeaderProps {

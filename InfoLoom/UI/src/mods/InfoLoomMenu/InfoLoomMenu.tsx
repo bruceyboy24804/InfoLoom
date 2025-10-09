@@ -13,7 +13,6 @@ import TradeCost from "mods/InfoLoomSections/TradeCostSection/TradeCost";
 import * as bindings from "mods/bindings";
 import { CommercialMenuButton } from "mods/InfoLoomMenu/CommercialMenu/CommercialMenu";
 import IndustrialMenuButton from "./IndustrialMenu/IndustrialMenu";
-import DistrictMenuButton from "./DistrictMenu/DistrictMenu";
 import Residential from "mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential";
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 import {Entity} from "cs2/utils"
@@ -42,7 +41,6 @@ function InfoLoomButton(): JSX.Element {
     const buildingDemandOpen = useValue(bindings.BuildingDemandOpen);
     const industrialMenuOpen = useValue(bindings.IndustrialMenuOpen);
     const tradeCostsOpen = useValue(bindings.TradeCostsOpen);
-    const districtMenuOpen = useValue(bindings.DistrictMenuOpen);
     const commercialMenuOpen = useValue(bindings.CommercialMenuOpen);
     // Define sections without translations - move translations to render time
     const sections = useMemo<SectionsType>(() => ({
@@ -97,16 +95,9 @@ function InfoLoomButton(): JSX.Element {
             toggle: bindings.SetTradeCostsOpen,
             displayName: null // Will be set at render time
         },
-        "District Menu": {
-            component: <DistrictMenuButton/>,
-            isOpen: districtMenuOpen,
-            toggle: bindings.SetDistrictMenuOpen,
-            displayName: null, // Will be set at render time
-            src: "Media/Glyphs/FilledArrowRight.svg"
-        },
         
     }), [demographicsOpen, workforceOpen, workplacesOpen, residentialMenuOpen,
-        buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, districtMenuOpen, commercialMenuOpen ]);
+        buildingDemandOpen, industrialMenuOpen, tradeCostsOpen, commercialMenuOpen ]);
 
     const toggleSection = useCallback(
         (name: string) => {
@@ -130,7 +121,6 @@ function InfoLoomButton(): JSX.Element {
             const menuSectionsToClose = [
                 "Residential Menu",
                 "Industrial Menu",
-                "District Menu",
                 "Commercial Menu"
             ];
 
@@ -200,9 +190,6 @@ function InfoLoomButton(): JSX.Element {
                                 case 'Trade Cost':
                                     displayName = translate("InfoLoomTwo.Menu[Button7]", "Trade Costs");
                                     break;
-                                case 'District Menu':
-                                    displayName = translate("InfoLoomTwo.Menu[Button8]", "District Menu");
-                                    break;
                                 case 'Commercial Menu':
                                     displayName = translate("InfoLoomTwo.Menu[Button9]", "Commercial Menu");
                                     break;
@@ -258,7 +245,6 @@ function InfoLoomButton(): JSX.Element {
             {/* This ensures the panels remain visible even when the main InfoLoom menu is closed */}
             <ResidentialMenuButton />
             <IndustrialMenuButton />
-            <DistrictMenuButton />
             <CommercialMenuButton />
         </div>
     );

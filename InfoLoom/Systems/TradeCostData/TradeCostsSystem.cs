@@ -127,49 +127,42 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private void OnBuyCostChanged(BuyCostEnum value)
         {
             m_buyCostEnum = value;
-            ResetOtherSorting(nameof(BuyCostEnum));
             UpdateSortedData();
         }
 
         private void OnSellCostChanged(SellCostEnum value)
         {
             m_sellCostEnum = value;
-            ResetOtherSorting(nameof(SellCostEnum));
             UpdateSortedData();
         }
 
         private void OnImportAmountChanged(ImportAmountEnum value)
         {
             m_importAmountEnum = value;
-            ResetOtherSorting(nameof(ImportAmountEnum));
             UpdateSortedData();
         }
 
         private void OnExportAmountChanged(ExportAmountEnum value)
         {
             m_exportAmountEnum = value;
-            ResetOtherSorting(nameof(ExportAmountEnum));
             UpdateSortedData();
         }
 
         private void OnProfitChanged(ProfitEnum value)
         {
             m_profitEnum = value;
-            ResetOtherSorting(nameof(ProfitEnum));
             UpdateSortedData();
         }
 
         private void OnProfitMarginChanged(ProfitMarginEnum value)
         {
             m_profitMarginEnum = value;
-            ResetOtherSorting(nameof(ProfitMarginEnum));
             UpdateSortedData();
         }
 
         private void OnResourceNameChanged(ResourceNameEnum value)
         {
             m_resourceNameEnum = value;
-            ResetOtherSorting(nameof(ResourceNameEnum));
             UpdateSortedData();
         }
 
@@ -183,16 +176,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
             }
         }
 
-        private void ResetOtherSorting(string currentSorting)
-        {
-            if (currentSorting != nameof(BuyCostEnum)) m_buyCostEnum = BuyCostEnum.Off;
-            if (currentSorting != nameof(SellCostEnum)) m_sellCostEnum = SellCostEnum.Off;
-            if (currentSorting != nameof(ImportAmountEnum)) m_importAmountEnum = ImportAmountEnum.Off;
-            if (currentSorting != nameof(ExportAmountEnum)) m_exportAmountEnum = ExportAmountEnum.Off;
-            if (currentSorting != nameof(ProfitEnum)) m_profitEnum = ProfitEnum.Off;
-            if (currentSorting != nameof(ProfitMarginEnum)) m_profitMarginEnum = ProfitMarginEnum.Off;
-            if (currentSorting != nameof(ResourceNameEnum)) m_resourceNameEnum = ResourceNameEnum.Off;
-        }
+        
 
         private void UpdateSortedData()
         {
@@ -288,9 +272,29 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private static bool ShouldProcessResource(Resource resource)
         {
             return resource != Resource.Money &&
-                   resource != Resource.NoResource;
+                   resource != Resource.NoResource && 
+                   resource != Resource.UnsortedMail && 
+                   resource != Resource.OutgoingMail &&
+                   resource != Resource.LocalMail &&
+                   resource != Resource.Garbage &&
+                   resource != Resource.Lodging &&
+                   resource != Resource.Entertainment &&
+                   resource != Resource.Recreation;
         }
+        public static class UnitConversionUtils
+        {
+            private const float KilogramsPerTon = 1000f;
 
+            public static float KilogramsToTons(float kilograms)
+            {
+                return kilograms / KilogramsPerTon;
+            }
+
+            public static float TonsToKilograms(float tons)
+            {
+                return tons * KilogramsPerTon;
+            }
+        }
         private string GetResourceIconPath(Resource resource)
         {
             if (resource == Resource.Money)

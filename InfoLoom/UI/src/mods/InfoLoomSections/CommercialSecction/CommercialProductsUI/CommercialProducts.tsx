@@ -36,15 +36,6 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <div className={styles.col5}>
         {`${data.Workers}/${data.WrkPercent}%`}
       </div>
-      <div className={styles.col6}>
-        {`${data.SvcFactor}/${data.SvcPercent}%`}
-      </div>
-      <div className={styles.col7}>
-        {`${data.ResourceNeedPercent}%`}
-      </div>
-      <div className={styles.col8}>
-        {data.ResourceNeedPerCompany}
-      </div>
       <div className={styles.col9}>
           {data.TaxFactor}
         </div>
@@ -80,21 +71,6 @@ const TableHeader: React.FC<{ }> = ({ }) => {
           <span>{`${"Workers"}/${"Worker"}%`}</span>
         </Tooltip>
       </div>
-      <div className={styles.col6}>
-        <Tooltip tooltip={'It measures how much more service (production) is needed for a resource, considering both demand and current capacity. A higher value means more unmet demand. Service % shows the percentage of available service capacity currently being used for this resource. If there is no available capacity, it displays 0%.'}>
-          <span>{`${"Service"}/${"Service"}%`}</span>
-        </Tooltip>
-      </div>
-      <div className={styles.col7}>
-        <Tooltip tooltip={'ResourceNeedPercent: Indicates how much of the required production capacity for this resource is currently being met, capped so the denominator is at least 100 to avoid extreme values.'}>
-        <span>{"Resource Need%"}</span>
-        </Tooltip>
-      </div>
-      <div className={styles.col8}>
-        <Tooltip tooltip={'ResourceNeedPerCompany: Shows the average amount of resource needed per service company for this resource. If there are no service companies, it displays 0.'}>
-          <span>{"Resource Need/Company"}</span>
-        </Tooltip>
-      </div>
       <div className={styles.col9}>
         <Tooltip tooltip={'TaxFactor: Shows the effect of the current commercial tax rate on demand for this resource, scaled as a percentage. A higher value means taxes are reducing demand more.'}>
           <span>{"Tax Factor"}</span>
@@ -104,7 +80,7 @@ const TableHeader: React.FC<{ }> = ({ }) => {
   );
 };
 
-const LodgingHeader: React.FC = () => {
+/*const LodgingHeader: React.FC = () => {
   return (
     <div className={styles.headerRow}>
       <div className={styles.col1}>
@@ -143,14 +119,14 @@ const LodgingHeader: React.FC = () => {
       </div>
     </div>
   );
-};
+};*/
 
 interface LodgingResourceLineProps {
   data: CommercialProductData;
 }
 
 // Update the LodgingResourceLine component to use the new interface
-const LodgingResourceLine: React.FC<LodgingResourceLineProps> = ({ data }) => {
+/*const LodgingResourceLine: React.FC<LodgingResourceLineProps> = ({ data }) => {
   const formattedResourceName = formatWords(data.ResourceName, true);
 
   return (
@@ -184,7 +160,7 @@ const LodgingResourceLine: React.FC<LodgingResourceLineProps> = ({ data }) => {
       </div>
     </div>
   );
-};
+};*/
 const OtherResourcesHeader: React.FC = () => {
   return (
     <div className={styles.headerRow}>
@@ -203,11 +179,7 @@ const OtherResourcesHeader: React.FC = () => {
       <div className={styles.col5}>
           <span>{`${"Workers"}/${"Worker"}%`}</span>
       </div>
-
-      <div className={styles.col6}>
-        <span>Resource Need/Company</span>
-      </div>
-      <div className={styles.col7}>
+      <div className={styles.col9}>
         <span>Tax Factor</span>
       </div>
     </div>
@@ -232,10 +204,7 @@ const OtherResourcesLine: React.FC<ResourceLineProps> = ({ data }) => {
         <div className={styles.col5}>
           {`${data.Workers}/${data.WrkPercent}%`}
         </div>
-        <div className={styles.col6}>
-          {data.ResourceNeedPerCompany}
-        </div>
-        <div className={styles.col7}>
+        <div className={styles.col9}>
           {data.TaxFactor}
         </div>
       </div>
@@ -264,10 +233,10 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
           {commercialProductsData.filter(item => !['Lodging', 'Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName)).map((item, index) => (
             <ResourceLine key={`${item.ResourceName}-${index}`} data={item}/>
           ))}
-          <LodgingHeader />
+          {/*<LodgingHeader />
           {commercialProductsData.filter(item => item.ResourceName === 'Lodging').map((item, index) => (
             <LodgingResourceLine key={`${item.ResourceName}-${index}`} data={item} />
-          ))}
+          ))}*/}
           <OtherResourcesHeader />
           {commercialProductsData.filter(item => ['Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName)).map((item, index) => (
             <OtherResourcesLine key={`${item.ResourceName}-${index}`} data={item} />

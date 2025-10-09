@@ -12,10 +12,6 @@ namespace InfoLoomTwo.Domain.DataDomain
             public int Free;
             public int Companies;
             public int Workers;
-            public int SvcFactor;
-            public int SvcPercent;
-            public int ResourceNeedPercent;
-            public int ResourceNeedPerCompany;
             public int WrkPercent;
             public int TaxFactor;
             

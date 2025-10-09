@@ -13,4 +13,6 @@ export interface populationAtAge {
   Educated: number;
   WellEducated: number;
   HighlyEducated: number;
+  ChildOrTeenWithNoSchool: number;
+
 }

@@ -122,25 +122,22 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.15.0" />
+	<ModVersion Value="1.16.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.3.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.15.0
-- Fixed small issue with workfocrce showing over % of unemployment
-- Increased height of Demand panel
-- Fixed some issues with the Industrial Company Panel and the Commercial Companies Panel 
-- Compatability with real life mod 
-- Improved readability of the Industrial companies panel
-- Improved readability of the Commercial companies panel
-- Improved Default sorting of trade costs panel using the vanilla sorting for resources 
-- Re-arranged some of the buttons in the infoloom menu
-- When the InfoLoom menu is displayed/active, the infoloom button will now be highlighted    
-- Cleaned up Residential Demand Panel, Industrial Demand Panel and Commercial Demand Panel    
-- Added Education to the demographics panel
-- Synced a couple of numbers in some panels         
+	<ChangeLog>## Version 1.16.0
+- Changed No demand for to demand for commercial and industrial demand panels.
+- Added Rent information to the selected info panel
+- Added Profit information to the selected info panel
+- hopefully made demographics panel better
+- Added extra information to the District selected info panel 
+- Removed Districts from the infoloom menu
+- Cleaned up Infoloom company inside of the selected info panel      
+- Cleaned up Commercial products panel 
+- Cleaneed up Industrial products panel    
 </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />

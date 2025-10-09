@@ -339,10 +339,11 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                         // InfoLoom
                         empCap += ((float)m_TotalCurrentWorkers[resourceIndex2] + 1f) / ((float)m_TotalMaxWorkers[resourceIndex2] + 1f);
                         numDemanded++;
+                        m_ExcludedResources.value |= iterator.resource;
                     }
                     else
                     {
-                        m_ExcludedResources.value |= iterator.resource;
+                        
                     }
                     num++;
                     m_ResourceDemands[resourceIndex2] = math.min(100, math.max(0, m_ResourceDemands[resourceIndex2]));

@@ -79,59 +79,27 @@ const StackedBar: React.FC<StackedBarProps> = ({ levelName, levelColor, levelVal
 
   const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
 
-  const createTooltipContent = (segment: (typeof segments)[0]) => {
-    const percentage = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
-    const totalPercentage = total > 0 ? (segment.value / total) * 100 : 0;
+  // SVG bar dimensions
+  const BAR_WIDTH = 750;
+  const BAR_HEIGHT = 24;
 
-    return (
-      <div className={styles.tooltipContent}>
-        <div className={styles.tooltipHeader}>
-          {levelName}
-          <span style={{ margin: '0 8px' }}>-</span>
-          {segment.label}
-        </div>
-        <div className={styles.tooltipRow}>
-          <span>{translations.segmentTooltipCount}:</span>
-          <span>{segment.value.toLocaleString()}</span>
-        </div>
-        <div className={styles.tooltipRow}>
-          <span>{translations.segmentTooltipWithin}:</span>
-          <span>{percentage.toFixed(1)}%</span>
-        </div>
-        <div className={styles.tooltipRow}>
-          <span>{translations.segmentTooltipOfTotal}:</span>
-          <span>{totalPercentage.toFixed(1)}%</span>
-        </div>
-      </div>
+  // Calculate segment widths
+  let x = 0;
+  const svgSegments = segments.map((segment, idx) => {
+    const width = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * BAR_WIDTH : 0;
+    const rect = (
+      <rect
+        key={idx}
+        x={x}
+        y={0}
+        width={width}
+        height={BAR_HEIGHT}
+        fill={segment.color}
+      />
     );
-  };
-
-  const barTooltipContent = (
-    <div className={styles.tooltipContent}>
-      <div className={styles.tooltipHeader}>{levelName} {translations.barTooltipHeader}</div>
-      <div className={styles.tooltipRow}>
-        <span>{translations.barTooltipTotal}:</span>
-        <span>{levelValues.Total.toLocaleString()}</span>
-      </div>
-      <div className={styles.tooltipRow}>
-        <span>{translations.barTooltipPercentage}:</span>
-        <span>{total > 0 ? ((levelValues.Total / total) * 100).toFixed(1) : '0'}%</span>
-      </div>
-      <div className={styles.tooltipDivider}></div>
-      {segments.map((segment, index) => {
-        if (segment.value === 0) return null;
-        const percentage = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
-        return (
-          <div key={index} className={styles.tooltipRow}>
-            <span style={{ color: segment.color }}>• {segment.label}:</span>
-            <span>
-              {segment.value.toLocaleString()} ({percentage.toFixed(1)}%)
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+    x += width;
+    return rect;
+  });
 
   return (
     <PanelFoldout
@@ -145,30 +113,19 @@ const StackedBar: React.FC<StackedBarProps> = ({ levelName, levelColor, levelVal
       initialExpanded={false}
       className={styles.stackedBarContainer}
     >
-      <Tooltip tooltip={barTooltipContent} direction="down" alignment="center">
-        <div className={styles.stackedBar}>
-          {segments.map((segment, index) => {
-            const percentage =
-              totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * 100 : 0;
-            return percentage > 0 ? (
-              <Tooltip
-                key={index}
-                tooltip={createTooltipContent(segment)}
-                direction="up"
-                alignment="center"
-              >
-                <div
-                  className={styles.barSegment}
-                  style={{
-                    width: `${percentage}%`,
-                    backgroundColor: segment.color,
-                  }}
-                />
-              </Tooltip>
-            ) : null;
-          })}
-        </div>
-      </Tooltip>
+      <div style={{ position: 'relative', width: BAR_WIDTH, height: BAR_HEIGHT }}>
+        <svg width={BAR_WIDTH} height={BAR_HEIGHT}>
+          {svgSegments}
+        </svg>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '10rem', fontSize: '15rem' }}>
+        {segments.map((segment, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ width: '15rem', height: '15rem', backgroundColor: segment.color, marginRight: '5rem', borderRadius: '4rem' }}></div>
+            <span style={{ marginRight: '10rem' }}>{segment.label}: {segment.value.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
     </PanelFoldout>
   );
 };
@@ -187,22 +144,6 @@ const WorkforceChart: React.FC<{
       initialExpanded={false}
       className={styles.chartSection}
     >
-      <div className={styles.legendContainer}>
-        {legendItems.map((item, index) => (
-          <Tooltip
-            key={index}
-            tooltip={`${item.label}: ${legendTooltipSuffix}`}
-            direction="up"
-            alignment="center"
-          >
-            <div className={styles.legendItem}>
-              <div className={styles.legendSymbol} style={{ backgroundColor: item.color || '#000000' }}></div>
-              <span>{item.label}</span>
-            </div>
-          </Tooltip>
-        ))}
-      </div>
-
       {educationLevels.map((level, index) => (
         <StackedBar
           key={index}

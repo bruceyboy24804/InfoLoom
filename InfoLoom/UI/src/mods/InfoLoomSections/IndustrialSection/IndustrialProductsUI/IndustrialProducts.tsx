@@ -159,15 +159,6 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <div className={styles.col5}>
         {data.Companies}
       </div>
-      <div className={styles.col6}>
-        {data.SvcPercent}
-      </div>
-      <div className={styles.col7}>
-        {data.CapPerCompany}
-      </div>
-      <div className={styles.col8}>
-        {data.CapPercent}
-      </div>
       <div className={styles.col9}>
         {data.Workers}
       </div>
@@ -208,21 +199,6 @@ const TableHeader: React.FC = () => {
       <div className={styles.col5}>
         <Tooltip tooltip={'The number of industrial companies that are currently operating in the city for this resource.'}>
           <span>Companies</span>
-        </Tooltip>
-      </div>
-      <div className={styles.col6}>
-        <Tooltip tooltip={'The total number of storage building in the city for this resource.'}>
-          <span>Storage</span>
-        </Tooltip>
-      </div>
-      <div className={styles.col7}>
-        <Tooltip tooltip={'Shows the amount of the resource produced by a single company. This helps determine how much each company contributes to meeting the overall resource demand.'}>
-        <span>Production</span>
-        </Tooltip>
-      </div>
-      <div className={styles.col8 }>
-        <Tooltip tooltip={'Represents the total demand for the resource from all companies, indicating how much of the resource is needed across the city’s industrial sector. It is used to assess whether current production meets company requirements.'}>
-        <span>Demand</span>
         </Tooltip>
       </div>
       <div className={styles.col9}>

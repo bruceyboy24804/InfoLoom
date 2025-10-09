@@ -1,40 +1,7 @@
 .button {
     background-color: rgba(0, 0, 0, 0);
-    border-left-color: initial;
-    border-left-style: none;
-    border-left-width: medium;
-    border-right-color: initial;
-    border-right-style: none;
-    border-right-width: medium;
-    border-top-color: initial;
-    border-top-style: none;
-    border-top-width: medium;
-    border-bottom-color: initial;
-    border-bottom-style: none;
-    border-bottom-width: medium;
-    border-image-source: none;
-    border-image-slice: 100% 100% 100% 100%;
-    border-image-width: 1 1 1 1;
-    border-image-outset: 0 0 0 0;
-    border-image-repeat: stretch stretch;
-    white-space: nowrap;
-    cursor: pointer;
-    
-    border-top-left-radius:  var(--panelRadiusInnerSIP) ;
-    border-top-right-radius:  var(--panelRadiusInnerSIP) ;
-    border-bottom-left-radius:  var(--panelRadiusInnerSIP) ;
-    border-bottom-right-radius:  var(--panelRadiusInnerSIP) ;
     display: flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding-left: 100rem;
-    padding-top: 5rem;
-    padding-bottom: 5rem;
-
-    &:hover {
-    background-color: var(--hoverColorBright);
-    }
 }
 
 .icon_hE2 {
@@ -145,9 +112,7 @@ display: flex;
     margin-right: 0.3rem;
     font-weight: 500;
 }
-.educationCount {
-   
-}
+
 .panelSectionRow {
     background-color:  var(--progressTrackColor) ;
     border-top-left-radius: 5rem 5rem;
@@ -158,3 +123,4 @@ display: flex;
     padding-bottom: 3rem;
     margin-bottom: 8rem;
 }
+

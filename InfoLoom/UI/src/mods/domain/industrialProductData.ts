@@ -6,8 +6,6 @@ export interface industrialProductData {
     Companies: number;
     Workers: number;
     SvcPercent: number;
-    CapPercent: number;
-    CapPerCompany: number;
     WrkPercent: number;
     TaxFactor: number;
 }

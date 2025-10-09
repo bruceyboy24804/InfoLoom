@@ -1,18 +1,16 @@
-namespace InfoLoomTwo.Domain
+using Game.Economy;
+
+namespace InfoLoomTwo.Domain.DataDomain
 {
     public struct IndustrialProductsData
     {
-        public string ResourceName;
-        public int Demand;
-        public int Building;
-        public int Free;
-        public int Companies;
-        public int Workers;
-        public int SvcPercent;
-        public int CapPercent;
-        public int CapPerCompany;
-        public int WrkPercent;
-        public int TaxFactor;
-        public int Consumption;
+        public string ResourceName { get; set; }
+        public int Demand { get; set; }
+        public int Building { get; set; }
+        public int Free { get; set; }
+        public int Companies { get; set; }
+        public int Workers { get; set; }
+        public int WrkPercent { get; set; }
+        public int TaxFactor { get; set; }
     }
 }

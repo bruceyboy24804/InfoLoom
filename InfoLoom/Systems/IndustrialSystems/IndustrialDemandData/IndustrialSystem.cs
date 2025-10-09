@@ -682,12 +682,13 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
                             m_OfficeDemandFactors[1] += demandFactorEffect2; // UneducatedWorkforce 
                             m_OfficeDemandFactors[11] += demandFactorEffect3; // Taxes 
                             m_OfficeDemandFactors[13] += math.min(0, num38 - num39); // EmptyBuildings 
+                             m_ExcludedResources.value |= iterator.resource;
                         }
                         // InfoLoom - no demand
                         else
                         {
                             //Plugin.Log($"No office demand for: {iterator.resource}");
-                            m_ExcludedResources.value |= iterator.resource;
+                           
                         }
                     }
                     else if ((!flag && !flag3) || (m_IndustrialBuildingDemands[resourceIndex4] > 0 && m_IndustrialZoningDemands[resourceIndex4] > 0)) // weight > 0
@@ -705,12 +706,13 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
                         m_DemandFactors[10] += demandFactorEffect7; // LocalInputs 
                         m_DemandFactors[11] += demandFactorEffect8; // Taxes 
                         m_DemandFactors[13] += math.min(0, num40 - num41); // EmptyBuildings 
+                         m_ExcludedResources.value |= iterator.resource;
                     }
                     // InfoLoom - no demand, TODO COUNT
                     else
                     {
                         //Plugin.Log($"No industry demand for: {iterator.resource}");
-                        m_ExcludedResources.value |= iterator.resource;
+                       
                     }
                 }
 

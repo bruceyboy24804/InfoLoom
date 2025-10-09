@@ -19,215 +19,214 @@ using Unity.Entities;
 
 namespace InfoLoomTwo.Systems.Sections
 {
-	public partial class ILCitizenSection : ExtendedInfoSectionBase
-	{
-		protected override string group => nameof(ILCitizenSection);
-		private bool isCitizen;
-		private string Household;
-		private int HouseholdMoney;
-		private int HouseholdSpendableMoney;
-		private string HouseholdNeedResources;
-		private int HouseholdNeedResourcesAmount;
-		private Entity companyEntity;
-		private string Shift;
-		private string WellBeing;
-		private int Health;
-		private int BirthDay;
-		private string Purpose;
-		private int ShoppingAmount;
-		private string Resource;
-		private int Rent;
-		private int NumberOfCitizensInHousehold;
+    public partial class ILCitizenSection : ExtendedInfoSectionBase
+    {
+        // Private fields following naming conventions from other sections
+        private Entity citizenEntity;
+        private Entity householdEntity;
+        private Entity companyEntity;
+        
+        private string _Household;
+        private int _HouseholdMoney;
+        private int _HouseholdSpendableMoney;
+        private string _HouseholdNeedResources;
+        private int _HouseholdNeedResourcesAmount;
+        private string _Workplace;
+        private string _Shift;
+        private string _WellBeing;
+        private int _Health;
+        private int _BirthDay;
+        private string _Purpose;
+        private int _ShoppingAmount;
+        private string _Resource;
+        private int _Rent;
+        private int _NumberOfCitizensInHousehold;
 
-		protected override void Reset() { }
+        protected override string group => nameof(ILCitizenSection);
 
-		protected override void OnCreate()
-		{
-			base.OnCreate();
-			m_InfoUISystem.AddMiddleSection(this);
-		}
+        protected override void Reset()
+        {
+            citizenEntity = Entity.Null;
+            householdEntity = Entity.Null;
+            companyEntity = Entity.Null;
+            
+            _Household = "";
+            _HouseholdMoney = 0;
+            _HouseholdSpendableMoney = 0;
+            _HouseholdNeedResources = "";
+            _HouseholdNeedResourcesAmount = 0;
+            _Workplace = "";
+            _Shift = "";
+            _WellBeing = "";
+            _Health = 0;
+            _BirthDay = 0;
+            _Purpose = "";
+            _ShoppingAmount = 0;
+            _Resource = "";
+            _Rent = 0;
+            _NumberOfCitizensInHousehold = 0;
+        }
 
-		private bool Visible()
-		{
-			isCitizen = false;
-			if (EntityManager.HasComponent<Citizen>(selectedEntity))
-			{
-				isCitizen = true;
-			}
-			return isCitizen;
-		}
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            m_InfoUISystem.AddMiddleSection(this);
+        }
 
-		protected override void OnUpdate()
-		{
-			base.visible = Visible();
-		}
+        private bool Visible()
+        {
+            if (EntityManager.HasComponent<Citizen>(selectedEntity) && !Mod.setting.hideCitizenSection)
+            {
+                citizenEntity = selectedEntity;
+                return true;
+            }
+            return false;
+        }
 
-		protected override void OnProcess()
-		{
-			Entity companyEntity = Entity.Null;
-			companyEntity = CitizenUIUtils.GetCompanyEntity(base.EntityManager, selectedEntity);
-			// Household
-			Entity household = Entity.Null;
-			if (EntityManager.HasComponent<HouseholdMember>(selectedEntity))
-			{
-				household = EntityManager.GetComponentData<HouseholdMember>(selectedEntity).m_Household;
-				Household = m_NameSystem.GetRenderedLabelName(household);
-			}
-			HouseholdNeedResources = "";
-			HouseholdNeedResourcesAmount = 0;
-			if (household != Entity.Null && EntityManager.HasComponent<HouseholdNeed>(household))
-			{
-				var need = EntityManager.GetComponentData<HouseholdNeed>(household);
-				HouseholdNeedResources = need.m_Resource.ToString();
-				HouseholdNeedResourcesAmount = need.m_Amount;
-			}
-			Household householdData = default(Household);
-			if (EntityManager.HasComponent<Game.Economy.Resources>(household))
-			{
-				int resources = EconomyUtils.GetResources(Game.Economy.Resource.Money, base.EntityManager.GetBuffer<Game.Economy.Resources>(household, isReadOnly: true));
-				HouseholdMoney = resources;
-				if (base.EntityManager.TryGetComponent<PropertyRenter>(household, out var component))
-				{
-					BufferLookup<Renter> m_RenterBufs = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
-					ComponentLookup<Game.Prefabs.ConsumptionData> consumptionDatas = SystemAPI.GetComponentLookup<Game.Prefabs.ConsumptionData>(isReadOnly: true);
-					ComponentLookup<PrefabRef> prefabRefs = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
-					HouseholdSpendableMoney = EconomyUtils.GetHouseholdSpendableMoney
-						(householdData,
-							EntityManager.GetBuffer<Game.Economy.Resources>(household, isReadOnly: true),
-							ref m_RenterBufs,
-							ref consumptionDatas,
-							ref prefabRefs,
-							component
-						);
-				}
-			}
-			//Shift
-			Shift = "";
-			if (EntityManager.TryGetComponent<Worker>(selectedEntity, out var worker))
-			{
-				Shift = worker.m_Shift.ToString();
-			}
-			WellBeing = "";
-			if (EntityManager.TryGetComponent<Citizen>(selectedEntity, out var citizenData))
-			{
-				Citizen componentData19 = base.EntityManager.GetComponentData<Citizen>(selectedEntity);
-				WellBeing = $"{WellbeingToString(componentData19.m_WellBeing)} ({componentData19.m_WellBeing})";
-			}
-			// Get rent and money values from the selected entity
-			Rent = 0;
-			Entity householder = Entity.Null;
-			if (EntityManager.HasComponent<HouseholdMember>(selectedEntity))
-			{
-				householder = EntityManager.GetComponentData<HouseholdMember>(selectedEntity).m_Household;
-				if (household != Entity.Null && EntityManager.HasComponent<PropertyRenter>(householder))
-				{
-					PropertyRenter componentData = EntityManager.GetComponentData<PropertyRenter>(householder);
-					Rent = componentData.m_Rent;
-				}
-			}
-			// Number of Citizens in Household
-			NumberOfCitizensInHousehold = 0;
-			if (household != Entity.Null && EntityManager.HasBuffer<HouseholdCitizen>(household))
-			{
-				DynamicBuffer<HouseholdCitizen> householdCitizens = EntityManager.GetBuffer<HouseholdCitizen>(household);
-				NumberOfCitizensInHousehold = householdCitizens.Length;
-			}
+        protected override void OnUpdate()
+        {
+            visible = Visible();
+        }
 
-			// Purpose
-			Purpose = "";
-			if (EntityManager.TryGetComponent<TravelPurpose>(selectedEntity, out var component2))
-			{
-				Purpose purpose = component2.m_Purpose;
-				Purpose = purpose.ToString();
+        protected override void OnProcess()
+        {
+            // Get household entity
+            if (EntityManager.TryGetComponent<HouseholdMember>(citizenEntity, out var householdMember))
+            {
+                householdEntity = householdMember.m_Household;
+                _Household = m_NameSystem.GetRenderedLabelName(householdEntity);
+            }
 
-			}
+            // Get company entity
+            companyEntity = CitizenUIUtils.GetCompanyEntity(EntityManager, citizenEntity);
+            _Workplace = companyEntity != Entity.Null ? m_NameSystem.GetRenderedLabelName(companyEntity) : "";
 
+            // Process household data
+            ProcessHouseholdData();
 
-			// Health
-			Health = 0;
-			if (EntityManager.TryGetComponent<Citizen>(selectedEntity, out var health))
-			{
-				Health = health.m_Health;
-			}
+            // Process citizen data
+            ProcessCitizenData();
 
-			// BirthDay
-			BirthDay = 0;
-			if (EntityManager.TryGetComponent<Citizen>(selectedEntity, out var age))
-			{
-				BirthDay = age.m_BirthDay;
-			}
+            // Process travel purpose data
+            ProcessTravelPurposeData();
+        }
 
-			// ShoppingAmount
-			ShoppingAmount = 0;
-			if (EntityManager.TryGetComponent<TravelPurpose>(selectedEntity, out var shopper))
-			{
-				ShoppingAmount = shopper.m_Data;
-			}
+        private void ProcessHouseholdData()
+        {
+            if (householdEntity == Entity.Null) return;
 
-			// Resource
-			Resource = "";
-			if (EntityManager.TryGetComponent<TravelPurpose>(selectedEntity, out var shopper2))
-			{
-				Resource = shopper2.m_Resource.ToString();
-			}
-		}
+            // Household needs
+            if (EntityManager.TryGetComponent<HouseholdNeed>(householdEntity, out var need))
+            {
+                _HouseholdNeedResources = need.m_Resource.ToString();
+                _HouseholdNeedResourcesAmount = need.m_Amount;
+            }
 
-		public override void OnWriteProperties(IJsonWriter writer)
-		{
-			writer.PropertyName("Household");
-			writer.Write(Household);
+            // Household money
+            if (EntityManager.HasBuffer<Game.Economy.Resources>(householdEntity))
+            {
+                
+                 EntityManager.TryGetBuffer<Game.Economy.Resources>(householdEntity, isReadOnly: true, out var resourceBuffer);
+                _HouseholdMoney = EconomyUtils.GetResources(Game.Economy.Resource.Money, resourceBuffer);
 
-			writer.PropertyName("HouseholdMoney");
-			writer.Write(HouseholdMoney);
-			writer.PropertyName("HouseholdSpendableMoney");
-			writer.Write(HouseholdSpendableMoney);
-			writer.PropertyName("HouseholdNeedResources");
-			writer.Write(HouseholdNeedResources);
-			writer.PropertyName("HouseholdNeedResourcesAmount");
-			writer.Write(HouseholdNeedResourcesAmount);
-			writer.PropertyName("Workplace");
-			m_NameSystem.BindName(writer, companyEntity);
+                // Spendable money calculation
+                if (EntityManager.TryGetComponent<PropertyRenter>(householdEntity, out var propertyRenter))
+                {
+                    var renterBufs = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+                    var consumptionDatas = SystemAPI.GetComponentLookup<Game.Prefabs.ConsumptionData>(isReadOnly: true);
+                    var prefabRefs = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
 
-			writer.PropertyName("Shift");
-			writer.Write(Shift);
+                    _HouseholdSpendableMoney = EconomyUtils.GetHouseholdSpendableMoney(
+                        default(Household),
+                        resourceBuffer,
+                        ref renterBufs,
+                        ref consumptionDatas,
+                        ref prefabRefs,
+                        propertyRenter
+                    );
+                    
+                    _Rent = propertyRenter.m_Rent;
+                }
+            }
 
-			writer.PropertyName("WellBeing");
-			writer.Write(WellBeing);
+            // Number of citizens in household
+            if (EntityManager.HasBuffer<HouseholdCitizen>(householdEntity))
+            {
+                EntityManager.TryGetBuffer<HouseholdCitizen>(householdEntity, isReadOnly: true, out var householdCitizens);
+                _NumberOfCitizensInHousehold = householdCitizens.Length;
+            }
+        }
 
-			writer.PropertyName("Health");
-			writer.Write(Health);
+        private void ProcessCitizenData()
+        {
+            // Worker shift
+            if (EntityManager.TryGetComponent<Worker>(citizenEntity, out var worker))
+            {
+                _Shift = worker.m_Shift.ToString();
+            }
 
-			writer.PropertyName("BirthDay");
-			writer.Write(BirthDay);
+            // Citizen wellbeing and health
+            if (EntityManager.TryGetComponent<Citizen>(citizenEntity, out var citizen))
+            {
+                _WellBeing = $"{WellbeingToString(citizen.m_WellBeing)} ({citizen.m_WellBeing})";
+                _Health = citizen.m_Health;
+                _BirthDay = citizen.m_BirthDay;
+            }
+        }
 
-			writer.PropertyName("Purpose");
-			writer.Write(Purpose);
+        private void ProcessTravelPurposeData()
+        {
+            if (EntityManager.TryGetComponent<TravelPurpose>(citizenEntity, out var travelPurpose))
+            {
+                _Purpose = travelPurpose.m_Purpose.ToString();
+                _ShoppingAmount = travelPurpose.m_Data;
+                _Resource = travelPurpose.m_Resource.ToString();
+            }
+        }
 
-			writer.PropertyName("ShoppingAmount");
-			writer.Write(ShoppingAmount);
+        public override void OnWriteProperties(IJsonWriter writer)
+        {
+            writer.PropertyName("HideCitizenSection");
+            writer.Write(Mod.setting.hideCitizenSection);
+            writer.PropertyName("Household");
+            writer.Write(_Household);
+            writer.PropertyName("HouseholdMoney");
+            writer.Write(_HouseholdMoney);
+            writer.PropertyName("HouseholdSpendableMoney");
+            writer.Write(_HouseholdSpendableMoney);
+            writer.PropertyName("HouseholdNeedResources");
+            writer.Write(_HouseholdNeedResources);
+            writer.PropertyName("HouseholdNeedResourcesAmount");
+            writer.Write(_HouseholdNeedResourcesAmount);
+            writer.PropertyName("Workplace");
+            writer.Write(_Workplace);
+            writer.PropertyName("Shift");
+            writer.Write(_Shift);
+            writer.PropertyName("WellBeing");
+            writer.Write(_WellBeing);
+            writer.PropertyName("Health");
+            writer.Write(_Health);
+            writer.PropertyName("BirthDay");
+            writer.Write(_BirthDay);
+            writer.PropertyName("Purpose");
+            writer.Write(_Purpose);
+            writer.PropertyName("ShoppingAmount");
+            writer.Write(_ShoppingAmount);
+            writer.PropertyName("Resource");
+            writer.Write(_Resource);
+            writer.PropertyName("Rent");
+            writer.Write(_Rent);
+            writer.PropertyName("NumberOfCitizensInHousehold");
+            writer.Write(_NumberOfCitizensInHousehold);
+        }
 
-			writer.PropertyName("Resource");
-			writer.Write(Resource);
-
-			writer.PropertyName("Rent");
-			writer.Write(Rent);
-
-			writer.PropertyName("NumberOfCitizensInHousehold");
-			writer.Write(NumberOfCitizensInHousehold);
-		}
-
-
-		private static string WellbeingToString(int wellbeing)
-		{
-			if (wellbeing < 25)
-				return "Depressed";
-			if (wellbeing < 40)
-				return "Sad";
-			if (wellbeing < 60)
-				return "Neutral";
-			if (wellbeing < 80)
-				return "Content";
-			return "Happy";
-		}
+        private static string WellbeingToString(int wellbeing)
+        {
+            if (wellbeing < 25) return "Depressed";
+            if (wellbeing < 40) return "Sad";
+            if (wellbeing < 60) return "Neutral";
+            if (wellbeing < 80) return "Content";
+            return "Happy";
+        }
     }
 }

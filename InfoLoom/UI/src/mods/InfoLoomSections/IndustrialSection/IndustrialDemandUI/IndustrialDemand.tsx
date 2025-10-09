@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react';
 import { bindValue, useValue } from 'cs2/api';
 import mod from 'mod.json';
-import { DraggablePanelProps, PanelProps, Panel, Tooltip } from 'cs2/ui';
+import { DraggablePanelProps, PanelProps, Panel, Tooltip, Scrollable } from 'cs2/ui';
 import { IndustrialData, IndustrialDataExRes } from '../../../bindings';
 import { useLocalization } from 'cs2/l10n';
 import styles from './IndustrialDemand.module.scss';
@@ -27,6 +27,7 @@ interface SingleValueProps {
   width?: string;
   small?: boolean;
 }
+
 const RowWithTwoColumns: React.FC<RowWithTwoColumnsProps> = ({ left, right }) => {
   return (
     <div className="labels_L7Q row_S2v">
@@ -84,7 +85,6 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
   );
 };
 
-// Simple horizontal line
 const DataDivider: React.FC = () => {
   return (
     <div
@@ -100,7 +100,6 @@ const DataDivider: React.FC = () => {
   );
 };
 
-// Centered value with optional flag for styling
 const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) => {
   const rowClass = small ? 'row_S2v small_ExK' : 'row_S2v';
   const centerStyle: React.CSSProperties = {
@@ -122,170 +121,166 @@ const SingleValue: React.FC<SingleValueProps> = ({ value, flag, width, small }) 
     </div>
   );
 };
-// Declare the engine object if it's globally available
 
-const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, draggable }) => {
-  const { translate } = useLocalization();
-  const ilIndustrial = useValue(IndustrialData);
-  const ilIndustrialExRes = useValue(IndustrialDataExRes);
+// Move components outside to prevent re-creation on render
+const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: number[]; translate: any }) => {
+  return (
+    <div style={{ width: '70%', boxSizing: 'border-box', border: '1px solid gray' }}>
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%' }}></div>
+        <SingleValue value={translate("InfoLoomTwo.IndustrialPanel[Industrial]", "INDUSTRIAL") || "INDUSTRIAL"} />
+        <SingleValue value={translate("InfoLoomTwo.IndustrialPanel[Office]", "OFFICE") || "OFFICE"} />
+      </div>
 
-  const IndustrialDataWithTranslation = ({ data }: { data: number[] }) => {
-    return (
-      <div style={{ width: '70%', boxSizing: 'border-box', border: '1px solid gray' }}>
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%' }}></div>
-          <SingleValue value={translate("InfoLoomTwo.IndustrialPanel[Industrial]", "INDUSTRIAL") || "INDUSTRIAL"} />
-          <SingleValue value={translate("InfoLoomTwo.IndustrialPanel[Office]", "OFFICE") || "OFFICE"} />
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[EmptyBuildingsTooltip]", "Number of empty industrial/office buildings available for new companies to move in")}>
+            <span>{translate("InfoLoomTwo.IndustrialPanel[EmptyBuildings]", "EMPTY BUILDINGS")}</span>
+          </Tooltip>
         </div>
-
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[EmptyBuildingsTooltip]", "Number of empty industrial/office buildings available for new companies to move in")}>
-              <span>{translate("InfoLoomTwo.IndustrialPanel[EmptyBuildings]", "EMPTY BUILDINGS")}</span>
-            </Tooltip>
-          </div>
-          <SingleValue value={data[0]} />
-          <SingleValue value={data[10]} />
+        <SingleValue value={data[0]} />
+        <SingleValue value={data[10]} />
+      </div>
+      
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[PropertylessCompaniesTooltip]", "Companies that exist but don't have a building to operate from. High numbers indicate need for more zoned land.")}>
+            <span>{translate("InfoLoomTwo.IndustrialPanel[PropertylessCompanies]", "PROPERTYLESS COMPANIES")}</span>
+          </Tooltip>
         </div>
-        
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[PropertylessCompaniesTooltip]", "Companies that exist but don't have a building to operate from. High numbers indicate need for more zoned land.")}>
-              <span>{translate("InfoLoomTwo.IndustrialPanel[PropertylessCompanies]", "PROPERTYLESS COMPANIES")}</span>
-            </Tooltip>
-          </div>
-          <div className="row_S2v" style={{ width: '20%', justifyContent: 'center' }}>
-            {data[1]}
-          </div>
-          <div className="row_S2v" style={{ width: '20%', justifyContent: 'center' }}>
-            {data[11]}
-          </div>
+        <div className="row_S2v" style={{ width: '20%', justifyContent: 'center' }}>
+          {data[1]}
         </div>
-
-        <DataDivider />
-
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[TaxRateTooltip]", "Average tax rate across all resource types. Higher taxes reduce company demand. 10% is neutral.")}>
-              <p>{translate("InfoLoomTwo.IndustrialPanel[TaxRate]", "AVERAGE TAX RATE")}</p>
-            </Tooltip>
-          </div>
-          <div className={`row_S2v ${data[2] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
-            {(data[2] / 10).toFixed(1)} %
-          </div>
-          <div className={`row_S2v ${data[12] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
-            {(data[12] / 10).toFixed(1)} %
-          </div>
-        </div>
-
-        <DataDivider />
-
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[LocalDemandTooltip]", "Production capacity compared to local demand. 100% means production equals demand. Higher values indicate overproduction.")}>
-              <p>{translate("InfoLoomTwo.IndustrialPanel[LocalDemand]", "LOCAL DEMAND (ind)")}</p>
-            </Tooltip>
-          </div>
-          <div className={`row_S2v ${data[3] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
-            {data[3]} %
-          </div>
-        </div>
-
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[InputUtilizationTooltip]", "How well input resources are being utilized by manufacturing. 110% is neutral, values capped at 400%.")}>
-              <p>{translate("InfoLoomTwo.IndustrialPanel[InputUtilization]", "INPUT UTILIZATION (ind)")}</p>
-            </Tooltip>
-          </div>
-          <div className={`row_S2v ${data[7] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
-            {data[7]} %
-          </div>
-        </div>
-
-        <DataDivider />
-
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacityTooltip]", "Ratio of current employees to maximum employee capacity. 72% industrial and 75% office are neutral ratios.")}>
-              <p>{translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacity]", "EMPLOYEE CAPACITY RATIO")}</p>
-            </Tooltip>
-          </div>
-          <div className={`row_S2v ${data[4] < 720 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
-            {(data[4] / 10).toFixed(1)} %
-          </div>
-          <div className={`row_S2v ${data[14] < 750 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
-            {(data[14] / 10).toFixed(1)} %
-          </div>
-        </div>
-
-        <DataDivider />
-
-        <div style={{ display: 'flex' }}>
-          <div style={{ width: '60%', height: '2.2em', display: 'flex', alignItems: 'center', fontSize: '15rem', color: 'white' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[WorkforceTooltip]", "Available educated and uneducated workers that can be employed by new companies")}>
-              <span>{translate("InfoLoomTwo.IndustrialPanel[Workforce]", "AVAILABLE WORKFORCE")}</span>
-            </Tooltip>
-          </div>
-          <div style={{ width: '40%' }}>
-            <RowWithTwoColumns left={translate("InfoLoomTwo.IndustrialPanel[Educated]", "Educated")} right={data[8]} />
-            <RowWithTwoColumns left={translate("InfoLoomTwo.IndustrialPanel[Uneducated]", "Uneducated")} right={data[9]} />
-          </div>
-        </div>
-
-        <DataDivider />
-
-        <div style={{ display: 'flex' }}>
-          <div style={{ width: '50%', height: '2.2em', display: 'flex', flexDirection: 'column' }}>
-            <p style={{ fontSize: '15rem', color: 'white' }}>
-              <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StorageTooltip]", "Storage facilities for industrial goods. The game spawns warehouses when demand for storage exists.")}>
-                <span>{translate("InfoLoomTwo.IndustrialPanel[Storage]", "STORAGE")}</span>
-              </Tooltip>
-            </p>
-            <p style={{ fontSize: '12rem', color: 'white' }}>
-              {translate("InfoLoomTwo.IndustrialPanel[StorageDescription]", "The game will spawn warehouses when DEMANDED TYPES exist.")}
-            </p>
-          </div>
-          <div style={{ width: '50%' }}>
-            <RowWithTwoColumns 
-              left={
-                <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StorageEmptyBuildingsTooltip]", "Empty warehouse buildings available for storage companies")}>
-                  <span>{translate("InfoLoomTwo.IndustrialPanel[StorageEmptyBuildings]", "Empty buildings")}</span>
-                </Tooltip>
-              } 
-              right={data[5]} 
-            />
-            <RowWithTwoColumns 
-              left={
-                <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StoragePropertylessTooltip]", "Storage companies without warehouse buildings")}>
-                  <span>{translate("InfoLoomTwo.IndustrialPanel[StoragePropertyless]", "Propertyless companies")}</span>
-                </Tooltip>
-              } 
-              right={data[6]} 
-            />
-            <RowWithTwoColumns 
-              left={
-                <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[DemandedTypesTooltip]", "Number of resource types that need storage capacity based on demand vs storage capacity")}>
-                  <span>{translate("InfoLoomTwo.IndustrialPanel[DemandedTypes]", "DEMANDED TYPES")}</span>
-                </Tooltip>
-              } 
-              right={data[15]} 
-            />
-          </div>
+        <div className="row_S2v" style={{ width: '20%', justifyContent: 'center' }}>
+          {data[11]}
         </div>
       </div>
-    );
-  };
 
-  const ExcludedResourcesWithTranslation = ({ resources }: { resources: string[] }) => {
-    return (
-      <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray' }}>
-        <div className="labels_L7Q row_S2v">
-          <div className="row_S2v" style={{ width: '100%' }}>
-            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[NoDemandTooltip]", "Resources that currently have no company demand due to oversupply, lack of workforce, or high taxes")}>
-              <p style={{ margin: 0 }}>{translate("InfoLoomTwo.IndustrialPanel[NoDemand]", "NO DEMAND FOR")}</p>
-            </Tooltip>
-          </div>
+      <DataDivider />
+
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[TaxRateTooltip]", "Average tax rate across all resource types. Higher taxes reduce company demand. 10% is neutral.")}>
+            <p>{translate("InfoLoomTwo.IndustrialPanel[TaxRate]", "AVERAGE TAX RATE")}</p>
+          </Tooltip>
         </div>
+        <div className={`row_S2v ${data[2] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
+          {(data[2] / 10).toFixed(1)} %
+        </div>
+        <div className={`row_S2v ${data[12] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
+          {(data[12] / 10).toFixed(1)} %
+        </div>
+      </div>
+
+      <DataDivider />
+
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[LocalDemandTooltip]", "Production capacity compared to local demand. 100% means production equals demand. Higher values indicate overproduction.")}>
+            <p>{translate("InfoLoomTwo.IndustrialPanel[LocalDemand]", "LOCAL DEMAND (ind)")}</p>
+          </Tooltip>
+        </div>
+        <div className={`row_S2v ${data[3] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
+          {data[3]} %
+        </div>
+      </div>
+
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[InputUtilizationTooltip]", "How well input resources are being utilized by manufacturing. 110% is neutral, values capped at 400%.")}>
+            <p>{translate("InfoLoomTwo.IndustrialPanel[InputUtilization]", "INPUT UTILIZATION (ind)")}</p>
+          </Tooltip>
+        </div>
+        <div className={`row_S2v ${data[7] > 100 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '40%', justifyContent: 'center' }}>
+          {data[7]} %
+        </div>
+      </div>
+
+      <DataDivider />
+
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '60%', flexDirection: 'column' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacityTooltip]", "Ratio of current employees to maximum employee capacity. 72% industrial and 75% office are neutral ratios.")}>
+            <p>{translate("InfoLoomTwo.IndustrialPanel[EmployeeCapacity]", "EMPLOYEE CAPACITY RATIO")}</p>
+          </Tooltip>
+        </div>
+        <div className={`row_S2v ${data[4] < 720 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
+          {(data[4] / 10).toFixed(1)} %
+        </div>
+        <div className={`row_S2v ${data[14] < 750 ? 'negative_YWY' : 'positive_zrK'}`} style={{ width: '20%', justifyContent: 'center' }}>
+          {(data[14] / 10).toFixed(1)} %
+        </div>
+      </div>
+
+      <DataDivider />
+
+      <div style={{ display: 'flex' }}>
+        <div style={{ width: '60%', height: '2.2em', display: 'flex', alignItems: 'center', fontSize: '15rem', color: 'white' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[WorkforceTooltip]", "Available educated and uneducated workers that can be employed by new companies")}>
+            <span>{translate("InfoLoomTwo.IndustrialPanel[Workforce]", "AVAILABLE WORKFORCE")}</span>
+          </Tooltip>
+        </div>
+        <div style={{ width: '40%' }}>
+          <RowWithTwoColumns left={translate("InfoLoomTwo.IndustrialPanel[Educated]", "Educated")} right={data[8]} />
+          <RowWithTwoColumns left={translate("InfoLoomTwo.IndustrialPanel[Uneducated]", "Uneducated")} right={data[9]} />
+        </div>
+      </div>
+
+      <DataDivider />
+
+      <div style={{ display: 'flex' }}>
+        <div style={{ width: '50%', height: '2.2em', display: 'flex', flexDirection: 'column' }}>
+          <p style={{ fontSize: '15rem', color: 'white' }}>
+            <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StorageTooltip]", "Storage facilities for industrial goods. The game spawns warehouses when demand for storage exists.")}>
+              <span>{translate("InfoLoomTwo.IndustrialPanel[Storage]", "STORAGE")}</span>
+            </Tooltip>
+          </p>
+          <p style={{ fontSize: '12rem', color: 'white' }}>
+            {translate("InfoLoomTwo.IndustrialPanel[StorageDescription]", "The game will spawn warehouses when DEMANDED TYPES exist.")}
+          </p>
+        </div>
+        <div style={{ width: '50%' }}>
+          <RowWithTwoColumns 
+            left={
+              <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StorageEmptyBuildingsTooltip]", "Empty warehouse buildings available for storage companies")}>
+                <span>{translate("InfoLoomTwo.IndustrialPanel[StorageEmptyBuildings]", "Empty buildings")}</span>
+              </Tooltip>
+            } 
+            right={data[5]} 
+          />
+          <RowWithTwoColumns 
+            left={
+              <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[StoragePropertylessTooltip]", "Storage companies without warehouse buildings")}>
+                <span>{translate("InfoLoomTwo.IndustrialPanel[StoragePropertyless]", "Propertyless companies")}</span>
+              </Tooltip>
+            } 
+            right={data[6]} 
+          />
+          <RowWithTwoColumns 
+            left={
+              <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[DemandedTypesTooltip]", "Number of resource types that need storage capacity based on demand vs storage capacity")}>
+                <span>{translate("InfoLoomTwo.IndustrialPanel[DemandedTypes]", "DEMANDED TYPES")}</span>
+              </Tooltip>
+            } 
+            right={data[15]} 
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const ExcludedResourcesWithTranslation = React.memo(({ resources, translate }: { resources: string[]; translate: any }) => {
+  return (
+    <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray', display: 'flex', flexDirection: 'column' }}>
+      <div className="labels_L7Q row_S2v">
+        <div className="row_S2v" style={{ width: '100%' }}>
+          <Tooltip tooltip={translate("InfoLoomTwo.IndustrialPanel[NoDemandTooltip]", "Resources that currently have no company demand due to oversupply, lack of workforce, or high taxes")}>
+            <p style={{ margin: 0 }}>{translate("InfoLoomTwo.IndustrialPanel[NoDemand]", "DEMAND FOR")}</p>
+          </Tooltip>
+        </div>
+      </div>
+      <Scrollable vertical={true} style={{ maxHeight: '335rem', flex: 1 }}>
         <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
           {resources.map((item, index) => (
             <li key={index}>
@@ -293,9 +288,15 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
             </li>
           ))}
         </ul>
-      </div>
-    );
-  };
+      </Scrollable>
+    </div>
+  );
+});
+
+const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, draggable }) => {
+  const { translate } = useLocalization();
+  const ilIndustrial = useValue(IndustrialData);
+  const ilIndustrialExRes = useValue(IndustrialDataExRes);
 
   return (
     <Panel
@@ -313,8 +314,8 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
         <p>{translate("InfoLoomTwo.IndustrialPanel[Waiting]", "Waiting...")}</p>
       ) : (
         <div style={{ display: 'flex' }}>
-          <IndustrialDataWithTranslation data={ilIndustrial} />
-          <ExcludedResourcesWithTranslation resources={ilIndustrialExRes} />
+          <IndustrialDataWithTranslation data={ilIndustrial} translate={translate} />
+          <ExcludedResourcesWithTranslation resources={ilIndustrialExRes} translate={translate} />
         </div>
       )}
     </Panel>

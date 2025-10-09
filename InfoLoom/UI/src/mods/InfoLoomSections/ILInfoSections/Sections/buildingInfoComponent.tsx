@@ -16,7 +16,24 @@ export const InfoRowTheme: Theme | any = getModule(
     "game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss",
     "classes"
 );
-
+// Add this helper function before your component declaration:
+const getTruckStateDescription = (truckState: number): string => {
+    const states: string[] = [];
+    
+    // DeliveryTruckFlags enum values
+    if (truckState & 1) states.push("Returning");
+    if (truckState & 2) states.push("Loaded");
+    if (truckState & 4) states.push("Dummy Traffic");
+    if (truckState & 16) states.push("Buying");
+    if (truckState & 32) states.push("Storage Transfer");
+    if (truckState & 64) states.push("Delivering");
+    if (truckState & 128) states.push("No Unloading");
+    if (truckState & 256) states.push("Transaction Cancelled");
+    if (truckState & 512) states.push("Update Owner Quantity");
+    if (truckState & 1024) states.push("Update Seller Quantity");
+    
+    return states.length > 0 ? states.join(", ") : "Idle";
+};
 interface TradeCostData extends SelectedInfoSectionBase {
   Resource: string;
   BuyCost: number;
@@ -53,7 +70,6 @@ interface ILBuildingSection extends SelectedInfoSectionBase {
     TransportCost: number;
     MaxProfitPerDay: number;
     ProfitPerDay: number;
-    PotentialProfitGain: number;
     EmployeeCount: number;
     MaxEmployees: number;
     EducationDataEmployees: ChartData;
@@ -65,7 +81,16 @@ interface ILBuildingSection extends SelectedInfoSectionBase {
     CommuterByEducationLevel: CommuterLevelData[];
     CommuterByWorkplaceAndEducationLevel: CommuterWorkplaceLevelData[];
 
+    IsStorageTransfer: boolean;
+    CostPayer: Entity;
+    MeanInputTripLength: number;
+    VehicleTarget: Entity;
+    TruckState: number;
+
     TradeCosts: TradeCostData[];
+    Input1: string;
+    Input2: string;
+    Output: string;
 }
 
 const getDisplayName = (
@@ -103,156 +128,71 @@ const focusEntity = (e: Entity) => {
     trigger('camera', 'focusEntity', e);
 };
 
+// Update your component to use this logic more reliably
 export const ILBuildingInfoSection = (componentList: any): any => {
 componentList["InfoLoomTwo.Systems.Sections.ILBuildingSection"] = (props: ILBuildingSection & TradeCostData & CommuterLevelData & OvereducatedLevelData) => {
   const { translate } = useLocalization();
-        return (
-            <InfoSectionFoldout
-                header={
-                    <div className={InfoRowTheme.infoRow}>
-                        <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Info Loom Company</div>
-                    </div>
-                }
-                initialExpanded={PanelOpen}
-                expandFromContent={false}
-                focusKey={FOCUS_AUTO}
-                onToggleExpanded={(value: boolean) => { PanelOpen = value }}
-            >
-                <PanelSectionRow
-                    left={"Buying from"}
-                    right={<Button
-                        className={styles.button}
-                        onSelect={() => focusEntity(props.TradePartnerEntity)}
-                    >
-                        <img className={styles.icon_hE2} src="Media/Glyphs/ViewInfo.svg"/>
-                        <div className={styles.ellipsis_C0N}>{getDisplayName(props.TradePartnerName, translate)}</div>
-                    </Button>}
-                    uppercase={false}
-                    disableFocus={true}
-                    className={InfoRowTheme.infoRow}
-                />
-                <PanelSectionRow
-                    left={"Transport Cost"}
-                    right={`${(props.TransportCost || 0).toFixed(2)}`}
-                    uppercase={false}
-                    disableFocus={true}
-                    className={InfoRowTheme.infoRow}
-                />
-                
-                {/* Display all trade costs from the array */}
-                {props.TradeCosts && Array.isArray(props.TradeCosts) && props.TradeCosts.length > 0 && (
-                    <>
-                        {props.TradeCosts.map((tradeCost, index) => {
-                            // Additional safety checks for each trade cost item
-                            if (!tradeCost || typeof tradeCost !== 'object') return null;
-                            
-                            return (
-                                <PanelSectionRow
-                                    key={index}
-                                    left={`${safeFormatWords(tradeCost.Resource)} Cost (${props.ResourceAmount.toFixed(2)}t)`}
-                                    right={`Buy ${(tradeCost.BuyCost || 0).toFixed(2)} / Sell ${(tradeCost.SellCost || 0).toFixed(2)}`}
-                                    uppercase={false}
-                                    disableFocus={true}
-                                    className={InfoRowTheme.infoRow}
-                                />
-                            );
-                        })}
-                    </>
-                )}
-                {props.OvereductedEmployees ? (
-                            <PanelFoldout
-                                header={
-                                    <div className={InfoRowTheme.infoRow} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                                        <div className={InfoRowSCSS.left}>Overeducated Employees</div>
-                                        <div className={InfoRowSCSS.right} style={{ marginLeft: 8 }}>{props.OvereductedEmployees}</div>
-                                    </div>
-                                }
-                                tooltip="The Workplace Level is the education level of the workplace where the overeducated employee works. Education Level is the level of education of the overeducated employee. The number to the right of the education level is the number of overeducated employees with that education level working at that workplace level."
-                                initialExpanded={false}
-                                expandFromContent={false}
-                                focusKey={FOCUS_AUTO}
-                            >
-                                {/* Column titles row */}
-                                <div className={InfoRowTheme.infoRow} style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}>
-                                    <div className={InfoRowSCSS.left}>Workplace Level</div>
-                                    <div className={InfoRowSCSS.right}>Education Level</div>
-                                </div>
-                                {props.OvereductedByWorkplaceAndEducationLevel && props.OvereductedByWorkplaceAndEducationLevel.length > 0 ? (
-                                    [...props.OvereductedByWorkplaceAndEducationLevel]
-                                        .sort((a, b) => a.WorkplaceLevel - b.WorkplaceLevel)
-                                        .map((workplace, idx) => (
-                                            <PanelSectionRow
-                                                className={styles.panelSectionRow}
-                                                key={idx}
-                                                left={
-                                                    <span style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        width: "100%",
-                                                    }}>
-                                                        <span className={styles.symbol} style={{background: educationLevels[workplace.WorkplaceLevel]?.color}}/>
-                                                        {educationLevels[workplace.WorkplaceLevel]
-                                                            ? educationLevels[workplace.WorkplaceLevel].label
-                                                            : `Workplace Level ${workplace.WorkplaceLevel}`}
-                                                    </span>
-                                                }
-                                                right={
-                                                    <div style={{
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        width: "100%",
-                                                    }}>
-                                                        {workplace.EducationLevels && workplace.EducationLevels.length > 0 ? (
-                                                            [...workplace.EducationLevels]
-                                                                .sort((a, b) => a.EducationLevel - b.EducationLevel)
-                                                                .map((ed, i) => (
-                                                                    <span
-                                                                        key={i}
-                                                                        style={{
-                                                                            display: "flex",
-                                                                            alignItems: "center",
-                                                                            marginBottom: 2,
-                                                                            width: "100%"
-                                                                        }}
-                                                                    >
-                                                                        <span
-                                                                            className={styles.symbol}
-                                                                            style={{
-                                                                                background: educationLevels[ed.EducationLevel]?.color,
-                                                                                marginRight: 8
-                                                                            }}
-                                                                        />
-                                                                        <span className={InfoRowSCSS.left} style={{ flex: 1 }}>
-                                                                            {(educationLevels[ed.EducationLevel]?.label || `Level ${ed.EducationLevel}`) + ":"}
-                                                                        </span>
-                                                                        <span className={InfoRowSCSS.right} style={{ minWidth: 32 }}>
-                                                                            {ed.Count}
-                                                                        </span>
-                                                                    </span>
-                                                                ))
-                                                        ) : (
-                                                            <span>No data</span>
-                                                        )}
-                                                    </div>
-                                                }
-                                            />
-                                        ))
-                                ) : (
-                                    <PanelSectionRow
-                                        left="No data"
-                                    />
-                                )}
-                            </PanelFoldout>
-                        ) : null}
+  
+  // Determine if buying or selling based on trade costs matching inputs/outputs
+  const getBuyingOrSelling = () => {
+    if (!props.TradeCosts || props.TradeCosts.length === 0) return "Trading with";
+    
+    const hasInputTrade = props.TradeCosts.some(
+        tradeCost => tradeCost.Resource === props.Input1 || tradeCost.Resource === props.Input2
+    );
+    const hasOutputTrade = props.TradeCosts.some(
+        tradeCost => tradeCost.Resource === props.Output
+    );
+    
+    if (hasInputTrade) return "Buying from";
+    if (hasOutputTrade && !hasInputTrade) return "Selling to";
+    if (hasInputTrade && hasOutputTrade) return "Trading with";
+    
+    return "Trading with";
+  };
+
+  return (
+    <InfoSectionFoldout
+        header={
+            <div className={InfoRowTheme.infoRow}>
+                <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Info Loom Company</div>
+            </div>
+        }
+        initialExpanded={PanelOpen}
+        expandFromContent={false}
+        focusKey={FOCUS_AUTO}
+        onToggleExpanded={(value: boolean) => { PanelOpen = value }}
+    >
+        {/* Display all trade costs from the array */}
+        {props.TradeCosts && Array.isArray(props.TradeCosts) && props.TradeCosts.length > 0 && (
+            <>
+                {props.TradeCosts.map((tradeCost, index) => {
+                    // Additional safety checks for each trade cost item
+                    if (!tradeCost || typeof tradeCost !== 'object') return null;
+                    
+                    return (
+                        <PanelSectionRow
+                            key={index}
+                            left={`${safeFormatWords(tradeCost.Resource)} Cost (${props.ResourceAmount.toFixed(2)}t)`}
+                            right={`Buy ${(tradeCost.BuyCost || 0).toFixed(2)} / Sell ${(tradeCost.SellCost || 0).toFixed(2)}`}
+                            uppercase={false}
+                            disableFocus={true}
+                            className={InfoRowTheme.infoRow}
+                            tooltip={"If you see (0.00t), but there is a buy and sell cost this means the vehicle has not yet collected/loaded the resource"}
+                        />
+                    );
+                })}
+            </>
+        )}
+        {props.OvereductedEmployees ? (
                     <PanelFoldout
-                        
                         header={
                             <div className={InfoRowTheme.infoRow} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                                <div className={InfoRowSCSS.left}>Commuter Employees</div>
-                                <div className={InfoRowSCSS.right} style={{ marginLeft: 8 }}>{props.CommuterEmployees}</div>
+                                <div className={InfoRowSCSS.left}>Overeducated Employees</div>
+                                <div className={InfoRowSCSS.right} style={{ marginLeft: 8 }}>{props.OvereductedEmployees}</div>
                             </div>
                         }
-                        tooltip="The Workplace Level is the education level of the workplace where the commuter works. Education Level is the level of education of the commuter. The number to the right of the education level is the number of commuters with that education level working at that workplace level."
+                        tooltip="The Workplace Level is the education level of the workplace where the overeducated employee works. Education Level is the level of education of the overeducated employee. The number to the right of the education level is the number of overeducated employees with that education level working at that workplace level."
                         initialExpanded={false}
                         expandFromContent={false}
                         focusKey={FOCUS_AUTO}
@@ -262,13 +202,13 @@ componentList["InfoLoomTwo.Systems.Sections.ILBuildingSection"] = (props: ILBuil
                             <div className={InfoRowSCSS.left}>Workplace Level</div>
                             <div className={InfoRowSCSS.right}>Education Level</div>
                         </div>
-                        {props.CommuterByWorkplaceAndEducationLevel && props.CommuterByWorkplaceAndEducationLevel.length > 0 ? (
-                            [...props.CommuterByWorkplaceAndEducationLevel]
+                        {props.OvereductedByWorkplaceAndEducationLevel && props.OvereductedByWorkplaceAndEducationLevel.length > 0 ? (
+                            [...props.OvereductedByWorkplaceAndEducationLevel]
                                 .sort((a, b) => a.WorkplaceLevel - b.WorkplaceLevel)
                                 .map((workplace, idx) => (
                                     <PanelSectionRow
-                                        key={idx}
                                         className={styles.panelSectionRow}
+                                        key={idx}
                                         left={
                                             <span style={{
                                                 display: "flex",
@@ -328,9 +268,96 @@ componentList["InfoLoomTwo.Systems.Sections.ILBuildingSection"] = (props: ILBuil
                             />
                         )}
                     </PanelFoldout>
-                
-            </InfoSectionFoldout>
-        );
-    };
-    return componentList as any;
+                ) : null}
+                <PanelFoldout
+                    
+                    header={
+                        <div className={InfoRowTheme.infoRow} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                            <div className={InfoRowSCSS.left}>Commuter Employees</div>
+                            <div className={InfoRowSCSS.right} style={{ marginLeft: 8 }}>{props.CommuterEmployees}</div>
+                        </div>
+                    }
+                    tooltip="The Workplace Level is the education level of the workplace where the commuter works. Education Level is the level of education of the commuter. The number to the right of the education level is the number of commuters with that education level working at that workplace level."
+                    initialExpanded={false}
+                    expandFromContent={false}
+                    focusKey={FOCUS_AUTO}
+                >
+                    {/* Column titles row */}
+                    <div className={InfoRowTheme.infoRow} style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}>
+                        <div className={InfoRowSCSS.left}>Workplace Level</div>
+                        <div className={InfoRowSCSS.right}>Education Level</div>
+                    </div>
+                    {props.CommuterByWorkplaceAndEducationLevel && props.CommuterByWorkplaceAndEducationLevel.length > 0 ? (
+                        [...props.CommuterByWorkplaceAndEducationLevel]
+                            .sort((a, b) => a.WorkplaceLevel - b.WorkplaceLevel)
+                            .map((workplace, idx) => (
+                                <PanelSectionRow
+                                    key={idx}
+                                    className={styles.panelSectionRow}
+                                    left={
+                                        <span style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            width: "100%",
+                                        }}>
+                                            <span className={styles.symbol} style={{background: educationLevels[workplace.WorkplaceLevel]?.color}}/>
+                                            {educationLevels[workplace.WorkplaceLevel]
+                                                ? educationLevels[workplace.WorkplaceLevel].label
+                                                : `Workplace Level ${workplace.WorkplaceLevel}`}
+                                        </span>
+                                    }
+                                    right={
+                                        <div style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            width: "100%",
+                                        }}>
+                                            {workplace.EducationLevels && workplace.EducationLevels.length > 0 ? (
+                                                [...workplace.EducationLevels]
+                                                    .sort((a, b) => a.EducationLevel - b.EducationLevel)
+                                                    .map((ed, i) => (
+                                                        <span
+                                                            key={i}
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                marginBottom: 2,
+                                                                width: "100%"
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className={styles.symbol}
+                                                                style={{
+                                                                    background: educationLevels[ed.EducationLevel]?.color,
+                                                                    marginRight: 8
+                                                                }}
+                                                            />
+                                                            <span className={InfoRowSCSS.left} style={{ flex: 1 }}>
+                                                                {(educationLevels[ed.EducationLevel]?.label || `Level ${ed.EducationLevel}`) + ":"}
+                                                            </span>
+                                                            <span className={InfoRowSCSS.right} style={{ minWidth: 32 }}>
+                                                                {ed.Count}
+                                                            </span>
+                                                        </span>
+                                                    ))
+                                            ) : (
+                                                <span>No data</span>
+                                            )}
+                                        </div>
+                                    }
+                                />
+                            ))
+                    ) : (
+                        <PanelSectionRow
+                            left="No data"
+                        />
+                    )}
+                </PanelFoldout>
+            
+        {/* Transportation & Logistics Information */}
+        
+        </InfoSectionFoldout>
+    );
+};
+return componentList as any;
 }

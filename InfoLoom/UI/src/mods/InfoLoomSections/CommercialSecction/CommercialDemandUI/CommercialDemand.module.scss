@@ -1,8 +1,8 @@
 .panel {
   display: flex;
   flex-direction: column;
-  height: 264rem;
-  width: 400rem;
+  min-height: 200rem;
+  width: 430rem;
   background-color: var(--panelColorNormal);
 }
 

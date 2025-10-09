@@ -15,7 +15,6 @@ using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
-using InfoLoomTwo.Systems.DistrictData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
@@ -67,7 +66,7 @@ namespace InfoLoomTwo
             log.effectivenessLevel = Level.Debug;
 #endif
             //Try to fetch the mod asset from the mod manager
-            /*setting = new Setting(this);
+            setting = new Setting(this);
             if (setting == null)
             {
                 Log.Error("Failed to initialize settings.");
@@ -77,7 +76,7 @@ namespace InfoLoomTwo
            AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
              //Load localization
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));*/
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
 
             var harmony = new Harmony(harmonyId);
             harmony.PatchAll(typeof(Mod).Assembly);
@@ -99,7 +98,6 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<DistrictDataSystem>(SystemUpdatePhase.UIUpdate);
 
             
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
@@ -107,6 +105,9 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
             ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
             ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
+            ILRentSection ilRentSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();
+            ILCompanyProfitSection ilCompanyProfitSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCompanyProfitSection>();
+            ILDistrictSection ilDistrictSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILDistrictSection>();
 
             // Register RealLife settings updater to initialize after all mods are loaded
         }
@@ -115,11 +116,11 @@ namespace InfoLoomTwo
         {
             //Log entry for debugging purposes
             log.Info(nameof(OnDispose));
-            /*if (setting != null)
+            if (setting != null)
             {
-              setting.UnregisterInOptionsUI();
-               setting = null;
-            }*/
+                setting.UnregisterInOptionsUI();
+                setting = null;
+            }
 
             // Cleanup RealLife integration
 
