@@ -28,15 +28,14 @@ namespace InfoLoomTwo.Systems.TradeCostData
     {
         private Dictionary<Resource, ResourceTradeCost> m_TradeCosts = new Dictionary<Resource, ResourceTradeCost>();
 
-        // Restore the old enum fields for sorting state
-        private BuyCostEnum m_buyCostEnum = BuyCostEnum.Off;
-        private SellCostEnum m_sellCostEnum = SellCostEnum.Off;
-        private ImportAmountEnum m_importAmountEnum = ImportAmountEnum.Off;
-        private ExportAmountEnum m_exportAmountEnum = ExportAmountEnum.Off;
-        private ProfitEnum m_profitEnum = ProfitEnum.Off;
-        private ProfitMarginEnum m_profitMarginEnum = ProfitMarginEnum.Off;
-        private ResourceNameEnum m_resourceNameEnum = ResourceNameEnum.Off;
-       
+        private SortingEnum m_buyCostSorting = SortingEnum.Off;
+        private SortingEnum m_sellCostSorting = SortingEnum.Off;
+        private SortingEnum m_importAmountSorting = SortingEnum.Off;
+        private SortingEnum m_exportAmountSorting = SortingEnum.Off;
+        private SortingEnum m_profitSorting = SortingEnum.Off;
+        private SortingEnum m_profitMarginSorting = SortingEnum.Off;
+        private SortingEnum m_resourceNameSorting = SortingEnum.Off;
+        private string m_currentSortColumn = "";
 
         // System references
         private ImageSystem m_ImageSystem;
@@ -56,6 +55,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
         // Simplified bindings using base class
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
         private ValueBinding<bool> _tCPVBinding;
+        private ValueBindingHelper<OutsideConnectionType> outsideConnectionTypeBinding;
 
         protected override void OnCreate()
         {
@@ -66,7 +66,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
             m_ResourceSystem = World.GetExistingSystemManaged<ResourceSystem>();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_CommercialDemandSystem = World.GetOrCreateSystemManaged<CommercialDemandSystem>();
-            m_IndustrialDemandSystem = World.GetOrCreateSystemManaged<IndustrialDemandSystem>();
+            m_IndustrialDemandSystem = World.GetOrCreateSystemManaged<Game.Simulation.IndustrialDemandSystem>();
             m_CountCompanyDataSystem = World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
             m_TradeSystem = World.GetOrCreateSystemManaged<TradeSystem>();
             _uiUpdateState = UIUpdateState.Create(World, 512);
@@ -86,28 +86,30 @@ namespace InfoLoomTwo.Systems.TradeCostData
             // Create simplified bindings
             m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
             _tCPVBinding = new ValueBinding<bool>("InfoLoomTwo", "TradeCostsOpen", false);
-             AddBinding(_tCPVBinding);
-             AddBinding(new TriggerBinding<bool>("InfoLoomTwo", "TradeCostsOpen", OnVisibilityChanged));
+            AddBinding(_tCPVBinding);
+            AddBinding(new TriggerBinding<bool>("InfoLoomTwo", "TradeCostsOpen", OnVisibilityChanged));
 
             // Create sorting triggers using the old manual approach
-            CreateTrigger<BuyCostEnum>("SetBuyCost", OnBuyCostChanged);
-            CreateTrigger<SellCostEnum>("SetSellCost", OnSellCostChanged);
-            CreateTrigger<ImportAmountEnum>("SetImportAmount", OnImportAmountChanged);
-            CreateTrigger<ExportAmountEnum>("SetExportAmount", OnExportAmountChanged);
-            CreateTrigger<ProfitEnum>("SetProfit", OnProfitChanged);
-            CreateTrigger<ProfitMarginEnum>("SetProfitMargin", OnProfitMarginChanged);
-            CreateTrigger<ResourceNameEnum>("SetResourceName", OnResourceNameChanged);
+            CreateTrigger<SortingEnum>("SetBuyCost", OnBuyCostChanged);
+            CreateTrigger<SortingEnum>("SetSellCost", OnSellCostChanged);
+            CreateTrigger<SortingEnum>("SetImportAmount", OnImportAmountChanged);
+            CreateTrigger<SortingEnum>("SetExportAmount", OnExportAmountChanged);
+            CreateTrigger<SortingEnum>("SetProfit", OnProfitChanged);
+            CreateTrigger<SortingEnum>("SetProfitMargin", OnProfitMarginChanged);
+            CreateTrigger<SortingEnum>("SetResourceName", OnResourceNameChanged);
 
             // Create value bindings for the sorting enums
-            CreateBinding("BuyCost", () => m_buyCostEnum);
-            CreateBinding("SellCost", () => m_sellCostEnum);
-            CreateBinding("ImportAmount", () => m_importAmountEnum);
-            CreateBinding("ExportAmount", () => m_exportAmountEnum);
-            CreateBinding("Profit", () => m_profitEnum);
-            CreateBinding("ProfitMargin", () => m_profitMarginEnum);
-            CreateBinding("ResourceName", () => m_resourceNameEnum);
-            
+            CreateBinding("BuyCost", () => m_buyCostSorting);
+            CreateBinding("SellCost", () => m_sellCostSorting);
+            CreateBinding("ImportAmount", () => m_importAmountSorting);
+            CreateBinding("ExportAmount", () => m_exportAmountSorting);
+            CreateBinding("Profit", () => m_profitSorting);
+            CreateBinding("ProfitMargin", () => m_profitMarginSorting);
+            CreateBinding("ResourceName", () => m_resourceNameSorting);
 
+            // Create outside connection type binding and trigger
+            outsideConnectionTypeBinding = CreateBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.Road, OnOutsideConnectionTypeChanged);
+            //CreateTrigger<OutsideConnectionType>("SetOutsideConnectionType", OnOutsideConnectionTypeChanged);
         }
 
         protected override void OnUpdate()
@@ -124,45 +126,60 @@ namespace InfoLoomTwo.Systems.TradeCostData
         }
 
         // Sorting change handlers
-        private void OnBuyCostChanged(BuyCostEnum value)
+        private void OnBuyCostChanged(SortingEnum value)
         {
-            m_buyCostEnum = value;
+            m_buyCostSorting = value;
+            m_currentSortColumn = "BuyCost";
             UpdateSortedData();
         }
 
-        private void OnSellCostChanged(SellCostEnum value)
+        private void OnSellCostChanged(SortingEnum value)
         {
-            m_sellCostEnum = value;
+            m_sellCostSorting = value;
+            m_currentSortColumn = "SellCost";
             UpdateSortedData();
         }
 
-        private void OnImportAmountChanged(ImportAmountEnum value)
+        private void OnImportAmountChanged(SortingEnum value)
         {
-            m_importAmountEnum = value;
+            m_importAmountSorting = value;
+            m_currentSortColumn = "ImportAmount";
             UpdateSortedData();
         }
 
-        private void OnExportAmountChanged(ExportAmountEnum value)
+        private void OnExportAmountChanged(SortingEnum value)
         {
-            m_exportAmountEnum = value;
+            m_exportAmountSorting = value;
+            m_currentSortColumn = "ExportAmount";
             UpdateSortedData();
         }
 
-        private void OnProfitChanged(ProfitEnum value)
+        private void OnProfitChanged(SortingEnum value)
         {
-            m_profitEnum = value;
+            m_profitSorting = value;
+            m_currentSortColumn = "Profit";
             UpdateSortedData();
         }
 
-        private void OnProfitMarginChanged(ProfitMarginEnum value)
+        private void OnProfitMarginChanged(SortingEnum value)
         {
-            m_profitMarginEnum = value;
+            m_profitMarginSorting = value;
+            m_currentSortColumn = "ProfitMargin";
             UpdateSortedData();
         }
 
-        private void OnResourceNameChanged(ResourceNameEnum value)
+        private void OnResourceNameChanged(SortingEnum value)
         {
-            m_resourceNameEnum = value;
+            m_resourceNameSorting = value;
+            m_currentSortColumn = "ResourceName";
+            UpdateSortedData();
+        }
+
+        
+
+        private void OnOutsideConnectionTypeChanged(OutsideConnectionType connectionType)
+        {
+            UpdateAllTradeCosts();
             UpdateSortedData();
         }
 
@@ -175,8 +192,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 UpdateSortedData();
             }
         }
-
-        
 
         private void UpdateSortedData()
         {
@@ -211,37 +226,18 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 int unsatisfiedIndustrial = resourceIndustrialConsumption - industrialSatisfied;
                 int commercialSatisfied = math.min(resourceCommercialConsumption, satisfied - industrialSatisfied);
 
-                int importAmount = resourceCommercialConsumption - commercialSatisfied + unsatisfiedIndustrial;
-                int exportAmount = resourceProduction - satisfied;
+                float importAmount = resourceCommercialConsumption - commercialSatisfied + unsatisfiedIndustrial;
+                float exportAmount = resourceProduction - satisfied;
                 var cityEntity = m_CityQuery.GetSingletonEntity();
                 DynamicBuffer<CityModifier> cityEffects = EntityManager.GetBuffer<CityModifier>(cityEntity);
 
-                // Get trade costs for all available connection types
-                float bestBuyPrice = float.MaxValue;
-                float bestSellPrice = 0f;
-                var connectionTypes = new[] {
-                    OutsideConnectionTransferType.Road,
-                    OutsideConnectionTransferType.Train,
-                    OutsideConnectionTransferType.Air,
-                    OutsideConnectionTransferType.Ship
-                };
+                // Get the selected connection type and convert to OutsideConnectionTransferType
+                OutsideConnectionType selectedConnectionType = outsideConnectionTypeBinding.Value;
+                OutsideConnectionTransferType transferType = OutsideConnectionTypeUtils.GetTransferType(selectedConnectionType);
 
-                foreach (var connectionType in connectionTypes)
-                {
-                    var buyPrice = m_TradeSystem.GetTradePrice(resource, connectionType, true, cityEffects);
-                    var sellPrice = m_TradeSystem.GetTradePrice(resource, connectionType, false, cityEffects);
-
-                    if (buyPrice > 0 && buyPrice < bestBuyPrice)
-                        bestBuyPrice = buyPrice;
-
-                    if (sellPrice > bestSellPrice)
-                        bestSellPrice = sellPrice;
-                }
-
-                float finalBuyPrice = bestBuyPrice == float.MaxValue ?
-                    m_TradeSystem.GetTradePrice(resource, OutsideConnectionTransferType.Road, true, cityEffects) : bestBuyPrice;
-                float finalSellPrice = bestSellPrice > 0 ? bestSellPrice :
-                    m_TradeSystem.GetTradePrice(resource, OutsideConnectionTransferType.Road, false, cityEffects);
+                // Get trade costs for the selected connection type
+                float finalBuyPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, true, cityEffects);
+                float finalSellPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, false, cityEffects);
 
                 if (!m_TradeCosts.TryGetValue(iterator.resource, out ResourceTradeCost tradeCost))
                 {
@@ -272,8 +268,8 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private static bool ShouldProcessResource(Resource resource)
         {
             return resource != Resource.Money &&
-                   resource != Resource.NoResource && 
-                   resource != Resource.UnsortedMail && 
+                   resource != Resource.NoResource &&
+                   resource != Resource.UnsortedMail &&
                    resource != Resource.OutgoingMail &&
                    resource != Resource.LocalMail &&
                    resource != Resource.Garbage &&
@@ -281,20 +277,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
                    resource != Resource.Entertainment &&
                    resource != Resource.Recreation;
         }
-        public static class UnitConversionUtils
-        {
-            private const float KilogramsPerTon = 1000f;
 
-            public static float KilogramsToTons(float kilograms)
-            {
-                return kilograms / KilogramsPerTon;
-            }
-
-            public static float TonsToKilograms(float tons)
-            {
-                return tons * KilogramsPerTon;
-            }
-        }
         private string GetResourceIconPath(Resource resource)
         {
             if (resource == Resource.Money)
@@ -310,64 +293,55 @@ namespace InfoLoomTwo.Systems.TradeCostData
         {
             IEnumerable<ResourceTradeCost> query = m_TradeCosts.Values;
 
-            // Use the enum fields instead of binding values
-            if (m_resourceNameEnum != ResourceNameEnum.Off)
+            if (!string.IsNullOrEmpty(m_currentSortColumn))
             {
-                query = m_resourceNameEnum == ResourceNameEnum.Ascending
-                    ? query.OrderBy(x => x.Resource)
-                    : query.OrderByDescending(x => x.Resource);
-            }
+                var currentSorting = m_currentSortColumn switch
+                {
+                    "BuyCost" => m_buyCostSorting,
+                    "SellCost" => m_sellCostSorting,
+                    "ImportAmount" => m_importAmountSorting,
+                    "ExportAmount" => m_exportAmountSorting,
+                    "Profit" => m_profitSorting,
+                    "ProfitMargin" => m_profitMarginSorting,
+                    "ResourceName" => m_resourceNameSorting,
+                    _ => SortingEnum.Off
+                };
 
-            if (m_profitMarginEnum != ProfitMarginEnum.Off)
-            {
-                query = m_profitMarginEnum == ProfitMarginEnum.Ascending
-                    ? query.OrderBy(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1))
-                    : query.OrderByDescending(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1));
+                if (currentSorting != SortingEnum.Off)
+                {
+                    query = m_currentSortColumn switch
+                    {
+                        "ResourceName" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.Resource)
+                            : query.OrderByDescending(x => x.Resource),
+                        "BuyCost" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.BuyCost)
+                            : query.OrderByDescending(x => x.BuyCost),
+                        "SellCost" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.SellCost)
+                            : query.OrderByDescending(x => x.SellCost),
+                        "ImportAmount" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.ImportAmount)
+                            : query.OrderByDescending(x => x.ImportAmount),
+                        "ExportAmount" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.ExportAmount)
+                            : query.OrderByDescending(x => x.ExportAmount),
+                        "Profit" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount)
+                            : query.OrderByDescending(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount),
+                        "ProfitMargin" => currentSorting == SortingEnum.Ascending
+                            ? query.OrderBy(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1))
+                            : query.OrderByDescending(x => (x.SellCost - x.BuyCost) / (x.BuyCost > 0 ? x.BuyCost : 1)),
+                        _ => query.OrderBy(x => GetResourcePriority(x.Resource)).ThenBy(x => x.Resource)
+                    };
+                }
+                else
+                {
+                    query = query.OrderBy(x => GetResourcePriority(x.Resource))
+                        .ThenBy(x => x.Resource);
+                }
             }
-
-            if (m_profitEnum != ProfitEnum.Off)
-            {
-                query = m_profitEnum == ProfitEnum.Ascending
-                    ? query.OrderBy(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount)
-                    : query.OrderByDescending(x => x.SellCost * x.ExportAmount - x.BuyCost * x.ImportAmount);
-            }
-
-            if (m_exportAmountEnum != ExportAmountEnum.Off)
-            {
-                query = m_exportAmountEnum == ExportAmountEnum.Ascending
-                    ? query.OrderBy(x => x.ExportAmount)
-                    : query.OrderByDescending(x => x.ExportAmount);
-            }
-
-            if (m_importAmountEnum != ImportAmountEnum.Off)
-            {
-                query = m_importAmountEnum == ImportAmountEnum.Ascending
-                    ? query.OrderBy(x => x.ImportAmount)
-                    : query.OrderByDescending(x => x.ImportAmount);
-            }
-
-            if (m_sellCostEnum != SellCostEnum.Off)
-            {
-                query = m_sellCostEnum == SellCostEnum.Ascending
-                    ? query.OrderBy(x => x.SellCost)
-                    : query.OrderByDescending(x => x.SellCost);
-            }
-
-            if (m_buyCostEnum != BuyCostEnum.Off)
-            {
-                query = m_buyCostEnum == BuyCostEnum.Ascending
-                    ? query.OrderBy(x => x.BuyCost)
-                    : query.OrderByDescending(x => x.BuyCost);
-            }
-
-            // Default sorting when no other sorting is applied
-            if (m_buyCostEnum == BuyCostEnum.Off &&
-                m_sellCostEnum == SellCostEnum.Off &&
-                m_importAmountEnum == ImportAmountEnum.Off &&
-                m_exportAmountEnum == ExportAmountEnum.Off &&
-                m_profitEnum == ProfitEnum.Off &&
-                m_profitMarginEnum == ProfitMarginEnum.Off &&
-                m_resourceNameEnum == ResourceNameEnum.Off)
+            else
             {
                 query = query.OrderBy(x => GetResourcePriority(x.Resource))
                     .ThenBy(x => x.Resource);

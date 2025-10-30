@@ -4,15 +4,28 @@
   flex-direction: column; /* Ensure proper layout */
   background-color: var(--panelColorDark);
 
-  .panel1 { width: 560rem; }
-  .panel2 { width: 490rem; }
-  .panel3 { width: 440rem; }
-  .panel4 { width: 390rem; }
-  .panel5 { width: 340rem; }
-  .panel6 { width: 290rem; }
-  .panel7 { width: 240rem; }
+  .panel1 {
+    width: 560rem;
+  }
+  .panel2 {
+    width: 490rem;
+  }
+  .panel3 {
+    width: 440rem;
+  }
+  .panel4 {
+    width: 390rem;
+  }
+  .panel5 {
+    width: 340rem;
+  }
+  .panel6 {
+    width: 290rem;
+  }
+  .panel7 {
+    width: 240rem;
+  }
 }
-
 
 .header {
   display: flex;
@@ -77,28 +90,26 @@
 }
 
 .levelNameContainer {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-grow: 0;
-    flex-shrink: 1;
-    flex-basis: auto;
-    line-height: 110%;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  line-height: 110%;
 }
 
 .levelSymbol {
-    width: 1.2em;
-    height: 1.2em;
-    border-top-left-radius: 4rem 4rem;
-    border-top-right-radius: 4rem 4rem;
-    border-bottom-left-radius: 4rem 4rem;
-    border-bottom-right-radius: 4rem 4rem;
-    margin-right: 0.5em;
+  width: 1.2em;
+  height: 1.2em;
+  border-top-left-radius: 4rem 4rem;
+  border-top-right-radius: 4rem 4rem;
+  border-bottom-left-radius: 4rem 4rem;
+  border-bottom-right-radius: 4rem 4rem;
+  margin-right: 0.5em;
 }
-
-
 
 /* Stacked Bar Chart Styles */
 .chartSection {
@@ -111,8 +122,6 @@
   font-weight: bold;
   text-align: center;
 }
-
-
 
 .barLabel {
   display: flex;
@@ -145,6 +154,37 @@
   overflow: hidden;
   border: 1rem solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
+}
+
+.svgBarContainer {
+  width: 100%;
+  height: 24rem;
+  position: relative;
+}
+
+.svgBar {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.segmentLegend {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10rem;
+}
+
+.segmentLegendItem {
+  display: flex;
+  align-items: center;
+  font-size: 15rem;
+}
+
+.segmentLegendSymbol {
+  width: 15rem;
+  height: 15rem;
+  margin-right: 5rem;
+  border-radius: 4rem;
 }
 
 .barSegment {
@@ -242,87 +282,86 @@
   position: absolute;
 }
 
-
-.col1{
+.col1 {
   width: 130rem;
   text-align: left;
   margin-left: 15rem;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col2{
+.col2 {
   width: 55rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col3{
-  width: 55rem; 
+.col3 {
+  width: 55rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col4{
-  width: 55rem; 
+.col4 {
+  width: 55rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col5{
+.col5 {
   width: 75rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col6{
+.col6 {
   width: 55rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col7{
+.col7 {
   width: 55rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col8{
+.col8 {
   width: 60rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
-.col9{
+.col9 {
   width: 60rem;
   text-align: center;
-  font-size:  var(--fontSizeS) ;
+  font-size: var(--fontSizeS);
 }
 .row_S2v {
-    display: flex;
+  display: flex;
   align-items: center;
   padding: 8px 0;
   top: 0;
   z-index: 1;
 }
-.symbol{
-     width: 1.2em;
-    height: 1.2em;
-    border-top-left-radius: 4rem 4rem;
-    border-top-right-radius: 4rem 4rem;
-    border-bottom-left-radius: 4rem 4rem;
-    border-bottom-right-radius: 4rem 4rem;
-    margin-right: 0.5em;
+.symbol {
+  width: 1.2em;
+  height: 1.2em;
+  border-top-left-radius: 4rem 4rem;
+  border-top-right-radius: 4rem 4rem;
+  border-bottom-left-radius: 4rem 4rem;
+  border-bottom-right-radius: 4rem 4rem;
+  margin-right: 0.5em;
 }
-.label{
-    flex-shrink: 1;
-    margin-right: 0.4em;
+.label {
+  flex-shrink: 1;
+  margin-right: 0.4em;
 }
-.value{
+.value {
   margin-left: 0.4em;
   display: flex;
 }
-.colorLegend{
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-grow: 0;
-    flex-shrink: 1;
-    flex-basis: auto;
-    line-height: 110%;
+.colorLegend {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  line-height: 110%;
 }
 .headerRow {
   display: flex;
@@ -338,18 +377,18 @@
   width: 200rem;
   height: 5rem;
 }
-.sliderValue{
+.sliderValue {
   display: flex;
   width: 20rem;
   margin-left: 220rem;
   margin-bottom: 100rem;
 }
-.sliderLabel{
-    flex-shrink: 1;
-    margin-right: 0.4em;
-    width: 200rem;
+.sliderLabel {
+  flex-shrink: 1;
+  margin-right: 0.4em;
+  width: 200rem;
 }
-.sliderValue{
+.sliderValue {
   margin-left: 0.4em;
   display: flex;
 }

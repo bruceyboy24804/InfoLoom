@@ -40,7 +40,7 @@ export interface EmploymentData extends Typed<''> {
   total: number;
 }
 
-export interface District extends Typed<''> {
+export interface District {
   name: Name;
   householdCount: number;
   maxHouseholds: number;
@@ -57,17 +57,17 @@ export interface District extends Typed<''> {
   entity: Entity;
   policyCount: number;
   policies: DistrictPolicy[];
-  
+
   elementaryEligible: number;
   highSchoolEligible: number;
   collegeEligible: number;
   universityEligible: number;
-  
+
   elementaryCapacity: number;
   highSchoolCapacity: number;
   collegeCapacity: number;
   universityCapacity: number;
-  
+
   elementaryStudents: number;
   highSchoolStudents: number;
   collegeStudents: number;
@@ -77,5 +77,4 @@ export interface District extends Typed<''> {
   highSchoolAvailability: IndicatorValue;
   collegeAvailability: IndicatorValue;
   universityAvailability: IndicatorValue;
-
 }

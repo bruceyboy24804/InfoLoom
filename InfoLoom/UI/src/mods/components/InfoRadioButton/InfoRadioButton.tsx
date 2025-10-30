@@ -34,14 +34,8 @@ export const InfoRadioButton = ({
         <span className={styles.label}>{label}</span>
       </div>
       <div className={styles.labelCheckboxSection}>
-        {count !== undefined && count !== null && (
-          <span className={styles.label}>{'Count' + ': ' + count}</span>
-        )}
-        <RadioButton
-          isChecked={isChecked}
-          groupingStrategy={groupingStrategy}
-          onValueChange={onToggle}
-        />
+        {count !== undefined && count !== null && <span className={styles.label}>{'Count' + ': ' + count}</span>}
+        <RadioButton isChecked={isChecked} groupingStrategy={groupingStrategy} onValueChange={onToggle} />
       </div>
     </div>
   );

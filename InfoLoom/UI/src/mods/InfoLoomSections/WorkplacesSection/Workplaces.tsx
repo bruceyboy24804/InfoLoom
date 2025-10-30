@@ -4,18 +4,24 @@ import { WorkplacesData } from 'mods/bindings';
 import { DraggablePanelProps, Panel, Tooltip, Button, PanelFoldout } from 'cs2/ui';
 import styles from './Workplaces.module.scss';
 import { workplacesInfo } from '../../domain/WorkplacesInfo';
-import { useLocalization } from 'cs2/l10n';
+import { LocalizedPercentage, useLocalization } from 'cs2/l10n';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
-import {DistrictSelector} from "../../InfoloomInfoviewContents/DistrictSelector/districtSelector";
+import { DistrictSelector } from '../../InfoloomInfoviewContents/DistrictSelector/districtSelector';
+import { SelectedInfoSectionBase, Theme } from 'cs2/bindings';
+import { useRem } from 'cs2/utils';
+import { getModule } from 'cs2/modding';
+import classNames from 'classnames';
+import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
 
+export const InfoRowTheme: Theme | any = getModule(
+  'game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss',
+  'classes'
+);
 
 export const hideColumnsBinding = bindLocalValue(false);
 export const panelTrigger = (state: boolean) => {
-    hideColumnsBinding.update(state);
+  hideColumnsBinding.update(state);
 };
-
-
-
 
 interface WorkplaceLevelProps {
   levelColor?: string;
@@ -68,95 +74,84 @@ interface StackedBarProps {
     barTooltipPercentage: string | null;
   };
 }
-const WorkplaceTableHeader: React.FC<{ translations: any; }> = ({ translations }) => {
+const WorkplaceTableHeader: React.FC<{ translations: any }> = ({ translations }) => {
   const hideColumns = useValue(hideColumnsBinding);
-  return (  
-      <div className={styles.headerRow}>
-        <div className={styles.col1}>
-          <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
-            <span>Education</span>
-          </Tooltip>
-        </div>
-        <div className={styles.col2}>
-          <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
-            <span>Total</span>
-          </Tooltip>
-        </div>
-          <div className={styles.col3}>
-            <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
-              <span>%</span>
-            </Tooltip>
-          </div>
-          <div className={styles.col4}>
-            <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
-              <span>Employee</span>
-            </Tooltip>
-          </div>
-          <div className={styles.col5}>
-            <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
-              <span>Commuter</span>
-            </Tooltip>
-          </div>
-          <div className={styles.col6}>
-            <span>Open</span>
-          </div>
-          <div className={styles.col7}>
-            <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
-              <span>Filled</span>
-            </Tooltip>
-          </div>
-          { !hideColumns  && (
-            <>
-              <div className={styles.col8}>
-                <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
-                  <span>Service</span>
-                </Tooltip>
-              </div>
-              <div className={styles.col9}>
-                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
-                  <span>Commercial</span>
-                </Tooltip>
-              </div>
-              <div className={styles.col10}>
-                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
-                  <span>Leisure</span>
-                </Tooltip>
-              </div>
-            <div className={styles.col11}>
-                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
-                  <span>Extractor</span>
-                </Tooltip>
-              </div>
-              <div className={styles.col12}>
-                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
-                  <span>Industrial</span>
-                </Tooltip>
-              </div>
-              <div className={styles.col13}>
-                <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
-                  <span>Office</span>
-                </Tooltip>
-              </div>
-            </>
-          )}
+  return (
+    <div className={styles.headerRow}>
+      <div className={styles.col1}>
+        <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
+          <span>Education</span>
+        </Tooltip>
       </div>
-    );
-}  
+      <div className={styles.col2}>
+        <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
+          <span>Total</span>
+        </Tooltip>
+      </div>
+      <div className={styles.col3}>
+        <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
+          <span>%</span>
+        </Tooltip>
+      </div>
+      <div className={styles.col4}>
+        <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
+          <span>Employee</span>
+        </Tooltip>
+      </div>
+      <div className={styles.col5}>
+        <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+          <span>Commuter</span>
+        </Tooltip>
+      </div>
+      <div className={styles.col6}>
+        <span>Open</span>
+      </div>
+      <div className={styles.col7}>
+        <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+          <span>Filled</span>
+        </Tooltip>
+      </div>
+      {!hideColumns && (
+        <>
+          <div className={styles.col8}>
+            <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+              <span>Service</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col9}>
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+              <span>Commercial</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col10}>
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+              <span>Leisure</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col11}>
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+              <span>Extractor</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col12}>
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+              <span>Industrial</span>
+            </Tooltip>
+          </div>
+          <div className={styles.col13}>
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
+              <span>Office</span>
+            </Tooltip>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
-
-
-
-
-const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({
-  levelColor,
-  levelName,
-  levelValues,
-  total,
-  people,  
-}) => {
+const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({ levelColor, levelName, levelValues, total, people }) => {
   const hideColumns = useValue(hideColumnsBinding);
-  const percent = total > 0 ? ((100 * levelValues.Total) / total).toFixed(1) + '%' : '';
-  
+
   // Count unique employees and commuters
   const counted = new Set<number>();
   let employeeCount = 0;
@@ -178,38 +173,63 @@ const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({
     commuterCount = levelValues.Commuter;
   }
 
-  const filledRate =
-    levelValues.Total > 0
-      ? Math.min(100, (100 * (employeeCount + commuterCount)) / levelValues.Total).toFixed(1) + '%'
-      : '';
+  const filledCount = employeeCount + commuterCount;
+  const percent = total > 0 ? (100 * levelValues.Total) / total + '%' : '';
   return (
-   <div className={styles.row_S2v}>
+    <div className={styles.row_S2v}>
       <div className={styles.col1}>
-          <div className={styles.colorLegend}>
-              <div className={styles.symbol} style={{ backgroundColor: levelColor }} />
-              <div className={styles.label}>{levelName}</div>
-          </div>
+        <div className={styles.colorLegend}>
+          <div className={styles.symbol} style={{ backgroundColor: levelColor }} />
+          <div className={styles.label}>{levelName}</div>
+        </div>
       </div>
-      <div className={styles.col2}><span>{levelValues.Total.toLocaleString()}</span></div>
-      <div className={styles.col3}><span>{percent}</span></div>
-      <div className={styles.col4}><span>{levelValues.Employee}</span></div>
-      <div className={styles.col5}><span>{levelValues.Commuter}</span></div>
-      <div className={styles.col6}><span>{levelValues.Open}</span></div>
-      <div className={styles.col7}><span>{filledRate}</span></div>
+      <div className={styles.col2}>
+        <span>{levelValues.Total.toLocaleString()}</span>
+      </div>
+      <div className={styles.col3}>
+        <span>
+          <LocalizedPercentage value={levelValues.Total} max={total} />
+        </span>
+      </div>
+      <div className={styles.col4}>
+        <span>{levelValues.Employee}</span>
+      </div>
+      <div className={styles.col5}>
+        <span>{levelValues.Commuter}</span>
+      </div>
+      <div className={styles.col6}>
+        <span>{levelValues.Open}</span>
+      </div>
+      <div className={styles.col7}>
+        <span>
+          <LocalizedPercentage value={Math.min(filledCount, levelValues.Total)} max={levelValues.Total} />
+        </span>
+      </div>
       {!hideColumns && (
         <>
-          <div className={styles.col8}><span>{levelValues.Service}</span></div>
-          <div className={styles.col9}><span>{levelValues.Commercial}</span></div>
-          <div className={styles.col10}><span>{levelValues.Leisure}</span></div>
-          <div className={styles.col11}><span>{levelValues.Extractor}</span></div>
-          <div className={styles.col12}><span>{levelValues.Industrial}</span></div>
-          <div className={styles.col13}><span>{levelValues.Office}</span></div>
+          <div className={styles.col8}>
+            <span>{levelValues.Service}</span>
+          </div>
+          <div className={styles.col9}>
+            <span>{levelValues.Commercial}</span>
+          </div>
+          <div className={styles.col10}>
+            <span>{levelValues.Leisure}</span>
+          </div>
+          <div className={styles.col11}>
+            <span>{levelValues.Extractor}</span>
+          </div>
+          <div className={styles.col12}>
+            <span>{levelValues.Industrial}</span>
+          </div>
+          <div className={styles.col13}>
+            <span>{levelValues.Office}</span>
+          </div>
         </>
       )}
     </div>
   );
 };
-
 
 const StackedBar: React.FC<StackedBarProps> = ({
   levelName,
@@ -222,17 +242,49 @@ const StackedBar: React.FC<StackedBarProps> = ({
   if (total === 0 || levelValues.Total === 0) return null;
 
   const sectorSegments = [
-    { label: translations.segments[0]?.label || 'Service', value: levelValues.Service, color: '#4287f5' },
-    { label: translations.segments[1]?.label || 'Commercial', value: levelValues.Commercial, color: '#f5d142' },
-    { label: translations.segments[2]?.label || 'Leisure', value: levelValues.Leisure, color: '#f542a7' },
-    { label: translations.segments[3]?.label || 'Extractor', value: levelValues.Extractor, color: '#8c42f5' },
-    { label: translations.segments[4]?.label || 'Industrial', value: levelValues.Industrial, color: '#f55142' },
-    { label: translations.segments[5]?.label || 'Office', value: levelValues.Office, color: '#42f5b3' },
+    {
+      label: translations.segments[0]?.label || 'Service',
+      value: levelValues.Service,
+      color: '#4287f5',
+    },
+    {
+      label: translations.segments[1]?.label || 'Commercial',
+      value: levelValues.Commercial,
+      color: '#f5d142',
+    },
+    {
+      label: translations.segments[2]?.label || 'Leisure',
+      value: levelValues.Leisure,
+      color: '#f542a7',
+    },
+    {
+      label: translations.segments[3]?.label || 'Extractor',
+      value: levelValues.Extractor,
+      color: '#8c42f5',
+    },
+    {
+      label: translations.segments[4]?.label || 'Industrial',
+      value: levelValues.Industrial,
+      color: '#f55142',
+    },
+    {
+      label: translations.segments[5]?.label || 'Office',
+      value: levelValues.Office,
+      color: '#42f5b3',
+    },
   ];
 
   const employmentSegments = [
-    { label: translations.segments[0]?.label || 'Employee', value: levelValues.Employee, color: '#4CAF50' },
-    { label: translations.segments[1]?.label || 'Commuter', value: levelValues.Commuter, color: '#FF9800' },
+    {
+      label: translations.segments[0]?.label || 'Employee',
+      value: levelValues.Employee,
+      color: '#4CAF50',
+    },
+    {
+      label: translations.segments[1]?.label || 'Commuter',
+      value: levelValues.Commuter,
+      color: '#FF9800',
+    },
     { label: translations.segments[2]?.label || 'Open', value: levelValues.Open, color: '#F44336' },
   ];
 
@@ -240,23 +292,17 @@ const StackedBar: React.FC<StackedBarProps> = ({
   const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
 
   // SVG bar dimensions
-  const BAR_WIDTH = 1100;
-  const BAR_HEIGHT = 24;
+  const rem = useRem();
+  const barWidthInRem = 860;
+  const barHeightInRem = 24;
+  const barWidth = barWidthInRem * rem;
+  const barHeight = barHeightInRem * rem;
 
   // Calculate segment widths
   let x = 0;
   const svgSegments = segments.map((segment, idx) => {
-    const width = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * BAR_WIDTH : 0;
-    const rect = (
-      <rect
-        key={idx}
-        x={x}
-        y={0}
-        width={width}
-        height={BAR_HEIGHT}
-        fill={segment.color}
-      />
-    );
+    const width = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * barWidth : 0;
+    const rect = <rect key={idx} x={x} y={0} width={width} height={barHeight} fill={segment.color} />;
     x += width;
     return rect;
   });
@@ -264,24 +310,45 @@ const StackedBar: React.FC<StackedBarProps> = ({
   return (
     <PanelFoldout
       header={
-        <div className={styles.barLabel}>
-          <div className={styles.barLabelSymbol} style={{ backgroundColor: levelColor }}></div>
-          <div className={styles.barLabelText}>{levelName}</div>
-          <div className={styles.barLabelValue}>{levelValues.Total.toLocaleString()}</div>
+        <div className={InfoRowTheme.infoRow}>
+          <div className={styles.barLabel}>
+            <div className={styles.barLabelSymbol} style={{ backgroundColor: levelColor }}></div>
+            <div className={styles.barLabelText}>{levelName}</div>
+            <div className={styles.barLabelValue}>{levelValues.Total.toLocaleString()}</div>
+          </div>
         </div>
       }
       initialExpanded={false}
     >
-      <div style={{ position: 'relative', width: BAR_WIDTH, height: BAR_HEIGHT }}>
-        <svg width={BAR_WIDTH} height={BAR_HEIGHT}>
+      <div
+        style={{
+          position: 'relative',
+          width: `${barWidthInRem}rem`,
+          height: `${barHeightInRem}rem`,
+          paddingLeft: '10rem',
+          paddingRight: '10rem',
+        }}
+      >
+        <svg width={barWidth} height={barHeight} style={{ display: 'block' }}>
           {svgSegments}
         </svg>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '10rem', fontSize: '15rem' }}>
         {segments.map((segment, idx) => (
-          <div key={idx} style={{display: 'flex', alignItems: 'center' }}>
-            <div style={{ width: '15rem', height: '15rem', backgroundColor: segment.color, marginRight: '5rem', borderRadius: '4rem' }}></div>
-            <span style={{marginRight: '10rem'}}>{segment.label}: {segment.value.toLocaleString()}</span>
+          <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
+            <div
+              style={{
+                width: '15rem',
+                height: '15rem',
+                backgroundColor: segment.color,
+                marginRight: '5rem',
+                marginLeft: '10rem',
+                borderRadius: '4rem',
+              }}
+            ></div>
+            <span style={{ marginRight: '10rem' }}>
+              {segment.label}: {segment.value.toLocaleString()}
+            </span>
           </div>
         ))}
       </div>
@@ -316,7 +383,11 @@ const WorkplaceChart: React.FC<WorkplaceChartProps> = ({
 }) => {
   return (
     <PanelFoldout
-      header={<div className={styles.chartTitle}>{chartTitle}</div>}
+      header={
+        <div className={InfoRowTheme.infoRow}>
+          <div className={classNames(InfoRowSCSS.left)}>{chartTitle}</div>
+        </div>
+      }
       initialExpanded={false}
       className={styles.chartSection}
     >
@@ -364,21 +435,13 @@ const HideColumnsToggle: FC = () => {
     <InfoCheckbox
       label="Hide Columns"
       isChecked={hideColumns}
-      onToggle={(newVal) => {
+      onToggle={newVal => {
         hideColumnsBinding.update(newVal);
       }}
       className={styles.hideColumnsToggle}
     />
   );
-}
-
-
-
-
-
-
-
-
+};
 
 const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
   const { translate } = useLocalization();
@@ -393,7 +456,7 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
       className={hideColumns ? styles.compactPanel : styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>{translate("InfoLoomTwo.WorkplacesPanel[Title]", "Workplaces")}</span>
+          <span className={styles.headerText}>{translate('InfoLoomTwo.WorkplacesPanel[Title]', 'Workplaces')}</span>
         </div>
       }
     >
@@ -405,99 +468,207 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
             <DistrictSelector />
             <HideColumnsToggle />
           </div>
-          <WorkplaceTableHeader translations={{
-            totalTooltip: translate("InfoLoomTwo.WorkplacesPanel[TotalTooltip]", "Total workplaces at this education level"),
-            percentTooltip: translate("InfoLoomTwo.WorkplacesPanel[PercentTooltip]", "Percentage of total workplaces"),
-            workerTooltip: translate("InfoLoomTwo.WorkplacesPanel[WorkerTooltip]", "Workplaces filled by city residents"),
-            unemployedTooltip: translate("InfoLoomTwo.WorkplacesPanel[UnemployedTooltip]", "Workplaces filled by commuters from outside the city"),
-            unemploymentTooltip: translate("InfoLoomTwo.WorkplacesPanel[UnemploymentTooltip]", "Unfilled workplace positions"),
-            outsideTooltip: translate("InfoLoomTwo.WorkplacesPanel[OutsideTooltip]", "Percentage of workplace positions that are filled"),
-            homelessTooltip: translate("InfoLoomTwo.WorkplacesPanel[HomelessTooltip]", "Sector breakdown of workplaces"),
-          }} /> 
+          <WorkplaceTableHeader
+            translations={{
+              totalTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[TotalTooltip]',
+                'Total workplaces at this education level'
+              ),
+              percentTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[PercentTooltip]',
+                'Percentage of total workplaces'
+              ),
+              workerTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[WorkerTooltip]',
+                'Workplaces filled by city residents'
+              ),
+              unemployedTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[UnemployedTooltip]',
+                'Workplaces filled by commuters from outside the city'
+              ),
+              unemploymentTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[UnemploymentTooltip]',
+                'Unfilled workplace positions'
+              ),
+              outsideTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[OutsideTooltip]',
+                'Percentage of workplace positions that are filled'
+              ),
+              homelessTooltip: translate(
+                'InfoLoomTwo.WorkplacesPanel[HomelessTooltip]',
+                'Sector breakdown of workplaces'
+              ),
+            }}
+          />
           <WorkplaceLevel
             levelColor="#808080"
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row1EL]", "Uneducated")}
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row1EL]', 'Uneducated')}
             levelValues={workplaces[0]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#B09868"
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row2EL]", "Poorly Educated")}
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row2EL]', 'Poorly Educated')}
             levelValues={workplaces[1]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#368A2E"
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row3EL]", "Educated")}
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row3EL]', 'Educated')}
             levelValues={workplaces[2]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#B981C0"
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row4EL]", "Well Educated")}
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row4EL]', 'Well Educated')}
             levelValues={workplaces[3]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#5796D1"
-            levelName={translate("InfoLoomTwo.WorkplacesPanel[Row5EL]", "Highly Educated")}
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row5EL]', 'Highly Educated')}
             levelValues={workplaces[4]}
             total={workplaces[5].Total}
           />
           <div className={styles.spacingSmall}></div>
-          <WorkplaceLevel levelName={translate("InfoLoomTwo.WorkplacesPanel[Row6]", "TOTAL")} levelValues={workplaces[5]} total={0} />
-
+          <WorkplaceLevel
+            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row6]', 'TOTAL')}
+            levelValues={workplaces[5]}
+            total={workplaces[5].Total}
+          />
           <WorkplaceChart
             workplaces={workplaces}
             chartType={chartType}
             onChartTypeChange={setChartType}
-            chartTitle={chartType === 'employment' 
-              ? translate("InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]", "Employment Status by Education Level")
-              : translate("InfoLoomTwo.WorkplacesPanel[ChartTitleSector]", "Workplace Distribution by Sector")
+            chartTitle={
+              chartType === 'employment'
+                ? translate('InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]', 'Employment Status by Education Level')
+                : translate('InfoLoomTwo.WorkplacesPanel[ChartTitleSector]', 'Workplace Distribution by Sector')
             }
-            toggleButton1={translate("InfoLoomTwo.WorkplacesPanel[ToggleButton1]", "By Sector")}
-            toggleButton2={translate("InfoLoomTwo.WorkplacesPanel[ToggleButton2]", "By Employment")}
-            legendItems={chartType === 'employment' ? [
-              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]", "Employee"), color: '#4CAF50' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]", "Commuter"), color: '#FF9800' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]", "Open"), color: '#F44336' },
-            ] : [
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]", "Service"), color: '#4287f5' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]", "Commercial"), color: '#f5d142' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]", "Leisure"), color: '#f542a7' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]", "Extractor"), color: '#8c42f5' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]", "Industrial"), color: '#f55142' },
-              { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]", "Office"), color: '#42f5b3' },
-            ]}
-            legendTooltipSuffix={translate("InfoLoomTwo.WorkplacesPanel[LegendTooltipSuffix]", "Click on bar segments above to see detailed breakdown")}
+            toggleButton1={translate('InfoLoomTwo.WorkplacesPanel[ToggleButton1]', 'By Sector')}
+            toggleButton2={translate('InfoLoomTwo.WorkplacesPanel[ToggleButton2]', 'By Employment')}
+            legendItems={
+              chartType === 'employment'
+                ? [
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]', 'Employee'),
+                      color: '#4CAF50',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]', 'Commuter'),
+                      color: '#FF9800',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]', 'Open'),
+                      color: '#F44336',
+                    },
+                  ]
+                : [
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]', 'Service'),
+                      color: '#4287f5',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]', 'Commercial'),
+                      color: '#f5d142',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]', 'Leisure'),
+                      color: '#f542a7',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]', 'Extractor'),
+                      color: '#8c42f5',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]', 'Industrial'),
+                      color: '#f55142',
+                    },
+                    {
+                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]', 'Office'),
+                      color: '#42f5b3',
+                    },
+                  ]
+            }
+            legendTooltipSuffix={translate(
+              'InfoLoomTwo.WorkplacesPanel[LegendTooltipSuffix]',
+              'Click on bar segments above to see detailed breakdown'
+            )}
             educationLevels={[
-              { name: translate("InfoLoomTwo.WorkplacesPanel[Row1EL]", "Uneducated"), color: '#808080', data: workplaces[0] },
-              { name: translate("InfoLoomTwo.WorkplacesPanel[Row2EL]", "Poorly Educated"), color: '#B09868', data: workplaces[1] },
-              { name: translate("InfoLoomTwo.WorkplacesPanel[Row3EL]", "Educated"), color: '#368A2E', data: workplaces[2] },
-              { name: translate("InfoLoomTwo.WorkplacesPanel[Row4EL]", "Well Educated"), color: '#B981C0', data: workplaces[3] },
-              { name: translate("InfoLoomTwo.WorkplacesPanel[Row5EL]", "Highly Educated"), color: '#5796D1', data: workplaces[4] },
+              {
+                name: translate('InfoLoomTwo.WorkplacesPanel[Row1EL]', 'Uneducated'),
+                color: '#808080',
+                data: workplaces[0],
+              },
+              {
+                name: translate('InfoLoomTwo.WorkplacesPanel[Row2EL]', 'Poorly Educated'),
+                color: '#B09868',
+                data: workplaces[1],
+              },
+              {
+                name: translate('InfoLoomTwo.WorkplacesPanel[Row3EL]', 'Educated'),
+                color: '#368A2E',
+                data: workplaces[2],
+              },
+              {
+                name: translate('InfoLoomTwo.WorkplacesPanel[Row4EL]', 'Well Educated'),
+                color: '#B981C0',
+                data: workplaces[3],
+              },
+              {
+                name: translate('InfoLoomTwo.WorkplacesPanel[Row5EL]', 'Highly Educated'),
+                color: '#5796D1',
+                data: workplaces[4],
+              },
             ]}
             translations={{
-              segments: chartType === 'employment' ? [
-                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]", "Employee") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]", "Commuter") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]", "Open") },
-              ] : [
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]", "Service") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]", "Commercial") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]", "Leisure") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]", "Extractor") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]", "Industrial") },
-                { label: translate("InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]", "Office") },
-              ],
-              segmentTooltipCount: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]", "Count"),
-              segmentTooltipWithin: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]", "Within "),
-              segmentTooltipOfTotal: translate("InfoLoomTwo.WorkplacesPanel[SegmentTooltipOfTotal]", "Of Total Workplaces"),
-              barTooltipHeader: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]", "Summary"),
-              barTooltipTotal: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipTotal]", "Total"),
-              barTooltipPercentage: translate("InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]", "% of Total Workplaces"),
+              segments:
+                chartType === 'employment'
+                  ? [
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]', 'Employee'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]', 'Commuter'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]', 'Open'),
+                      },
+                    ]
+                  : [
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]', 'Service'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]', 'Commercial'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]', 'Leisure'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]', 'Extractor'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]', 'Industrial'),
+                      },
+                      {
+                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]', 'Office'),
+                      },
+                    ],
+              segmentTooltipCount: translate('InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]', 'Count'),
+              segmentTooltipWithin: translate('InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]', 'Within '),
+              segmentTooltipOfTotal: translate(
+                'InfoLoomTwo.WorkplacesPanel[SegmentTooltipOfTotal]',
+                'Of Total Workplaces'
+              ),
+              barTooltipHeader: translate('InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]', 'Summary'),
+              barTooltipTotal: translate('InfoLoomTwo.WorkplacesPanel[BarTooltipTotal]', 'Total'),
+              barTooltipPercentage: translate(
+                'InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]',
+                '% of Total Workplaces'
+              ),
             }}
-            totalLabel={translate("InfoLoomTwo.WorkplacesPanel[Row6]", "TOTAL")}
+            totalLabel={translate('InfoLoomTwo.WorkplacesPanel[Row6]', 'TOTAL')}
           />
         </div>
       )}

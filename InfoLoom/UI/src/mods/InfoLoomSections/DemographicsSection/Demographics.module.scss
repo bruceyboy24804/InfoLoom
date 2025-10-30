@@ -49,12 +49,12 @@
 
   :global {
     .toggle-field {
-      width: 180rem !important; 
-      height: 32rem !important; 
-      min-height: 32rem !important; 
+      width: 180rem !important;
+      height: 32rem !important;
+      min-height: 32rem !important;
 
       span {
-        font-size: 14rem; 
+        font-size: 14rem;
       }
     }
   }
@@ -62,9 +62,11 @@
 
 .chartContainer {
   padding: 1rem;
-  height: calc(100vh - 250px);
-  min-height: 600px; 
-  overflow: visible; 
+  height: 100%;
+  max-height: calc(100vh - 250px);
+  min-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -76,8 +78,8 @@
 }
 
 .chartVisualization {
-  width: 800px; 
-  height: 600px; 
+  width: 800px;
+  height: 600px;
   position: relative;
   contain: paint layout style;
   display: flex;
@@ -88,9 +90,9 @@
   canvas {
     transform: translateZ(0);
     backface-visibility: hidden;
-    display: block !important; 
-    width: 100% !important; 
-    height: 100% !important; 
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 }
 
@@ -212,6 +214,32 @@
     }
   }
 }
+
+.refreshButton {
+  width: 130rem;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 10rem 0;
+  border: none;
+  background-color: rgba(36, 98, 255, 0.3);
+  color: var(--menuText1Normal);
+  font-size: var(--fontSizeM);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background-color: rgba(36, 98, 255, 0.5);
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
 .seriesSelector {
   display: flex;
   flex-wrap: wrap;
@@ -228,7 +256,9 @@
   cursor: pointer;
   font-size: 15rem; /* 12px -> 0.75rem */
   line-height: 1;
-  transition: background 120ms ease, transform 80ms ease;
+  transition:
+    background 120ms ease,
+    transform 80ms ease;
 }
 
 .seriesChip:hover {
@@ -241,8 +271,77 @@
 }
 
 .seriesChipSelected {
-  background: linear-gradient(90deg, #2462FF 0%, #5796D1 100%);
+  background: linear-gradient(90deg, #2462ff 0%, #5796d1 100%);
   border-color: transparent;
   color: #ffffff;
   box-shadow: 0 0.125rem 0.375rem rgba(15, 50, 120, 0.15); /* 2px 6px -> 0.125rem 0.375rem */
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 4px;
+  margin: 1rem;
+}
+
+.errorTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff6b6b;
+  margin-bottom: 0.5rem;
+}
+
+.errorMessage {
+  color: #ffffff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.errorButton {
+  padding: 0.5rem 1rem;
+  background-color: #2462ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #1a4acc;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  min-height: 200px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #2462ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingMessage {
+  margin-top: 1rem;
+  color: #ffffff;
+  font-size: 14px;
 }

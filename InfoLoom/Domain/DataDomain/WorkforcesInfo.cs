@@ -6,7 +6,10 @@ namespace InfoLoomTwo.Domain
             public int Total { get; set; } 
             public int Worker { get; set; } 
             public int Unemployed { get; set; } 
+            
+            public float UnemploymentRate { get; set; } 
             public int Homeless { get; set; } 
+            
             public int Employable { get; set; } 
             public int Outside { get; set; } 
             public int Under; 
@@ -16,6 +19,7 @@ namespace InfoLoomTwo.Domain
                 Total = 0;
                 Worker = 0;
                 Unemployed = 0;
+                UnemploymentRate = 0f;
                 Homeless = 0;
                 Employable = 0;
                 Outside = 0;

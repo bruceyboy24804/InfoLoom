@@ -80,9 +80,7 @@ namespace InfoLoomTwo.Systems.Sections
                 NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityHandle);
                 NativeArray<CurrentDistrict> districts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
                 NativeArray<PrefabRef> prefabRefs = chunk.GetNativeArray(ref m_PrefabRefHandle);
-
-                var chunkIterator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-
+                
                 int resCount = 0;
                 int comCount = 0;
                 int indCount = 0;
@@ -101,9 +99,17 @@ namespace InfoLoomTwo.Systems.Sections
                     if (m_AbandonedLookup.HasComponent(entity) || m_ParkLookup.HasComponent(prefab))
                         continue;
 
-                    if (m_StoragePropertyLookup.HasComponent(entity))
+                    // Check once and cache results
+                    bool hasStorage = m_StoragePropertyLookup.HasComponent(entity);
+                    bool hasOffice = m_OfficePropertyLookup.HasComponent(entity);
+
+                    if (hasStorage)
                     {
                         storCount++;
+                    }
+                    else if (hasOffice)
+                    {
+                        offCount++;
                     }
                     else if (m_ResidentialPropertyLookup.HasComponent(entity))
                     {
@@ -113,15 +119,9 @@ namespace InfoLoomTwo.Systems.Sections
                     {
                         comCount++;
                     }
-                    else if (m_IndustrialPropertyLookup.HasComponent(entity)
-                             && !m_StoragePropertyLookup.HasComponent(entity)
-                             && !m_OfficePropertyLookup.HasComponent(entity))
+                    else if (m_IndustrialPropertyLookup.HasComponent(entity))
                     {
                         indCount++;
-                    }
-                    else if (m_OfficePropertyLookup.HasComponent(entity))
-                    {
-                        offCount++;
                     }
                 }
 
@@ -343,9 +343,7 @@ namespace InfoLoomTwo.Systems.Sections
                 var entities = chunk.GetNativeArray(m_EntityHandle);
                 var districts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
                 var prefabRefs = chunk.GetNativeArray(ref m_PrefabRefHandle);
-
-               
-
+                
                 int elemStud = 0, hsStud = 0, collStud = 0, uniStud = 0;
 
                 for (int i = 0; i < chunk.Count; i++)
@@ -408,7 +406,7 @@ namespace InfoLoomTwo.Systems.Sections
         private int _UniversityStudents;
         
        
-        
+        private bool hasSchool;
         private CitySystem m_CitySystem;
         public static readonly int kUpdatesPerDay = 1;
         
@@ -498,8 +496,6 @@ namespace InfoLoomTwo.Systems.Sections
                 .WithAll<Building, CurrentDistrict, PrefabRef>()
                 .Build();
 
-            Dependency = propertyJob.ScheduleParallel(buildingQuery, Dependency);
-
             // Land value calculation job
             var landValueResults = new NativeArray<float>(2, Allocator.TempJob);
             
@@ -512,8 +508,6 @@ namespace InfoLoomTwo.Systems.Sections
                 m_LandValueLookup = SystemAPI.GetComponentLookup<LandValue>(isReadOnly: true),
                 m_Results = landValueResults
             };
-
-            Dependency = landValueJob.ScheduleParallel(buildingQuery, Dependency);
 
             // Building level calculation job
             var buildingLevelResults = new NativeArray<int>(2, Allocator.TempJob);
@@ -530,9 +524,7 @@ namespace InfoLoomTwo.Systems.Sections
                 m_Results = buildingLevelResults
             };
 
-            Dependency = buildingLevelJob.ScheduleParallel(buildingQuery, Dependency);
-
-            // School buildings job
+            // School capacity job
             var elemCapCounter = new NativeCounter(Allocator.TempJob);
             var hsCapCounter = new NativeCounter(Allocator.TempJob);
             var collCapCounter = new NativeCounter(Allocator.TempJob);
@@ -554,7 +546,7 @@ namespace InfoLoomTwo.Systems.Sections
                 m_UniversityCapacity = uniCapCounter.ToConcurrent(),
             };
 
-            Dependency = capacityJob.ScheduleParallel(buildingQuery, Dependency);
+            // School students job
             var elemStudCounter = new NativeCounter(Allocator.TempJob);
             var hsStudCounter = new NativeCounter(Allocator.TempJob);
             var collStudCounter = new NativeCounter(Allocator.TempJob);
@@ -575,14 +567,12 @@ namespace InfoLoomTwo.Systems.Sections
                 m_UniversityStudents = uniStudCounter.ToConcurrent(),
             };
 
-            Dependency = studentsJob.ScheduleParallel(buildingQuery, Dependency);
-            Dependency.Complete();
             // Citizen eligibility job
             var elementaryCounter = new NativeCounter(Allocator.TempJob);
             var highSchoolCounter = new NativeCounter(Allocator.TempJob);
             var collegeCounter = new NativeCounter(Allocator.TempJob);
             var universityCounter = new NativeCounter(Allocator.TempJob);
-            var educationParameterQuery = SystemAPI.QueryBuilder().WithAll<EducationParameterData>().Build();
+            
             var citizenJob = new ProcessDistrictCitizensJob
             {
                 m_SelectedDistrict = selectedEntity,
@@ -604,21 +594,37 @@ namespace InfoLoomTwo.Systems.Sections
                 m_CollegeEligible = collegeCounter.ToConcurrent(),
                 m_UniversityEligible = universityCounter.ToConcurrent(),
             };
+
             EntityQuery citizenQuery = SystemAPI.QueryBuilder().WithAll<Citizen, HouseholdMember>().WithNone<Temp, Deleted>().Build();
-            Dependency = citizenJob.ScheduleParallel(citizenQuery, Dependency);
+
+            // Schedule jobs with explicit dependencies for maximum parallelization
+            // All building jobs can run in parallel, then citizen job depends on all of them
+            JobHandle propertyHandle = JobChunkExtensions.ScheduleParallel(propertyJob, buildingQuery, Dependency);
+            JobHandle landValueHandle = JobChunkExtensions.ScheduleParallel(landValueJob, buildingQuery, Dependency);
+            JobHandle buildingLevelHandle = JobChunkExtensions.ScheduleParallel(buildingLevelJob, buildingQuery, Dependency);
+            JobHandle capacityHandle = JobChunkExtensions.ScheduleParallel(capacityJob, buildingQuery, Dependency);
+            JobHandle studentsHandle = JobChunkExtensions.ScheduleParallel(studentsJob, buildingQuery, Dependency);
+            
+            // Combine all building job handles
+            JobHandle allBuildingJobs = JobHandle.CombineDependencies(propertyHandle, landValueHandle, buildingLevelHandle);
+            allBuildingJobs = JobHandle.CombineDependencies(allBuildingJobs, capacityHandle, studentsHandle);
+            
+            // Citizen job runs independently (different query, no data conflicts)
+            JobHandle citizenHandle = JobChunkExtensions.ScheduleParallel(citizenJob, citizenQuery, Dependency);
+            
+            // Combine all jobs for final dependency
+            Dependency = JobHandle.CombineDependencies(allBuildingJobs, citizenHandle);
+            
+            // Complete all jobs before reading results
             Dependency.Complete();
 
             // Calculate average land value
             float buildingCount = landValueResults[1];
             _AverageLandValue = (buildingCount > 0f) ? (landValueResults[0] / buildingCount) : 0f;
-            
-            landValueResults.Dispose();
 
             // Calculate average building level
             float levelBuildingCount = buildingLevelResults[1];
             _AverageBuildingLevel = (levelBuildingCount > 0) ? ((float)buildingLevelResults[0] / levelBuildingCount) : 0f;
-            
-            buildingLevelResults.Dispose();
 
             _NoOfResProperties = resCounter.Count;
             _NoOfComProperties = comCounter.Count;
@@ -640,7 +646,10 @@ namespace InfoLoomTwo.Systems.Sections
             _HighSchoolEligible = highSchoolCounter.Count;
             _CollegeEligible = collegeCounter.Count;
             _UniversityEligible = universityCounter.Count;
-
+            
+            // Dispose all TempJob allocations
+            landValueResults.Dispose();
+            buildingLevelResults.Dispose();
             resCounter.Dispose();
             comCounter.Dispose();
             indCounter.Dispose();
@@ -661,7 +670,28 @@ namespace InfoLoomTwo.Systems.Sections
         }
         protected override void OnProcess()
         {
+            // Check if the selected district has any schools
+            hasSchool = false;
             
+            if (selectedEntity != Entity.Null)
+            {
+                EntityQuery schoolQuery = SystemAPI.QueryBuilder()
+                    .WithAll<Game.Buildings.School, CurrentDistrict>()
+                    .Build();
+                
+                NativeArray<CurrentDistrict> districts = schoolQuery.ToComponentDataArray<CurrentDistrict>(Allocator.Temp);
+                
+                for (int i = 0; i < districts.Length; i++)
+                {
+                    if (districts[i].m_District == selectedEntity)
+                    {
+                        hasSchool = true;
+                        break;
+                    }
+                }
+                
+                districts.Dispose();
+            }
         }
 
         public override void OnWriteProperties(IJsonWriter writer)
@@ -679,7 +709,7 @@ namespace InfoLoomTwo.Systems.Sections
             writer.PropertyName("NoOfStorageProperties");
             writer.Write(_NoOfStorageProperties);
             writer.PropertyName("AverageLandValue");
-            writer.Write(Mathf.RoundToInt(_AverageLandValue));
+            writer.Write(_AverageLandValue);
             writer.PropertyName("AverageBuildingLevel");
             writer.Write(Mathf.RoundToInt(_AverageBuildingLevel));
 
@@ -709,8 +739,10 @@ namespace InfoLoomTwo.Systems.Sections
             writer.Write(_CollegeEligible);
             writer.PropertyName("UniversityEligible");
             writer.Write(_UniversityEligible);
+            
+            writer.PropertyName("hasSchool");
+            writer.Write(hasSchool);
         }
-
         [BurstCompile]
         private struct CalculateDistrictLandValueJob : IJobChunk
         {
@@ -737,6 +769,9 @@ namespace InfoLoomTwo.Systems.Sections
                 var buildings = chunk.GetNativeArray(ref m_BuildingHandle);
                 var districts = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
 
+                float sumLandValue = 0f;
+                float count = 0f;
+
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     CurrentDistrict district = districts[i];
@@ -749,9 +784,16 @@ namespace InfoLoomTwo.Systems.Sections
                     if (m_LandValueLookup.HasComponent(building.m_RoadEdge))
                     {
                         LandValue landValue = m_LandValueLookup[building.m_RoadEdge];
-                        m_Results[0] += landValue.m_LandValue;  // Sum of land values
-                        m_Results[1] += 1f;                      // Count of buildings
+                        sumLandValue += landValue.m_LandValue;
+                        count += 1f;
                     }
+                }
+
+                // Atomic write at the end
+                if (count > 0f)
+                {
+                    m_Results[0] += sumLandValue;
+                    m_Results[1] += count;
                 }
             }
         }
@@ -812,8 +854,12 @@ namespace InfoLoomTwo.Systems.Sections
                     }
                 }
 
-                m_Results[0] += sumLevels;
-                m_Results[1] += count;
+                // Atomic write at the end
+                if (count > 0)
+                {
+                    m_Results[0] += sumLevels;
+                    m_Results[1] += count;
+                }
             }
         }
     }

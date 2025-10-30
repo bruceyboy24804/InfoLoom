@@ -77,32 +77,17 @@ type SliderProps = {
 
 // This is an array of the different components and sass themes that are appropriate for your UI. You need to figure out which ones you need from the registry.
 const registryIndex = {
-  Section: [
-    'game-ui/game/components/tool-options/mouse-tool-options/mouse-tool-options.tsx',
-    'Section',
-  ],
+  Section: ['game-ui/game/components/tool-options/mouse-tool-options/mouse-tool-options.tsx', 'Section'],
   ToolButton: ['game-ui/game/components/tool-options/tool-button/tool-button.tsx', 'ToolButton'],
-  StepToolButton: [
-    'game-ui/game/components/tool-options/tool-button/tool-button.tsx',
-    'StepToolButton',
-  ],
+  StepToolButton: ['game-ui/game/components/tool-options/tool-button/tool-button.tsx', 'StepToolButton'],
   ColorField: ['game-ui/common/input/color-picker/color-field/color-field.tsx', 'ColorField'],
-  toolButtonTheme: [
-    'game-ui/game/components/tool-options/tool-button/tool-button.module.scss',
-    'classes',
-  ],
+  toolButtonTheme: ['game-ui/game/components/tool-options/tool-button/tool-button.module.scss', 'classes'],
   mouseToolOptionsTheme: [
     'game-ui/game/components/tool-options/mouse-tool-options/mouse-tool-options.module.scss',
     'classes',
   ],
-  colorFieldTheme: [
-    'game-ui/common/input/color-picker/color-field/color-field.module.scss',
-    'classes',
-  ],
-  assetGridTheme: [
-    'game-ui/game/components/asset-menu/asset-grid/asset-grid.module.scss',
-    'classes',
-  ],
+  colorFieldTheme: ['game-ui/common/input/color-picker/color-field/color-field.module.scss', 'classes'],
+  assetGridTheme: ['game-ui/game/components/asset-menu/asset-grid/asset-grid.module.scss', 'classes'],
   Slider: ['game-ui/common/input/slider/slider.tsx', 'Slider'],
   FOCUS_DISABLED: ['game-ui/common/focus/focus-key.ts', 'FOCUS_DISABLED'],
   FOCUS_AUTO: ['game-ui/common/focus/focus-key.ts', 'FOCUS_AUTO'],

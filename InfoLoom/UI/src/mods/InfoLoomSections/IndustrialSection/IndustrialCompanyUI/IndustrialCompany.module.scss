@@ -1,6 +1,5 @@
 .panel {
   width: 1550rem;
-  
 }
 
 .header {
@@ -20,6 +19,16 @@
 .tableHeader {
   width: 100%;
   padding: 0 25rem;
+}
+
+.resourceFilterRow {
+  width: 100%;
+  height: 40rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 25rem;
+  margin-bottom: 5rem;
 }
 
 .headerRow {

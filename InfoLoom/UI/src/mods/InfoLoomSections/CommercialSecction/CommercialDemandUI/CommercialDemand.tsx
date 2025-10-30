@@ -17,10 +17,7 @@ interface DemandSection2Props {
 }
 
 const DemandSection2 = ({ title, value, factors }: DemandSection2Props): JSX.Element => (
-  <div
-    className="infoview-panel-section_RXJ"
-    style={{ width: '95%', paddingTop: '3rem', paddingBottom: '3rem' }}
-  >
+  <div className="infoview-panel-section_RXJ" style={{ width: '95%', paddingTop: '3rem', paddingBottom: '3rem' }}>
     <div className="labels_L7Q row_S2v uppercase_RJI">
       <div className="left_Lgw row_S2v">{title}</div>
       {value >= 0 && <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>}
@@ -79,7 +76,7 @@ const RowWithThreeColumns = ({
   flag1,
   right2,
   flag2,
-  tooltip
+  tooltip,
 }: RowWithThreeColumnsProps): JSX.Element => {
   const centerStyle = {
     width: right2 === undefined ? '40%' : '20%',
@@ -109,9 +106,7 @@ const RowWithThreeColumns = ({
 };
 
 const DataDivider = (): JSX.Element => (
-  <div
-    style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}
-  >
+  <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
     <div style={{ borderBottom: '1px solid gray' }}></div>
   </div>
 );
@@ -127,7 +122,7 @@ interface ColumnCommercialDataProps {
   serviceUtilizationLabel: string | null;
   serviceUtilizationTooltip: string | null;
   productionCapacityLabel: string | null;
-  productionCapacityTooltip: string  | null;
+  productionCapacityTooltip: string | null;
   employeeCapacityLabel: string | null;
   employeeCapacityTooltip: string | null;
   availableWorkforceLabel: string | null;
@@ -161,16 +156,8 @@ const ColumnCommercialData = ({
 }: ColumnCommercialDataProps): JSX.Element => {
   return (
     <div style={{ width: '70%', boxSizing: 'border-box', border: '1px solid gray' }}>
-      <RowWithTwoColumns 
-        left={emptyBuildingsLabel} 
-        right={data[0]} 
-        tooltip={emptyBuildingsTooltip}
-      />
-      <RowWithTwoColumns 
-        left={propertylessCompaniesLabel} 
-        right={data[1]} 
-        tooltip={propertylessCompaniesTooltip}
-      />
+      <RowWithTwoColumns left={emptyBuildingsLabel} right={data[0]} tooltip={emptyBuildingsTooltip} />
+      <RowWithTwoColumns left={propertylessCompaniesLabel} right={data[1]} tooltip={propertylessCompaniesTooltip} />
       <DataDivider />
       <RowWithThreeColumns
         left={averageTaxRateLabel}
@@ -218,16 +205,8 @@ const ColumnCommercialData = ({
             <p style={{ margin: 0 }}>{availableWorkforceLabel}</p>
           </div>
           <div className="row_S2v" style={{ width: '40%', flexDirection: 'column' }}>
-            <RowWithTwoColumns 
-              left={educatedLabel} 
-              right={data[8]} 
-              tooltip={educatedTooltip}
-            />
-            <RowWithTwoColumns 
-              left={uneducatedLabel} 
-              right={data[9]} 
-              tooltip={uneducatedTooltip}
-            />
+            <RowWithTwoColumns left={educatedLabel} right={data[8]} tooltip={educatedTooltip} />
+            <RowWithTwoColumns left={uneducatedLabel} right={data[9]} tooltip={uneducatedTooltip} />
           </div>
         </div>
       </Tooltip>
@@ -241,9 +220,21 @@ interface ColumnExcludedResourcesProps {
   excludedResourcesTooltip: string | null;
 }
 
-const ColumnExcludedResources = ({ resources, noDemandForLabel, excludedResourcesTooltip }: ColumnExcludedResourcesProps): JSX.Element => {
+const ColumnExcludedResources = ({
+  resources,
+  noDemandForLabel,
+  excludedResourcesTooltip,
+}: ColumnExcludedResourcesProps): JSX.Element => {
   return (
-    <div style={{ width: '30%', boxSizing: 'border-box', border: '1px solid gray', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        width: '30%',
+        boxSizing: 'border-box',
+        border: '1px solid gray',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <Tooltip tooltip={excludedResourcesTooltip}>
         <div className="labels_L7Q row_S2v">
           <div className="row_S2v" style={{ width: '100%' }}>
@@ -270,27 +261,72 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
   const commercialDataExRes = useValue(CommercialDataExRes);
 
   // All translations are done here
-  const emptyBuildingsLabel = translate("InfoLoomTwo.CommercialDemandPanel[EmptyBuildings]", "EMPTY BUILDINGS");
-  const emptyBuildingsTooltip = translate("InfoLoomTwo.CommercialDemandPanel[EmptyBuildingsTooltip]", "Number of commercial buildings available for rent. More empty buildings reduces demand for new commercial buildings.");
-  const propertylessCompaniesLabel = translate("InfoLoomTwo.CommercialDemandPanel[PropertylessCompanies]", "PROPERTYLESS COMPANIES");
-  const propertylessCompaniesTooltip = translate("InfoLoomTwo.CommercialDemandPanel[PropertylessCompaniesTooltip]", "Number of commercial companies without properties. More propertyless companies increases demand for new commercial buildings.");
-  const averageTaxRateLabel = translate("InfoLoomTwo.CommercialDemandPanel[AverageTaxRate]", "AVERAGE TAX RATE");
-  const averageTaxRateTooltip = translate("InfoLoomTwo.CommercialDemandPanel[TaxRateTooltip]", "Average commercial tax rate across all resources. Higher tax rates reduce commercial demand. 10% is considered neutral.");
-  const serviceUtilizationLabel = translate("InfoLoomTwo.CommercialDemandPanel[ServiceUtilization]", "SERVICE UTILIZATION");
-  const serviceUtilizationTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ServiceUtilizationTooltip]", "Percentage of service capacity currently utilized. Higher utilization increases demand for more commercial services. Below 30% is considered insufficient demand.");
-  const productionCapacityLabel = translate("InfoLoomTwo.CommercialDemandPanel[ProductionCapacity]", "PRODUCTION CAPACITY");
-  const productionCapacityTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ProductionCapacityTooltip]", "Current production capacity relative to resource needs. 100% means supply matches demand. Above 100% indicates oversupply which reduces demand for new commercial businesses.");
-  const employeeCapacityLabel = translate("InfoLoomTwo.CommercialDemandPanel[EmployeeCapacity]", "EMPLOYEE CAPACITY RATIO");
-  const employeeCapacityTooltip = translate("InfoLoomTwo.CommercialDemandPanel[EmployeeCapacityTooltip]", "Percentage of maximum worker positions currently filled. Below 75% indicates labor shortage which reduces demand for new commercial businesses.");
-  const availableWorkforceLabel = translate("InfoLoomTwo.CommercialDemandPanel[AvailableWorkforce]", "AVAILABLE WORKFORCE");
-  const availableWorkforceTooltip = translate("InfoLoomTwo.CommercialDemandPanel[AvailableWorkforceTooltip]", "Number of citizens available for work in commercial businesses. More available workers increases demand for new businesses.");
-  const educatedLabel = translate("InfoLoomTwo.CommercialDemandPanel[Educated]", "Educated");
-  const educatedTooltip = translate("InfoLoomTwo.CommercialDemandPanel[EducatedWorkforceTooltip]", "Number of educated citizens (high school or higher) available for work.");
-  const uneducatedLabel = translate("InfoLoomTwo.CommercialDemandPanel[Uneducated]", "Uneducated");
-  const uneducatedTooltip = translate("InfoLoomTwo.CommercialDemandPanel[UneducatedWorkforceTooltip]", "Number of uneducated citizens available for work.");
-  const noDemandForLabel = translate("InfoLoomTwo.CommercialDemandPanel[NoDemandFor]", "DEMAND FOR");
-  const excludedResourcesTooltip = translate("InfoLoomTwo.CommercialDemandPanel[ExcludedResourcesTooltip]", "Resources that currently have no commercial demand in your city. This may be due to oversupply, lack of customers, or economic factors.");
-  
+  const emptyBuildingsLabel = translate('InfoLoomTwo.CommercialDemandPanel[EmptyBuildings]', 'EMPTY BUILDINGS');
+  const emptyBuildingsTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[EmptyBuildingsTooltip]',
+    'Number of commercial buildings available for rent. More empty buildings reduces demand for new commercial buildings.'
+  );
+  const propertylessCompaniesLabel = translate(
+    'InfoLoomTwo.CommercialDemandPanel[PropertylessCompanies]',
+    'PROPERTYLESS COMPANIES'
+  );
+  const propertylessCompaniesTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[PropertylessCompaniesTooltip]',
+    'Number of commercial companies without properties. More propertyless companies increases demand for new commercial buildings.'
+  );
+  const averageTaxRateLabel = translate('InfoLoomTwo.CommercialDemandPanel[AverageTaxRate]', 'AVERAGE TAX RATE');
+  const averageTaxRateTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[TaxRateTooltip]',
+    'Average commercial tax rate across all resources. Higher tax rates reduce commercial demand. 10% is considered neutral.'
+  );
+  const serviceUtilizationLabel = translate(
+    'InfoLoomTwo.CommercialDemandPanel[ServiceUtilization]',
+    'SERVICE UTILIZATION'
+  );
+  const serviceUtilizationTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[ServiceUtilizationTooltip]',
+    'Percentage of service capacity currently utilized. Higher utilization increases demand for more commercial services. Below 30% is considered insufficient demand.'
+  );
+  const productionCapacityLabel = translate(
+    'InfoLoomTwo.CommercialDemandPanel[ProductionCapacity]',
+    'PRODUCTION CAPACITY'
+  );
+  const productionCapacityTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[ProductionCapacityTooltip]',
+    'Current production capacity relative to resource needs. 100% means supply matches demand. Above 100% indicates oversupply which reduces demand for new commercial businesses.'
+  );
+  const employeeCapacityLabel = translate(
+    'InfoLoomTwo.CommercialDemandPanel[EmployeeCapacity]',
+    'EMPLOYEE CAPACITY RATIO'
+  );
+  const employeeCapacityTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[EmployeeCapacityTooltip]',
+    'Percentage of maximum worker positions currently filled. Below 75% indicates labor shortage which reduces demand for new commercial businesses.'
+  );
+  const availableWorkforceLabel = translate(
+    'InfoLoomTwo.CommercialDemandPanel[AvailableWorkforce]',
+    'AVAILABLE WORKFORCE'
+  );
+  const availableWorkforceTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[AvailableWorkforceTooltip]',
+    'Number of citizens available for work in commercial businesses. More available workers increases demand for new businesses.'
+  );
+  const educatedLabel = translate('InfoLoomTwo.CommercialDemandPanel[Educated]', 'Educated');
+  const educatedTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[EducatedWorkforceTooltip]',
+    'Number of educated citizens (high school or higher) available for work.'
+  );
+  const uneducatedLabel = translate('InfoLoomTwo.CommercialDemandPanel[Uneducated]', 'Uneducated');
+  const uneducatedTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[UneducatedWorkforceTooltip]',
+    'Number of uneducated citizens available for work.'
+  );
+  const noDemandForLabel = translate('InfoLoomTwo.CommercialDemandPanel[NoDemandFor]', 'DEMAND FOR');
+  const excludedResourcesTooltip = translate(
+    'InfoLoomTwo.CommercialDemandPanel[ExcludedResourcesTooltip]',
+    'Resources that are currently in demand'
+  );
+
   return (
     <Panel
       draggable
@@ -299,12 +335,14 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
       className={styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>{translate("InfoLoomTwo.CommercialDemandPanel[Title]", "Commercial Demand")}</span>
+          <span className={styles.headerText}>
+            {translate('InfoLoomTwo.CommercialDemandPanel[Title]', 'Commercial Demand')}
+          </span>
         </div>
       }
     >
       {commercialData.length === 0 ? (
-        <p>{translate("InfoLoomTwo.CommercialDemandPanel[Loading]", "Loading commercial data...")}</p>
+        <p>{translate('InfoLoomTwo.CommercialDemandPanel[Loading]', 'Loading commercial data...')}</p>
       ) : (
         <div style={{ display: 'flex' }}>
           <ColumnCommercialData

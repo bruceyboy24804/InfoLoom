@@ -19,3 +19,81 @@
   margin-left: -5rem;
   font-size: 115%;
 }
+
+// AlignedParagraph styles
+.alignedContainer {
+  display: flex;
+  justify-content: space-between;
+  text-align: justify;
+  margin-bottom: 0.1em;
+}
+
+.leftText {
+  font-size: 80%;
+  width: 20%;
+  margin-left: 10%;
+  
+  &.negative {
+    color: red;
+  }
+  
+  &.positive {
+    color: #00CC00;
+  }
+  
+  &.neutral {
+    color: white;
+  }
+}
+
+.rightText {
+  font-size: 80%;
+  width: 60%;
+  margin-right: 10%;
+  text-align: right;
+}
+
+// DemandSection2 styles
+.sectionContainer {
+  width: 100%;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: var(--fontSizeM);
+}
+
+.sectionValue {
+  font-size: var(--fontSizeM);
+}
+
+.spacer {
+  height: 3rem;
+}
+
+.factorRow {
+  margin-top: 1rem;
+}
+
+.factorLabel {
+  font-size: var(--fontSizeS);
+}
+
+.factorValueContainer {
+  align-items: center;
+}
+
+.factorValue {
+  font-size: var(--fontSizeS);
+  display: flex;
+}
+
+// Value color classes
+.negativeValue {
+  color: #ff4444;
+}
+
+.positiveValue {
+  color: #00CC00;
+}

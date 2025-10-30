@@ -1,8 +1,8 @@
-import React, { FC } from "react";
-import { Panel, Tooltip, Icon, Portal } from "cs2/ui";
-import styles from "./TradeCost.module.scss";
-import { useValue } from "cs2/api";
-import { useLocalization } from 'cs2/l10n';
+import React, { FC } from 'react';
+import { Panel, Tooltip, Icon, Portal } from 'cs2/ui';
+import styles from './TradeCost.module.scss';
+import { useValue } from 'cs2/api';
+import { LocalizedNumber, useLocalization, Unit, LocalizedString } from 'cs2/l10n';
 import {
   TradeCostsData,
   SetResourceNameSorting,
@@ -19,40 +19,37 @@ import {
   ExportAmountSorting,
   SetImportAmountSorting,
   SetExportAmountSorting,
-} from "../../bindings";
-import { ResourceTradeCost } from "mods/domain/tradeCostData";
+} from '../../bindings';
+import { ResourceTradeCost } from 'mods/domain/tradeCostData';
 import {
-  ResourceNameEnum,
-  BuyCostEnum,
-  SellCostEnum,
-  ProfitEnum,
-  ProfitMarginEnum,
-  ImportAmountEnum,
-  ExportAmountEnum,
-} from "mods/domain/TradeCostEnums";
+  SortingEnum,
+  OutsideConnectionType,
+} from 'mods/domain/TradeCostEnums';
+import { formatWords } from '../utils/formatText';
+import { OutsideConnectionSelector } from './Selectors/outsideConnectionSelector';
 
 const DataDivider: FC = () => <div className={styles.dataDivider} />;
 
-function formatAmountInTons(amount: number): string {
+function formatAmountInTons(amount: number): number {
   const tons = amount / 1000;
-  
-  if (tons === 0) return "0 t";
-  if (tons < 0.1) return (tons * 1000).toFixed(0) + " kg";
-  if (tons < 1) return (tons * 1000).toFixed(0) + " kg";
-  if (tons < 10) return tons.toFixed(2) + " t";
-  if (tons < 100) return tons.toFixed(1) + " t";
-  return Math.round(tons).toLocaleString() + " t";
+
+  if (tons === 0) return 0;
+  if (tons < 0.1) return tons * 1000;
+  if (tons < 1) return tons * 1000;
+  if (tons < 10) return tons;
+  if (tons < 100) return tons;
+  return Math.round(tons);
 }
 
 function isImmaterialResource(data: ResourceTradeCost): boolean {
   return data.BuyCost === 0 && data.SellCost === 0 && (data.ImportAmount > 0 || data.ExportAmount > 0);
 }
 
-function formatImmaterialAmount(amount: number): string {
-  if (amount === 0) return "0";
-  if (amount < 1000) return amount.toFixed(0);
-  if (amount < 1000000) return (amount / 1000).toFixed(1) + "K";
-  return (amount / 1000000).toFixed(1) + "M";
+function formatImmaterialAmount(amount: number): number {
+  if (amount === 0) return 0;
+  if (amount < 1000) return amount;
+  if (amount < 1000000) return amount / 1000;
+  return amount / 1000000;
 }
 
 function getProfitClass(value: number) {
@@ -66,14 +63,14 @@ function calculateProfit(data: ResourceTradeCost) {
 }
 
 function calculateProfitMargin(data: ResourceTradeCost) {
-  return data.BuyCost !== 0 ? ((data.SellCost - data.BuyCost) / data.BuyCost): 0;
+  return data.BuyCost !== 0 ? (data.SellCost - data.BuyCost) / data.BuyCost : 0;
 }
 
 interface SortableHeaderProps {
   label: string;
   tooltip?: string;
   sortState: number;
-  onSort: (direction: "asc" | "desc" | "off") => void;
+  onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
 }
 
@@ -81,26 +78,22 @@ const SortableHeader: FC<SortableHeaderProps> = ({ label, tooltip, sortState, on
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (sortState === 0) onSort("asc");
-    else if (sortState === 1) onSort("desc");
-    else onSort("off");
+    if (sortState === 0) onSort('asc');
+    else if (sortState === 1) onSort('desc');
+    else onSort('off');
   };
 
   return (
     <Tooltip tooltip={tooltip}>
       <div
-        className={`${styles.sortableHeader} ${styles.headerCell} ${className || ""}`}
+        className={`${styles.sortableHeader} ${styles.headerCell} ${className || ''}`}
         onClick={handleClick}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: 'pointer' }}
       >
         <span>{label}</span>
         <div className={styles.sortArrows}>
-          {sortState === 1 && (
-            <Icon src="coui://uil/Standard/ArrowSortHighDown.svg" className={styles.sortIcon} />
-          )}
-          {sortState === 2 && (
-            <Icon src="coui://uil/Standard/ArrowSortLowDown.svg" className={styles.sortIcon} />
-          )}
+          {sortState === 1 && <Icon src="coui://uil/Standard/ArrowSortHighDown.svg" className={styles.sortIcon} />}
+          {sortState === 2 && <Icon src="coui://uil/Standard/ArrowSortLowDown.svg" className={styles.sortIcon} />}
         </div>
       </div>
     </Tooltip>
@@ -123,40 +116,40 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
   const exportAmountSorting = useValue(ExportAmountSorting);
 
   const onSort = {
-    ResourceName: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetResourceNameSorting(ResourceNameEnum.Ascending);
-      else if (direction === "desc") SetResourceNameSorting(ResourceNameEnum.Descending);
-      else SetResourceNameSorting(ResourceNameEnum.Off);
+    ResourceName: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetResourceNameSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetResourceNameSorting(SortingEnum.Descending);
+      else SetResourceNameSorting(SortingEnum.Off);
     },
-    BuyCost: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetBuyCostSorting(BuyCostEnum.Ascending);
-      else if (direction === "desc") SetBuyCostSorting(BuyCostEnum.Descending);
-      else SetBuyCostSorting(BuyCostEnum.Off);
+    BuyCost: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetBuyCostSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetBuyCostSorting(SortingEnum.Descending);
+      else SetBuyCostSorting(SortingEnum.Off);
     },
-    SellCost: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetSellCostSorting(SellCostEnum.Ascending);
-      else if (direction === "desc") SetSellCostSorting(SellCostEnum.Descending);
-      else SetSellCostSorting(SellCostEnum.Off);
+    SellCost: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetSellCostSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetSellCostSorting(SortingEnum.Descending);
+      else SetSellCostSorting(SortingEnum.Off);
     },
-    Profit: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetProfitSorting(ProfitEnum.Ascending);
-      else if (direction === "desc") SetProfitSorting(ProfitEnum.Descending);
-      else SetProfitSorting(ProfitEnum.Off);
+    Profit: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetProfitSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetProfitSorting(SortingEnum.Descending);
+      else SetProfitSorting(SortingEnum.Off);
     },
-    ProfitMargin: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetProfitMarginSorting(ProfitMarginEnum.Ascending);
-      else if (direction === "desc") SetProfitMarginSorting(ProfitMarginEnum.Descending);
-      else SetProfitMarginSorting(ProfitMarginEnum.Off);
+    ProfitMargin: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetProfitMarginSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetProfitMarginSorting(SortingEnum.Descending);
+      else SetProfitMarginSorting(SortingEnum.Off);
     },
-    ImportAmount: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetImportAmountSorting(ImportAmountEnum.Ascending);
-      else if (direction === "desc") SetImportAmountSorting(ImportAmountEnum.Descending);
-      else SetImportAmountSorting(ImportAmountEnum.Off);
+    ImportAmount: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetImportAmountSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetImportAmountSorting(SortingEnum.Descending);
+      else SetImportAmountSorting(SortingEnum.Off);
     },
-    ExportAmount: (direction: "asc" | "desc" | "off") => {
-      if (direction === "asc") SetExportAmountSorting(ExportAmountEnum.Ascending);
-      else if (direction === "desc") SetExportAmountSorting(ExportAmountEnum.Descending);
-      else SetExportAmountSorting(ExportAmountEnum.Off);
+    ExportAmount: (direction: 'asc' | 'desc' | 'off') => {
+      if (direction === 'asc') SetExportAmountSorting(SortingEnum.Ascending);
+      else if (direction === 'desc') SetExportAmountSorting(SortingEnum.Descending);
+      else SetExportAmountSorting(SortingEnum.Off);
     },
   };
 
@@ -172,13 +165,13 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
           header={
             <div className={styles.header}>
               <span className={styles.headerText}>
-                {translate?.("InfoLoomTwo.TradeCostsPanel[Title]", "Trade Costs") || "Trade Costs"}
+                {translate?.('InfoLoomTwo.TradeCostsPanel[Title]', 'Trade Costs') || 'Trade Costs'}
               </span>
             </div>
           }
         >
           <p className={styles.loadingText}>
-            {translate?.("InfoLoomTwo.TradeCostsPanel[Loading]", "Loading Trade Costs...") || "Loading Trade Costs..."}
+            {translate?.('InfoLoomTwo.TradeCostsPanel[Loading]', 'Loading Trade Costs...') || 'Loading Trade Costs...'}
           </p>
         </Panel>
       </Portal>
@@ -195,12 +188,16 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
         header={
           <div className={styles.header}>
             <span className={styles.headerText}>
-              {translate?.("InfoLoomTwo.TradeCostsPanel[Title]", "Trade Costs") || "Trade Costs"}
+              {translate?.('InfoLoomTwo.TradeCostsPanel[Title]', 'Trade Costs') || 'Trade Costs'}
             </span>
           </div>
         }
       >
         <div className={styles.panelContent}>
+          <div className={styles.outsideConnectionContainer}>
+          <OutsideConnectionSelector />
+          </div>
+          
           <div className={styles.tableHeader}>
             <div className={styles.headerRow}>
               <div className={`${styles.headerCell} ${styles.iconColumn}`}>
@@ -268,43 +265,41 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
           <DataDivider />
 
           <div className={styles.tableBody}>
-            {tradeCosts.map((row) => {
-  const isImmaterial = isImmaterialResource(row);
+            {tradeCosts.map(row => {
+              return (
+                <div className={styles.row} key={row.Resource}>
+                  <div className={styles.iconColumn}>
+                    <Icon src={row.ResourceIcon} className={styles.resourceIcon} />
+                  </div>
 
-  return (
-    <div className={styles.row} key={row.Resource}>
-      <div className={styles.iconColumn}>
-        <Icon src={row.ResourceIcon} className={styles.resourceIcon} />
-      </div>
+                  <div className={styles.resourceColumn}><LocalizedString id={formatWords(row.Resource)} showIdOnFail={true} /></div>
 
-      <div className={styles.resourceColumn}>{row.Resource}</div>
+                  <div className={styles.buyCostColumn}>
+                    <LocalizedNumber value={row.BuyCost} unit={Unit.FloatTwoFractions} />
+                  </div>
 
-      <div className={styles.buyCostColumn}>
-        {row.BuyCost.toFixed(2)}
-      </div>
+                  <div className={styles.sellCostColumn}>
+                    <LocalizedNumber value={row.SellCost} unit={Unit.FloatTwoFractions} />
+                  </div>
 
-      <div className={styles.sellCostColumn}>
-        {row.SellCost.toFixed(2)}
-      </div>
+                  <div className={`${styles.profitColumn} ${getProfitClass(calculateProfit(row))}`}>
+                    <LocalizedNumber value={calculateProfit(row)} unit={Unit.FloatTwoFractions} />
+                  </div>
 
-      <div className={`${styles.profitColumn} ${getProfitClass(calculateProfit(row))}`}>
-        {calculateProfit(row).toFixed(2)}
-      </div>
+                  <div className={`${styles.profitMarginColumn} ${getProfitClass(calculateProfitMargin(row))}`}>
+                    <LocalizedNumber value={calculateProfitMargin(row)} unit={Unit.PercentageSingleFraction} />
+                  </div>
 
-      <div className={`${styles.profitMarginColumn} ${getProfitClass(calculateProfitMargin(row))}`}>
-        {calculateProfitMargin(row).toFixed(2) + "%"}
-      </div>
+                  <div className={styles.importAmountColumn}>
+                    <LocalizedNumber value={row.ImportAmount} unit={Unit.Weight} />
+                  </div>
 
-      <div className={styles.importAmountColumn}>
-        {isImmaterial ? formatImmaterialAmount(row.ImportAmount) : formatAmountInTons(row.ImportAmount)}
-      </div>
-
-      <div className={styles.exportAmountColumn}>
-        {isImmaterial ? formatImmaterialAmount(row.ExportAmount) : formatAmountInTons(row.ExportAmount)}
-      </div>
-    </div>
-  );
-})}
+                  <div className={styles.exportAmountColumn}>
+                    <LocalizedNumber value={row.ExportAmount} unit={Unit.Weight} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <DataDivider />

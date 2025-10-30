@@ -18,6 +18,7 @@ using InfoLoomTwo.Domain.DataDomain;
 using InfoLoomTwo.Domain.DataDomain.Enums;
 using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
 using InfoLoomTwo.Extensions;
+using InfoLoomTwo.JsonWriterExtensions;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
@@ -72,12 +73,6 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<float> positionXBinding;
         private ValueBindingHelper<float> positionYBinding;
         
-        
-        
-        
-        private CommercialCompanyDTO[] m_SortedCompanyData = Array.Empty<CommercialCompanyDTO>();
-        private bool m_NeedSort = true;
-        private int m_LastDataCount = 0;
         
         /*private const string BuildingDemandData = "BuildingDemandData";
         private const string CommercialData = "CommercialData";
@@ -149,19 +144,49 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<SortingEnum> m_CommercialOutputSortingBinding;
         private ValueBindingHelper<SortingEnum> m_CommercialMaintenanceSortingBinding;
         
+        private ValueBindingHelper<string[]> listOfCCompanyNamesBinding;
+        private ValueBindingHelper<string> m_SelectedCCompanyNameBinding;
+        private ValueBindingHelper<string[]> listOfCInput1ResourcesBinding;
+        private ValueBindingHelper<string[]> listOfCOutputResourcesBinding;
+        private ValueBindingHelper<string> m_SelectedCInput1ResourceBinding;
+        private ValueBindingHelper<string> m_SelectedCOutputResourceBinding;
+        
+        public CommercialCompanyDTO[] m_FilteredCommercialCompanies;
+        private CommercialCompanyDTO[] m_CommercialResourceFilteredCompanies; // Base set after resource filtering, before company name filtering
+        private string m_LastSelectedCCompanyName = "";
+        private SortingEnum m_LastCommercialIndexSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommerciaNameSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialEmployeesSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialEfficiencySorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialProfitabilitySorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialResourceAmountSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialMoneySorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialInput1Sorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialOutputSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialMaintenanceSorting = SortingEnum.Off;
+        private SortingEnum m_LastCommercialServiceUsageSorting = SortingEnum.Off;
+        private string m_LastSelectedCInput1Resource = "";
+        private string m_LastSelectedCOutputResource = "";
+        private int m_LastCommercialDataCount = 0;
+        
+        
+        
+        
         
         
         //HouseholdData
         //DemographicsUI
-        public GetterValueBinding<int> m_OldCitizenBinding;
-        public ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
-        public ValueBindingHelper<int[]> m_TotalsBinding;
+       public GetterValueBinding<int> m_OldCitizenBinding;
+        private ValueBindingHelper<PopulationAtAgeInfo[]> m_PopulationAtAgeInfoBinding;
+        private ValueBindingHelper<int[]> m_TotalsBinding;
         public ValueBinding<bool> m_DemoStatsToggledOnBinding;
         private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
         private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
          private ValueBinding<Entity> m_SelectedDistrict;
         private ValueBindingHelper<Demographics1> m_Demographics1Binding;
         private ValueBindingHelper<Demographics2> m_Demographics2Binding;
+        private ValueBindingHelper<bool> _RefreshDataBinding;
+        
          
          
          
@@ -190,6 +215,33 @@ namespace InfoLoomTwo.Systems
         private ValueBindingHelper<SortingEnum> m_IndustrialInput2SortingBinding;
         private ValueBindingHelper<SortingEnum> m_IndustrialOutputSortingBinding;
         private ValueBindingHelper<SortingEnum> m_IndustrialMaintenanceSortingBinding;
+        private ValueBindingHelper<string[]> listOfCompanyNamesBinding;
+        private ValueBindingHelper<string> m_SelectedCompanyNameBinding;
+        private ValueBindingHelper<string[]> listOfInput1ResourcesBinding;
+        private ValueBindingHelper<string[]> listOfInput2ResourcesBinding;
+        private ValueBindingHelper<string[]> listOfOutputResourcesBinding;
+        private ValueBindingHelper<string> m_SelectedInput1ResourceBinding;
+        private ValueBindingHelper<string> m_SelectedInput2ResourceBinding;
+        private ValueBindingHelper<string> m_SelectedOutputResourceBinding;
+        
+        public IndustrialCompanyDTO[] m_FilteredIndustrialCompanies;
+        private IndustrialCompanyDTO[] m_ResourceFilteredCompanies; // Base set after resource filtering, before company name filtering
+        private string m_LastSelectedCompanyName = "";
+        private SortingEnum m_LastIndustrialIndexSorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialNameSorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialEmployeesSorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialEfficiencySorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialProfitabilitySorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialResourceAmountSorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialMoneySorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialInput1Sorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialInput2Sorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialOutputSorting = SortingEnum.Off;
+        private SortingEnum m_LastIndustrialMaintenanceSorting = SortingEnum.Off;
+        private string m_LastSelectedInput1Resource = "";
+        private string m_LastSelectedInput2Resource = "";
+        private string m_LastSelectedOutputResource = "";
+        private int m_LastIndustrialDataCount = 0;
         
         //ResidentialDemandDataUI
         public ValueBindingHelper<float[]> m_ResidentialBinding;
@@ -237,7 +289,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _TrafficDataVisibleBinding;
         
         
-        
+        public static PopulationAtAgeInfo populationAtAgeInfo = new();
         private ILog m_Log;
         
         public override GameMode gameMode => GameMode.Game;
@@ -367,8 +419,12 @@ namespace InfoLoomTwo.Systems
              m_CommercialInput2SortingBinding = CreateBinding("CommercialInput2Sorting", "SetCommercialInput2Sorting", SortingEnum.Off);
              m_CommercialOutputSortingBinding = CreateBinding("CommercialOutputSorting", "SetCommercialOutputSorting", SortingEnum.Off);
              m_CommercialMaintenanceSortingBinding = CreateBinding("CommercialMaintenanceSorting", "SetCommercialMaintenanceSorting", SortingEnum.Off);
-                
-             
+             listOfCCompanyNamesBinding = CreateBinding("listOfCommercialCompanyNames",  new string[0]);
+             m_SelectedCCompanyNameBinding = CreateBinding("selectedCommercialCompanyName", "SetSelectedCommercialCompanyName", "All Companies", SetSelectedCommercialCompanyName);
+             listOfCInput1ResourcesBinding = CreateBinding("listOfCommercialInput1Resources",  new string[0]);
+             listOfCOutputResourcesBinding = CreateBinding("listOfCommercialOutputResources",  new string[0]);  
+             m_SelectedCInput1ResourceBinding = CreateBinding("selectedCommercialInput1Resource", "SetSelectedCommercialInput1Resource", "All", SetSelectedCommercialInput1Resource);
+            m_SelectedCOutputResourceBinding = CreateBinding("selectedCommercialOutputResource", "SetSelectedCommercialOutputResource", "All", SetSelectedCommercialOutputResource);
 
              
             //DemographicsUI
@@ -391,6 +447,7 @@ namespace InfoLoomTwo.Systems
             AddBinding(m_DistrictInfos = new RawValueBinding(ModID, "districtInfos", UpdateDistrictInfos));
             m_Demographics1Binding = CreateBinding("Demographics1", "SetDemographics1", Demographics1.All);
             m_Demographics2Binding = CreateBinding("Demographics2", "SetDemographics2", Demographics2.All);
+            _RefreshDataBinding = CreateBinding("demographics", "updateDemographics", false, UpdateDemographicsData);
             
             
             
@@ -424,7 +481,15 @@ namespace InfoLoomTwo.Systems
             m_IndustrialInput2SortingBinding = CreateBinding("IndustrialInput2Sorting", "SetIndustrialInput2Sorting", SortingEnum.Off);
             m_IndustrialOutputSortingBinding = CreateBinding("IndustrialOutputSorting", "SetIndustrialOutputSorting", SortingEnum.Off);
             m_IndustrialMaintenanceSortingBinding = CreateBinding("IndustrialMaintenanceSorting", "SetIndustrialMaintenanceSorting", SortingEnum.Off);
-
+            listOfCompanyNamesBinding = CreateBinding("listOfCompanyNames",  new string[0]);
+            m_SelectedCompanyNameBinding = CreateBinding("selectedCompanyName", "SetSelectedCompanyName", "All Companies", SetSelectedCompanyName);
+            listOfInput1ResourcesBinding = CreateBinding("listOfInput1Resources",  new string[0]);
+            listOfInput2ResourcesBinding = CreateBinding("listOfInput2Resources",  new string[0]);
+            listOfOutputResourcesBinding = CreateBinding("listOfOutputResources",  new string[0]);
+            m_SelectedInput1ResourceBinding = CreateBinding("selectedInput1Resource", "SetSelectedInput1Resource", "All", SetSelectedInput1Resource);
+            m_SelectedInput2ResourceBinding = CreateBinding("selectedInput2Resource", "SetSelectedInput2Resource", "All", SetSelectedInput2Resource);
+            m_SelectedOutputResourceBinding = CreateBinding("selectedOutputResource", "SetSelectedOutputResource", "All", SetSelectedOutputResource);
+            
             //ResidentialDemandDataUI
             m_ResidentialBinding = CreateBinding("ResidentialData", new float[21]);
             
@@ -465,14 +530,10 @@ namespace InfoLoomTwo.Systems
                 var commercialSystem = base.World.GetOrCreateSystemManaged<CommercialSystem>();
                 m_CommercialBinding.Value = commercialSystem.m_Results.ToArray();
                 m_ExcludedResourcesBinding.Value =
-                    commercialSystem.m_ExcludedResources.value == Resource.NoResource
+                    commercialSystem.m_IncludedResources.value == Resource.NoResource
                     ? new string[0]
-                    : ExtractExcludedResources(commercialSystem.m_ExcludedResources.value);
-                
-                
+                    : UIUtil.ExtractExcludedResources(commercialSystem.m_IncludedResources.value);
                 m_CommercialSystem.IsPanelVisible = true;
-                m_CommercialSystem.ForceUpdateOnce();
-                
             }
 
             if (_cPPVBinding.value )
@@ -521,6 +582,15 @@ namespace InfoLoomTwo.Systems
             {
                     m_CommercialCompanyDataSystem.IsPanelVisible = true;
                     
+                    int currentDataCount = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs?.Length ?? 0;
+                    if (currentDataCount != m_LastCommercialDataCount)
+                    {
+                        listOfCCompanyNamesBinding.Value = m_CommercialCompanyDataSystem.GetAllCompanyNames();
+                        listOfCInput1ResourcesBinding.Value = m_CommercialCompanyDataSystem.GetAllInput1Resources();
+                        listOfCOutputResourcesBinding.Value = m_CommercialCompanyDataSystem.GetAllOutputResources();
+                        m_LastCommercialDataCount = currentDataCount;
+                    }
+                    
                     // Get the current sorting values from bindings
                     SortingEnum companyNameSorting = m_CommercialNameSortingBinding.Value;
                     SortingEnum efficiencySorting = m_CommercialEfficiencySortingBinding.Value;
@@ -535,42 +605,93 @@ namespace InfoLoomTwo.Systems
                     SortingEnum outputSorting = m_CommercialOutputSortingBinding.Value;
                     SortingEnum maintenanceSorting = m_CommercialMaintenanceSortingBinding.Value;
                     
-                    // Set the current sorting values in the data system
-                    m_CommercialCompanyDataSystem.m_CurrentIndexSorting = indexSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentCompanyNameSorting = companyNameSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentServiceUsageSorting = serviceUsageSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentEmployeesSorting = employeesSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentEfficiencySorting = efficiencySorting;
-                    m_CommercialCompanyDataSystem.m_CurrentProfitabilitySorting = profitabilitySorting;
-                    m_CommercialCompanyDataSystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentMoneySorting = moneySorting;
-                    m_CommercialCompanyDataSystem.m_CurrentInput1Sorting = input1Sorting;
-                    m_CommercialCompanyDataSystem.m_CurrentInput2Sorting = input2Sorting;
-                    m_CommercialCompanyDataSystem.m_CurrentOutputSorting = outputSorting;
-                    m_CommercialCompanyDataSystem.m_CurrentMaintenanceSorting = maintenanceSorting;
                     
-                    // Update the UI to reflect current sorting values
-                    m_CommercialNameSortingBinding.UpdateCallback(companyNameSorting);
-                    m_CommercialEfficiencySortingBinding.UpdateCallback(efficiencySorting);
-                    m_CommercialIndexSortingBinding.UpdateCallback(indexSorting);
-                    m_CommercialServiceUsageSortingBinding.UpdateCallback(serviceUsageSorting);
-                    m_CommercialEmployeesSortingBinding.UpdateCallback(employeesSorting);
-                    m_CommercialProfitabilitySortingBinding.UpdateCallback(profitabilitySorting);
-                    m_CommercialResourceAmountSortingBinding.UpdateCallback(resourceAmountSorting);
-                    m_CommercialMoneySortingBinding.UpdateCallback(moneySorting);
-                    m_CommercialInput1SortingBinding.UpdateCallback(input1Sorting);
-                    m_CommercialInput2SortingBinding.UpdateCallback(input2Sorting);
-                    m_CommercialOutputSortingBinding.UpdateCallback(outputSorting);
-                    m_CommercialMaintenanceSortingBinding.UpdateCallback(maintenanceSorting);
+                    string selectedCompanyName = m_SelectedCCompanyNameBinding.Value;
+                    string selectedInput1Resource = m_SelectedCInput1ResourceBinding.Value;
+                    string selectedOutputResource = m_SelectedCOutputResourceBinding.Value;
                     
-                    // Update UI with the sorted data
-                    m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+                     bool sortingChanged = 
+                    companyNameSorting != m_LastCommerciaNameSorting ||
+                    efficiencySorting != m_LastCommercialEfficiencySorting ||
+                    indexSorting != m_LastCommercialIndexSorting ||
+                    employeesSorting != m_LastCommercialEmployeesSorting ||
+                    profitabilitySorting != m_LastCommercialProfitabilitySorting ||
+                    resourceAmountSorting != m_LastCommercialResourceAmountSorting ||
+                    moneySorting != m_LastCommercialMoneySorting ||
+                    input1Sorting != m_LastCommercialInput1Sorting ||
+                    outputSorting != m_LastCommercialOutputSorting ||
+                    maintenanceSorting != m_LastCommercialMaintenanceSorting ||
+                    selectedCompanyName != m_LastSelectedCCompanyName || 
+                    selectedInput1Resource != m_LastSelectedCInput1Resource ||
+                    selectedOutputResource != m_LastSelectedCOutputResource;
+                    
+                     if(sortingChanged)
+                     {
+                         // Set the current sorting values in the data system
+                        m_CommercialCompanyDataSystem.m_CurrentIndexSorting = indexSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentCompanyNameSorting = companyNameSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentServiceUsageSorting = serviceUsageSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentEmployeesSorting = employeesSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentEfficiencySorting = efficiencySorting;
+                        m_CommercialCompanyDataSystem.m_CurrentProfitabilitySorting = profitabilitySorting;
+                        m_CommercialCompanyDataSystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentMoneySorting = moneySorting;
+                        m_CommercialCompanyDataSystem.m_CurrentInput1Sorting = input1Sorting;
+                        m_CommercialCompanyDataSystem.m_CurrentInput2Sorting = input2Sorting;
+                        m_CommercialCompanyDataSystem.m_CurrentOutputSorting = outputSorting;
+                        m_CommercialCompanyDataSystem.m_CurrentMaintenanceSorting = maintenanceSorting;
+                        
+                        // Update the UI to reflect current sorting values
+                        m_CommercialNameSortingBinding.UpdateCallback(companyNameSorting);
+                        m_CommercialEfficiencySortingBinding.UpdateCallback(efficiencySorting);
+                        m_CommercialIndexSortingBinding.UpdateCallback(indexSorting);
+                        m_CommercialServiceUsageSortingBinding.UpdateCallback(serviceUsageSorting);
+                        m_CommercialEmployeesSortingBinding.UpdateCallback(employeesSorting);
+                        m_CommercialProfitabilitySortingBinding.UpdateCallback(profitabilitySorting);
+                        m_CommercialResourceAmountSortingBinding.UpdateCallback(resourceAmountSorting);
+                        m_CommercialMoneySortingBinding.UpdateCallback(moneySorting);
+                        m_CommercialInput1SortingBinding.UpdateCallback(input1Sorting);
+                        m_CommercialInput2SortingBinding.UpdateCallback(input2Sorting);
+                        m_CommercialOutputSortingBinding.UpdateCallback(outputSorting);
+                        m_CommercialMaintenanceSortingBinding.UpdateCallback(maintenanceSorting);
+                        
+                        ApplyCommercialSortingToDisplayedData();
+                        
+                        m_LastCommerciaNameSorting = companyNameSorting;
+                        m_LastCommercialEfficiencySorting = efficiencySorting;
+                        m_LastCommercialIndexSorting = indexSorting;
+                        m_LastCommercialServiceUsageSorting = serviceUsageSorting;
+                        m_LastCommercialEmployeesSorting = employeesSorting;
+                        m_LastCommercialProfitabilitySorting = profitabilitySorting;
+                        m_LastCommercialResourceAmountSorting = resourceAmountSorting;
+                        m_LastCommercialMoneySorting = moneySorting;
+                        m_LastCommercialInput1Sorting = input1Sorting;
+                        m_LastCommercialOutputSorting = outputSorting;
+                        m_LastCommercialMaintenanceSorting = maintenanceSorting;
+                        m_LastSelectedCCompanyName = selectedCompanyName;
+                        m_LastSelectedCInput1Resource = selectedInput1Resource;
+                        m_LastSelectedCOutputResource = selectedOutputResource;
+                     }
+                    
+                    
+                    
             }
             if (_iCDVBinding.value)
             {
                 m_IndustrialCompanySystem.IsPanelVisible = true;
                 
-                // Get the current sorting values from bindings
+                // Only update company names and resource lists when data count changes
+                int currentDataCount = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs?.Length ?? 0;
+                if (currentDataCount != m_LastIndustrialDataCount)
+                {
+                    listOfCompanyNamesBinding.Value = m_IndustrialCompanySystem.GetAllCompanyNames();
+                    listOfInput1ResourcesBinding.Value = m_IndustrialCompanySystem.GetAllInput1Resources();
+                    listOfInput2ResourcesBinding.Value = m_IndustrialCompanySystem.GetAllInput2Resources();
+                    listOfOutputResourcesBinding.Value = m_IndustrialCompanySystem.GetAllOutputResources();
+                    m_LastIndustrialDataCount = currentDataCount;
+                }
+                
+                // Get current sorting values
                 SortingEnum companyNameSorting = m_IndustrialNameSortingBinding.Value;
                 SortingEnum efficiencySorting = m_IndustrialEfficiencySortingBinding.Value;
                 SortingEnum indexSorting = m_IndustrialIndexSortingBinding.Value;
@@ -581,44 +702,90 @@ namespace InfoLoomTwo.Systems
                 SortingEnum input1Sorting = m_IndustrialInput1SortingBinding.Value;
                 SortingEnum input2Sorting = m_IndustrialInput2SortingBinding.Value;
                 SortingEnum outputSorting = m_IndustrialOutputSortingBinding.Value;
-                SortingEnum maintenance2Sorting = m_IndustrialMaintenanceSortingBinding.Value;
+                SortingEnum maintenanceSorting = m_IndustrialMaintenanceSortingBinding.Value;
                 
-                // Set the current sorting values in the data system
-                m_IndustrialCompanySystem.m_CurrentIndexSorting = indexSorting;
-                m_IndustrialCompanySystem.m_CurrentCompanyNameSorting = companyNameSorting;
-                m_IndustrialCompanySystem.m_CurrentEmployeesSorting = employeesSorting;
-                m_IndustrialCompanySystem.m_CurrentEfficiencySorting = efficiencySorting;
-                m_IndustrialCompanySystem.m_CurrentProfitabilitySorting = profitabilitySorting;
-                m_IndustrialCompanySystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
-                m_IndustrialCompanySystem.m_CurrentMoneySorting = moneySorting;
-                m_IndustrialCompanySystem.m_CurrentInput1Sorting = input1Sorting;
-                m_IndustrialCompanySystem.m_CurrentInput2Sorting = input2Sorting;
-                m_IndustrialCompanySystem.m_CurrentOutputSorting = outputSorting;
-                m_IndustrialCompanySystem.m_CurrentMaintenanceSorting = maintenance2Sorting;
+                // Get current filter values
+                string selectedCompanyName = m_SelectedCompanyNameBinding.Value;
+                string selectedInput1Resource = m_SelectedInput1ResourceBinding.Value;
+                string selectedInput2Resource = m_SelectedInput2ResourceBinding.Value;
+                string selectedOutputResource = m_SelectedOutputResourceBinding.Value;
                 
-                // Each sort will be applied in sequence
-                m_IndustrialIndexSortingBinding.UpdateCallback(indexSorting);
-                m_IndustrialNameSortingBinding.UpdateCallback(companyNameSorting);
-                m_IndustrialEmployeesSortingBinding.UpdateCallback(employeesSorting);
-                m_IndustrialEfficiencySortingBinding.UpdateCallback(efficiencySorting);
-                m_IndustrialProfitabilitySortingBinding.UpdateCallback(profitabilitySorting);
-                m_IndustrialResourceAmountSortingBinding.UpdateCallback(resourceAmountSorting);
-                m_IndustrialMoneySortingBinding.UpdateCallback(moneySorting);
-                m_IndustrialInput1SortingBinding.UpdateCallback(input1Sorting);
-                m_IndustrialInput2SortingBinding.UpdateCallback(input2Sorting);
-                m_IndustrialOutputSortingBinding.UpdateCallback(outputSorting);
-                m_IndustrialMaintenanceSortingBinding.UpdateCallback(maintenance2Sorting);
-                // Update UI with the sorted data
-                m_uiDebugData2.Value = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
+                // Check if any sorting criteria or filters changed
+                bool sortingChanged = 
+                    companyNameSorting != m_LastIndustrialNameSorting ||
+                    efficiencySorting != m_LastIndustrialEfficiencySorting ||
+                    indexSorting != m_LastIndustrialIndexSorting ||
+                    employeesSorting != m_LastIndustrialEmployeesSorting ||
+                    profitabilitySorting != m_LastIndustrialProfitabilitySorting ||
+                    resourceAmountSorting != m_LastIndustrialResourceAmountSorting ||
+                    moneySorting != m_LastIndustrialMoneySorting ||
+                    input1Sorting != m_LastIndustrialInput1Sorting ||
+                    input2Sorting != m_LastIndustrialInput2Sorting ||
+                    outputSorting != m_LastIndustrialOutputSorting ||
+                    maintenanceSorting != m_LastIndustrialMaintenanceSorting ||
+                    selectedCompanyName != m_LastSelectedCompanyName || 
+                    selectedInput1Resource != m_LastSelectedInput1Resource ||
+                    selectedInput2Resource != m_LastSelectedInput2Resource ||
+                    selectedOutputResource != m_LastSelectedOutputResource;
                 
+                // Only update and sort if something changed
+                if (sortingChanged)
+                {
+                    // Set the current sorting values in the data system
+                    m_IndustrialCompanySystem.m_CurrentIndexSorting = indexSorting;
+                    m_IndustrialCompanySystem.m_CurrentCompanyNameSorting = companyNameSorting;
+                    m_IndustrialCompanySystem.m_CurrentEmployeesSorting = employeesSorting;
+                    m_IndustrialCompanySystem.m_CurrentEfficiencySorting = efficiencySorting;
+                    m_IndustrialCompanySystem.m_CurrentProfitabilitySorting = profitabilitySorting;
+                    m_IndustrialCompanySystem.m_CurrentResourceAmountSorting = resourceAmountSorting;
+                    m_IndustrialCompanySystem.m_CurrentMoneySorting = moneySorting;
+                    m_IndustrialCompanySystem.m_CurrentInput1Sorting = input1Sorting;
+                    m_IndustrialCompanySystem.m_CurrentInput2Sorting = input2Sorting;
+                    m_IndustrialCompanySystem.m_CurrentOutputSorting = outputSorting;
+                    m_IndustrialCompanySystem.m_CurrentMaintenanceSorting = maintenanceSorting;
+                    
+                    // Update callbacks
+                    m_IndustrialIndexSortingBinding.UpdateCallback(indexSorting);
+                    m_IndustrialNameSortingBinding.UpdateCallback(companyNameSorting);
+                    m_IndustrialEmployeesSortingBinding.UpdateCallback(employeesSorting);
+                    m_IndustrialEfficiencySortingBinding.UpdateCallback(efficiencySorting);
+                    m_IndustrialProfitabilitySortingBinding.UpdateCallback(profitabilitySorting);
+                    m_IndustrialResourceAmountSortingBinding.UpdateCallback(resourceAmountSorting);
+                    m_IndustrialMoneySortingBinding.UpdateCallback(moneySorting);
+                    m_IndustrialInput1SortingBinding.UpdateCallback(input1Sorting);
+                    m_IndustrialInput2SortingBinding.UpdateCallback(input2Sorting);
+                    m_IndustrialOutputSortingBinding.UpdateCallback(outputSorting);
+                    m_IndustrialMaintenanceSortingBinding.UpdateCallback(maintenanceSorting);
+                    
+                    // Update with sorted data
+                    ApplySortingToDisplayedData();
+                    
+                    // Cache current values
+                    m_LastIndustrialIndexSorting = indexSorting;
+                    m_LastIndustrialNameSorting = companyNameSorting;
+                    m_LastIndustrialEmployeesSorting = employeesSorting;
+                    m_LastIndustrialEfficiencySorting = efficiencySorting;
+                    m_LastIndustrialProfitabilitySorting = profitabilitySorting;
+                    m_LastIndustrialResourceAmountSorting = resourceAmountSorting;
+                    m_LastIndustrialMoneySorting = moneySorting;
+                    m_LastIndustrialInput1Sorting = input1Sorting;
+                    m_LastIndustrialInput2Sorting = input2Sorting;
+                    m_LastIndustrialOutputSorting = outputSorting;
+                    m_LastIndustrialMaintenanceSorting = maintenanceSorting;
+                    m_LastSelectedCompanyName = selectedCompanyName;
+                    m_LastSelectedInput1Resource = selectedInput1Resource;
+                    m_LastSelectedInput2Resource = selectedInput2Resource;
+                    m_LastSelectedOutputResource = selectedOutputResource;
+                }
             }
+
             //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} 2.");
             if (_dPVBinding.value)
             {
                 
                 var demographics = World.GetExistingSystemManaged<Demographics>();
 
-                m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
+               m_PopulationAtAgeInfoBinding.Value = demographics.m_Results.ToArray();
                 GroupingStrategy currentStrategy = m_DemoGroupingStrategyBinding.Value;
                 m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
                 if (m_DemoStatsToggledOnBinding.value)
@@ -626,23 +793,18 @@ namespace InfoLoomTwo.Systems
                     m_TotalsBinding.Value = demographics.m_Totals.ToArray();
                     m_OldCitizenBinding.Update();
                 }
-                
                 m_Demographics.IsPanelVisible = true;
-                m_Demographics.ForceUpdateOnce();
-
-                //m_Log.Debug($"{nameof(InfoLoomUISystem)}.{nameof(OnUpdate)} demographics finished");
             }
             if (_iDPVBinding.value )
             {
                 var industrialSystem = base.World.GetOrCreateSystemManaged<IndustrialSystem>();
                 m_IndustrialBinding.Value = industrialSystem.m_Results.ToArray();
                 m_ExcludedResourcesBinding.Value =
-                    industrialSystem.m_ExcludedResources.value == Resource.NoResource
+                    industrialSystem.m_IncludedResources.value == Resource.NoResource
                     ? new string[0]
-                    : IndustrialExtractExcludedResources(industrialSystem.m_ExcludedResources.value);
+                    : UIUtil.IndustrialExtractExcludedResources(industrialSystem.m_IncludedResources.value);
                 
                 m_IndustrialSystem.IsPanelVisible = true;
-                m_IndustrialSystem.ForceUpdateOnce();
             }
         
             if (_iPPVBinding.value && _uiUpdateState.Advance())
@@ -761,14 +923,12 @@ namespace InfoLoomTwo.Systems
             m_CommercialSystem.IsPanelVisible = open;
             if (open)
             {
-                m_CommercialSystem.ForceUpdateOnce();
-                
                 var commercialSystem = World.GetOrCreateSystemManaged<CommercialSystem>();
                 m_CommercialBinding.Value = commercialSystem.m_Results.ToArray();
                 m_ExcludedResourcesBinding.Value = 
-                    commercialSystem.m_ExcludedResources.value == Resource.NoResource
+                    commercialSystem.m_IncludedResources.value == Resource.NoResource
                     ? new string[0]
-                    : ExtractExcludedResources(commercialSystem.m_ExcludedResources.value);
+                    : UIUtil.ExtractExcludedResources(commercialSystem.m_IncludedResources.value);
             }
         }
         private void SetCommercialProductsVisibility(bool open)
@@ -813,8 +973,6 @@ namespace InfoLoomTwo.Systems
                     m_TotalsBinding.Value = m_Demographics.m_Totals.ToArray();
                     m_OldCitizenBinding.Update();
                 }
-                
-                m_Demographics.ForceUpdateOnce();
             }
         }
         private void SetIndustrialDemandVisibility(bool open)
@@ -825,13 +983,12 @@ namespace InfoLoomTwo.Systems
             if (open)
             {
                 
-                m_IndustrialSystem.ForceUpdateOnce();
                 var industrialSystem = World.GetOrCreateSystemManaged<IndustrialSystem>();
                 m_IndustrialBinding.Value = industrialSystem.m_Results.ToArray();
                 m_IndustrialExcludedResourcesBinding.Value =
-                    industrialSystem.m_ExcludedResources.value == Resource.NoResource
+                    industrialSystem.m_IncludedResources.value == Resource.NoResource
                     ? new string[0]
-                    : IndustrialExtractExcludedResources(industrialSystem.m_ExcludedResources.value);
+                    : UIUtil.IndustrialExtractExcludedResources(industrialSystem.m_IncludedResources.value);
             }
         }
         
@@ -920,7 +1077,22 @@ namespace InfoLoomTwo.Systems
 
             if (open)
             {
-                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+                m_CommercialCompanyDataSystem.UpdateCommercialStatsWithBurstJob();
+                var allCompanies = m_CommercialCompanyDataSystem.GetAllCompanies();
+                m_uiDebugData.Value = allCompanies;
+                
+                listOfCInput1ResourcesBinding.Value = m_CommercialCompanyDataSystem.GetAllInput1Resources();
+                listOfCOutputResourcesBinding.Value = m_CommercialCompanyDataSystem.GetAllOutputResources();
+                
+                listOfCCompanyNamesBinding.Value = m_CommercialCompanyDataSystem.GetAllCompanyNames();
+                
+                m_SelectedCInput1ResourceBinding.Value = "All";
+                m_SelectedCOutputResourceBinding.Value = "All";
+                m_SelectedCCompanyNameBinding.Value = "All Companies";
+                
+                // Clear any previous filtered state
+                m_FilteredCommercialCompanies = null;
+                m_CommercialResourceFilteredCompanies = null;
             }
         }
         private void SetIndustrialCompanyDebugVisibility(bool open)
@@ -930,52 +1102,32 @@ namespace InfoLoomTwo.Systems
 
             if (open)
             {
-                m_uiDebugData2.Value = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
+                m_IndustrialCompanySystem.UpdateIndustrialStatsWithBurstJob();
+                
+                // IMPORTANT: Get all companies first to establish baseline
+                var allCompanies = m_IndustrialCompanySystem.GetAllCompanies();
+                m_uiDebugData2.Value = allCompanies;
+                
+                // Populate resource filters from ALL companies
+                listOfInput1ResourcesBinding.Value = m_IndustrialCompanySystem.GetAllInput1Resources();
+                listOfInput2ResourcesBinding.Value = m_IndustrialCompanySystem.GetAllInput2Resources();
+                listOfOutputResourcesBinding.Value = m_IndustrialCompanySystem.GetAllOutputResources();
+                
+                // Populate company names from ALL companies
+                listOfCompanyNamesBinding.Value = m_IndustrialCompanySystem.GetAllCompanyNames();
+                
+                // Reset all filters to initial state
+                m_SelectedInput1ResourceBinding.Value = "All";
+                m_SelectedInput2ResourceBinding.Value = "All";
+                m_SelectedOutputResourceBinding.Value = "All";
+                m_SelectedCompanyNameBinding.Value = "All Companies";
+                
+                // Clear any previous filtered state
+                m_FilteredIndustrialCompanies = null;
+                m_ResourceFilteredCompanies = null;
             }
-        }    
-        private string[] ExtractExcludedResources(Resource excludedResources)
-        {
-            List<string> excludedResourceNames = new List<string>();
-            if (excludedResources == Resource.All)
-            {
-                return new string[] { Resource.All.ToString() };
-            }
-            Resource[] resources = (Resource[])Enum.GetValues(typeof(Resource));
-            for (int i = 0; i < resources.Length; i++)
-            {
-                Resource resource = resources[i];
-                if ((excludedResources & resource) != 0 &&
-                    resource != Resource.NoResource &&
-                    resource != Resource.All)
-                {
-                    excludedResourceNames.Add(resource.ToString());
-                }
-            }
-
-            return excludedResourceNames.ToArray();
         }
-
-        private string[] IndustrialExtractExcludedResources(Resource excludedResources)
-        {
-            List<string> excludedResourceNames = new List<string>();
-            if (excludedResources == Resource.All)
-            {
-                return new string[] { Resource.All.ToString() };
-            }
-            Resource[] resources = (Resource[])Enum.GetValues(typeof(Resource));
-            for (int i = 0; resources.Length > i; i++)
-            {
-                Resource resource = resources[i];
-                if ((excludedResources & resource) != 0 &&
-                    resource != Resource.NoResource &&
-                    resource != Resource.All)
-                {
-                    excludedResourceNames.Add(resource.ToString());
-                }
-            }
-
-            return excludedResourceNames.ToArray();
-        }
+   
         public void NavigateTo(Entity entity)
         {
             if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
@@ -1079,8 +1231,380 @@ namespace InfoLoomTwo.Systems
                 m_WorkplacesBinder.Value = workplacesSystem.m_Results.ToArray();
             }
         }
+        #region Industrial Company Filtering
         
-         
+        private void SetSelectedCompanyName(string companyName)
+        {
+            Mod.log.Info($"SetSelectedCompanyName called with: {companyName}");
+            m_SelectedCompanyNameBinding.Value = companyName;
 
+            if (string.IsNullOrEmpty(companyName) || companyName == "All Companies")
+            {
+                m_FilteredIndustrialCompanies = m_ResourceFilteredCompanies;
+                ApplySortingToDisplayedData();
+                Mod.log.Info("Showing all companies from resource-filtered base");
+                return;
+            }
+
+            var baseSet = m_ResourceFilteredCompanies ?? m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
+            var filteredByName = baseSet.Where(c => c.CompanyName == companyName).ToArray();
+            m_FilteredIndustrialCompanies = filteredByName;
+            ApplySortingToDisplayedData();
+            Mod.log.Info($"Filtered to {filteredByName.Length} companies with name: {companyName}");
+        }
+
+        private void SetSelectedInput1Resource(string resourceName)
+        {
+            m_SelectedInput1ResourceBinding.Value = resourceName;
+
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput2ResourceBinding.Value = "All";
+                m_SelectedOutputResourceBinding.Value = "All";
+            }
+
+            ApplyResourceFilters();
+        }
+
+        private void SetSelectedInput2Resource(string resourceName)
+        {
+            m_SelectedInput2ResourceBinding.Value = resourceName;
+
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput1ResourceBinding.Value = "All";
+                m_SelectedOutputResourceBinding.Value = "All";
+            }
+
+            ApplyResourceFilters();
+        }
+
+        private void SetSelectedOutputResource(string resourceName)
+        {
+            m_SelectedOutputResourceBinding.Value = resourceName;
+
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput1ResourceBinding.Value = "All";
+                m_SelectedInput2ResourceBinding.Value = "All";
+            }
+
+            ApplyResourceFilters();
+        }
+
+        private void ApplyResourceFilters()
+        {
+            if (m_IndustrialCompanySystem.m_IndustrialCompanyDTOs == null ||
+                m_IndustrialCompanySystem.m_IndustrialCompanyDTOs.Length == 0)
+            {
+                Mod.log.Warn("ApplyResourceFilters called but no company data available yet");
+                return;
+            }
+
+            string input1Filter = m_SelectedInput1ResourceBinding.Value ?? "All";
+            string input2Filter = m_SelectedInput2ResourceBinding.Value ?? "All";
+            string outputFilter = m_SelectedOutputResourceBinding.Value ?? "All";
+
+            Mod.log.Info($"Applying resource filters - Input1: {input1Filter}, Input2: {input2Filter}, Output: {outputFilter}");
+
+            string activeFilter = null;
+            string activeFilterType = null;
+
+            if (!string.IsNullOrEmpty(input1Filter) && input1Filter != "All")
+            {
+                activeFilter = input1Filter;
+                activeFilterType = "Input1";
+            }
+            else if (!string.IsNullOrEmpty(input2Filter) && input2Filter != "All")
+            {
+                activeFilter = input2Filter;
+                activeFilterType = "Input2";
+            }
+            else if (!string.IsNullOrEmpty(outputFilter) && outputFilter != "All")
+            {
+                activeFilter = outputFilter;
+                activeFilterType = "Output";
+            }
+
+            if (activeFilter == null)
+            {
+                m_ResourceFilteredCompanies = null;
+                m_FilteredIndustrialCompanies = null;
+                m_uiDebugData2.Value = m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
+                UpdateIndustrialCompanyNameList(m_IndustrialCompanySystem.m_IndustrialCompanyDTOs);
+                Mod.log.Info("Cleared all resource filters, showing all companies");
+                return;
+            }
+
+            var filtered = new List<IndustrialCompanyDTO>();
+            foreach (var company in m_IndustrialCompanySystem.m_IndustrialCompanyDTOs)
+            {
+                bool matches = false;
+
+                switch (activeFilterType)
+                {
+                    case "Input1":
+                        if (company.Input1Resources != null)
+                        {
+                            foreach (var res in company.Input1Resources)
+                            {
+                                if (res.ResourceName == activeFilter)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+
+                    case "Input2":
+                        if (company.Input2Resources != null)
+                        {
+                            foreach (var res in company.Input2Resources)
+                            {
+                                if (res.ResourceName == activeFilter)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+
+                    case "Output":
+                        if (company.OutputResources != null)
+                        {
+                            foreach (var res in company.OutputResources)
+                            {
+                                if (res.ResourceName == activeFilter)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                }
+
+                if (matches)
+                {
+                    filtered.Add(company);
+                }
+            }
+
+            m_ResourceFilteredCompanies = filtered.ToArray();
+            m_FilteredIndustrialCompanies = m_ResourceFilteredCompanies;
+            Mod.log.Info($"Filtered to {filtered.Count} companies using {activeFilterType} filter: {activeFilter}");
+            m_uiDebugData2.Value = m_FilteredIndustrialCompanies;
+            UpdateIndustrialCompanyNameList(m_FilteredIndustrialCompanies);
+        }
+
+        private void UpdateIndustrialCompanyNameList(IndustrialCompanyDTO[] companies)
+        {
+            var uniqueCompanyNames = new HashSet<string>();
+            
+            foreach (var company in companies)
+            {
+                if (!string.IsNullOrEmpty(company.CompanyName))
+                {
+                    uniqueCompanyNames.Add(company.CompanyName);
+                }
+            }
+            
+            var sortedNames = uniqueCompanyNames.OrderBy(name => name).ToList();
+            sortedNames.Insert(0, "All Companies");
+            listOfCompanyNamesBinding.Value = sortedNames.ToArray();
+            Mod.log.Info($"Updated company name list with {uniqueCompanyNames.Count} unique companies");
+        }
+
+        private void ApplySortingToDisplayedData()
+        {
+            IndustrialCompanyDTO[] dataToSort = m_FilteredIndustrialCompanies ?? m_IndustrialCompanySystem.m_IndustrialCompanyDTOs;
+            
+            if (dataToSort != null && dataToSort.Length > 0)
+            {
+                List<IndustrialCompanyDTO> companiesList = new List<IndustrialCompanyDTO>(dataToSort);
+                m_IndustrialCompanySystem.ApplySorts(companiesList);
+                m_uiDebugData2.Value = companiesList.ToArray();
+            }
+        }
+
+        #endregion
+
+        #region Commercial Company Filtering
+
+        private void SetSelectedCommercialCompanyName(string companyName)
+        {
+            Mod.log.Info($"SetSelectedCommercialCompanyName called with: {companyName}");
+            m_SelectedCCompanyNameBinding.Value = companyName;
+
+            if (string.IsNullOrEmpty(companyName) || companyName == "All Companies")
+            {
+                m_FilteredCommercialCompanies = m_CommercialResourceFilteredCompanies;
+                ApplyCommercialSortingToDisplayedData();
+                Mod.log.Info("Showing all companies from resource-filtered base");
+                return;
+            }
+
+            var baseSet = m_CommercialResourceFilteredCompanies ?? m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+            var filteredByName = baseSet.Where(c => c.CompanyName == companyName).ToArray();
+            m_FilteredCommercialCompanies = filteredByName;
+            ApplyCommercialSortingToDisplayedData();
+            Mod.log.Info($"Filtered to {filteredByName.Length} companies with name: {companyName}");
+        }
+
+        private void SetSelectedCommercialInput1Resource(string resourceName)
+        {
+            m_SelectedCInput1ResourceBinding.Value = resourceName;
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedCOutputResourceBinding.Value = "All";
+            }
+            ApplyCommercialResourceFilters();
+        }
+
+        private void SetSelectedCommercialOutputResource(string resourceName)
+        {
+            m_SelectedCOutputResourceBinding.Value = resourceName;
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedCInput1ResourceBinding.Value = "All";
+            }
+            ApplyCommercialResourceFilters();
+        }
+
+        private void ApplyCommercialResourceFilters()
+        {
+            if (m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs == null ||
+                m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs.Length == 0)
+            {
+                Mod.log.Warn("ApplyResourceFilters called but no company data available yet");
+                return;
+            }
+            
+            string input1Filter = m_SelectedCInput1ResourceBinding.Value ?? "All";
+            string outputFilter = m_SelectedCOutputResourceBinding.Value ?? "All";
+
+            Mod.log.Info($"Applying commercial resource filters - Input1: {input1Filter}, Output: {outputFilter}");
+
+            
+            string activeFilter = null;
+            string activeFilterType = null;
+
+            if (!string.IsNullOrEmpty(input1Filter) && input1Filter != "All")
+            {
+                activeFilter = input1Filter;
+                activeFilterType = "Input1";
+            }
+            else if (!string.IsNullOrEmpty(outputFilter) && outputFilter != "All")
+            {
+                activeFilter = outputFilter;
+                activeFilterType = "Output";
+            }
+            if (activeFilter == null)
+            {
+                m_CommercialResourceFilteredCompanies = null;
+                m_FilteredCommercialCompanies = null;
+                m_uiDebugData.Value = m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+                UpdateCommercialCompanyNameList(m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs);
+                Mod.log.Info("Cleared all resource filters, showing all companies");
+                return;
+            }
+            var filtered = new List<CommercialCompanyDTO>();
+            foreach (var company in m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs)
+            {
+                bool matches = false;
+
+                switch (activeFilterType)
+                {
+                    case "Input1":
+                        if (company.Input1Resources != null)
+                        {
+                            foreach (var res in company.Input1Resources)
+                            {
+                                if (res.ResourceName == activeFilter)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    
+                    case "Output":
+                        if (company.OutputResources != null)
+                        {
+                            foreach (var res in company.OutputResources)
+                            {
+                                if (res.ResourceName == activeFilter)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                }
+
+                if (matches)
+                {
+                    filtered.Add(company);
+                }
+            }
+            m_CommercialResourceFilteredCompanies = filtered.ToArray();
+            m_FilteredCommercialCompanies = m_CommercialResourceFilteredCompanies;
+            Mod.log.Info($"Filtered to {filtered.Count} companies using {activeFilterType} filter: {activeFilter}");
+            m_uiDebugData.Value = m_FilteredCommercialCompanies;
+            UpdateCommercialCompanyNameList(m_FilteredCommercialCompanies);
+
+            
+        }
+        private void UpdateCommercialCompanyNameList(CommercialCompanyDTO[] companies)
+        {
+            var uniqueCompanyNames = new HashSet<string>();
+            
+            foreach (var company in companies)
+            {
+                if (!string.IsNullOrEmpty(company.CompanyName))
+                {
+                    uniqueCompanyNames.Add(company.CompanyName);
+                }
+            }
+            
+            var sortedNames = uniqueCompanyNames.OrderBy(name => name).ToList();
+            sortedNames.Insert(0, "All Companies");
+            listOfCCompanyNamesBinding.Value = sortedNames.ToArray();
+            Mod.log.Info($"Updated commercial company name list with {uniqueCompanyNames.Count} unique companies");
+        }
+        private void ApplyCommercialSortingToDisplayedData()
+        {
+            CommercialCompanyDTO[] dataToSort = m_FilteredCommercialCompanies ?? m_CommercialCompanyDataSystem.m_CommercialCompanyDTOs;
+
+            if (dataToSort != null && dataToSort.Length > 0)
+            {
+                List<CommercialCompanyDTO> companiesList = new List<CommercialCompanyDTO>(dataToSort);
+                m_CommercialCompanyDataSystem.ApplySorts(companiesList);
+                m_uiDebugData.Value = companiesList.ToArray();
+            }
+        }
+
+        #endregion
+        private void UpdateDemographicsData(bool buttonPressed)
+        {
+            _RefreshDataBinding.Value = buttonPressed;
+            if(buttonPressed)
+            {
+                // Force immediate demographics update
+                m_Demographics.UpdateDemographics();
+                
+                // Immediately push the updated data to UI bindings
+                m_PopulationAtAgeInfoBinding.Binding.TriggerUpdate();
+                m_TotalsBinding.Binding.TriggerUpdate();
+                m_OldCitizenBinding.Update();
+                
+                //m_Log.Info("Demographics data manually refreshed and bindings updated");
+            }
+        }
+        
     }
 }

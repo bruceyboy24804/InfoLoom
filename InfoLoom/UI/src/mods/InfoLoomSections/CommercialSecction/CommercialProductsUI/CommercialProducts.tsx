@@ -24,56 +24,62 @@ const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
       <div className={styles.col1}>
         <span>{formattedResourceName}</span>
       </div>
-      <div className={styles.col2}>
-        {data.Building}
-      </div>
-      <div className={styles.col3}>
-        {data.Free}
-      </div>
-      <div className={styles.col4}>
-        {data.Companies}
-      </div>
-      <div className={styles.col5}>
-        {`${data.Workers}/${data.WrkPercent}%`}
-      </div>
-      <div className={styles.col9}>
-          {data.TaxFactor}
-        </div>
+      <div className={styles.col2}>{data.Building}</div>
+      <div className={styles.col3}>{data.Free}</div>
+      <div className={styles.col4}>{data.Companies}</div>
+      <div className={styles.col5}>{`${data.Workers}/${data.WrkPercent}%`}</div>
+      <div className={styles.col9}>{data.TaxFactor}</div>
     </div>
   );
 };
 
-const TableHeader: React.FC<{ }> = ({ }) => {
+const TableHeader: React.FC<{}> = ({}) => {
   return (
     <div className={styles.headerRow}>
       <div className={styles.col1}>
         <Tooltip tooltip={'The type/name of the resource'}>
-        <span>{"Resource"}</span>
+          <span>{'Resource'}</span>
         </Tooltip>
       </div>
-        <div className={styles.col2}>
-          <Tooltip tooltip={' key number that decides what buildings will spawn; 0 means there is no demand'}>
-        <span>{"Building Demand"}</span>
+      <div className={styles.col2}>
+        <Tooltip tooltip={' key number that decides what buildings will spawn; 0 means there is no demand'}>
+          <span>{'Building Demand'}</span>
         </Tooltip>
       </div>
       <div className={styles.col3}>
-        <Tooltip tooltip={'Free indicates the number of free properties available for the resource. This is the number of properties that are not currently occupied or used by any commercial buildings.'}>
-          <span>{"Free"}</span>
+        <Tooltip
+          tooltip={
+            'Free indicates the number of free properties available for the resource. This is the number of properties that are not currently occupied or used by any commercial buildings.'
+          }
+        >
+          <span>{'Free'}</span>
         </Tooltip>
       </div>
       <div className={styles.col4}>
-        <Tooltip tooltip={'Companies indicates the number of commercial companies that are currently operating for the resource.'}>
-          <span>{"Companies"}</span>
+        <Tooltip
+          tooltip={
+            'Companies indicates the number of commercial companies that are currently operating for the resource.'
+          }
+        >
+          <span>{'Companies'}</span>
         </Tooltip>
       </div>
       <div className={styles.col5}>
-        <Tooltip tooltip={'Workers indicates the number of workers employed by the commercial companies for the resource and worker % indicates the percentage of workers employed compared to the total number of workers available in the city. 100% means all workers are employed.'}>
-          <span>{`${"Workers"}/${"Worker"}%`}</span>
+        <Tooltip
+          tooltip={
+            'Workers indicates the number of workers employed by the commercial companies for the resource and worker % indicates the percentage of workers employed compared to the total number of workers available in the city. 100% means all workers are employed.'
+          }
+        >
+          <span>{`${'Workers'}/${'Worker'}%`}</span>
         </Tooltip>
       </div>
       <div className={styles.col9}>
-        <Tooltip tooltip={'TaxFactor: Shows the effect of the current commercial tax rate on demand for this resource, scaled as a percentage. A higher value means taxes are reducing demand more.'}>
-          <span>{"Tax Factor"}</span>
+        <Tooltip
+          tooltip={
+            'TaxFactor: Shows the effect of the current commercial tax rate on demand for this resource, scaled as a percentage. A higher value means taxes are reducing demand more.'
+          }
+        >
+          <span>{'Tax Factor'}</span>
         </Tooltip>
       </div>
     </div>
@@ -168,16 +174,16 @@ const OtherResourcesHeader: React.FC = () => {
         <span>Resource</span>
       </div>
       <div className={styles.col2}>
-          <span>Building Demand</span>
+        <span>Building Demand</span>
       </div>
       <div className={styles.col3}>
-          <span>Free</span>
+        <span>Free</span>
       </div>
       <div className={styles.col4}>
-          <span>Companies</span>
+        <span>Companies</span>
       </div>
       <div className={styles.col5}>
-          <span>{`${"Workers"}/${"Worker"}%`}</span>
+        <span>{`${'Workers'}/${'Worker'}%`}</span>
       </div>
       <div className={styles.col9}>
         <span>Tax Factor</span>
@@ -192,22 +198,12 @@ const OtherResourcesLine: React.FC<ResourceLineProps> = ({ data }) => {
       <div className={styles.col1}>
         <span>{formattedResourceName}</span>
       </div>
-        <div className={styles.col2}>
-          {data.Building}
-        </div>
-        <div className={styles.col3}>
-          {data.Free}
-        </div>
-        <div className={styles.col4}>
-          {data.Companies}
-        </div>
-        <div className={styles.col5}>
-          {`${data.Workers}/${data.WrkPercent}%`}
-        </div>
-        <div className={styles.col9}>
-          {data.TaxFactor}
-        </div>
-      </div>
+      <div className={styles.col2}>{data.Building}</div>
+      <div className={styles.col3}>{data.Free}</div>
+      <div className={styles.col4}>{data.Companies}</div>
+      <div className={styles.col5}>{`${data.Workers}/${data.WrkPercent}%`}</div>
+      <div className={styles.col9}>{data.TaxFactor}</div>
+    </div>
   );
 };
 
@@ -229,18 +225,22 @@ const $CommercialProducts: FC<CommercialProps> = ({ onClose }) => {
         <p>Waiting...</p>
       ) : (
         <div className={styles.panelContent}>
-          <TableHeader/>
-          {commercialProductsData.filter(item => !['Lodging', 'Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName)).map((item, index) => (
-            <ResourceLine key={`${item.ResourceName}-${index}`} data={item}/>
-          ))}
+          <TableHeader />
+          {commercialProductsData
+            .filter(item => !['Lodging', 'Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName))
+            .map((item, index) => (
+              <ResourceLine key={`${item.ResourceName}-${index}`} data={item} />
+            ))}
           {/*<LodgingHeader />
           {commercialProductsData.filter(item => item.ResourceName === 'Lodging').map((item, index) => (
             <LodgingResourceLine key={`${item.ResourceName}-${index}`} data={item} />
           ))}*/}
           <OtherResourcesHeader />
-          {commercialProductsData.filter(item => ['Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName)).map((item, index) => (
-            <OtherResourcesLine key={`${item.ResourceName}-${index}`} data={item} />
-          ))}
+          {commercialProductsData
+            .filter(item => ['Meals', 'Entertainment', 'Recreation'].includes(item.ResourceName))
+            .map((item, index) => (
+              <OtherResourcesLine key={`${item.ResourceName}-${index}`} data={item} />
+            ))}
         </div>
       )}
     </Panel>

@@ -13,14 +13,7 @@ interface InfoCheckboxProps {
   style?: CSSProperties;
 }
 
-export const InfoCheckbox = ({
-  label,
-  count,
-  isChecked,
-  onToggle,
-  className,
-  style,
-}: InfoCheckboxProps) => {
+export const InfoCheckbox = ({ label, count, isChecked, onToggle, className, style }: InfoCheckboxProps) => {
   return (
     <div
       className={styles.subPanel + ' ' + className}
@@ -31,9 +24,7 @@ export const InfoCheckbox = ({
         <span className={styles.label}>{label}</span>
       </div>
       <div className={styles.labelCheckboxSection}>
-        {count !== undefined && count !== null && (
-          <span className={styles.label}>{'Count' + ': ' + count}</span>
-        )}
+        {count !== undefined && count !== null && <span className={styles.label}>{'Count' + ': ' + count}</span>}
         <Checkbox isChecked={isChecked} onValueToggle={value => {}} />
       </div>
     </div>

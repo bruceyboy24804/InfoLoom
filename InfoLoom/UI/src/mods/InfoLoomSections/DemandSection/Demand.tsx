@@ -14,38 +14,19 @@ interface AlignedParagraphProps {
 }
 
 const AlignedParagraph: FC<AlignedParagraphProps> = ({ left, right }) => {
-  let color: string;
+  let colorClass: string;
   if (left < -50) {
-    color = 'red';
+    colorClass = styles.negative;
   } else if (left > 50) {
-    color = '#00CC00';
+    colorClass = styles.positive;
   } else {
-    color = 'white'; // default
+    colorClass = styles.neutral;
   }
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    textAlign: 'justify',
-    marginBottom: '0.1em', // Add some spacing between the <p> tags
-  };
-  const leftTextStyle: React.CSSProperties = {
-    color: color,
-    fontSize: '80%',
-    width: '20%',
-    marginLeft: '10%',
-  };
-  const rightTextStyle: React.CSSProperties = {
-    fontSize: '80%',
-    width: '60%',
-    marginRight: '10%',
-    textAlign: 'right',
-  };
-
   return (
-    <p style={containerStyle}>
-      <span style={leftTextStyle}>{left}</span>
-      <span style={rightTextStyle}>{right}</span>
+    <p className={styles.alignedContainer}>
+      <span className={`${styles.leftText} ${colorClass}`}>{left}</span>
+      <span className={styles.rightText}>{right}</span>
     </p>
   );
 };
@@ -150,68 +131,38 @@ const DemandSection2: FC<DemandSection2Props> = ({ title, value, factors }) => {
     return result == null ? fallback : result;
   };
   return (
-    <div
-      className="infoview-panel-section_RXJ"
-      style={{ width: '100%', paddingTop: '3rem', paddingBottom: '3rem' }}
-    >
+    <div className={`infoview-panel-section_RXJ ${styles.sectionContainer}`}>
       {/* Title with tooltip */}
       <div className="labels_L7Q row_S2v uppercase_RJI">
         <Tooltip tooltip={safeTranslate(`InfoLoomTwo.DemandPanel[${title.replace(/\s/g, '')}Tooltip]`, `${title} demand factors`)}>
-          <div
-            className="left_Lgw row_S2v"
-            style={{
-              fontSize: 'var(--fontSizeM)',
-            }}
-          >
+          <div className={`left_Lgw row_S2v ${styles.sectionTitle}`}>
             {safeTranslate(`InfoLoomTwo.DemandPanel[${title.replace(/\s/g, '')}]`, title)}
           </div>
         </Tooltip>
         {value >= 0 && (
-          <div
-            className="right_k30 row_S2v"
-            style={{
-              fontSize: 'var(--fontSizeM)',
-            }}
-          >
+          <div className={`right_k30 row_S2v ${styles.sectionValue}`}>
             {Math.round(value * 100)}
           </div>
         )}
       </div>
-      <div className="space_uKL" style={{ height: '3rem' }}></div>
+      <div className={`space_uKL ${styles.spacer}`}></div>
       {/* Factors */}
       {factors.map((item, index) => {
         const { display, tooltip } = getDisplayName(item.factor, safeTranslate);
         return (
-          <div key={index} className="labels_L7Q row_S2v small_ExK" style={{ marginTop: '1rem' }}>
+          <div key={index} className={`labels_L7Q row_S2v small_ExK ${styles.factorRow}`}>
             <Tooltip tooltip={tooltip}>
-              <div
-                className="left_Lgw row_S2v"
-                style={{
-                  fontSize: 'var(--fontSizeS)',
-                }}
-              >
+              <div className={`left_Lgw row_S2v ${styles.factorLabel}`}>
                 {display}
               </div>
             </Tooltip>
-            <div className="right_k30 row_S2v" style={{ alignItems: 'center' }}>
+            <div className={`right_k30 row_S2v ${styles.factorValueContainer}`}>
               {item.weight < 0 ? (
-                <div
-                  className="negative_YWY"
-                  style={{
-                    fontSize: 'var(--fontSizeS)',
-                    display: 'flex'
-                  }}
-                >
+                <div className={`negative_YWY ${styles.factorValue}`}>
                   {item.weight}
                 </div>
               ) : (
-                <div
-                  className="positive_zrK"
-                  style={{
-                    fontSize: 'var(--fontSizeS)',
-                    display: 'flex'
-                  }}
-                >
+                <div className={`positive_zrK ${styles.factorValue}`}>
                   {item.weight}
                 </div>
               )}

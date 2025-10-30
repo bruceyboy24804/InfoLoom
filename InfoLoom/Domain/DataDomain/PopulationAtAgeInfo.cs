@@ -1,3 +1,4 @@
+using Colossal.UI.Binding;
 using Unity.Collections;
 using Unity.Mathematics;
 
@@ -27,8 +28,6 @@ namespace InfoLoomTwo.Domain.DataDomain
         
         public int ChildOrTeenWithNoSchool { get; set; }
         
-        
-
         public PopulationAtAgeInfo(int age)
         {
             Age = age;
@@ -52,5 +51,6 @@ namespace InfoLoomTwo.Domain.DataDomain
             ChildOrTeenWithNoSchool = 0;
             
         }
+        
     }
 }

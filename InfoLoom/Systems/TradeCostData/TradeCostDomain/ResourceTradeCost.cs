@@ -7,7 +7,7 @@ namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
         public int Count;
         public float BuyCost;
         public float SellCost;
-        public int ImportAmount;
-        public int ExportAmount;
+        public float ImportAmount;
+        public float ExportAmount;
     }
 }

@@ -26,7 +26,7 @@ export interface CommercialCompanyDebug {
   ResourceAmount: number;
   TotalEfficiency: number;
   Factors: EfficiencyFactorInfo[];
-  ProcessResources: ProcessResourceInfo[];  
+  ProcessResources: ProcessResourceInfo[];
   Profitability: number;
   LastTotalWorth: number;
   TotalWages: number;
@@ -38,5 +38,4 @@ export interface CommercialCompanyDebug {
   Input1Resources: ResourceInfo[];
   OutputResources: ResourceInfo[];
   MaintenanceResources: ResourceInfo[];
-  
 }

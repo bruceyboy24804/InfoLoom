@@ -4,6 +4,13 @@
   min-height: 200rem;
   width: 430rem;
   background-color: var(--panelColorNormal);
+
+  // Disable scrolling on the panel content
+  :global(.content) {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .header {

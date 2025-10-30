@@ -7,7 +7,7 @@ import { formatWords } from 'mods/InfoLoomSections/utils/formatText';
 import { useValue } from 'cs2/api';
 import { industrialProductData } from 'mods/domain/industrialProductData';
 import { IndustrialProductsData } from '../../../bindings';
-import { useLocalization } from 'cs2/l10n';
+import { LocalizedFraction, LocalizedNumber, Unit, useLocalization } from 'cs2/l10n';
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
@@ -42,14 +42,7 @@ interface RowWithThreeColumnsProps {
 }
 
 // Component: RowWithThreeColumns
-const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
-  left,
-  leftSmall,
-  right1,
-  flag1,
-  right2,
-  flag2,
-}) => {
+const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({ left, leftSmall, right1, flag1, right2, flag2 }) => {
   const centerStyle: React.CSSProperties = {
     width: right2 === undefined ? '30%' : '15%',
     justifyContent: 'center',
@@ -90,9 +83,7 @@ const RowWithThreeColumns: React.FC<RowWithThreeColumnsProps> = ({
 // Component: DataDivider
 const DataDivider: React.FC = () => {
   return (
-    <div
-      style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}
-    >
+    <div style={{ display: 'flex', height: '4rem', flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ borderBottom: '1rem solid gray' }}></div>
     </div>
   );
@@ -138,35 +129,34 @@ interface ResourceLineProps {
 // Component: ResourceLine
 const ResourceLine: React.FC<ResourceLineProps> = ({ data }) => {
   const resourceNameMap: Record<string, string> = {
-      "conv.food": "Convenience Food",
-    };
-    const formattedResourceName =
-    resourceNameMap[data.ResourceName] || formatWords(data.ResourceName, true);
+    'conv.food': 'Convenience Food',
+  };
+  const formattedResourceName = resourceNameMap[data.ResourceName] || formatWords(data.ResourceName, true);
   return (
     <div className={styles.row_S2v}>
       <div className={styles.col1}>
         <span>{formattedResourceName}</span>
       </div>
       <div className={styles.col2}>
-        {data.Demand}
+        <LocalizedNumber value={data.Demand} unit={Unit.Integer} />
       </div>
       <div className={styles.col3}>
-        {data.Building}
+        <LocalizedNumber value={data.Building} unit={Unit.Integer} />
       </div>
       <div className={styles.col4}>
-        {data.Free}
+        <LocalizedNumber value={data.Free} unit={Unit.Integer} />
       </div>
       <div className={styles.col5}>
-        {data.Companies}
+        <LocalizedNumber value={data.Companies} unit={Unit.Integer} />
       </div>
       <div className={styles.col9}>
-        {data.Workers}
+        <LocalizedNumber value={data.Workers} unit={Unit.Integer} />
       </div>
       <div className={styles.col10}>
-        {`${data.WrkPercent}%`}
+        <LocalizedNumber value={data.WrkPercent} unit={Unit.Percentage} />
       </div>
       <div className={styles.col11}>
-        {data.TaxFactor}
+        <LocalizedNumber value={data.TaxFactor} unit={Unit.Percentage} />
       </div>
     </div>
   );
@@ -182,38 +172,58 @@ const TableHeader: React.FC = () => {
         </Tooltip>
       </div>
       <div className={styles.col2}>
-        <Tooltip tooltip={'key number that decides what companies will spawn;  the higher the number, the higher probability of a company being spawned.'}>
+        <Tooltip
+          tooltip={
+            'key number that decides what companies will spawn;  the higher the number, the higher probability of a company being spawned.'
+          }
+        >
           <span>Resource Demand</span>
         </Tooltip>
       </div>
       <div className={styles.col3}>
-          <Tooltip tooltip={' key number that decides what buildings will spawn; 0 means there is no demand'}>
-        <span>Building Demand</span>
+        <Tooltip tooltip={' key number that decides what buildings will spawn; 0 means there is no demand'}>
+          <span>Building Demand</span>
         </Tooltip>
       </div>
       <div className={styles.col4}>
-        <Tooltip tooltip={'Free indicates the number of free properties available for the resource. This is the number of properties that are not currently occupied or used by any industrial buildings.'}>
+        <Tooltip
+          tooltip={
+            'Free indicates the number of free properties available for the resource. This is the number of properties that are not currently occupied or used by any industrial buildings.'
+          }
+        >
           <span>Free</span>
         </Tooltip>
       </div>
       <div className={styles.col5}>
-        <Tooltip tooltip={'The number of industrial companies that are currently operating in the city for this resource.'}>
+        <Tooltip
+          tooltip={'The number of industrial companies that are currently operating in the city for this resource.'}
+        >
           <span>Companies</span>
         </Tooltip>
       </div>
       <div className={styles.col9}>
-        <Tooltip tooltip={'Workers indicates the number of workers employed by the industrial companies for the resource'}>
-        <span>Workers</span>
+        <Tooltip
+          tooltip={'Workers indicates the number of workers employed by the industrial companies for the resource'}
+        >
+          <span>Workers</span>
         </Tooltip>
       </div>
       <div className={styles.col10}>
-        <Tooltip tooltip={'worker % indicates the percentage of workers employed compared to the total number of workers available in the city. 100% means all workers are employed'}>
+        <Tooltip
+          tooltip={
+            'worker % indicates the percentage of workers employed compared to the total number of workers available in the city. 100% means all workers are employed'
+          }
+        >
           <span>Worker %</span>
         </Tooltip>
       </div>
       <div className={styles.col11}>
-        <Tooltip tooltip={'TaxFactor: Shows the effect of the current industrial/office tax rate on demand for this resource, scaled as a percentage. A higher value means taxes are reducing demand more.'}>
-            <span>Tax Factor</span>
+        <Tooltip
+          tooltip={
+            'TaxFactor: Shows the effect of the current industrial/office tax rate on demand for this resource, scaled as a percentage. A higher value means taxes are reducing demand more.'
+          }
+        >
+          <span>Tax Factor</span>
         </Tooltip>
       </div>
     </div>
@@ -233,12 +243,14 @@ const $IndustrialProducts: FC<IndustrialProps> = ({ onClose }) => {
       className={styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>{translate("InfoLoomTwo.IndustrialProductsPanel[Title]", "Industrial & Office Products")}</span>
+          <span className={styles.headerText}>
+            {translate('InfoLoomTwo.IndustrialProductsPanel[Title]', 'Industrial & Office Products')}
+          </span>
         </div>
       }
     >
       {industrialProducts.length === 0 ? (
-        <p>{translate("InfoLoomTwo.IndustrialProductsPanel[Waiting]", "Waiting...")}</p>
+        <p>{translate('InfoLoomTwo.IndustrialProductsPanel[Waiting]', 'Waiting...')}</p>
       ) : (
         <div className={styles.panelContent}>
           <TableHeader />

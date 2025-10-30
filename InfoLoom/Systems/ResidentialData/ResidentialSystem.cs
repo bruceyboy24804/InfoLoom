@@ -1,5 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
 using Game;
 using Game.Simulation;
 using Unity.Collections;
@@ -12,7 +10,6 @@ namespace InfoLoomTwo.Systems.ResidentialData
 {
     public partial class ResidentialSystem : GameSystemBase
     {
-        // All the heavy lifting systems
         private ResidentialDemandSystem m_ResidentialDemandSystem;
         private CountResidentialPropertySystem m_CountResidentialPropertySystem;
         private CountHouseholdDataSystem m_CountHouseholdDataSystem;
@@ -22,22 +19,6 @@ namespace InfoLoomTwo.Systems.ResidentialData
         
         public bool IsPanelVisible { get; set; }
         public NativeArray<float> m_Results;
-
-        // Direct property accessors using existing systems
-        
-        public int3 TotalProperties => m_CountResidentialPropertySystem.TotalProperties;
-        
-        
-        public int3 FreeProperties => m_CountResidentialPropertySystem.FreeProperties;
-        
-        
-        public int3 OccupiedProperties => TotalProperties - FreeProperties;
-        
-        
-        public int HouseholdDemand => m_ResidentialDemandSystem.householdDemand;
-        
-        
-        public int3 BuildingDemand => m_ResidentialDemandSystem.buildingDemand;
 
         protected override void OnCreate()
         {
@@ -84,7 +65,30 @@ namespace InfoLoomTwo.Systems.ResidentialData
             // Ultra-fast direct assignments
             PopulateBasicData(residentialData, householdData, population, demandParams, studyPositions);
         }
-
+        public enum ResultIndex
+        {
+            LowTotal = 0,
+            MediumTotal = 1,
+            HighTotal = 2,
+            LowOccupied = 3,
+            MediumOccupied = 4,
+            HighOccupied = 5,
+            // Index 6 unused
+            AverageHappiness = 7,
+            NeutralHappiness = 8,
+            UnemploymentRate = 9,
+            NeutralUnemployment = 10,
+            HomelessHouseholds = 11,
+            MovedInHouseholds = 12,
+            NeutralHomelessness = 13,
+            TotalStudyPositions = 14,
+            WeightedTaxRate = 15,
+            HouseholdDemand = 16,
+            StudentRatio = 17,
+            FreeRequirementLow = 18,
+            FreeRequirementMedium = 19,
+            FreeRequirementHigh = 20
+        }
         private void PopulateBasicData(
             CountResidentialPropertySystem.ResidentialPropertyData residentialData,
             CountHouseholdDataSystem.HouseholdData householdData,
@@ -95,38 +99,39 @@ namespace InfoLoomTwo.Systems.ResidentialData
             var total = residentialData.m_TotalProperties;
             var occupied = total - residentialData.m_FreeProperties;
             
-            // Basic property counts (0-5)
-            m_Results[0] = RTI(total.x);    // Low total
-            m_Results[1] = RTI(total.y);    // Medium total  
-            m_Results[2] = RTI(total.z);    // High total
-            m_Results[3] = RTI(occupied.x); // Low occupied
-            m_Results[4] = RTI(occupied.y); // Medium occupied
-            m_Results[5] = RTI(occupied.z); // High occupied
+            // Basic property counts
+            m_Results[(int)ResultIndex.LowTotal] = RTI(total.x);
+            m_Results[(int)ResultIndex.MediumTotal] = RTI(total.y);
+            m_Results[(int)ResultIndex.HighTotal] = RTI(total.z);
+            m_Results[(int)ResultIndex.LowOccupied] = RTI(occupied.x);
+            m_Results[(int)ResultIndex.MediumOccupied] = RTI(occupied.y);
+            m_Results[(int)ResultIndex.HighOccupied] = RTI(occupied.z);
             
-            // Demand parameters (6, 8, 10, 13, 15)
-            m_Results[8] = RTI(demandParams.m_NeutralHappiness);
-            m_Results[10] = RTI(10f * demandParams.m_NeutralUnemployment);
-            m_Results[13] = RTI(10f * demandParams.m_NeutralHomelessness);
+            // Demand parameters
+            m_Results[(int)ResultIndex.NeutralHappiness] = RTI(demandParams.m_NeutralHappiness);
+            m_Results[(int)ResultIndex.NeutralUnemployment] = RTI(10f * demandParams.m_NeutralUnemployment);
+            m_Results[(int)ResultIndex.NeutralHomelessness] = RTI(10f * demandParams.m_NeutralHomelessness);
             
-            // Population data (7, 9, 11-12, 14-17)
-            m_Results[7] = RTI(population.m_AverageHappiness);
-            m_Results[9] = Mathf.Round(m_CountHouseholdDataSystem.UnemploymentRate * 10f) / 10f;
-            m_Results[11] = RTI(householdData.m_HomelessHouseholdCount);
-            m_Results[12] = RTI(householdData.m_MovedInHouseholdCount);
+            // Population data
+            m_Results[(int)ResultIndex.AverageHappiness] = RTI(population.m_AverageHappiness);
+            m_Results[(int)ResultIndex.UnemploymentRate] = Mathf.Round(m_CountHouseholdDataSystem.UnemploymentRate * 10f) / 10f;
+            m_Results[(int)ResultIndex.HomelessHouseholds] = RTI(householdData.m_HomelessHouseholdCount);
+            m_Results[(int)ResultIndex.MovedInHouseholds] = RTI(householdData.m_MovedInHouseholdCount);
             
             // Study positions and tax data
             var totalStudy = studyPositions.Length > 4 ? 
                 studyPositions[1] + studyPositions[2] + studyPositions[3] + studyPositions[4] : 0;
-            m_Results[14] = RTI(totalStudy);
-            m_Results[15] = CalculateWeightedTaxRate();
+            m_Results[(int)ResultIndex.TotalStudyPositions] = RTI(totalStudy);
+            m_Results[(int)ResultIndex.WeightedTaxRate] = CalculateWeightedTaxRate();
             
             // Demand data
-            m_Results[16] = RTI(m_ResidentialDemandSystem.householdDemand);
-            m_Results[17] = CalculateStudentRatio();
+            m_Results[(int)ResultIndex.HouseholdDemand] = RTI(m_ResidentialDemandSystem.householdDemand);
+            m_Results[(int)ResultIndex.StudentRatio] = CalculateStudentRatio();
             
-            m_Results[18] = RTI(10  * demandParams.m_FreeResidentialRequirement.x);
-            m_Results[19] = RTI(10  * demandParams.m_FreeResidentialRequirement.y);
-            m_Results[20] = RTI(10  * demandParams.m_FreeResidentialRequirement.z);
+            // Free property requirements
+            m_Results[(int)ResultIndex.FreeRequirementLow] = RTI(10 * demandParams.m_FreeResidentialRequirement.x);
+            m_Results[(int)ResultIndex.FreeRequirementMedium] = RTI(10 * demandParams.m_FreeResidentialRequirement.y);
+            m_Results[(int)ResultIndex.FreeRequirementHigh] = RTI(10 * demandParams.m_FreeResidentialRequirement.z);
         }
 
         private int CalculateWeightedTaxRate()

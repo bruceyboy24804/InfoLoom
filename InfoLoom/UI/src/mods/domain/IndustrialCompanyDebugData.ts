@@ -20,7 +20,7 @@ export interface IndustrialCompanyDebug {
   MaxWorkers: number;
   VehicleCount: number;
   VehicleCapacity: number;
-  
+
   ProcessResources: ProcessResourceInfo[];
   TotalEfficiency: number;
   Factors: EfficiencyFactorInfo[];
@@ -35,7 +35,7 @@ export interface IndustrialCompanyDebug {
   ResourceAmount: number;
   ResourceIcon: string;
   IsExtractor: boolean;
-  
+
   MoneyAmount: number;
   Input1Resources: ResourceInfo[];
   Input2Resources: ResourceInfo[];

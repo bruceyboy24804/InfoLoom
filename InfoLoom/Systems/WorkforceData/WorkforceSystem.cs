@@ -17,6 +17,7 @@ using Unity.Collections;
 using Unity.Entities;
 using InfoLoomTwo.Domain;
 using InfoLoomTwo.Domain.DataDomain;
+using Unity.Mathematics;
 
 namespace InfoLoomTwo.Systems.WorkforceData
 {
@@ -37,35 +38,31 @@ namespace InfoLoomTwo.Systems.WorkforceData
         }
         private struct CountEmploymentJob : IJobChunk
         {
+            [ReadOnly] public EntityTypeHandle m_EntityType;
             [ReadOnly] public ComponentTypeHandle<Citizen> m_CitizenType;
-            [ReadOnly] public ComponentTypeHandle<Worker> m_WorkerType;
-            [ReadOnly] public ComponentTypeHandle<Game.Citizens.Student> m_StudentType;
-            [ReadOnly] public ComponentTypeHandle<HealthProblem> m_HealthProblemType;
             [ReadOnly] public ComponentTypeHandle<HouseholdMember> m_HouseholdMemberType;
+            [ReadOnly] public ComponentLookup<Worker> m_Workers;
             [ReadOnly] public ComponentLookup<OutsideConnection> m_OutsideConnections;
             [ReadOnly] public ComponentLookup<PropertyRenter> m_PropertyRenters;
             [ReadOnly] public ComponentLookup<HomelessHousehold> m_HomelessHouseholds;
             [ReadOnly] public ComponentLookup<MovingAway> m_MovingAways;
             [ReadOnly] public ComponentLookup<Household> m_Households;
-            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup; // Add this
+            [ReadOnly] public ComponentLookup<CurrentDistrict> m_CurrentDistrictLookup;
+            [ReadOnly] public ComponentLookup<Game.Citizens.Student> m_Students;
+            [ReadOnly] public ComponentLookup<Citizen> m_Citizens;
+            [ReadOnly] public ComponentLookup<HealthProblem> m_HealthProblems;
             public NativeArray<WorkforcesInfo> m_Results;
             public Entity m_SelectedDistrict; 
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
+                var entityArray = chunk.GetNativeArray(m_EntityType);
                 var householdMemberArray = chunk.GetNativeArray(ref m_HouseholdMemberType);
                 var citizenArray = chunk.GetNativeArray(ref m_CitizenType);
-                var workerArray = chunk.GetNativeArray(ref m_WorkerType);
-                var healthProblemArray = chunk.GetNativeArray(ref m_HealthProblemType);
-                var studentArray = chunk.GetNativeArray(ref m_StudentType); // Add this line
-
-                bool isWorkerChunk = workerArray.IsCreated;
-                bool hasHealthProblems = healthProblemArray.IsCreated;
-                bool hasStudents = studentArray.IsCreated; // Add this line
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    
+                    Entity citizenEntity = entityArray[i];
                     Entity household = householdMemberArray[i].m_Household;
 
                     if (m_SelectedDistrict != Entity.Null && !IsInSelectedDistrict(household))
@@ -73,22 +70,29 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
                     Citizen citizen = citizenArray[i];
                     
-                    var age = citizen.GetAge();
-                    if (age == CitizenAge.Child || age == CitizenAge.Elderly)
+                    // Use vanilla's IsWorkableCitizen check
+                    if (!CitizenUtils.IsWorkableCitizen(citizenEntity, ref m_Citizens, ref m_Students, ref m_HealthProblems))
                         continue;
-                    if (hasStudents && i < studentArray.Length)
+                        
+                    if (ShouldSkipCitizen(citizenEntity, citizen, household))
                         continue;
-                    if (ShouldSkipCitizen(citizen, household, hasHealthProblems ? healthProblemArray[i] : default, hasHealthProblems))
-                        continue;
-                    ProcessCitizen(citizen, household, isWorkerChunk ? workerArray[i] : default, isWorkerChunk);
+                    
+                    // Check if this citizen is a worker (per-citizen, not per-chunk)
+                    bool hasWorker = m_Workers.HasComponent(citizenEntity);
+                    Worker worker = hasWorker ? m_Workers[citizenEntity] : default;
+                        
+                    ProcessCitizen(citizen, household, worker, hasWorker);
                 }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private bool ShouldSkipCitizen(Citizen citizen, Entity household, HealthProblem healthProblem, bool hasHealthProblems)
+            private bool ShouldSkipCitizen(Entity citizenEntity, Citizen citizen, Entity household)
             {
-                return (hasHealthProblems && CitizenUtils.IsDead(healthProblem)) ||
-                       (citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != 0 ||
+                // Check if dead using ComponentLookup (per-citizen check)
+                if (CitizenUtils.IsDead(citizenEntity, ref m_HealthProblems))
+                    return true;
+                    
+                return (citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != 0 ||
                        !m_Households.HasComponent(household) ||
                        (m_Households[household].m_Flags & HouseholdFlags.MovedIn) == 0 ||
                        m_MovingAways.HasComponent(household);
@@ -101,14 +105,37 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 
                 info.Total++;
                 
-                if (isWorker)
+                // Match vanilla logic: check worker component first
+                bool hasWorker = isWorker;
+                
+                if (hasWorker)
                 {
                     info.Worker++;
-                    ProcessWorker(ref info, worker, educationLevel);
+                     bool isWorkingOutside = m_OutsideConnections.HasComponent(worker.m_Workplace);
+                    bool isUnderemployed = worker.m_Level < educationLevel;
+                    
+                    if (isWorkingOutside)
+                    {
+                        info.Outside++;
+                    }
+                    
+                    if (isUnderemployed)
+                    {
+                        info.Under++;
+                    }
+                    
+                    // Count as employable if working outside OR underemployed
+                    if (isWorkingOutside || isUnderemployed)
+                    {
+                        info.Employable++;
+                    }
                 }
                 else
                 {
-                    info.Unemployed++;
+                    // Don't increment Unemployed here - it's calculated in CalculateTotals
+                    // to match vanilla's formula: Unemployed = Total - CityWorkers
+                    // Unemployed are also employable
+                    info.Employable++;
                 }
                 
                 // Check if homeless
@@ -120,30 +147,6 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 m_Results[educationLevel] = info;
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void ProcessWorker(ref WorkforcesInfo info, Worker worker, int educationLevel)
-            {
-                bool isEmployable = false;
-                
-                if (m_OutsideConnections.HasComponent(worker.m_Workplace))
-                {
-                    info.Outside++;
-                    isEmployable = true;
-                }
-                
-                if (worker.m_Level < educationLevel)
-                {
-                    info.Under++;
-                    isEmployable = true;
-                    
-                    
-                }
-                
-                if (isEmployable)
-                {
-                    info.Employable++;
-                }
-            }
             private bool IsInSelectedDistrict(Entity household)
             {
                 // If no district selected, include all households (even those without property)
@@ -175,6 +178,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
         }
 
         private SimulationSystem m_SimulationSystem;
+        private Game.Simulation.CountHouseholdDataSystem m_CountHouseholdDataSystem;
         private EntityQuery m_AllAdultGroup;
         public Entity SelectedDistrict { get; set; } = Entity.Null;
 
@@ -196,6 +200,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
             base.OnCreate();
 
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
+            m_CountHouseholdDataSystem = base.World.GetOrCreateSystemManaged<Game.Simulation.CountHouseholdDataSystem>();
             m_NameSystem = base.World.GetOrCreateSystemManaged<NameSystem>();
             m_DistrictQuery = GetEntityQuery(ComponentType.ReadOnly<District>());
             m_AllAdultGroup = GetEntityQuery(new EntityQueryDesc
@@ -239,17 +244,19 @@ namespace InfoLoomTwo.Systems.WorkforceData
             
             var jobData = new CountEmploymentJob
             {
+                m_EntityType = SystemAPI.GetEntityTypeHandle(),
                 m_CitizenType = SystemAPI.GetComponentTypeHandle<Citizen>(isReadOnly: true),
-                m_HealthProblemType = SystemAPI.GetComponentTypeHandle<HealthProblem>(isReadOnly: true),
-                m_WorkerType = SystemAPI.GetComponentTypeHandle<Worker>(isReadOnly: true),
-                m_StudentType = SystemAPI.GetComponentTypeHandle<Game.Citizens.Student>(isReadOnly: true),
                 m_HouseholdMemberType = SystemAPI.GetComponentTypeHandle<HouseholdMember>(isReadOnly: true),
+                m_Workers = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true),
                 m_MovingAways = SystemAPI.GetComponentLookup<MovingAway>(isReadOnly: true),
                 m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true),
                 m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true),
                 m_OutsideConnections = SystemAPI.GetComponentLookup<OutsideConnection>(isReadOnly: true),
                 m_Households = SystemAPI.GetComponentLookup<Household>(isReadOnly: true),
                 m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true),
+                m_Students = SystemAPI.GetComponentLookup<Game.Citizens.Student>(isReadOnly: true),
+                m_Citizens = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true),
+                m_HealthProblems = SystemAPI.GetComponentLookup<HealthProblem>(isReadOnly: true),
                 m_SelectedDistrict = SelectedDistrict,
                 m_Results = m_Results
             };
@@ -274,13 +281,39 @@ namespace InfoLoomTwo.Systems.WorkforceData
             for (EducationLevel level = EducationLevel.Uneducated; level <= EducationLevel.HighlyEducated; level++)
             {
                 var levelData = m_Results[(int)level];
+                
+                // Match vanilla's exact unemployment calculation:
+                // Unemployed = WorkableCitizen - CityWorkers
+                // where CityWorkers excludes outside workers
+                if (levelData.Total > 0)
+                {
+                    // CityWorkers = all workers minus those working outside
+                    int cityWorkers = levelData.Worker - levelData.Outside;
+                    // Unemployed count should match vanilla's formula exactly
+                    int unemployedCount = math.max(0, levelData.Total - cityWorkers);
+                    levelData.UnemploymentRate = (float)unemployedCount / (float)levelData.Total * 100f;
+                    // Update the Unemployed field to match the calculated value
+                    levelData.Unemployed = unemployedCount;
+                    m_Results[(int)level] = levelData;
+                }
+                
                 totals.Total += levelData.Total;
                 totals.Worker += levelData.Worker;
                 totals.Unemployed += levelData.Unemployed;
+                totals.UnemploymentRate += levelData.UnemploymentRate;
                 totals.Homeless += levelData.Homeless;
                 totals.Employable += levelData.Employable;
                 totals.Outside += levelData.Outside;
                 totals.Under += levelData.Under;
+            }
+
+            // Calculate total unemployment rate using vanilla's exact formula
+            if (totals.Total > 0)
+            {
+                int cityWorkers = totals.Worker - totals.Outside;
+                int unemployedCount = math.max(0, totals.Total - cityWorkers);
+                totals.UnemploymentRate = (float)unemployedCount / (float)totals.Total * 100f;
+                totals.Unemployed = unemployedCount;
             }
 
             m_Results[(int)EducationLevel.Totals] = totals;

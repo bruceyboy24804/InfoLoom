@@ -1,6 +1,13 @@
 .panel {
-  height: 312rem; 
+  height: 320rem;
   width: 500rem;
+
+  // Disable scrolling on the panel content
+  :global(.content) {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .header {
@@ -11,7 +18,131 @@
   height: 20rem;
   text-transform: none;
 }
+
 .headerText {
   margin-left: -5rem;
   font-size: 115%;
+}
+
+.twoColumnRow {
+  width: 70%;
+}
+
+.twoColumnLeft {
+  width: 70%;
+}
+
+.twoColumnRight {
+  width: 30%;
+  justify-content: center;
+}
+
+.dataDivider {
+  display: flex;
+  height: 4rem;
+  flex-direction: column;
+  justify-content: center;
+
+  > div {
+    border-bottom: 1px solid gray;
+  }
+}
+
+.singleValueDefault {
+  width: 20%;
+  justify-content: center;
+}
+
+.mainDataContainer {
+  width: 70%;
+  box-sizing: border-box;
+  border: 1px solid gray;
+}
+
+.columnHeaderRow {
+  width: 60%;
+}
+
+.dataRow {
+  width: 60%;
+}
+
+.dataRowColumn {
+  width: 60%;
+  flex-direction: column;
+}
+
+.dataValueWide {
+  width: 40%;
+  justify-content: center;
+}
+
+.dataValueNormal {
+  width: 20%;
+  justify-content: center;
+}
+
+.workforceHeader {
+  width: 60%;
+  height: 2.2em;
+  display: flex;
+  align-items: center;
+  font-size: 15rem;
+  color: white;
+}
+
+.workforceData {
+  width: 40%;
+}
+
+.storageContainer {
+  display: flex;
+}
+
+.storageLeft {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+}
+
+.storageTitle {
+  font-size: 15rem;
+  color: white;
+}
+
+.storageDescription {
+  font-size: 12rem;
+  color: white;
+}
+
+.storageRight {
+  width: 50%;
+}
+
+.excludedResourcesContainer {
+  width: 30%;
+  border: 1px solid gray;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.excludedResourcesHeader {
+  width: 100%;
+}
+
+.excludedResourcesTitle {
+  margin: 0;
+}
+
+.scrollableList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.mainLayout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }

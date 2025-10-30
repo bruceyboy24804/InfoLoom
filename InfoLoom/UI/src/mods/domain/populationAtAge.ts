@@ -1,4 +1,4 @@
-export interface populationAtAge {
+export interface PopulationAtAge {
   Age: number;
   Work: number;
   School1: number;
@@ -14,5 +14,4 @@ export interface populationAtAge {
   WellEducated: number;
   HighlyEducated: number;
   ChildOrTeenWithNoSchool: number;
-
 }

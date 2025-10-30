@@ -1,5 +1,5 @@
-export enum SortingEnum{
-    Off = 0,
-    Ascending = 1,
-    Descending = 2,
+export enum SortingEnum {
+  Off = 0,
+  Ascending = 1,
+  Descending = 2,
 }

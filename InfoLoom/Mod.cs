@@ -24,6 +24,7 @@ using InfoLoomTwo.Systems.Sections;
 using InfoLoomTwo.Systems.TradeCostData; 
 using Unity.Entities;
 using Game.Settings;
+using InfoLoomTwo.Systems.ChirpSystem_s_;
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -98,7 +99,7 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
-
+            updateSystem.UpdateAt<InfoLoomChirpSystem>(SystemUpdatePhase.GameSimulation);
             
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
