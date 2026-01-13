@@ -47,6 +47,9 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.Jobs
         [ReadOnly] public EconomyParameterData EconomyParams;
         [ReadOnly] public ExtractorParameterData ExtractorParams;
         [ReadOnly] public ResourcePrefabs ResourcePrefabs;
+        
+        [ReadOnly] public ComponentLookup<CompanyStatisticData> CompanyStatisticDataLookup;
+
 
         public NativeList<IndustrialCompanyJobData>.ParallelWriter ResultWriter;
         
@@ -134,6 +137,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.Jobs
                     IsExtractor = isExtractor,
                     ResourceCount = resourceCount
                 };
+                result.HasStatistics = CompanyStatisticDataLookup.HasComponent(entity);
+
                 ResultWriter.AddNoResize(result);
             }
         }

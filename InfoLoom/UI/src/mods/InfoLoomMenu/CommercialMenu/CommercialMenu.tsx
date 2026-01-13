@@ -1,12 +1,12 @@
 import { useValue } from 'cs2/api';
 import * as bindings from '../../bindings';
 import Commercial from '../../InfoLoomSections/CommercialSecction/CommercialDemandUI/CommercialDemand';
-import CommercialProducts from '../../InfoLoomSections/CommercialSecction/CommercialProductsUI/CommercialProducts';
 import CommercialCompanyDebugDataPanel from '../../InfoLoomSections/CommercialSecction/CommercialDebugDataUI/CommercialCompanyDebugData';
 import React, { useCallback } from 'react';
 import { Button, Panel } from 'cs2/ui';
 import styles from '../CommercialMenu/CommercialMenu.module.scss';
 import { useLocalization } from 'cs2/l10n';
+import { Localekeys } from 'mods/locale';
 
 interface SectionConfig {
   component: JSX.Element;
@@ -23,12 +23,6 @@ export function CommercialMenuButton(): JSX.Element {
       component: <Commercial />,
       openState: () => useValue(bindings.CommercialDemandOpen),
       toggle: bindings.SetCommercialDemandOpen,
-      displayName: null, // Will be set at render time
-    },
-    Products: {
-      component: <CommercialProducts />,
-      openState: () => useValue(bindings.CommercialProductsOpen),
-      toggle: bindings.SetCommercialProductsOpen,
       displayName: null, // Will be set at render time
     },
     Companies: {
@@ -55,13 +49,13 @@ export function CommercialMenuButton(): JSX.Element {
               let displayName: string | null;
               switch (name) {
                 case 'Demand':
-                  displayName = translate('InfoLoomTwo.CommercialMenu[Button1]', 'Demand');
+                  displayName = translate(Localekeys.Demand, 'Demand');
                   break;
                 case 'Products':
-                  displayName = translate('InfoLoomTwo.CommercialMenu[Button2]', 'Products');
+                  displayName = translate(Localekeys.Products, 'Products');
                   break;
                 case 'Companies':
-                  displayName = translate('InfoLoomTwo.CommercialMenu[Button3]', 'Companies');
+                  displayName = translate(Localekeys.Companies, 'Companies');
                   break;
                 default:
                   displayName = name;

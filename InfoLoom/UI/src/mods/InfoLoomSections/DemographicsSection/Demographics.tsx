@@ -6,13 +6,16 @@ import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable, DropdownItem, Button } from 'cs2/ui';
 import { GroupingStrategy } from '../../domain/GroupingStrategy';
 import {
-  DemographicsDataDetails,
   DemographicsDataOldestCitizen,
   DemographicsDataTotals,
   DemoStatsToggledOn,
   SetDemoStatsToggledOn,
   DemoGroupingStrategy,
   SetDemoGroupingStrategy,
+  DemographicsDetailedData,
+  DemographicsFiveYearDetails,
+  DemographicsTenYearDetails,
+  DemographicsLifecycleDetails,
 } from '../../bindings';
 import { getModule } from 'cs2/modding';
 import { useLegendLabels, useLifecycleLabels, useGroupingStrategies } from './hooks';
@@ -20,6 +23,11 @@ import { DemographicsType } from './types';
 import { DistrictSelector } from 'mods/InfoloomInfoviewContents/DistrictSelector/districtSelector';
 import { ToggleButton, StatisticsPanel, DemographicsChart, ErrorBoundary, LoadingSpinner } from './components';
 import mod from 'mod.json';
+import { Localekeys } from 'mods/locale';
+import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
+import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
+import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
+import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
 
 const demographics = bindValue<boolean>(mod.id, 'demographics', false)
 const updateDemographics = (value: boolean) => trigger(mod.id, 'updateDemographics', value);
@@ -34,7 +42,10 @@ const SetChartSwitch = (switchTo: DemographicsType) => {
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const { translate } = useLocalization();
-  const demographicsDataStructureDetails = useValue(DemographicsDataDetails);
+  const demographicsDataStructureDetails = useValue(DemographicsDetailedData);
+  const fiveYearDetails = useValue(DemographicsFiveYearDetails);
+  const tenYearDetails = useValue(DemographicsTenYearDetails);
+  const lifecycleDetails = useValue(DemographicsLifecycleDetails);
   const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
   const demoStatsToggledOn = useValue(DemoStatsToggledOn);
@@ -45,7 +56,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   // Use custom hooks for translated labels and strategies
   const lifecycleLabels = useLifecycleLabels(translate);
   const legendLabels = useLegendLabels(translate);
-  const groupingStrategies = useGroupingStrategies(translate);
+  const groupingStrategies = useGroupingStrategies(translate, demographicsDataStructureDetails);
 
   return (
     <Panel
@@ -55,7 +66,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
       initialPosition={{ x: 0.16, y: 0.15 }}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>{translate('InfoLoomTwo.DemographicsPanel[Title]', 'Demographics')}</span>
+          <span className={styles.headerText}>{translate(Localekeys.Demographics, 'Demographics')}</span>
         </div>
       }
     >
@@ -63,10 +74,18 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
         <div className={styles.toggleContainer}>
           <DistrictSelector />
           <InfoCheckbox
-            label={translate('InfoLoomTwo.DemographicsPanel[Toggle]', 'Show Statistics')}
+            label={translate(Localekeys.ShowStatistics, 'Show Statistics')}
             isChecked={demoStatsToggledOn}
             onToggle={SetDemoStatsToggledOn}
           />
+             <Button
+            onSelect={() => updateDemographics(true)}
+            className={styles.refreshButton}
+            variant="flat"
+            type="button"
+          >
+            {translate(Localekeys.Refresh, 'Refresh')}
+          </Button>
           <Dropdown
             theme={DropdownStyle}
             content={groupingStrategies.map(strategy => (
@@ -107,23 +126,16 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
             selected={chartSwitch === DemographicsType.Employment}
             onSelected={() => SetChartSwitch(DemographicsType.Employment)}
           >
-            {translate('InfoLoomTwo.DemographicsPanel[ToggleButton1]', 'Employment')}
+            {translate(Localekeys.Employment, 'Employment')}
           </ToggleButton>
 
           <ToggleButton
             selected={chartSwitch === DemographicsType.Education}
             onSelected={() => SetChartSwitch(DemographicsType.Education)}
           >
-            {translate('InfoLoomTwo.DemographicsPanel[ToggleButton2]', 'Education')}
+            {translate(Localekeys.Education, 'Education')}
           </ToggleButton>
-          <Button
-            onSelect={() => updateDemographics(true)}
-            className={styles.refreshButton}
-            variant="flat"
-            type="button"
-          >
-            {translate('InfoLoomTwo.DemographicsPanel[RefreshButton]', 'Refresh Data')}
-          </Button>
+         
         </div>
         <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
           <div className={styles.chartContainer}>
@@ -133,6 +145,9 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
               ) : (
                 <DemographicsChart
                   StructureDetails={demographicsDataStructureDetails}
+                  fiveYearDetails={fiveYearDetails}
+                  tenYearDetails={tenYearDetails}
+                  lifecycleDetails={lifecycleDetails}
                   groupingStrategy={demoGroupingStrategy}
                   legendLabels={legendLabels}
                   lifecycleLabels={lifecycleLabels}

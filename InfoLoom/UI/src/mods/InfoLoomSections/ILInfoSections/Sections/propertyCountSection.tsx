@@ -8,6 +8,7 @@ import { formatPercentage1 } from 'mods/InfoLoomSections/utils/formatText';
 import styles from './buildingInfoComponent.module.scss';
 import { FC } from 'react';
 import { LocalizedNumber, Unit } from 'cs2/l10n';
+import { LocalizedNumberWithSuffix } from 'mods/InfoLoomSections/utils/localizedNumberWithSuffix';
 
 const InfoRowTheme: Theme | any = getModule(
   'game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss',
@@ -39,6 +40,8 @@ interface ILPropertyCountSection extends SelectedInfoSectionBase {
   AverageLandValue: number;
   AverageBuildingLevel: number;
   hasSchool: boolean;
+  Geometry: number;
+  PopulationDensity: number;
 }
 
 let PanelOpen: boolean = false;
@@ -309,6 +312,19 @@ export const ILPropertyInfoSection = (componentList: any): any => {
           subRow={true}
           disableFocus={true}
         />
+        <PanelSectionRow
+          left={'District Size'}
+          right={<LocalizedNumber value={props.Geometry} unit={Unit.Area} />}
+          subRow={true}
+          disableFocus={true}
+        />
+        <PanelSectionRow
+          left={'Population Density'}
+          right={<LocalizedNumberWithSuffix value={props.PopulationDensity} unit={Unit.FloatSingleFraction} suffix="/km²"/>}
+          subRow={true}
+          disableFocus={true}
+        />
+
       </InfoSectionFoldout>
     );
   };

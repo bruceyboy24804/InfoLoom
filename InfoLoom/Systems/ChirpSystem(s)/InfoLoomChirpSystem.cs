@@ -24,8 +24,7 @@ namespace InfoLoomTwo.Systems.ChirpSystem_s_
     {
         private WorkforceSystem _workforceSystem;
         private SimulationSystem _sim;
-        private EntityQuery _timeDataQ;
-        private EntityQuery _chirpQuery;
+        
         
         private uint _lastUnemploymentChirpFrame;
         private uint _lastUnderemploymentChirpFrame;
@@ -51,11 +50,9 @@ namespace InfoLoomTwo.Systems.ChirpSystem_s_
 
             _workforceSystem = World.GetExistingSystemManaged<WorkforceSystem>();
             _sim = World.GetOrCreateSystemManaged<SimulationSystem>();
-            _timeDataQ = GetEntityQuery(ComponentType.ReadOnly<TimeData>());
-            _chirpQuery = GetEntityQuery(
-                ComponentType.ReadOnly<Chirp>(),
-                ComponentType.ReadOnly<PrefabRef>()
-            );
+            var _timeDataQ = SystemAPI.QueryBuilder().WithAll<TimeData>().Build();
+            var _chirpQuery = SystemAPI.QueryBuilder().WithAll<Chirp, PrefabRef>().Build();
+            
 
             _lastUnemploymentChirpFrame = 0;
             _lastUnderemploymentChirpFrame = 0;

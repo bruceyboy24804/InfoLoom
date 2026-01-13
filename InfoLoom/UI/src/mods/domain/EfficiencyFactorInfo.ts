@@ -30,6 +30,10 @@ export enum EfficiencyFactorEnum {
   CityModifierOfficeEfficiency,
   CityModifierHospitalEfficiency,
   SpecializationBonus,
+  CityModifierFishInput,
+  CityModifierFishHub,
+  LackResources,
+  GateBypass,
   Count,
 }
 

@@ -8,7 +8,7 @@ import { ModuleResolver } from '../../../InfoloomInfoviewContents/ModuleResolver
 import { OutsideConnectionType } from 'mods/domain/TradeCostEnums';
 
 // Define bindings for outside connection type
-const OutsideConnectionTypeSorting = bindValue<OutsideConnectionType>(mod.id, 'OutsideConnectionType', OutsideConnectionType.Road);
+const OutsideConnectionTypeSorting = bindValue<OutsideConnectionType>(mod.id, 'OutsideConnectionType', OutsideConnectionType.All);
 const SetOutsideConnectionTypeSorting = (type: OutsideConnectionType) => trigger(mod.id, 'SetOutsideConnectionType', type);
 
 // Custom selector for outside connection type
@@ -18,10 +18,12 @@ export const OutsideConnectionSelector = () => {
 
 	// Define connection type options
 	const connectionTypes = [
+		{ type: OutsideConnectionType.All, name: 'All' },
 		{ type: OutsideConnectionType.Road, name: 'Road' },
 		{ type: OutsideConnectionType.Train, name: 'Train' },
 		{ type: OutsideConnectionType.Air, name: 'Air' },
 		{ type: OutsideConnectionType.Ship, name: 'Ship' },
+		
 	];
 
 	// Create dropdown items for each connection type

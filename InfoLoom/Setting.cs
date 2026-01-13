@@ -17,8 +17,8 @@ using Unity.Mathematics;
 namespace InfoLoomTwo
 {
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources ,ChirpsGroup)]
-    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources ,ChirpsGroup)]
+    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, ChirpsGroup)]
+    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, ChirpsGroup)]
     [SettingsUITabOrder(GeneralTab, CustomChirpsTab)]
     public class Setting : ModSetting
     {
@@ -29,6 +29,7 @@ namespace InfoLoomTwo
         public const string DemandPanelResources = "DemandPanelResources";
         public const string InfoviewChirps = "InfoviewChirps";
         public const string Data = "Data";
+        public const string DemographicsGroup = "Demographics";
         public bool data;
         // ===== General Tab =====
         [SettingsUISection(GeneralTab, SectionsGroup)]
@@ -36,9 +37,6 @@ namespace InfoLoomTwo
         
         [SettingsUISection(GeneralTab, SectionsGroup)]
         public bool hideCitizenSection { get; set; }
-        
-        [SettingsUISection(GeneralTab, SectionsGroup)]
-        public bool hideProfitSection { get; set; }
         
         [SettingsUISection(GeneralTab, SectionsGroup)]
         public bool hideDistrictSection { get; set; }
@@ -52,6 +50,19 @@ namespace InfoLoomTwo
         [SettingsUISection(GeneralTab, DemandPanelResources)]
         [SettingsUISlider(min = 0f, max = 100f, step = 1f, unit = Unit.kInteger)]
         public int indResDemValue { get; set; }
+        
+        // ===== Demographics Age Limits =====
+        [SettingsUISection(GeneralTab, DemographicsGroup)]
+        [SettingsUISlider(min = 1, max = 50, step = 1, unit = Unit.kInteger)]
+        public int teenAgeLimit { get; set; }
+        
+        [SettingsUISection(GeneralTab, DemographicsGroup)]
+        [SettingsUISlider(min = 1, max = 100, step = 1, unit = Unit.kInteger)]
+        public int adultAgeLimit { get; set; }
+        
+        [SettingsUISection(GeneralTab, DemographicsGroup)]
+        [SettingsUISlider(min = 1, max = 150, step = 1, unit = Unit.kInteger)]
+        public int elderAgeLimit { get; set; }
         
         // ===== Custom Chirps Tab =====
         // These settings are hidden if CustomChirps mod is NOT detected
@@ -105,11 +116,15 @@ namespace InfoLoomTwo
         {
             hideBuildingSection = false;
             hideCitizenSection = false;
-            hideProfitSection = false;
             hideDistrictSection = false;
             hideRentSection = false;
             comResDemValue = 100;
             indResDemValue = 100;
+            
+            // Default age limits matching vanilla game
+            teenAgeLimit = 21;
+            adultAgeLimit = 36;
+            elderAgeLimit = 84;
             
             enableUnemploymentChirps = true;
             enableUnderemploymentChirps = true;
@@ -188,16 +203,16 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionTabLocaleID(Setting.GeneralTab), "General" },
                 { m_Setting.GetOptionTabLocaleID(Setting.CustomChirpsTab), "Custom Chirps" },
                 { m_Setting.GetOptionTabLocaleID(Setting.DemandPanelResources), "Production Panel Resources" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.DemandPanelResources), "Production Panel Resources" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.SectionsGroup), "Sections" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.ChirpsGroup), "Chirp Settings" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.Data), "Data" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.DemographicsGroup), "Demographics Age Limits" },
                 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideBuildingSection)), "Hide Building Section"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideBuildingSection)), "Toggle to hide the Building Section" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideCitizenSection)), "Hide Citizen Section"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideCitizenSection)), "Toggle to hide the Citizen Section" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideProfitSection)), "Hide Profit Section"  },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideProfitSection)), "Toggle to hide the Profit Section" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideDistrictSection)), "Hide District Section"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideDistrictSection)), "Toggle to hide the District Section" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideRentSection)), "Hide Rent Section"  },
@@ -223,6 +238,13 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.comResDemValue)), "Value which to show resources in the commercial demand panel" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.indResDemValue)), "Industrial Resource Demand"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.indResDemValue)), "Value which to show resources in the industrial demand panel" },
+                
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.teenAgeLimit)), "Teen Age Limit (days)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.teenAgeLimit)), "Age in days when children become teens. Match this with your aging mod settings." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.adultAgeLimit)), "Adult Age Limit (days)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.adultAgeLimit)), "Age in days when teens become adults. Match this with your aging mod settings." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.elderAgeLimit)), "Elder Age Limit (days)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.elderAgeLimit)), "Age in days when adults become elders. Match this with your aging mod settings." },
                 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.enableElectrictyChirps)), "Enable Electricity Chirps"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.enableElectrictyChirps)), "Receive chirps when when you are consuming less electricity than you are producing" },

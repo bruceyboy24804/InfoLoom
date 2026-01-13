@@ -94,27 +94,13 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 			m_CountWorkplacesSystem = World.GetOrCreateSystemManaged<CountWorkplacesSystem>();
 			m_CountCompanyDataSystem = World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
 			
-			m_EconomyParameterQuery = GetEntityQuery(ComponentType.ReadOnly<EconomyParameterData>());
-			m_DemandParameterQuery = GetEntityQuery(ComponentType.ReadOnly<DemandParameterData>());
-			m_FreeIndustrialQuery = GetEntityQuery(
-				ComponentType.ReadOnly<IndustrialProperty>(), 
-				ComponentType.ReadOnly<PropertyOnMarket>(), 
-				ComponentType.ReadOnly<PrefabRef>(), 
-				ComponentType.Exclude<Abandoned>(), 
-				ComponentType.Exclude<Destroyed>(), 
-				ComponentType.Exclude<Deleted>(), 
-				ComponentType.Exclude<Condemned>(), 
-				ComponentType.Exclude<Temp>());
-			m_ProcessDataQuery = GetEntityQuery(
-				ComponentType.ReadOnly<IndustrialProcessData>(), 
-				ComponentType.Exclude<ServiceCompanyData>());
-			m_StorageCompanyQuery = GetEntityQuery(
-				ComponentType.ReadOnly<PrefabRef>(), 
-				ComponentType.ReadOnly<Game.Companies.StorageCompany>(), 
-				ComponentType.Exclude<Game.Objects.OutsideConnection>(), 
-				ComponentType.Exclude<Deleted>(), 
-				ComponentType.Exclude<Temp>());
-
+			m_EconomyParameterQuery = SystemAPI.QueryBuilder().WithAll<EconomyParameterData>().Build();
+			m_DemandParameterQuery = SystemAPI.QueryBuilder().WithAll<DemandParameterData>().Build();
+			
+			m_FreeIndustrialQuery = SystemAPI.QueryBuilder().WithAll<IndustrialProperty>().WithAll<PropertyOnMarket, PrefabRef>().WithNone<Abandoned, Destroyed, Deleted, Condemned, Temp>().Build();
+			m_ProcessDataQuery = SystemAPI.QueryBuilder().WithAll<IndustrialProcessData>().WithNone<ServiceCompanyData>().Build();
+			m_StorageCompanyQuery = SystemAPI.QueryBuilder().WithAll<PrefabRef, Game.Companies.StorageCompany>().WithNone<Game.Objects.OutsideConnection, Deleted>().Build();
+			
 			int resourceCount = EconomyUtils.ResourceCount;
 			m_ResourceDemands = new NativeArray<int>(resourceCount, Allocator.Persistent);
 			m_FreeProperties = new NativeArray<int>(resourceCount, Allocator.Persistent);

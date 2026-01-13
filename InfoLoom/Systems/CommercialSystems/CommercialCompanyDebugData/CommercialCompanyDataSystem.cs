@@ -6,6 +6,7 @@ using Colossal.Logging;
 using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using Game;
+using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
@@ -85,7 +86,21 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public ResourceInfo[] Input1Resources;
         public ResourceInfo[] OutputResources;
         public ResourceInfo[] MaintenanceResources;
-       public ProcessResourceInfo[] ProcessResources;
+        public ProcessResourceInfo[] ProcessResources;
+
+       public int Income;
+       public int Worth;
+       public int Profit;
+       public int WagePaid;
+       public int RentPaid;
+       public int ElectricityPaid;
+       public int WaterPaid;
+       public int SewagePaid;
+       public int GarbagePaid;
+       public int TaxPaid;
+       public int ResourcesBoughtPaid;
+       public int CurrentCustomers;
+       public int MonthlyCustomers;
     }
 
     public struct EfficiencyFactorInfo
@@ -120,6 +135,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         public int ProductionPerDay;
         public float EfficiencyValue;
         public int ResourceCount;
+        public bool HasStatistics;
     }
 
     // Burst-compiled job for processing commercial companies
@@ -154,6 +170,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
         // Shared data
         [ReadOnly] public EconomyParameterData EconomyParams;
         [ReadOnly] public ResourcePrefabs ResourcePrefabs;
+        [ReadOnly] public ComponentLookup<CompanyStatisticData> CompanyStatisticDataLookup;
         
         // Output data
         public NativeList<CommercialCompanyJobData>.ParallelWriter ResultWriter;
@@ -244,6 +261,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 // Calculate production per day
                 int productionPerDay = CalculateProductionPerDay(prefab, efficiencyValue, employeeBuffer);
                 
+                
                 // Create job data
                 var jobData = new CommercialCompanyJobData
                 {
@@ -261,9 +279,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                     TotalWages = totalWages,
                     ProductionPerDay = productionPerDay,
                     EfficiencyValue = efficiencyValue * 100f,
-                    ResourceCount = resourceCount
+                    ResourceCount = resourceCount,
+                    
                 };
-
+                jobData.HasStatistics = CompanyStatisticDataLookup.HasComponent(entity);
                 ResultWriter.AddNoResize(jobData);
             }
         }
@@ -306,10 +325,18 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             if (!IndustrialProcessDataLookup.TryGetComponent(prefab, out var industryProcess))
                 return 0;
 
-            // Commercial companies are not industrial, so pass false for isIndustrial
             // Get the resource data for the output resource
             var resourceData = ResourceDataLookup[ResourcePrefabs[industryProcess.m_Output.m_Resource]];
+
+            // Get service availability data for commercial companies
+            ServiceAvailable serviceAvailable = default;
+            ServiceCompanyData serviceCompanyData = default;
             
+            if (ServiceCompanyDataLookup.HasComponent(prefab))
+            {
+                serviceCompanyData = ServiceCompanyDataLookup[prefab];
+            }
+
             return EconomyUtils.GetCompanyProductionPerDay(
                 efficiencyValue,
                 false, // isIndustrial parameter (commercial companies)
@@ -317,8 +344,13 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 industryProcess,
                 resourceData,
                 ref CitizenLookup,
-                ref EconomyParams);
+                ref EconomyParams,
+                serviceAvailable,
+                serviceCompanyData
+            );
         }
+        
+
     }
 
     /// <summary>
@@ -386,8 +418,8 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
 
             // Define optimized query for commercial companies
             m_CommercialCompanyQuery = SystemAPI.QueryBuilder()
-                .WithAll<CommercialCompany>()
-                .WithNone<StorageCompany>()
+                .WithAll<CommercialCompany, PropertyRenter>()
+                .WithNone<StorageCompany, MovingAway>()
                 .Build();
 
             // Initialize caches
@@ -504,6 +536,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 EmployeeBufferType = SystemAPI.GetBufferTypeHandle<Employee>(true),
                 OwnedVehicleBufferType = SystemAPI.GetBufferTypeHandle<OwnedVehicle>(true),
                 ResourcesBufferType = SystemAPI.GetBufferTypeHandle<Resources>(true),
+                CompanyStatisticDataLookup = GetComponentLookup<CompanyStatisticData>(true),
                 
                 // Component lookups
                 ServiceCompanyDataLookup = GetComponentLookup<ServiceCompanyData>(true),
@@ -714,7 +747,41 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
             else
                 companyNameString = "Unknown Company";
             
-            // Create final DTO
+            int income = 0;
+            int worth = 0;
+            int profit = 0;
+            int wagePaid = 0;
+            int rentPaid = 0;
+            int electricityPaid = 0;
+            int waterPaid = 0;
+            int sewagePaid = 0;
+            int garbagePaid = 0;
+            int taxPaid = 0;
+            int resourcesBoughtPaid = 0;
+            int currentCustomers = 0;
+            int monthlyCustomers = 0;
+       
+            if(jobData.HasStatistics)
+            {
+                var statisticsLookup = SystemAPI.GetComponentLookup<CompanyStatisticData>(true);
+                if(statisticsLookup.TryGetComponent(jobData.EntityId, out var statistics))
+                {
+                    income = statistics.m_Income;
+                    worth = statistics.m_Worth;
+                    profit = statistics.m_Profit;
+                    wagePaid = statistics.m_WagePaid;
+                    rentPaid = statistics.m_RentPaid;
+                    electricityPaid = statistics.m_ElectricityPaid;
+                    waterPaid = statistics.m_WaterPaid;
+                    sewagePaid = statistics.m_SewagePaid;
+                    garbagePaid = statistics.m_GarbagePaid;
+                    taxPaid = statistics.m_TaxPaid;
+                    resourcesBoughtPaid = statistics.m_CostBuyResource;
+                    currentCustomers = statistics.m_CurrentNumberOfCustomers;
+                    monthlyCustomers = statistics.m_MonthlyCustomerCount;
+                } 
+            }
+            
             var companyDTO = new CommercialCompanyDTO
             {
                 EntityId = jobData.EntityId,
@@ -742,6 +809,19 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData
                 OutputResources = outputResources,
                 MaintenanceResources = maintenanceResources,
                 ProcessResources = processList,
+                Income = income,
+                Worth = worth,
+                Profit = profit,
+                WagePaid = wagePaid,
+                RentPaid = rentPaid,
+                ElectricityPaid = electricityPaid,
+                WaterPaid = waterPaid,
+                SewagePaid = sewagePaid,
+                GarbagePaid = garbagePaid,
+                TaxPaid = taxPaid,
+                ResourcesBoughtPaid = resourcesBoughtPaid,
+                CurrentCustomers = currentCustomers,
+                MonthlyCustomers = monthlyCustomers,
             };
             
             // Cache the result

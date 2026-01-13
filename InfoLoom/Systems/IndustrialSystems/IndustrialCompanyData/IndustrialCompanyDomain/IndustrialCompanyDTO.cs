@@ -31,5 +31,19 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.Industrial
         public ResourceInfo[] Input2Resources;
         public ResourceInfo[] OutputResources;
         public ResourceInfo[] MaintenanceResources;
+        
+        public int Income;
+        public int Worth;
+        public int Profit;
+        public int WagePaid;
+        public int RentPaid;
+        public int ElectricityPaid;
+        public int WaterPaid;
+        public int SewagePaid;
+        public int GarbagePaid;
+        public int TaxPaid;
+        public int ResourcesBoughtPaid;
+        public int CurrentCustomers;
+        public int MonthlyCustomers;
     }
 }

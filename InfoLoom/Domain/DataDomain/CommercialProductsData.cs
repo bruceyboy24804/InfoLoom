@@ -14,7 +14,8 @@ namespace InfoLoomTwo.Domain.DataDomain
             public int Workers;
             public int WrkPercent;
             public int TaxFactor;
-            
+            public int Production;
+            public int Consumption; 
             public int CurrentTourists;
             public int AvailableLodging;
             public int RequiredRooms;

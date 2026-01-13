@@ -16,6 +16,7 @@ import IndustrialMenuButton from './IndustrialMenu/IndustrialMenu';
 import Residential from 'mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential';
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 import { Entity } from 'cs2/utils';
+import { Localekeys } from 'mods/locale';
 interface SectionItem {
   component: JSX.Element;
   isOpen: boolean;
@@ -154,7 +155,7 @@ function InfoLoomButton(): JSX.Element {
 
   return (
     <div>
-      <Tooltip tooltip={translate('InfoLoomTwo.FloatingButtonTooltip', 'Info Loom')}>
+      <Tooltip tooltip={translate(Localekeys.ModName, "Info Loom")}>
         <Button
           variant="floating"
           src={icon}
@@ -166,7 +167,7 @@ function InfoLoomButton(): JSX.Element {
       {infoLoomMenuOpen && (
         <div draggable className={styles.panel}>
           <header className={styles.header}>
-            <div>{translate('InfoLoomTwo.Menu[Title]', 'Info Loom')}</div>
+            <div>{translate(Localekeys.ModName, "Info Loom")}</div>
           </header>
           <div className={styles.buttonRow}>
             {Object.keys(sections).map(name => {
@@ -174,28 +175,28 @@ function InfoLoomButton(): JSX.Element {
               let displayName: string | null;
               switch (name) {
                 case 'Demographics':
-                  displayName = translate('InfoLoomTwo.Menu[Button1]', 'Demographics');
+                  displayName = translate(Localekeys.Demographics, 'Demographics');
                   break;
                 case 'Workforce':
-                  displayName = translate('InfoLoomTwo.Menu[Button2]', 'Workforce');
+                  displayName = translate(Localekeys.Workforce, 'Workforce');
                   break;
                 case 'Workplaces':
-                  displayName = translate('InfoLoomTwo.Menu[Button3]', 'Workplaces');
+                  displayName = translate(Localekeys.Workplaces, 'Workplaces');
                   break;
                 case 'Residential Menu':
-                  displayName = translate('InfoLoomTwo.Menu[Button4]', 'Residential Menu');
+                  displayName = translate(Localekeys.MenuResidential, 'Residential Menu');
                   break;
                 case 'Demand':
-                  displayName = translate('InfoLoomTwo.Menu[Button5]', 'Demand');
+                  displayName = translate(Localekeys.Demand, 'Demand');
                   break;
                 case 'Industrial Menu':
-                  displayName = translate('InfoLoomTwo.Menu[Button6]', 'Industrial Menu');
+                  displayName = translate(Localekeys.MenuIndustrial, 'Industrial Menu');
                   break;
                 case 'Trade Cost':
-                  displayName = translate('InfoLoomTwo.Menu[Button7]', 'Trade Costs');
+                  displayName = translate(Localekeys.TradeCosts, 'Trade Costs');
                   break;
                 case 'Commercial Menu':
-                  displayName = translate('InfoLoomTwo.Menu[Button9]', 'Commercial Menu');
+                  displayName = translate(Localekeys.MenuCommercial, 'Commercial Menu');
                   break;
                 default:
                   displayName = name;

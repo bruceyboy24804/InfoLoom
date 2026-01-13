@@ -1,22 +1,286 @@
 import { useMemo } from 'react';
-import { PopulationAtAge } from 'mods/domain/populationAtAge';
+import { useValue } from 'cs2/api';
 import { GroupingStrategy } from '../../domain/GroupingStrategy';
-import { transformDataByStrategy, generateRanges, LIFECYCLE_RANGES } from './dataTransform';
+import { transformDataByStrategy, generateRanges, getLifecycleRangePlaceholders } from './dataTransform';
 import { CHART_COLORS } from './chartConfig';
 import { ChartData, LegendLabels, DemographicsType, GroupingStrategyOption } from './types';
+import { Localekeys } from 'mods/locale';
+import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
+import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
+import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
+import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
+import { DemographicsDetailedData, DemographicsFiveYearDetails, DemographicsTenYearDetails, DemographicsLifecycleDetails } from 'mods/bindings';
+function generateAgeRangeLabel(age: number, step: number): string {
+	const maxAge = 120;
+	if (age === 0) {
+		return `0-${step - 1}`;
+	} else if (age + step >= maxAge) {
+		return `${age}-${maxAge}`;
+	} else {
+		return `${age}-${age + step - 1}`;
+	}
+}
 
-/**
- * Custom hook to transform population data into chart-ready format
- */
 export function useChartData(
-	structureDetails: PopulationAtAge[],
+	structureDetails: PopulationDetailedGroupInfo[],
+	fiveYearGroups: PopulationFiveYearGroupInfo[],
+	tenYearGroups: PopulationTenYearGroupInfo[],
+	lifecycleDetails: PopulationLifecycleInfo[],
 	groupingStrategy: GroupingStrategy,
 	chartType: DemographicsType,
 	legendLabels: LegendLabels,
 	lifecycleLabels?: string[]
 ): ChartData {
+	const detailedData = structureDetails as PopulationDetailedGroupInfo[];
+	const fiveYearDetails = fiveYearGroups as PopulationFiveYearGroupInfo[];
+	const tenYearDetails = tenYearGroups as PopulationTenYearGroupInfo[];
+	const lifecycleData = lifecycleDetails as PopulationLifecycleInfo[];
+
 	return useMemo((): ChartData => {
 		try {
+			if (groupingStrategy === GroupingStrategy.FiveYear && fiveYearDetails?.length) {
+				const labels = fiveYearDetails.map(g => generateAgeRangeLabel(g.Age, 5));
+
+				const datasets =
+					chartType === DemographicsType.Employment
+						? [
+								{
+									label: legendLabels.work,
+									data: fiveYearDetails.map(g => g.Work),
+									backgroundColor: CHART_COLORS.work,
+								},
+								{
+									label: legendLabels.elementary,
+									data: fiveYearDetails.map(g => g.School1),
+									backgroundColor: CHART_COLORS.elementary,
+								},
+								{
+									label: legendLabels.highSchool,
+									data: fiveYearDetails.map(g => g.School2),
+									backgroundColor: CHART_COLORS.highSchool,
+								},
+								{
+									label: legendLabels.college,
+									data: fiveYearDetails.map(g => g.School3),
+									backgroundColor: CHART_COLORS.college,
+								},
+								{
+									label: legendLabels.university,
+									data: fiveYearDetails.map(g => g.School4),
+									backgroundColor: CHART_COLORS.university,
+								},
+								{
+									label: legendLabels.retired,
+									data: fiveYearDetails.map(g => g.Retired),
+									backgroundColor: CHART_COLORS.Retired,
+								},
+								{
+									label: legendLabels.unemployed,
+									data: fiveYearDetails.map(g => g.Unemployed),
+									backgroundColor: CHART_COLORS.Unemployed,
+								},
+								{
+									label: legendLabels.childOrTeenWithNoSchool,
+									data: fiveYearDetails.map(g => g.ChildOrTeenWithNoSchool),
+									backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
+								},
+							]
+						: [
+								{
+									label: legendLabels.uneducated,
+									data: fiveYearDetails.map(g => g.Uneducated),
+									backgroundColor: CHART_COLORS.Uneducated,
+								},
+								{
+									label: legendLabels.poorlyEducated,
+									data: fiveYearDetails.map(g => g.PoorlyEducated),
+									backgroundColor: CHART_COLORS.PoorlyEducated,
+								},
+								{
+									label: legendLabels.educated,
+									data: fiveYearDetails.map(g => g.Educated),
+									backgroundColor: CHART_COLORS.Educated,
+								},
+								{
+									label: legendLabels.wellEducated,
+									data: fiveYearDetails.map(g => g.WellEducated),
+									backgroundColor: CHART_COLORS.WellEducated,
+								},
+								{
+									label: legendLabels.highlyEducated,
+									data: fiveYearDetails.map(g => g.HighlyEducated),
+									backgroundColor: CHART_COLORS.HighlyEducated,
+								},
+							];
+
+				return { labels, datasets };
+			}
+
+			if (groupingStrategy === GroupingStrategy.TenYear && tenYearDetails?.length) {
+				const labels = tenYearDetails.map(g => generateAgeRangeLabel(g.Age, 10));
+
+				const datasets =
+					chartType === DemographicsType.Employment
+						? [
+								{
+									label: legendLabels.work,
+									data: tenYearDetails.map(g => g.Work),
+									backgroundColor: CHART_COLORS.work,
+								},
+								{
+									label: legendLabels.elementary,
+									data: tenYearDetails.map(g => g.School1),
+									backgroundColor: CHART_COLORS.elementary,
+								},
+								{
+									label: legendLabels.highSchool,
+									data: tenYearDetails.map(g => g.School2),
+									backgroundColor: CHART_COLORS.highSchool,
+								},
+								{
+									label: legendLabels.college,
+									data: tenYearDetails.map(g => g.School3),
+									backgroundColor: CHART_COLORS.college,
+								},
+								{
+									label: legendLabels.university,
+									data: tenYearDetails.map(g => g.School4),
+									backgroundColor: CHART_COLORS.university,
+								},
+								{
+									label: legendLabels.retired,
+									data: tenYearDetails.map(g => g.Retired),
+									backgroundColor: CHART_COLORS.Retired,
+								},
+								{
+									label: legendLabels.unemployed,
+									data: tenYearDetails.map(g => g.Unemployed),
+									backgroundColor: CHART_COLORS.Unemployed,
+								},
+								{
+									label: legendLabels.childOrTeenWithNoSchool,
+									data: tenYearDetails.map(g => g.ChildOrTeenWithNoSchool),
+									backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
+								},
+							]
+						: [
+								{
+									label: legendLabels.uneducated,
+									data: tenYearDetails.map(g => g.Uneducated),
+									backgroundColor: CHART_COLORS.Uneducated,
+								},
+								{
+									label: legendLabels.poorlyEducated,
+									data: tenYearDetails.map(g => g.PoorlyEducated),
+									backgroundColor: CHART_COLORS.PoorlyEducated,
+								},
+								{
+									label: legendLabels.educated,
+									data: tenYearDetails.map(g => g.Educated),
+									backgroundColor: CHART_COLORS.Educated,
+								},
+								{
+									label: legendLabels.wellEducated,
+									data: tenYearDetails.map(g => g.WellEducated),
+									backgroundColor: CHART_COLORS.WellEducated,
+								},
+								{
+									label: legendLabels.highlyEducated,
+									data: tenYearDetails.map(g => g.HighlyEducated),
+									backgroundColor: CHART_COLORS.HighlyEducated,
+								},
+							];
+
+				return { labels, datasets };
+			}
+
+			if (groupingStrategy === GroupingStrategy.LifeCycle && lifecycleDetails?.length) {
+				let labels = lifecycleDetails.map(g => String(g.Group));
+				if (
+					lifecycleLabels &&
+					lifecycleLabels.length === lifecycleDetails.length
+				) {
+					labels = lifecycleLabels;
+				}
+
+				const datasets =
+					chartType === DemographicsType.Employment
+						? [
+								{
+									label: legendLabels.work,
+									data: lifecycleDetails.map(g => g.Work),
+									backgroundColor: CHART_COLORS.work,
+								},
+								{
+									label: legendLabels.elementary,
+									data: lifecycleDetails.map(g => g.School1),
+									backgroundColor: CHART_COLORS.elementary,
+								},
+								{
+									label: legendLabels.highSchool,
+									data: lifecycleDetails.map(g => g.School2),
+									backgroundColor: CHART_COLORS.highSchool,
+								},
+								{
+									label: legendLabels.college,
+									data: lifecycleDetails.map(g => g.School3),
+									backgroundColor: CHART_COLORS.college,
+								},
+								{
+									label: legendLabels.university,
+									data: lifecycleDetails.map(g => g.School4),
+									backgroundColor: CHART_COLORS.university,
+								},
+								{
+									label: legendLabels.retired,
+									data: lifecycleDetails.map(g => g.Retired),
+									backgroundColor: CHART_COLORS.Retired,
+								},
+								{
+									label: legendLabels.unemployed,
+									data: lifecycleDetails.map(g => g.Unemployed),
+									backgroundColor: CHART_COLORS.Unemployed,
+								},
+								{
+									label: legendLabels.childOrTeenWithNoSchool,
+									data: lifecycleDetails.map(g => g.ChildOrTeenWithNoSchool),
+									backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
+								},
+							]
+						: [
+								{
+									label: legendLabels.uneducated,
+									data: lifecycleDetails.map(g => g.Uneducated),
+									backgroundColor: CHART_COLORS.Uneducated,
+								},
+								{
+									label: legendLabels.poorlyEducated,
+									data: lifecycleDetails.map(g => g.PoorlyEducated),
+									backgroundColor: CHART_COLORS.PoorlyEducated,
+								},
+								{
+									label: legendLabels.educated,
+									data: lifecycleDetails.map(g => g.Educated),
+									backgroundColor: CHART_COLORS.Educated,
+								},
+								{
+									label: legendLabels.wellEducated,
+									data: lifecycleDetails.map(g => g.WellEducated),
+									backgroundColor: CHART_COLORS.WellEducated,
+								},
+								{
+									label: legendLabels.highlyEducated,
+									data: lifecycleDetails.map(g => g.HighlyEducated),
+									backgroundColor: CHART_COLORS.HighlyEducated,
+								},
+							];
+
+				return {
+					labels,
+					datasets,
+				};
+			}
+
 			// Transform data using unified aggregation function
 			const transformed = transformDataByStrategy(structureDetails, groupingStrategy);
 
@@ -123,7 +387,16 @@ export function useChartData(
 				datasets: [],
 			};
 		}
-	}, [structureDetails, groupingStrategy, chartType, legendLabels, lifecycleLabels]);
+	}, [
+		structureDetails,
+		groupingStrategy,
+		chartType,
+		legendLabels,
+		lifecycleLabels,
+		lifecycleDetails,
+		fiveYearDetails,
+		tenYearDetails,
+	]);
 }
 
 /**
@@ -134,23 +407,19 @@ export function useLegendLabels(
 ): LegendLabels {
 	return useMemo(
 		(): LegendLabels => ({
-			work: translate('InfoLoomTwo.DemographicsPanel[LegendItem1]', 'Work') || 'Work',
-			elementary: translate('InfoLoomTwo.DemographicsPanel[LegendItem2]', 'Elementary') || 'Elementary',
-			highSchool: translate('InfoLoomTwo.DemographicsPanel[LegendItem3]', 'High School') || 'High School',
-			college: translate('InfoLoomTwo.DemographicsPanel[LegendItem4]', 'College') || 'College',
-			university: translate('InfoLoomTwo.DemographicsPanel[LegendItem5]', 'University') || 'University',
-			retired: translate('InfoLoomTwo.DemographicsPanel[LegendItem6]', 'Retired') || 'Retired',
-			unemployed: translate('InfoLoomTwo.DemographicsPanel[LegendItem7]', 'Unemployed') || 'Unemployed',
-			uneducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem8]', 'Uneducated') || 'Uneducated',
-			poorlyEducated:
-				translate('InfoLoomTwo.DemographicsPanel[LegendItem9]', 'Poorly Educated') || 'Poorly Educated',
-			educated: translate('InfoLoomTwo.DemographicsPanel[LegendItem10]', 'Educated') || 'Educated',
-			wellEducated: translate('InfoLoomTwo.DemographicsPanel[LegendItem11]', 'Well Educated') || 'Well Educated',
-			highlyEducated:
-				translate('InfoLoomTwo.DemographicsPanel[LegendItem12]', 'Highly Educated') || 'Highly Educated',
-			childOrTeenWithNoSchool:
-				translate('InfoLoomTwo.DemographicsPanel[LegendItem13]', 'Child/Teen with No School') ||
-				'Child/Teen with No School',
+			work: translate(Localekeys.Worker, 'Work') || 'Work',
+			elementary: translate(Localekeys.Elementary, 'Elementary') || 'Elementary' ,
+			highSchool: translate(Localekeys.HighSchool, 'High School') || 'High School',
+			college: translate(Localekeys.College, 'College') || 'College',
+			university: translate(Localekeys.University, 'University') || 'University',
+			retired: translate(Localekeys.Retired, 'Retired') || 'Retired',
+			unemployed: translate(Localekeys.Unemployed, 'Unemployed') || 'Unemployed',
+			uneducated: translate(Localekeys.Uneducated, 'Uneducated') || 'Uneducated',
+			poorlyEducated: translate(Localekeys.PoorlyEducated, 'Poorly Educated') || 'Poorly Educated',
+			educated: translate(Localekeys.Educated, 'Educated') || 'Educated',
+			wellEducated: translate(Localekeys.WellEducated, 'Well Educated') || 'Well Educated',
+			highlyEducated: translate(Localekeys.HighlyEducated, 'Highly Educated') || 'Highly Educated',
+			childOrTeenWithNoSchool:translate('InfoLoomTwo.DemographicsPanel[LegendItem13]', 'Child/Teen with No School') || 'Child/Teen with No School',
 		}),
 		[translate]
 	);
@@ -164,10 +433,10 @@ export function useLifecycleLabels(
 ): string[] {
 	return useMemo(
 		() => [
-			translate('InfoLoomTwo.DemographicsPanel[YAxisItem1]', 'Child') || 'Child',
-			translate('InfoLoomTwo.DemographicsPanel[YAxisItem2]', 'Teen') || 'Teen',
-			translate('InfoLoomTwo.DemographicsPanel[YAxisItem3]', 'Adult') || 'Adult',
-			translate('InfoLoomTwo.DemographicsPanel[YAxisItem4]', 'Elderly') || 'Elderly',
+			translate(Localekeys.Child, 'Child') || 'Child',
+			translate(Localekeys.Teen, 'Teen') || 'Teen',
+			translate(Localekeys.Adult, 'Adult') || 'Adult',
+			translate(Localekeys.Elder, 'Elder') || 'Elder',
 		],
 		[translate]
 	);
@@ -177,31 +446,32 @@ export function useLifecycleLabels(
  * Custom hook to create grouping strategy options
  */
 export function useGroupingStrategies(
-	translate: (key: string, fallback: string) => string | null
+	translate: (key: string, fallback: string) => string | null,
+	structureDetails?: PopulationDetailedGroupInfo[]
 ): GroupingStrategyOption[] {
 	return useMemo(
 		(): GroupingStrategyOption[] => [
 			{
-				label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem1]', 'Detailed View') || 'Detailed View',
+				label: translate(Localekeys.DetailedView, 'Detailed View') || 'Detailed View',
 				value: GroupingStrategy.None,
 				ranges: [],
 			},
 			{
-				label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem2]', '5-Year Groups') || '5-Year Groups',
+				label: translate(Localekeys.FiveYearGroups, '5-Year Groups') || '5-Year Groups',
 				value: GroupingStrategy.FiveYear,
 				ranges: generateRanges(5),
 			},
 			{
-				label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem3]', '10-Year Groups') || '10-Year Groups',
+				label: translate(Localekeys.TenYearGroups, '10-Year Groups') || '10-Year Groups',
 				value: GroupingStrategy.TenYear,
 				ranges: generateRanges(10),
 			},
 			{
-				label: translate('InfoLoomTwo.DemographicsPanel[DropdownItem4]', 'Lifecycle Groups') || 'Lifecycle Groups',
+				label: translate(Localekeys.LifeCycleGroups, 'Lifecycle Groups') || 'Lifecycle Groups',
 				value: GroupingStrategy.LifeCycle,
-				ranges: LIFECYCLE_RANGES,
+				ranges: getLifecycleRangePlaceholders(),
 			},
 		],
-		[translate]
+		[translate, structureDetails]
 	);
 }

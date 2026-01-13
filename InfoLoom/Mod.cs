@@ -13,18 +13,18 @@ using InfoLoomTwo.Extensions;
 using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
-using InfoLoomTwo.Systems.CommercialSystems.CommercialProductData;
 using InfoLoomTwo.Systems.DemographicsData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData;
 using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
-using InfoLoomTwo.Systems.IndustrialSystems.IndustrialProductData;
 using InfoLoomTwo.Systems.Sections;
 using InfoLoomTwo.Systems.TradeCostData; 
 using Unity.Entities;
 using Game.Settings;
 using InfoLoomTwo.Systems.ChirpSystem_s_;
+using Game.Simulation;
+
 
 // Mod namespace
 namespace InfoLoomTwo
@@ -96,8 +96,6 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<ResidentialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<CommercialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CommercialProductsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<IndustrialProductsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomChirpSystem>(SystemUpdatePhase.GameSimulation);
             
@@ -107,7 +105,6 @@ namespace InfoLoomTwo
             ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
             ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
             ILRentSection ilRentSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();
-            ILCompanyProfitSection ilCompanyProfitSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCompanyProfitSection>();
             ILDistrictSection ilDistrictSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILDistrictSection>();
 
             // Register RealLife settings updater to initialize after all mods are loaded

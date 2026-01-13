@@ -8,8 +8,10 @@ using Game.Buildings;
 using Game.City;
 using Game.Common;
 using Game.Companies;
+using Game.Debug;
 using Game.Economy;
 using Game.Prefabs;
+using Game.Serialization.DataMigration;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
@@ -18,6 +20,7 @@ using InfoLoomTwo.Systems.TradeCostData.TradeCostDomain;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Collections;
 using OutsideConnection = Game.Objects.OutsideConnection;
 using Resources = Game.Economy.Resources;
 using StorageCompany = Game.Companies.StorageCompany;
@@ -26,8 +29,14 @@ namespace InfoLoomTwo.Systems.TradeCostData
 {
     public partial class TradeCostsSystem : ExtendedUISystemBase
     {
-        private Dictionary<Resource, ResourceTradeCost> m_TradeCosts = new Dictionary<Resource, ResourceTradeCost>();
+        private Dictionary<Resource, ResourceTradeCost> m_TradeCosts = new ();
 
+        // Trade balance tracking
+        private NativeArray<int> m_TradeBalances;
+        private NativeArray<int> m_ImportAmounts;
+        private NativeArray<int> m_ExportAmounts;
+
+        // Sorting state
         private SortingEnum m_buyCostSorting = SortingEnum.Off;
         private SortingEnum m_sellCostSorting = SortingEnum.Off;
         private SortingEnum m_importAmountSorting = SortingEnum.Off;
@@ -47,12 +56,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private TradeSystem m_TradeSystem;
         private UIUpdateState _uiUpdateState;
 
-        // Entity queries
-        EntityQuery m_CityQuery;
-        EntityQuery m_TradeParameterQuery;
-        EntityQuery m_StorageGroupQuery;
-
-        // Simplified bindings using base class
+        // Bindings
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
         private ValueBinding<bool> _tCPVBinding;
         private ValueBindingHelper<OutsideConnectionType> outsideConnectionTypeBinding;
@@ -71,25 +75,18 @@ namespace InfoLoomTwo.Systems.TradeCostData
             m_TradeSystem = World.GetOrCreateSystemManaged<TradeSystem>();
             _uiUpdateState = UIUpdateState.Create(World, 512);
 
-            // Initialize queries
-            m_CityQuery = SystemAPI.QueryBuilder().WithAll<City>().Build();
-            m_TradeParameterQuery = SystemAPI.QueryBuilder().WithAll<OutsideTradeParameterData>().Build();
-            m_StorageGroupQuery = SystemAPI.QueryBuilder()
-                .WithAll<StorageCompany, OutsideConnection, PrefabRef, Resources, TradeCost>()
-                .WithNone<Deleted, Temp>()
-                .Build();
+            // Initialize native arrays for tracking
+            m_TradeBalances = new NativeArray<int>(EconomyUtils.ResourceCount, Allocator.Persistent);
+            m_ImportAmounts = new NativeArray<int>(EconomyUtils.ResourceCount, Allocator.Persistent);
+            m_ExportAmounts = new NativeArray<int>(EconomyUtils.ResourceCount, Allocator.Persistent);
 
-            RequireForUpdate(m_CityQuery);
-            RequireForUpdate(m_TradeParameterQuery);
-            RequireForUpdate(m_StorageGroupQuery);
-
-            // Create simplified bindings
+            // Create bindings
             m_TradeCostsBinding = CreateBinding("TradeCostsData", new List<ResourceTradeCost>());
             _tCPVBinding = new ValueBinding<bool>("InfoLoomTwo", "TradeCostsOpen", false);
             AddBinding(_tCPVBinding);
             AddBinding(new TriggerBinding<bool>("InfoLoomTwo", "TradeCostsOpen", OnVisibilityChanged));
 
-            // Create sorting triggers using the old manual approach
+            // Create sorting triggers
             CreateTrigger<SortingEnum>("SetBuyCost", OnBuyCostChanged);
             CreateTrigger<SortingEnum>("SetSellCost", OnSellCostChanged);
             CreateTrigger<SortingEnum>("SetImportAmount", OnImportAmountChanged);
@@ -98,7 +95,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
             CreateTrigger<SortingEnum>("SetProfitMargin", OnProfitMarginChanged);
             CreateTrigger<SortingEnum>("SetResourceName", OnResourceNameChanged);
 
-            // Create value bindings for the sorting enums
+            // Create value bindings for sorting enums
             CreateBinding("BuyCost", () => m_buyCostSorting);
             CreateBinding("SellCost", () => m_sellCostSorting);
             CreateBinding("ImportAmount", () => m_importAmountSorting);
@@ -107,9 +104,17 @@ namespace InfoLoomTwo.Systems.TradeCostData
             CreateBinding("ProfitMargin", () => m_profitMarginSorting);
             CreateBinding("ResourceName", () => m_resourceNameSorting);
 
-            // Create outside connection type binding and trigger
-            outsideConnectionTypeBinding = CreateBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.Road, OnOutsideConnectionTypeChanged);
-            //CreateTrigger<OutsideConnectionType>("SetOutsideConnectionType", OnOutsideConnectionTypeChanged);
+            // Create outside connection type binding
+            outsideConnectionTypeBinding = CreateBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.All, OnOutsideConnectionTypeChanged);
+        }
+
+        protected override void OnDestroy()
+        {
+            // Dispose native arrays
+            m_TradeBalances.Dispose();
+            m_ImportAmounts.Dispose();
+            m_ExportAmounts.Dispose();
+            base.OnDestroy();
         }
 
         protected override void OnUpdate()
@@ -175,8 +180,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
             UpdateSortedData();
         }
 
-        
-
         private void OnOutsideConnectionTypeChanged(OutsideConnectionType connectionType)
         {
             UpdateAllTradeCosts();
@@ -207,13 +210,113 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
             JobHandle.CompleteAll(ref deps1, ref deps2, ref deps3);
 
-            ResourceIterator iterator = ResourceIterator.GetIterator();
-            while (iterator.Next())
+            EntityQuery m_CityQuery = SystemAPI.QueryBuilder().WithAll<City>().Build();
+            RequireForUpdate(m_CityQuery);
+            var cityEntity = m_CityQuery.GetSingletonEntity();
+            EntityManager.TryGetBuffer(cityEntity, isReadOnly: true, out DynamicBuffer<CityModifier> modifier);
+
+            // Get selected connection type
+            OutsideConnectionType selectedConnectionType = outsideConnectionTypeBinding.Value;
+            OutsideConnectionTransferType transferType = OutsideConnectionTypeUtils.GetTransferType(selectedConnectionType);
+
+            // Reset tracking arrays
+            for (int i = 0; i < m_ImportAmounts.Length; i++)
             {
-                if (!ShouldProcessResource(iterator.resource))
+                m_ImportAmounts[i] = 0;
+                m_ExportAmounts[i] = 0;
+            }
+
+            // Query storage entities
+            EntityQuery m_StorageGroupQuery = SystemAPI.QueryBuilder()
+                .WithAll<StorageCompany, OutsideConnection, PrefabRef, Resources, TradeCost>()
+                .WithNone<Deleted, Temp>()
+                .Build();
+            RequireForUpdate(m_StorageGroupQuery);
+
+            var storageEntities = m_StorageGroupQuery.ToEntityArray(Allocator.Temp);
+
+            foreach (var storageEntity in storageEntities)
+            {
+                var prefabRef = EntityManager.GetComponentData<PrefabRef>(storageEntity);
+                Entity prefab = prefabRef.m_Prefab;
+
+                if (!EntityManager.HasComponent<StorageCompanyData>(prefab))
                     continue;
 
-                Resource resource = iterator.resource;
+                if (!EntityManager.HasComponent<OutsideConnectionData>(prefab))
+                    continue;
+
+                var connectionData = EntityManager.GetComponentData<OutsideConnectionData>(prefab);
+
+                // Only process if matches selected connection type
+                if ((connectionData.m_Type & transferType) == OutsideConnectionTransferType.None)
+                    continue;
+
+                if (!EntityManager.HasBuffer<Resources>(storageEntity))
+                    continue;
+
+                var resourceBuffer = EntityManager.GetBuffer<Resources>(storageEntity);
+                var storageData = EntityManager.GetComponentData<StorageCompanyData>(prefab);
+
+                // Calculate storage limit with upgrades
+                StorageLimitData limit = default;
+                if (EntityManager.HasComponent<StorageLimitData>(prefab))
+                {
+                    limit = EntityManager.GetComponentData<StorageLimitData>(prefab);
+
+                    // Account for upgrades
+                    if (EntityManager.HasBuffer<InstalledUpgrade>(storageEntity))
+                    {
+                        var upgrades = EntityManager.GetBuffer<InstalledUpgrade>(storageEntity);
+                        foreach (var upgrade in upgrades)
+                        {
+                            Entity upgradePrefab = upgrade.m_Upgrade;
+                            if (EntityManager.HasComponent<PrefabRef>(upgradePrefab))
+                            {
+                                Entity upgradeData = EntityManager.GetComponentData<PrefabRef>(upgradePrefab).m_Prefab;
+                                if (EntityManager.HasComponent<StorageLimitData>(upgradeData))
+                                {
+                                    var upgradeLimit = EntityManager.GetComponentData<StorageLimitData>(upgradeData);
+                                    limit.m_Limit += upgradeLimit.m_Limit;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ResourceIterator iterator = ResourceIterator.GetIterator();
+                int resourceCount = EconomyUtils.CountResources(storageData.m_StoredResources);
+
+                while (iterator.Next())
+                {
+                    if ((storageData.m_StoredResources & iterator.resource) != Resource.NoResource)
+                    {
+                        int amount = EconomyUtils.GetResources(iterator.resource, resourceBuffer);
+                        int index = EconomyUtils.GetResourceIndex(iterator.resource);
+
+                        // Calculate capacity per resource
+                        int capacityPerResource = resourceCount > 0 ? limit.m_Limit / resourceCount : 0;
+                        int halfCapacity = capacityPerResource / 2;
+
+                        // Track import/export based on deviation from half capacity
+                        if (amount < halfCapacity)
+                            m_ImportAmounts[index] += halfCapacity - amount;
+                        else if (amount > halfCapacity)
+                            m_ExportAmounts[index] += amount - halfCapacity;
+                    }
+                }
+            }
+
+            storageEntities.Dispose();
+
+            // Process all resources
+            ResourceIterator mainIterator = ResourceIterator.GetIterator();
+            while (mainIterator.Next())
+            {
+                if (!ShouldProcessResource(mainIterator.resource))
+                    continue;
+
+                Resource resource = mainIterator.resource;
                 var index = EconomyUtils.GetResourceIndex(resource);
 
                 int resourceProduction = production[index];
@@ -226,25 +329,29 @@ namespace InfoLoomTwo.Systems.TradeCostData
                 int unsatisfiedIndustrial = resourceIndustrialConsumption - industrialSatisfied;
                 int commercialSatisfied = math.min(resourceCommercialConsumption, satisfied - industrialSatisfied);
 
-                float importAmount = resourceCommercialConsumption - commercialSatisfied + unsatisfiedIndustrial;
-                float exportAmount = resourceProduction - satisfied;
-                var cityEntity = m_CityQuery.GetSingletonEntity();
-                DynamicBuffer<CityModifier> cityEffects = EntityManager.GetBuffer<CityModifier>(cityEntity);
+                // Calculate theoretical import/export needs
+                float theoreticalImport = resourceCommercialConsumption - commercialSatisfied + unsatisfiedIndustrial;
+                float theoreticalExport = resourceProduction - satisfied;
 
-                // Get the selected connection type and convert to OutsideConnectionTransferType
-                OutsideConnectionType selectedConnectionType = outsideConnectionTypeBinding.Value;
-                OutsideConnectionTransferType transferType = OutsideConnectionTypeUtils.GetTransferType(selectedConnectionType);
+                // Blend with actual storage data
+                float importAmount = math.lerp(theoreticalImport, m_ImportAmounts[index], 0.3f);
+                float exportAmount = math.lerp(theoreticalExport, m_ExportAmounts[index], 0.3f);
 
-                // Get trade costs for the selected connection type
-                float finalBuyPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, true, cityEffects);
-                float finalSellPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, false, cityEffects);
+                // Update trade balance
+                int netTrade = (int)(exportAmount - importAmount);
+                float refreshRate = 0.1f;
+                m_TradeBalances[index] = (int)math.lerp(m_TradeBalances[index], netTrade, refreshRate);
 
-                if (!m_TradeCosts.TryGetValue(iterator.resource, out ResourceTradeCost tradeCost))
+                // Get trade costs
+                float finalBuyPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, true, modifier);
+                float finalSellPrice = m_TradeSystem.GetBestTradePriceAmongTypes(resource, transferType, false, modifier);
+
+                if (!m_TradeCosts.TryGetValue(mainIterator.resource, out ResourceTradeCost tradeCost))
                 {
-                    string iconPath = GetResourceIconPath(iterator.resource);
+                    string iconPath = GetResourceIconPath(mainIterator.resource);
                     tradeCost = new ResourceTradeCost
                     {
-                        Resource = iterator.resource.ToString(),
+                        Resource = mainIterator.resource.ToString(),
                         ResourceIcon = iconPath,
                         Count = 1,
                         BuyCost = finalBuyPrice,
@@ -252,7 +359,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
                         ImportAmount = importAmount,
                         ExportAmount = exportAmount
                     };
-                    m_TradeCosts[iterator.resource] = tradeCost;
+                    m_TradeCosts[mainIterator.resource] = tradeCost;
                 }
                 else
                 {
@@ -260,7 +367,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
                     tradeCost.SellCost = finalSellPrice;
                     tradeCost.ImportAmount = importAmount;
                     tradeCost.ExportAmount = exportAmount;
-                    m_TradeCosts[iterator.resource] = tradeCost;
                 }
             }
         }
@@ -352,9 +458,9 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
         private int GetResourcePriority(string resourceName)
         {
-            if (Enum.TryParse<Resource>(resourceName, out Resource resource))
+            if (Enum.TryParse(resourceName, out Resource resource))
             {
-                if (Enum.TryParse<DefaultSorting>(resource.ToString(), out DefaultSorting sortOrder))
+                if (Enum.TryParse(resource.ToString(), out DefaultSorting sortOrder))
                 {
                     return (int)sortOrder;
                 }

@@ -27,30 +27,9 @@ import {
 } from 'mods/domain/TradeCostEnums';
 import { formatWords } from '../utils/formatText';
 import { OutsideConnectionSelector } from './Selectors/outsideConnectionSelector';
+import { Localekeys } from 'mods/locale';
 
 const DataDivider: FC = () => <div className={styles.dataDivider} />;
-
-function formatAmountInTons(amount: number): number {
-  const tons = amount / 1000;
-
-  if (tons === 0) return 0;
-  if (tons < 0.1) return tons * 1000;
-  if (tons < 1) return tons * 1000;
-  if (tons < 10) return tons;
-  if (tons < 100) return tons;
-  return Math.round(tons);
-}
-
-function isImmaterialResource(data: ResourceTradeCost): boolean {
-  return data.BuyCost === 0 && data.SellCost === 0 && (data.ImportAmount > 0 || data.ExportAmount > 0);
-}
-
-function formatImmaterialAmount(amount: number): number {
-  if (amount === 0) return 0;
-  if (amount < 1000) return amount;
-  if (amount < 1000000) return amount / 1000;
-  return amount / 1000000;
-}
 
 function getProfitClass(value: number) {
   if (value < 0) return styles.negative;
@@ -67,8 +46,8 @@ function calculateProfitMargin(data: ResourceTradeCost) {
 }
 
 interface SortableHeaderProps {
-  label: string;
-  tooltip?: string;
+  label: string | null
+  tooltip?: string | null;
   sortState: number;
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
@@ -165,13 +144,13 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
           header={
             <div className={styles.header}>
               <span className={styles.headerText}>
-                {translate?.('InfoLoomTwo.TradeCostsPanel[Title]', 'Trade Costs') || 'Trade Costs'}
+                {translate?.(Localekeys.TradeCosts, 'Trade Costs')}
               </span>
             </div>
           }
         >
           <p className={styles.loadingText}>
-            {translate?.('InfoLoomTwo.TradeCostsPanel[Loading]', 'Loading Trade Costs...') || 'Loading Trade Costs...'}
+            {translate?.(Localekeys.Waiting, 'Waiting')}
           </p>
         </Panel>
       </Portal>
@@ -188,7 +167,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
         header={
           <div className={styles.header}>
             <span className={styles.headerText}>
-              {translate?.('InfoLoomTwo.TradeCostsPanel[Title]', 'Trade Costs') || 'Trade Costs'}
+              {translate?.(Localekeys.TradeCosts, 'Trade Costs')}
             </span>
           </div>
         }
@@ -197,7 +176,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
           <div className={styles.outsideConnectionContainer}>
           <OutsideConnectionSelector />
           </div>
-          
+
           <div className={styles.tableHeader}>
             <div className={styles.headerRow}>
               <div className={`${styles.headerCell} ${styles.iconColumn}`}>
@@ -205,56 +184,56 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
               </div>
 
               <SortableHeader
-                label="Resource"
-                tooltip="Name of the resource"
+                label={translate(Localekeys.Resources)}
+                tooltip={translate(Localekeys.ResourceHeaderTooltip)}
                 sortState={resourceNameSorting}
                 onSort={onSort.ResourceName}
                 className={styles.resourceColumn}
               />
 
               <SortableHeader
-                label="Buy Cost"
-                tooltip="Cost to buy from outside connections"
+                label={translate(Localekeys.BuyCostHeader)}
+                tooltip={translate(Localekeys.BuyCostHeaderTooltip)}
                 sortState={buyCostSorting}
                 onSort={onSort.BuyCost}
                 className={styles.buyCostColumn}
               />
 
               <SortableHeader
-                label="Sell Cost"
-                tooltip="Sell price to outside connections"
+                label={translate(Localekeys.SellCostHeader)}
+                tooltip={translate(Localekeys.SellCostHeaderTooltip)}
                 sortState={sellCostSorting}
                 onSort={onSort.SellCost}
                 className={styles.sellCostColumn}
               />
 
               <SortableHeader
-                label="Profit"
-                tooltip="Sell Cost - Buy Cost"
+                label={translate(Localekeys.ProfitHeader)}
+                tooltip={translate(Localekeys.ProfitHeaderTooltip)}
                 sortState={profitSorting}
                 onSort={onSort.Profit}
                 className={styles.profitColumn}
               />
 
               <SortableHeader
-                label="Profit Margin"
-                tooltip="Profit as a percentage of Buy Cost"
+                label={translate(Localekeys.ProfitMarginHeader)}
+                tooltip={translate(Localekeys.ProfitMarginHeaderTooltip)}
                 sortState={profitMarginSorting}
                 onSort={onSort.ProfitMargin}
                 className={styles.profitMarginColumn}
               />
 
               <SortableHeader
-                label="Import Amount"
-                tooltip="Amount imported from outside connections"
+                label={translate(Localekeys.ImportAmountHeader)}
+                tooltip={translate(Localekeys.ImportAmountHeaderTooltip)}
                 sortState={importAmountSorting}
                 onSort={onSort.ImportAmount}
                 className={styles.importAmountColumn}
               />
 
               <SortableHeader
-                label="Export Amount"
-                tooltip="Amount exported to outside connections"
+                label={translate(Localekeys.ExportAmountHeader)}
+                tooltip={translate(Localekeys.ExportAmountHeaderTooltip)}
                 sortState={exportAmountSorting}
                 onSort={onSort.ExportAmount}
                 className={styles.exportAmountColumn}

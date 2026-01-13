@@ -9,6 +9,7 @@ import { LocalizedNumber, Unit, useLocalization } from 'cs2/l10n';
 import styles from './IndustrialDemand.module.scss';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
 import classNames from 'classnames';
+import { Localekeys } from 'mods/locale';
 export const InfoRowTheme: Theme | any = getModule(
   'game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss',
   'classes'
@@ -69,19 +70,19 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
     <div className={styles.mainDataContainer}>
       <div className="labels_L7Q row_S2v">
         <div className={classNames('row_S2v', styles.columnHeaderRow)}></div>
-        <SingleValue value={translate('InfoLoomTwo.IndustrialPanel[Industrial]', 'INDUSTRIAL') || 'INDUSTRIAL'} />
-        <SingleValue value={translate('InfoLoomTwo.IndustrialPanel[Office]', 'OFFICE') || 'OFFICE'} />
+        <SingleValue value={translate(Localekeys.Industrial, 'INDUSTRIAL')} />
+        <SingleValue value={translate(Localekeys.Office, 'OFFICE')} />
       </div>
 
       <div className="labels_L7Q row_S2v">
         <div className={classNames('row_S2v', styles.dataRow)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[EmptyBuildingsTooltip]',
+              Localekeys.EmptyBuildingsTooltip,
               'Number of empty industrial/office buildings available for new companies to move in'
             )}
           >
-            <span>{translate('InfoLoomTwo.IndustrialPanel[EmptyBuildings]', 'EMPTY BUILDINGS')}</span>
+            <span>{translate(Localekeys.EmptyBuildings, 'EMPTY BUILDINGS')}</span>
           </Tooltip>
         </div>
         <SingleValue value={data[0]} />
@@ -92,11 +93,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={classNames('row_S2v', styles.dataRow)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[PropertylessCompaniesTooltip]',
+              Localekeys.PropertylessCompaniesTooltip,
               "Companies that exist but don't have a building to operate from. High numbers indicate need for more zoned land."
             )}
           >
-            <span>{translate('InfoLoomTwo.IndustrialPanel[PropertylessCompanies]', 'PROPERTYLESS COMPANIES')}</span>
+            <span>{translate(Localekeys.PropertylessCompanies, 'PROPERTYLESS COMPANIES')}</span>
           </Tooltip>
         </div>
         <div className={classNames('row_S2v', styles.dataValueNormal)}>{data[1]}</div>
@@ -109,11 +110,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={classNames('row_S2v', styles.dataRowColumn)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[TaxRateTooltip]',
+              Localekeys.TaxRateTooltip,
               'Average tax rate across all resource types. Higher taxes reduce company demand. 10% is neutral.'
             )}
           >
-            <p>{translate('InfoLoomTwo.IndustrialPanel[TaxRate]', 'AVERAGE TAX RATE')}</p>
+            <p>{translate(Localekeys.TaxRate, 'AVERAGE TAX RATE')}</p>
           </Tooltip>
         </div>
         <div className={classNames('row_S2v', styles.dataValueNormal, data[2] > 100 ? 'negative_YWY' : 'positive_zrK')}>
@@ -132,11 +133,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={classNames('row_S2v', styles.dataRowColumn)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[LocalDemandTooltip]',
+              Localekeys.LocalDemandTooltip,
               'Production capacity compared to local demand. 100% means production equals demand. Higher values indicate overproduction.'
             )}
           >
-            <p>{translate('InfoLoomTwo.IndustrialPanel[LocalDemand]', 'LOCAL DEMAND (ind)')}</p>
+            <p>{translate(Localekeys.LocalDemand, 'LOCAL DEMAND (ind)')}</p>
           </Tooltip>
         </div>
         <div className={classNames('row_S2v', styles.dataValueWide, data[3] > 100 ? 'negative_YWY' : 'positive_zrK')}>
@@ -148,11 +149,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={classNames('row_S2v', styles.dataRowColumn)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[InputUtilizationTooltip]',
+              Localekeys.InputUtilizationTooltip,
               'How well input resources are being utilized by manufacturing. 110% is neutral, values capped at 400%.'
             )}
           >
-            <p>{translate('InfoLoomTwo.IndustrialPanel[InputUtilization]', 'INPUT UTILIZATION (ind)')}</p>
+            <p>{translate(Localekeys.InputUtilization, 'INPUT UTILIZATION (ind)')}</p>
           </Tooltip>
         </div>
         <div className={classNames('row_S2v', styles.dataValueWide, data[7] > 100 ? 'negative_YWY' : 'positive_zrK')}>
@@ -166,11 +167,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={classNames('row_S2v', styles.dataRowColumn)}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[EmployeeCapacityTooltip]',
+              Localekeys.EmployeeCapacityTooltip,
               'Ratio of current employees to maximum employee capacity. 72% industrial and 75% office are neutral ratios.'
             )}
           >
-            <p>{translate('InfoLoomTwo.IndustrialPanel[EmployeeCapacity]', 'EMPLOYEE CAPACITY RATIO')}</p>
+            <p>{translate(Localekeys.EmployeeCapacity, 'EMPLOYEE CAPACITY RATIO')}</p>
           </Tooltip>
         </div>
         <div className={classNames('row_S2v', styles.dataValueNormal, data[4] < 720 ? 'negative_YWY' : 'positive_zrK')}>
@@ -189,17 +190,17 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
         <div className={styles.workforceHeader}>
           <Tooltip
             tooltip={translate(
-              'InfoLoomTwo.IndustrialPanel[WorkforceTooltip]',
+              Localekeys.WorkforceTooltip,
               'Available educated and uneducated workers that can be employed by new companies'
             )}
           >
-            <span>{translate('InfoLoomTwo.IndustrialPanel[Workforce]', 'AVAILABLE WORKFORCE')}</span>
+            <span>{translate(Localekeys.Workforce, 'AVAILABLE WORKFORCE')}</span>
           </Tooltip>
         </div>
         <div className={styles.workforceData}>
-          <RowWithTwoColumns left={translate('InfoLoomTwo.IndustrialPanel[Educated]', 'Educated')} right={data[8]} />
+          <RowWithTwoColumns left={translate(Localekeys.Educated, 'Educated')} right={data[8]} />
           <RowWithTwoColumns
-            left={translate('InfoLoomTwo.IndustrialPanel[Uneducated]', 'Uneducated')}
+            left={translate(Localekeys.Uneducated, 'Uneducated')}
             right={data[9]}
           />
         </div>
@@ -212,16 +213,16 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
           <p className={styles.storageTitle}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.IndustrialPanel[StorageTooltip]',
+                Localekeys.StorageTooltip,
                 'Storage facilities for industrial goods. The game spawns warehouses when demand for storage exists.'
               )}
             >
-              <span>{translate('InfoLoomTwo.IndustrialPanel[Storage]', 'STORAGE')}</span>
+              <span>{translate(Localekeys.Storage, 'STORAGE')}</span>
             </Tooltip>
           </p>
           <p className={styles.storageDescription}>
             {translate(
-              'InfoLoomTwo.IndustrialPanel[StorageDescription]',
+              Localekeys.StorageDescription,
               'The game will spawn warehouses when DEMANDED TYPES exist.'
             )}
           </p>
@@ -231,11 +232,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
             left={
               <Tooltip
                 tooltip={translate(
-                  'InfoLoomTwo.IndustrialPanel[StorageEmptyBuildingsTooltip]',
+                  Localekeys.StorageEmptyBuildingsTooltip,
                   'Empty warehouse buildings available for storage companies'
                 )}
               >
-                <span>{translate('InfoLoomTwo.IndustrialPanel[StorageEmptyBuildings]', 'Empty buildings')}</span>
+                <span>{translate(Localekeys.EmptyBuildings, 'Empty buildings')}</span>
               </Tooltip>
             }
             right={data[5]}
@@ -244,11 +245,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
             left={
               <Tooltip
                 tooltip={translate(
-                  'InfoLoomTwo.IndustrialPanel[StoragePropertylessTooltip]',
+                  Localekeys.StorageEmptyBuildingsTooltip,
                   'Storage companies without warehouse buildings'
                 )}
               >
-                <span>{translate('InfoLoomTwo.IndustrialPanel[StoragePropertyless]', 'Propertyless companies')}</span>
+                <span>{translate(Localekeys.PropertylessCompanies, 'Propertyless companies')}</span>
               </Tooltip>
             }
             right={data[6]}
@@ -257,11 +258,11 @@ const IndustrialDataWithTranslation = React.memo(({ data, translate }: { data: n
             left={
               <Tooltip
                 tooltip={translate(
-                  'InfoLoomTwo.IndustrialPanel[DemandedTypesTooltip]',
+                  Localekeys.DemandedTypesTooltip,
                   'Number of resource types that need storage capacity based on demand vs storage capacity'
                 )}
               >
-                <span>{translate('InfoLoomTwo.IndustrialPanel[DemandedTypes]', 'DEMANDED TYPES')}</span>
+                <span>{translate(Localekeys.DemandedTypes, 'DEMANDED TYPES')}</span>
               </Tooltip>
             }
             right={data[15]}
@@ -278,16 +279,9 @@ const ExcludedResourcesWithTranslation = React.memo(
       <div className={styles.excludedResourcesContainer}>
         <div className="labels_L7Q row_S2v">
           <div className={classNames('row_S2v', styles.excludedResourcesHeader)}>
-            <Tooltip
-              tooltip={translate(
-                'InfoLoomTwo.IndustrialPanel[NoDemandTooltip]',
-                'Resources that currently in demand'
-              )}
-            >
-              <p className={styles.excludedResourcesTitle}>
-                {translate('InfoLoomTwo.IndustrialPanel[NoDemand]', 'DEMAND FOR')}
-              </p>
-            </Tooltip>
+            <p className={styles.excludedResourcesTitle}>
+              {translate(Localekeys.DemandFor, 'DEMAND FOR')}
+            </p>
           </div>
         </div>
         <Scrollable vertical={true} className={styles.scrollableList}>
@@ -317,13 +311,13 @@ const $Industrial: React.FC<DraggablePanelProps> = ({ onClose, initialPosition, 
       header={
         <div className={styles.header}>
           <span className={styles.headerText}>
-            {translate('InfoLoomTwo.IndustrialPanel[Title]', 'Industrial and Office Demand')}
+            {translate(Localekeys.IndustrialPanelTitle, 'Industrial and Office Demand')}
           </span>
         </div>
       }
     >
       {ilIndustrial.length === 0 ? (
-        <p>{translate('InfoLoomTwo.IndustrialPanel[Waiting]', 'Waiting...')}</p>
+        <p>{translate(Localekeys.Waiting, 'Waiting...')}</p>
       ) : (
         <div className={styles.mainLayout}>
           <IndustrialDataWithTranslation data={ilIndustrial} translate={translate} />

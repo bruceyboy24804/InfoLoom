@@ -410,15 +410,27 @@ namespace InfoLoomTwo.Systems.Sections
         private CitySystem m_CitySystem;
         public static readonly int kUpdatesPerDay = 1;
         
-        
+        private float _Geometry;
+        private int residentCount { get; set; }
+        private NativeArray<int> m_Results;
+        private float _PopulationDensity;
+        private NativeList<Entity> m_HouseholdsResult;
         
         protected override void OnCreate()
         {
             base.OnCreate();
             m_InfoUISystem.AddMiddleSection(this);
             m_CitySystem = World.GetOrCreateSystemManaged<CitySystem>();
-        }
+            m_Results = new NativeArray<int>(2, Allocator.Persistent);
+            m_HouseholdsResult = new NativeList<Entity>(Allocator.Persistent);
 
+        }
+        protected override void OnDestroy()
+	    {
+            m_HouseholdsResult.Dispose();
+		    m_Results.Dispose();
+		    base.OnDestroy();
+	    }
         protected override void Reset()
         {
             _NoOfResProperties = 0;
@@ -444,6 +456,9 @@ namespace InfoLoomTwo.Systems.Sections
             _HighSchoolStudents = 0;
             _CollegeStudents = 0;
             _UniversityStudents = 0;
+            m_HouseholdsResult.Clear();
+            m_Results[0] = 0;
+            m_Results[1] = 0;
         }
 
 
@@ -594,6 +609,36 @@ namespace InfoLoomTwo.Systems.Sections
                 m_CollegeEligible = collegeCounter.ToConcurrent(),
                 m_UniversityEligible = universityCounter.ToConcurrent(),
             };
+           
+            
+            var job = new CountDistrictHouseholdsJob()
+            {
+                m_SelectedEntity = selectedEntity,
+                m_EntityHandle = SystemAPI.GetEntityTypeHandle(),
+                m_CurrentDistrictHandle = SystemAPI.GetComponentTypeHandle<CurrentDistrict>(isReadOnly: true),
+                m_PrefabRefHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true),
+                m_ParkLookup = SystemAPI.GetComponentLookup<Game.Buildings.Park>(isReadOnly: true),
+                m_AbandonedLookup = SystemAPI.GetComponentLookup<Abandoned>(isReadOnly: true),
+                m_HealthProblemLookup = SystemAPI.GetComponentLookup<HealthProblem>(isReadOnly: true),
+                m_TravelPurposeLookup = SystemAPI.GetComponentLookup<TravelPurpose>(isReadOnly: true),
+                m_PropertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(isReadOnly: true),
+                m_HouseholdLookup = SystemAPI.GetComponentLookup<Household>(isReadOnly: true),
+                m_HouseholdCitizenLookup = SystemAPI.GetBufferLookup<HouseholdCitizen>(isReadOnly: true),
+                m_HouseholdAnimalLookup = SystemAPI.GetBufferLookup<HouseholdAnimal>(isReadOnly: true),
+                m_RenterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true),
+                m_Results = m_Results,
+                m_HouseholdsResult = m_HouseholdsResult
+            };
+
+            EntityQuery m_DistrictBuildingQuery = SystemAPI.QueryBuilder()
+                .WithAll<Building, ResidentialProperty, PrefabRef, Renter, CurrentDistrict>()
+                .WithNone<Temp, Deleted>()
+                .Build();
+
+            JobChunkExtensions.Schedule(job, m_DistrictBuildingQuery, base.Dependency).Complete();
+
+            
+               
 
             EntityQuery citizenQuery = SystemAPI.QueryBuilder().WithAll<Citizen, HouseholdMember>().WithNone<Temp, Deleted>().Build();
 
@@ -670,17 +715,16 @@ namespace InfoLoomTwo.Systems.Sections
         }
         protected override void OnProcess()
         {
-            // Check if the selected district has any schools
             hasSchool = false;
-            
+
             if (selectedEntity != Entity.Null)
             {
                 EntityQuery schoolQuery = SystemAPI.QueryBuilder()
                     .WithAll<Game.Buildings.School, CurrentDistrict>()
                     .Build();
-                
+
                 NativeArray<CurrentDistrict> districts = schoolQuery.ToComponentDataArray<CurrentDistrict>(Allocator.Temp);
-                
+
                 for (int i = 0; i < districts.Length; i++)
                 {
                     if (districts[i].m_District == selectedEntity)
@@ -689,11 +733,19 @@ namespace InfoLoomTwo.Systems.Sections
                         break;
                     }
                 }
-                
                 districts.Dispose();
+
+                EntityManager.TryGetComponent<Geometry>(selectedEntity, out var geometry);
+                _Geometry = geometry.m_SurfaceArea;
+                residentCount = m_Results[1];
+                
+                // Convert square meters to square kilometers (divide by 1,000,000)
+                float areaInSqKm = _Geometry / 1000000f;
+                _PopulationDensity = (areaInSqKm > 0) ? (residentCount / areaInSqKm) : 0f;
             }
         }
 
+        
         public override void OnWriteProperties(IJsonWriter writer)
         {
             writer.PropertyName("HideDistrictSection");
@@ -742,6 +794,10 @@ namespace InfoLoomTwo.Systems.Sections
             
             writer.PropertyName("hasSchool");
             writer.Write(hasSchool);
+            writer.PropertyName("Geometry");
+            writer.Write(_Geometry);
+            writer.PropertyName("PopulationDensity");
+            writer.Write(_PopulationDensity);
         }
         [BurstCompile]
         private struct CalculateDistrictLandValueJob : IJobChunk
@@ -861,6 +917,115 @@ namespace InfoLoomTwo.Systems.Sections
                     m_Results[1] += count;
                 }
             }
+        }
+        [BurstCompile]
+        public struct CountDistrictHouseholdsJob : IJobChunk
+	    {
+		    [ReadOnly]
+		    public Entity m_SelectedEntity;
+
+		    [ReadOnly]
+		    public EntityTypeHandle m_EntityHandle;
+
+		    [ReadOnly]
+		    public ComponentTypeHandle<CurrentDistrict> m_CurrentDistrictHandle;
+
+		    [ReadOnly]
+		    public ComponentTypeHandle<PrefabRef> m_PrefabRefHandle;
+
+		    [ReadOnly]
+		    public ComponentLookup<Game.Buildings.Park> m_ParkLookup;
+
+		    [ReadOnly]
+		    public ComponentLookup<Abandoned> m_AbandonedLookup;
+
+		    [ReadOnly]
+		    public ComponentLookup<HealthProblem> m_HealthProblemLookup;
+
+		    [ReadOnly]
+		    public ComponentLookup<TravelPurpose> m_TravelPurposeLookup;
+
+		    [ReadOnly]
+		    public ComponentLookup<BuildingPropertyData> m_PropertyDataLookup;
+
+		    [ReadOnly]
+		    public ComponentLookup<Household> m_HouseholdLookup;
+
+		    [ReadOnly]
+		    public BufferLookup<HouseholdCitizen> m_HouseholdCitizenLookup;
+
+		    [ReadOnly]
+		    public BufferLookup<HouseholdAnimal> m_HouseholdAnimalLookup;
+
+		    [ReadOnly]
+		    public BufferLookup<Renter> m_RenterLookup;
+
+		    public NativeArray<int> m_Results;
+
+		    public NativeList<Entity> m_HouseholdsResult;
+
+		    public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+		    {
+			    NativeArray<Entity> nativeArray = chunk.GetNativeArray(m_EntityHandle);
+			    NativeArray<CurrentDistrict> nativeArray2 = chunk.GetNativeArray(ref m_CurrentDistrictHandle);
+			    NativeArray<PrefabRef> nativeArray3 = chunk.GetNativeArray(ref m_PrefabRefHandle);
+			    int num = 0;
+			    int residentCount = 0;
+			    for (int i = 0; i < nativeArray.Length; i++)
+			    {
+				    Entity entity = nativeArray[i];
+				    CurrentDistrict currentDistrict = nativeArray2[i];
+				    PrefabRef prefabRef = nativeArray3[i];
+				    if (!(currentDistrict.m_District != m_SelectedEntity) && TryCountHouseholds(ref residentCount, entity, prefabRef.m_Prefab, ref m_ParkLookup, ref m_AbandonedLookup, ref m_PropertyDataLookup, ref m_HealthProblemLookup, ref m_TravelPurposeLookup, ref m_HouseholdLookup, ref m_RenterLookup, ref m_HouseholdCitizenLookup, ref m_HouseholdAnimalLookup, m_HouseholdsResult))
+				    {
+					    num = 1;
+				    }
+			    }
+			    m_Results[0] += num;
+			    m_Results[1] += residentCount;
+		    }
+
+		    void IJobChunk.Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+		    {
+			    Execute(in chunk, unfilteredChunkIndex, useEnabledMask, in chunkEnabledMask);
+		    }
+	    }
+        private static bool TryCountHouseholds(ref int residentCount, Entity entity, Entity prefab, ref ComponentLookup<Game.Buildings.Park> parkLookup, ref ComponentLookup<Abandoned> abandonedLookup, ref ComponentLookup<BuildingPropertyData> propertyDataLookup, ref ComponentLookup<HealthProblem> healthProblemLookup, ref ComponentLookup<TravelPurpose> travelPurposeLookup, ref ComponentLookup<Household> householdLookup, ref BufferLookup<Renter> renterLookup, ref BufferLookup<HouseholdCitizen> householdCitizenLookup, ref BufferLookup<HouseholdAnimal> householdAnimalLookup, NativeList<Entity> householdsResult)
+        {
+            bool result = false;
+            bool isAbandoned = abandonedLookup.HasComponent(entity);
+
+            DynamicBuffer<Renter> renterBuffer;
+            bool hasRenters = renterLookup.TryGetBuffer(entity, out renterBuffer) && renterBuffer.Length > 0;
+            bool isPark = parkLookup.HasComponent(entity);
+
+            BuildingPropertyData componentData;
+            bool hasResidential = propertyDataLookup.TryGetComponent(prefab, out componentData) && componentData.m_ResidentialProperties > 0 && !isAbandoned;
+            bool parkOrAbandonedWithRenters = (isPark || isAbandoned) && hasRenters;
+
+            if (hasResidential || parkOrAbandonedWithRenters)
+            {
+                result = true;
+
+                // Only update residentCount here; leave other refs untouched.
+                for (int i = 0; i < renterBuffer.Length; i++)
+                {
+                    Entity renterHousehold = renterBuffer[i].m_Renter;
+
+                    if (!householdLookup.HasComponent(renterHousehold) || !householdCitizenLookup.TryGetBuffer(renterHousehold, out var householdCitizens))
+                        continue;
+
+                    for (int j = 0; j < householdCitizens.Length; j++)
+                    {
+                        if (!CitizenUtils.IsCorpsePickedByHearse(householdCitizens[j].m_Citizen, ref healthProblemLookup, ref travelPurposeLookup))
+                        {
+                            residentCount++;
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }

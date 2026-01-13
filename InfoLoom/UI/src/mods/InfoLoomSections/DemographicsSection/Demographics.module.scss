@@ -221,7 +221,7 @@
   border-radius: 4rem;
   margin: 10rem 0;
   border: none;
-  background-color: rgba(36, 98, 255, 0.3);
+  background-color: var(--dividerColor);
   color: var(--menuText1Normal);
   font-size: var(--fontSizeM);
   cursor: pointer;
@@ -232,8 +232,7 @@
     transform 0.2s ease;
 
   &:hover {
-    background-color: rgba(36, 98, 255, 0.5);
-    transform: scale(1.02);
+    background-color: var(--hoverColorBright);
   }
 
   &:active {

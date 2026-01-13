@@ -5,6 +5,7 @@ import { useLocalization } from 'cs2/l10n';
 import styles from './residential.module.scss';
 import { ResidentialData } from '../../../bindings';
 import { LocalizedFraction } from 'cs2/l10n';
+import { Localekeys } from 'mods/locale';
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
   right: React.ReactNode;
@@ -142,21 +143,21 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
       <div style={{ boxSizing: 'border-box', border: '1px solid gray' }}>
         <div className="labels_L7Q row_S2v">
           <div className="row_S2v" style={{ width: '36%' }}></div>
-          <SingleValue value={translate('InfoLoomTwo.ResidentialPanel[Low]', 'LOW')} />
-          <SingleValue value={translate('InfoLoomTwo.ResidentialPanel[Medium]', 'MEDIUM')} />
-          <SingleValue value={translate('InfoLoomTwo.ResidentialPanel[High]', 'HIGH')} />
-          <SingleValue value={translate('InfoLoomTwo.ResidentialPanel[Total]', 'TOTAL')} />
+          <SingleValue value={translate(Localekeys.DemandPanelsLow, 'LOW')} />
+          <SingleValue value={translate(Localekeys.DemandPanelsMedium, 'MEDIUM')} />
+          <SingleValue value={translate(Localekeys.DemandPanelsHigh, 'HIGH')} />
+          <SingleValue value={translate(Localekeys.DemandPanelsTotalProperties, 'TOTAL')} />
         </div>
         <div className="labels_L7Q row_S2v">
           <div className="row_S2v" style={{ width: '2%' }}></div>
           <div className="row_S2v" style={{ width: '34%' }}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.ResidentialPanel[TotalPropertiesTooltip]',
+                Localekeys.TotalPropertiesTooltip,
                 'Total number of residential properties by density type'
               )}
             >
-              <span>{translate('InfoLoomTwo.ResidentialPanel[TotalProperties]', 'Total properties')}</span>
+              <span>{translate(Localekeys.DemandPanelsTotalProperties, 'Total properties')}</span>
             </Tooltip>
           </div>
           <SingleValue value={data[0]} />
@@ -169,11 +170,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           <div className="row_S2v small_ExK" style={{ width: '34%' }}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.ResidentialPanel[OccupiedPropertiesTooltip]',
+                Localekeys.OccupiedPropertiesTooltip,
                 'Properties currently occupied by households'
               )}
             >
-              <span>{translate('InfoLoomTwo.ResidentialPanel[OccupiedProperties]', '- Occupied properties')}</span>
+              <span>{translate(Localekeys.DemandPanelsOccupiedProperties, '- Occupied properties')}</span>
             </Tooltip>
           </div>
           <SingleValue value={data[3]} small={true} />
@@ -186,11 +187,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           <div className="row_S2v" style={{ width: '34%' }}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.ResidentialPanel[EmptyPropertiesTooltip]',
+                Localekeys.EmptyPropertiesTooltip,
                 'Available properties ready for new households to move in. Green indicates sufficient supply, red indicates shortage.'
               )}
             >
-              <span>{translate('InfoLoomTwo.ResidentialPanel[EmptyProperties]', '= Empty properties')}</span>
+              <span>{translate(Localekeys.DemandPanelsEmptyProperties, '= Empty properties')}</span>
             </Tooltip>
           </div>
           <SingleValue value={freeL} flag={freeL > needL} />
@@ -203,11 +204,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           <div className="row_S2v small_ExK" style={{ width: '34%' }}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.ResidentialPanel[NoDemandAtTooltip]',
+                Localekeys.NoDemandAtTooltip,
                 'Target number of empty properties needed to maintain zero building demand. Based on free residential requirement percentages.'
               )}
             >
-              <span>{translate('InfoLoomTwo.ResidentialPanel[NoDemandAt]', 'No demand at')}</span>
+              <span>{translate(Localekeys.DemandPanelsNoDemandAt, 'No demand at')}</span>
             </Tooltip>
           </div>
           <SingleValue value={needL} small={true} />
@@ -220,11 +221,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           <div className="row_S2v" style={{ width: '34%' }}>
             <Tooltip
               tooltip={translate(
-                'InfoLoomTwo.ResidentialPanel[BuildingDemandTooltip]',
+                Localekeys.BuildingDemandTooltip,
                 'Demand for new residential buildings. Calculated as (1 - empty properties / target empty properties) × 100. Green = surplus, Red = shortage. Total column shows overall empty property percentage.'
               )}
             >
-              <span>{translate('InfoLoomTwo.ResidentialPanel[BuildingDemand]', 'BUILDING DEMAND')}</span>
+              <span>{translate(Localekeys.DemandPanelsBuildingDemand, 'BUILDING DEMAND')}</span>
             </Tooltip>
           </div>
           <SingleValue value={demandL} flag={demandL < 0} />
@@ -245,12 +246,12 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
       className={styles.panel}
       header={
         <div className={styles.header}>
-          <span className={styles.headerText}>{translate('InfoLoomTwo.ResidentialPanel[Title]', 'Residential')}</span>
+          <span className={styles.headerText}>{translate(Localekeys.Residential, 'Residential')}</span>
         </div>
       }
     >
       {ilResidential.length === 0 ? (
-        <p style={{ color: 'white' }}>{translate('InfoLoomTwo.ResidentialPanel[Waiting]', 'Waiting...')}</p>
+        <p style={{ color: 'white' }}>{translate(Localekeys.Waiting, 'Waiting...')}</p>
       ) : (
         <div>
           <BuildingDemandSectionWithTranslation data={ilResidential} />
@@ -270,11 +271,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[StudyPositionsTooltip]',
+                      Localekeys.StudyPositionsTooltip,
                       'Total available study positions across all education levels (elementary through university)'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[StudyPositions]', 'STUDY POSITIONS')}</span>
+                    <span>{translate(Localekeys.DemandPanelsStudyPositions, 'STUDY POSITIONS')}</span>
                   </Tooltip>
                 }
                 right={ilResidential[14]}
@@ -284,11 +285,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[HappinessTooltip]',
+                      Localekeys.HappinessTooltip,
                       'Average happiness of all citizens. Affects residential demand - unhappy citizens create more demand for housing.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[Happiness]', 'HAPPINESS')}</span>
+                    <span>{translate(Localekeys.Happiness, 'HAPPINESS')}</span>
                   </Tooltip>
                 }
                 right1={ilResidential[7]}
@@ -299,11 +300,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[UnemploymentTooltip]',
+                      Localekeys.UnemploymentTooltip,
                       'Percentage of working-age population that is unemployed. High unemployment increases residential demand as people seek cheaper housing.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[Unemployment]', 'UNEMPLOYMENT')}</span>
+                    <span>{translate(Localekeys.Unemployment, 'UNEMPLOYMENT')}</span>
                   </Tooltip>
                 }
                 right1={Number(ilResidential[9]).toFixed(1)}
@@ -314,11 +315,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[HouseholdDemandTooltip]',
+                      Localekeys.HouseholdDemandTooltip,
                       'Overall demand for households to move into the city. Positive values indicate growing population, negative values indicate population decline.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[HouseholdDemand]', 'HOUSEHOLD DEMAND')}</span>
+                    <span>{translate(Localekeys.DemandPanelsHouseholdDemand, 'HOUSEHOLD DEMAND')}</span>
                   </Tooltip>
                 }
                 right1={ilResidential[16]}
@@ -340,11 +341,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[HouseholdsTooltip]',
+                      Localekeys.HouseholdsTooltip,
                       'Total number of households that have recently moved into the city'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[Households]', 'HOUSEHOLDS')}</span>
+                    <span>{translate(Localekeys.Households, 'HOUSEHOLDS')}</span>
                   </Tooltip>
                 }
                 right={ilResidential[12]}
@@ -354,11 +355,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[HomelessTooltip]',
+                      Localekeys.HomelessTooltip,
                       'Number of households without homes. High homelessness increases residential demand and reduces city attractiveness.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[Homeless]', 'HOMELESS')}</span>
+                    <span>{translate(Localekeys.Homeless, 'HOMELESS')}</span>
                   </Tooltip>
                 }
                 right1={ilResidential[11]}
@@ -369,11 +370,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[TaxRateTooltip]',
+                      Localekeys.TaxRateTooltip,
                       'Weighted average residential tax rate across all density types. Higher taxes reduce residential demand as people seek more affordable cities.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[TaxRate]', 'TAX RATE (weighted)')}</span>
+                    <span>{translate(Localekeys.TaxRate, 'TAX RATE (weighted)')}</span>
                   </Tooltip>
                 }
                 right1={ilResidential[15] / 10}
@@ -384,11 +385,11 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
                 left={
                   <Tooltip
                     tooltip={translate(
-                      'InfoLoomTwo.ResidentialPanel[StudentChanceTooltip]',
+                      Localekeys.StudentChanceTooltip,
                       'Percentage chance that unemployed citizens will become students instead of seeking jobs. Based on student vs unemployment demand factors.'
                     )}
                   >
-                    <span>{translate('InfoLoomTwo.ResidentialPanel[StudentChance]', 'STUDENT CHANCE')}</span>
+                    <span>{translate(Localekeys.DemandPanelsStudentChance, 'STUDENT CHANCE')}</span>
                   </Tooltip>
                 }
                 right={`${ilResidential[17]} %`}

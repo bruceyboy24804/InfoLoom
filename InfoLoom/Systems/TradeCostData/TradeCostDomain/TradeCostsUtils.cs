@@ -9,6 +9,7 @@ namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
         Train = 1,
         Air = 3,
         Ship = 4,
+        All = 5,
     }
     public static class OutsideConnectionTypeUtils
     {
@@ -18,6 +19,7 @@ namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
             {OutsideConnectionType.Train, OutsideConnectionTransferType.Train},
             {OutsideConnectionType.Air, OutsideConnectionTransferType.Air},
             {OutsideConnectionType.Ship, OutsideConnectionTransferType.Ship},
+            {OutsideConnectionType.All, OutsideConnectionTransferType.All},
         };
         public static string GetName(OutsideConnectionType tradeCostsUtils)
         {

@@ -4,39 +4,7 @@ import { DraggablePanelProps, PanelProps, Panel, Tooltip, Scrollable } from 'cs2
 import { CommercialData, CommercialDataExRes } from '../../../bindings';
 import styles from './CommercialDemand.module.scss';
 import { useLocalization } from 'cs2/l10n';
-
-interface Factor {
-  factor: string;
-  weight: number;
-}
-
-interface DemandSection2Props {
-  title: string;
-  value: number;
-  factors: Factor[];
-}
-
-const DemandSection2 = ({ title, value, factors }: DemandSection2Props): JSX.Element => (
-  <div className="infoview-panel-section_RXJ" style={{ width: '95%', paddingTop: '3rem', paddingBottom: '3rem' }}>
-    <div className="labels_L7Q row_S2v uppercase_RJI">
-      <div className="left_Lgw row_S2v">{title}</div>
-      {value >= 0 && <div className="right_k30 row_S2v">{Math.round(value * 100)}</div>}
-    </div>
-    <div className="space_uKL" style={{ height: '3rem' }}></div>
-    {factors.map((item, index) => (
-      <div key={index} className="labels_L7Q row_S2v small_ExK" style={{ marginTop: '1rem' }}>
-        <div className="left_Lgw row_S2v">{item.factor}</div>
-        <div className="right_k30 row_S2v">
-          {item.weight < 0 ? (
-            <div className="negative_YWY">{item.weight}</div>
-          ) : (
-            <div className="positive_zrK">{item.weight}</div>
-          )}
-        </div>
-      </div>
-    ))}
-  </div>
-);
+import { Localekeys } from 'mods/locale';
 
 interface RowWithTwoColumnsProps {
   left: React.ReactNode;
@@ -261,70 +229,69 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
   const commercialDataExRes = useValue(CommercialDataExRes);
 
   // All translations are done here
-  const emptyBuildingsLabel = translate('InfoLoomTwo.CommercialDemandPanel[EmptyBuildings]', 'EMPTY BUILDINGS');
+  const emptyBuildingsLabel = translate(Localekeys.UnoccupiedBuildings, 'EMPTY BUILDINGS');
   const emptyBuildingsTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[EmptyBuildingsTooltip]',
+    Localekeys.EmptyBuildingsTooltip,
     'Number of commercial buildings available for rent. More empty buildings reduces demand for new commercial buildings.'
   );
   const propertylessCompaniesLabel = translate(
-    'InfoLoomTwo.CommercialDemandPanel[PropertylessCompanies]',
+    Localekeys.PropertylessCompanies,
     'PROPERTYLESS COMPANIES'
   );
   const propertylessCompaniesTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[PropertylessCompaniesTooltip]',
+    Localekeys.PropertylessCompaniesTooltip,
     'Number of commercial companies without properties. More propertyless companies increases demand for new commercial buildings.'
   );
-  const averageTaxRateLabel = translate('InfoLoomTwo.CommercialDemandPanel[AverageTaxRate]', 'AVERAGE TAX RATE');
+  const averageTaxRateLabel = translate(Localekeys.TaxRate, 'AVERAGE TAX RATE');
   const averageTaxRateTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[TaxRateTooltip]',
+    Localekeys.TaxRateTooltip,
     'Average commercial tax rate across all resources. Higher tax rates reduce commercial demand. 10% is considered neutral.'
   );
   const serviceUtilizationLabel = translate(
-    'InfoLoomTwo.CommercialDemandPanel[ServiceUtilization]',
+    Localekeys.ServiceUtilization,
     'SERVICE UTILIZATION'
   );
   const serviceUtilizationTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[ServiceUtilizationTooltip]',
+    Localekeys.ServiceUtilizationTooltip,
     'Percentage of service capacity currently utilized. Higher utilization increases demand for more commercial services. Below 30% is considered insufficient demand.'
   );
   const productionCapacityLabel = translate(
-    'InfoLoomTwo.CommercialDemandPanel[ProductionCapacity]',
+    Localekeys.ProductionCapacity,
     'PRODUCTION CAPACITY'
   );
   const productionCapacityTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[ProductionCapacityTooltip]',
+    Localekeys.ProductionCapacityTooltip,
     'Current production capacity relative to resource needs. 100% means supply matches demand. Above 100% indicates oversupply which reduces demand for new commercial businesses.'
   );
   const employeeCapacityLabel = translate(
-    'InfoLoomTwo.CommercialDemandPanel[EmployeeCapacity]',
+    Localekeys.EmployeeCapacity,
     'EMPLOYEE CAPACITY RATIO'
   );
   const employeeCapacityTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[EmployeeCapacityTooltip]',
+    Localekeys.EmployeeCapacityTooltip,
     'Percentage of maximum worker positions currently filled. Below 75% indicates labor shortage which reduces demand for new commercial businesses.'
   );
   const availableWorkforceLabel = translate(
-    'InfoLoomTwo.CommercialDemandPanel[AvailableWorkforce]',
+    Localekeys.Workforce,
     'AVAILABLE WORKFORCE'
   );
   const availableWorkforceTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[AvailableWorkforceTooltip]',
+    Localekeys.AvailableWorkforceTooltip,
     'Number of citizens available for work in commercial businesses. More available workers increases demand for new businesses.'
   );
-  const educatedLabel = translate('InfoLoomTwo.CommercialDemandPanel[Educated]', 'Educated');
-  const educatedTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[EducatedWorkforceTooltip]',
+  const educatedLabel = translate(Localekeys.Educated, 'Educated');
+  const educatedTooltip = translate(Localekeys.EducatedWorkforceTooltip,
     'Number of educated citizens (high school or higher) available for work.'
   );
-  const uneducatedLabel = translate('InfoLoomTwo.CommercialDemandPanel[Uneducated]', 'Uneducated');
+  const uneducatedLabel = translate(Localekeys.Uneducated, 'Uneducated');
   const uneducatedTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[UneducatedWorkforceTooltip]',
+    Localekeys.UneducatedWorkforceTooltip,
     'Number of uneducated citizens available for work.'
   );
-  const noDemandForLabel = translate('InfoLoomTwo.CommercialDemandPanel[NoDemandFor]', 'DEMAND FOR');
+  const DemandForLabel = translate(Localekeys.DemandFor, 'DEMAND FOR');
   const excludedResourcesTooltip = translate(
-    'InfoLoomTwo.CommercialDemandPanel[ExcludedResourcesTooltip]',
-    'Resources that are currently in demand'
+    Localekeys.IncludedResourcesTooltip,
+    'Resources that currently have no demand in your city. This may be due to oversupply, lack of customers, or economic factors.'
   );
 
   return (
@@ -336,13 +303,13 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
       header={
         <div className={styles.header}>
           <span className={styles.headerText}>
-            {translate('InfoLoomTwo.CommercialDemandPanel[Title]', 'Commercial Demand')}
+            {translate(Localekeys.CommercialDemand, 'Commercial Demand')}
           </span>
         </div>
       }
     >
       {commercialData.length === 0 ? (
-        <p>{translate('InfoLoomTwo.CommercialDemandPanel[Loading]', 'Loading commercial data...')}</p>
+        <p>{translate(Localekeys.Waiting, 'Waiting...')}</p>
       ) : (
         <div style={{ display: 'flex' }}>
           <ColumnCommercialData
@@ -368,7 +335,7 @@ const $Commercial = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           />
           <ColumnExcludedResources
             resources={commercialDataExRes}
-            noDemandForLabel={noDemandForLabel}
+            noDemandForLabel={DemandForLabel}
             excludedResourcesTooltip={excludedResourcesTooltip}
           />
         </div>

@@ -12,6 +12,7 @@ import { useRem } from 'cs2/utils';
 import { getModule } from 'cs2/modding';
 import classNames from 'classnames';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
+import { Localekeys } from 'mods/locale';
 
 export const InfoRowTheme: Theme | any = getModule(
   'game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss',
@@ -502,37 +503,37 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
           />
           <WorkplaceLevel
             levelColor="#808080"
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row1EL]', 'Uneducated')}
+            levelName={translate(Localekeys.Uneducated, 'Uneducated')}
             levelValues={workplaces[0]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#B09868"
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row2EL]', 'Poorly Educated')}
+            levelName={translate(Localekeys.PoorlyEducated, 'Poorly Educated')}
             levelValues={workplaces[1]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#368A2E"
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row3EL]', 'Educated')}
+            levelName={translate(Localekeys.Educated, 'Educated')}
             levelValues={workplaces[2]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#B981C0"
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row4EL]', 'Well Educated')}
+            levelName={translate(Localekeys.WellEducated, 'Well Educated')}
             levelValues={workplaces[3]}
             total={workplaces[5].Total}
           />
           <WorkplaceLevel
             levelColor="#5796D1"
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row5EL]', 'Highly Educated')}
+            levelName={translate(Localekeys.HighlyEducated, 'Highly Educated')}
             levelValues={workplaces[4]}
             total={workplaces[5].Total}
           />
           <div className={styles.spacingSmall}></div>
           <WorkplaceLevel
-            levelName={translate('InfoLoomTwo.WorkplacesPanel[Row6]', 'TOTAL')}
+            levelName={translate(Localekeys.Total, 'TOTAL')}
             levelValues={workplaces[5]}
             total={workplaces[5].Total}
           />
@@ -551,41 +552,41 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
               chartType === 'employment'
                 ? [
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]', 'Employee'),
+                      label: translate(Localekeys.Employees, 'Employee'),
                       color: '#4CAF50',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]', 'Commuter'),
+                      label: translate(Localekeys.Commuter, 'Commuter'),
                       color: '#FF9800',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]', 'Open'),
+                      label: translate(Localekeys.Open, 'Open'),
                       color: '#F44336',
                     },
                   ]
                 : [
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]', 'Service'),
+                      label: translate(Localekeys.Services, 'Service'),
                       color: '#4287f5',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]', 'Commercial'),
+                      label: translate(Localekeys.Commercial, 'Commercial'),
                       color: '#f5d142',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]', 'Leisure'),
+                      label: translate(Localekeys.Leisure, 'Leisure'),
                       color: '#f542a7',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]', 'Extractor'),
+                      label: translate(Localekeys.Extractors, 'Extractor'),
                       color: '#8c42f5',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]', 'Industrial'),
+                      label: translate(Localekeys.Industrial, 'Industrial'),
                       color: '#f55142',
                     },
                     {
-                      label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]', 'Office'),
+                      label: translate(Localekeys.Office, 'Office'),
                       color: '#42f5b3',
                     },
                   ]
@@ -596,27 +597,27 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
             )}
             educationLevels={[
               {
-                name: translate('InfoLoomTwo.WorkplacesPanel[Row1EL]', 'Uneducated'),
+                name: translate(Localekeys.Uneducated, 'Uneducated'),
                 color: '#808080',
                 data: workplaces[0],
               },
               {
-                name: translate('InfoLoomTwo.WorkplacesPanel[Row2EL]', 'Poorly Educated'),
+                name: translate(Localekeys.PoorlyEducated, 'Poorly Educated'),
                 color: '#B09868',
                 data: workplaces[1],
               },
               {
-                name: translate('InfoLoomTwo.WorkplacesPanel[Row3EL]', 'Educated'),
+                name: translate(Localekeys.Educated, 'Educated'),
                 color: '#368A2E',
                 data: workplaces[2],
               },
               {
-                name: translate('InfoLoomTwo.WorkplacesPanel[Row4EL]', 'Well Educated'),
+                name: translate(Localekeys.WellEducated, 'Well Educated'),
                 color: '#B981C0',
                 data: workplaces[3],
               },
               {
-                name: translate('InfoLoomTwo.WorkplacesPanel[Row5EL]', 'Highly Educated'),
+                name: translate(Localekeys.HighlyEducated, 'Highly Educated'),
                 color: '#5796D1',
                 data: workplaces[4],
               },
@@ -626,33 +627,33 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                 chartType === 'employment'
                   ? [
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem1]', 'Employee'),
+                        label: translate(Localekeys.Employees, 'Employee'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem2]', 'Commuter'),
+                        label: translate(Localekeys.Commuter, 'Commuter'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[EmploymentLegendItem3]', 'Open'),
+                        label: translate(Localekeys.Open, 'Open'),
                       },
                     ]
                   : [
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem1]', 'Service'),
+                        label: translate(Localekeys.Services, 'Services'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem2]', 'Commercial'),
+                        label: translate(Localekeys.Commercial, 'Commercial'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem3]', 'Leisure'),
+                        label: translate(Localekeys.Leisure, 'Leisure'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem4]', 'Extractor'),
+                        label: translate(Localekeys.Extractors, 'Extractor'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem5]', 'Industrial'),
+                        label: translate(Localekeys.Industrial, 'Industrial'),
                       },
                       {
-                        label: translate('InfoLoomTwo.WorkplacesPanel[SectorLegendItem6]', 'Office'),
+                        label: translate(Localekeys.Office, 'Office'),
                       },
                     ],
               segmentTooltipCount: translate('InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]', 'Count'),
@@ -662,13 +663,13 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                 'Of Total Workplaces'
               ),
               barTooltipHeader: translate('InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]', 'Summary'),
-              barTooltipTotal: translate('InfoLoomTwo.WorkplacesPanel[BarTooltipTotal]', 'Total'),
+              barTooltipTotal: translate(Localekeys.Total, 'Total'),
               barTooltipPercentage: translate(
                 'InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]',
                 '% of Total Workplaces'
               ),
             }}
-            totalLabel={translate('InfoLoomTwo.WorkplacesPanel[Row6]', 'TOTAL')}
+            totalLabel={translate(Localekeys.Total, 'TOTAL')}
           />
         </div>
       )}

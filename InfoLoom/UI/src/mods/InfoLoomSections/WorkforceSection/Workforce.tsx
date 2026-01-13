@@ -15,6 +15,7 @@ import { infoview } from 'cs2/bindings';
 import classNames from 'classnames';
 import { useRem } from 'cs2/utils';
 import { formatPercentage1, formatPercentage2 } from '../utils/formatText';
+import { Localekeys } from 'mods/locale';
 
 const ShowExtraWorkforce = bindValue<number>(mod.id, 'ShowExtraWorkforce', 0);
 export const InfoRowTheme: Theme | any = getModule(
@@ -409,49 +410,49 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
           </div>
           <WorkforceTableHeader
             translations={{
-              totalTooltip: translate('InfoLoomTwo.WorkforcePanel[TotalTooltip]', 'Total Workforce'),
-              percentTooltip: translate('InfoLoomTwo.WorkforcePanel[PercentTooltip]', 'Percentage of Total Workforce'),
-              workerTooltip: translate('InfoLoomTwo.WorkforcePanel[WorkerTooltip]', 'Workers'),
-              unemployedTooltip: translate('InfoLoomTwo.WorkforcePanel[UnemployedTooltip]', 'Unemployed'),
-              unemploymentTooltip: translate('InfoLoomTwo.WorkforcePanel[UnemploymentTooltip]', 'Unemployment Rate'),
-              underTooltip: translate('InfoLoomTwo.WorkforcePanel[UnderTooltip]', 'Under Employed'),
-              outsideTooltip: translate('InfoLoomTwo.WorkforcePanel[OutsideTooltip]', 'Outside Workforce'),
-              homelessTooltip: translate('InfoLoomTwo.WorkforcePanel[HomelessTooltip]', 'Homeless Workforce'),
+              totalTooltip: translate(Localekeys.WorkforcePanelTotalTooltip, 'Total Workforce'),
+              percentTooltip: translate(Localekeys.WorkforcePanelPercentTooltip, 'Percentage of Total Workforce'),
+              workerTooltip: translate(Localekeys.WorkforcePanelWorkerTooltip, 'Workers'),
+              unemployedTooltip: translate(Localekeys.WorkforcePanelUnemployedTooltip, 'Unemployed'),
+              unemploymentTooltip: translate(Localekeys.WorkforcePanelUnemploymentTooltip, 'Unemployment Rate'),
+              underTooltip: translate(Localekeys.WorkforcePanelUnderTooltip, 'Under Employed'),
+              outsideTooltip: translate(Localekeys.WorkforcePanelOutsideTooltip, 'Outside Workforce'),
+              homelessTooltip: translate(Localekeys.WorkforcePanelHomelessTooltip, 'Homeless Workforce'),
             }}
           />
           <WorkforceLine
             levelColor="#808080"
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row1EL]', 'Uneducated')}
+            levelName={translate(Localekeys.Uneducated, 'Uneducated')}
             levelValues={workforce[0]}
             total={workforce[5].Total}
           />
           <WorkforceLine
             levelColor="#B09868"
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row2EL]', 'Poorly Educated')}
+            levelName={translate(Localekeys.PoorlyEducated, 'Poorly Educated')}
             levelValues={workforce[1]}
             total={workforce[5].Total}
           />
           <WorkforceLine
             levelColor="#368A2E"
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row3EL]', 'Educated')}
+            levelName={translate(Localekeys.Educated, 'Educated')}
             levelValues={workforce[2]}
             total={workforce[5].Total}
           />
           <WorkforceLine
             levelColor="#B981C0"
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row4EL]', 'Well Educated')}
+            levelName={translate(Localekeys.WellEducated, 'Well Educated')}
             levelValues={workforce[3]}
             total={workforce[5].Total}
           />
           <WorkforceLine
             levelColor="#5796D1"
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row5EL]', 'Highly Educated')}
+            levelName={translate(Localekeys.HighlyEducated, 'Highly Educated')}
             levelValues={workforce[4]}
             total={workforce[5].Total}
           />
           <div className={styles.spacingSmall}></div>
           <WorkforceLine
-            levelName={translate('InfoLoomTwo.WorkforcePanel[Row6]', 'TOTAL')}
+            levelName={translate(Localekeys.Total, 'TOTAL')}
             levelValues={workforce[5]}
             total={workforce[5].Total}
           />
@@ -464,50 +465,50 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
               )}
               educationLevels={[
                 {
-                  name: translate('InfoLoomTwo.WorkforcePanel[StackedBar1]', 'Uneducated'),
+                  name: translate(Localekeys.Uneducated, 'Uneducated'),
                   color: '#808080',
                   data: workforce[0],
                 },
                 {
-                  name: translate('InfoLoomTwo.WorkforcePanel[StackedBar2]', 'Poorly Educated'),
+                  name: translate(Localekeys.PoorlyEducated, 'Poorly Educated'),
                   color: '#B09868',
                   data: workforce[1],
                 },
                 {
-                  name: translate('InfoLoomTwo.WorkforcePanel[StackedBar3]', 'Educated'),
+                  name: translate(Localekeys.Educated, 'Educated'),
                   color: '#368A2E',
                   data: workforce[2],
                 },
                 {
-                  name: translate('InfoLoomTwo.WorkforcePanel[StackedBar4]', 'Well Educated'),
+                  name: translate(Localekeys.WellEducated, 'Well Educated'),
                   color: '#B981C0',
                   data: workforce[3],
                 },
                 {
-                  name: translate('InfoLoomTwo.WorkforcePanel[StackedBar5]', 'Highly Educated'),
+                  name: translate(Localekeys.HighlyEducated, 'Highly Educated'),
                   color: '#5796D1',
                   data: workforce[4],
                 },
               ]}
               legendItems={[
                 {
-                  label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem1]', 'Worker'),
+                  label: translate(Localekeys.Worker, 'Worker'),
                   color: '#4CAF50',
                 },
                 {
-                  label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem2]', 'Unemployed'),
+                  label: translate(Localekeys.Unemployed, 'Unemployed'),
                   color: '#F44336',
                 },
                 {
-                  label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem4]', 'Under Employed'),
+                  label: translate(Localekeys.WorkforcePanelUnder, 'Under Employed'),
                   color: '#9C27B0',
                 },
                 {
-                  label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem5]', 'Outside'),
+                  label: translate(Localekeys.WorkforcePanelOutside, 'Outside'),
                   color: '#607D8B',
                 },
                 {
-                  label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem6]', 'Homeless'),
+                  label: translate(Localekeys.Homeless, 'Homeless'),
                   color: '#795548',
                 },
               ]}
@@ -518,19 +519,19 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
               translations={{
                 segments: [
                   {
-                    label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem1]', 'Worker'),
+                    label: translate(Localekeys.Worker, 'Worker'),
                   },
                   {
-                    label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem2]', 'Unemployed'),
+                    label: translate(Localekeys.Unemployed, 'Unemployed'),
                   },
                   {
-                    label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem4]', 'Under Employed'),
+                    label: translate(Localekeys.WorkforcePanelUnder, 'Under Employed'),
                   },
                   {
-                    label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem5]', 'Outside'),
+                    label: translate(Localekeys.WorkforcePanelOutside, 'Outside'),
                   },
                   {
-                    label: translate('InfoLoomTwo.WorkforcePanel[StackedBarLegendItem6]', 'Homeless'),
+                    label: translate(Localekeys.Homeless, 'Homeless'),
                   },
                 ],
                 segmentTooltipCount: translate('InfoLoomTwo.WorkforcePanel[SegmentTooltipCount]', 'Count'),
@@ -543,12 +544,12 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                   'Of Total Workforce'
                 ),
                 barTooltipHeader: translate('InfoLoomTwo.WorkforcePanel[BarTooltipHeader]', 'Summary'),
-                barTooltipTotal: translate('InfoLoomTwo.WorkforcePanel[BarTooltipTotal]', 'Total'),
+                barTooltipTotal: translate(Localekeys.Total, 'Total'),
                 barTooltipPercentage: translate(
                   'InfoLoomTwo.WorkforcePanel[BarTooltipPercentage]',
                   '% of Total Workforce'
                 ),
-                totalLabel: translate('InfoLoomTwo.WorkforcePanel[StackedBar6]', 'TOTAL'),
+                totalLabel: translate(Localekeys.Total, 'TOTAL'),
               }}
             />
           </Scrollable>

@@ -81,6 +81,10 @@
 		  <Private>False</Private>
 		  <HintPath>$(ManagedPath)\mscorlib.dll</HintPath>
 		</Reference>
+        <Reference Include="System">
+		  <Private>False</Private>
+		  <HintPath>$(ManagedPath)\System.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

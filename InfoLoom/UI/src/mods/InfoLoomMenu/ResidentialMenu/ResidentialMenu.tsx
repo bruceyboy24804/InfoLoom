@@ -5,6 +5,7 @@ import { Button, Panel } from 'cs2/ui';
 import styles from '../ResidentialMenu/ResidentialMenu.module.scss';
 import Residential from 'mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential';
 import { useLocalization } from 'cs2/l10n';
+import { Localekeys } from 'mods/locale';
 
 // Define types for section configuration
 interface SectionItem {
@@ -56,7 +57,7 @@ export const ResidentialMenuButton = (): JSX.Element => {
               let displayName: string | null;
               switch (name) {
                 case 'Demand':
-                  displayName = translate('InfoLoomTwo.ResidentialMenu[Button1]', 'Demand');
+                  displayName = translate(Localekeys.Demand, 'Demand');
                   break;
                 default:
                   displayName = name;

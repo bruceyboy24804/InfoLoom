@@ -4,9 +4,9 @@ import React, { useCallback } from 'react';
 import { Button, Panel } from 'cs2/ui';
 import styles from '../IndustrialMenu/IndustrialMenu.module.scss';
 import Industrial from 'mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand';
-import IndustrialProducts from 'mods/InfoLoomSections/IndustrialSection/IndustrialProductsUI/IndustrialProducts';
 import IndustryCompany from 'mods/InfoLoomSections/IndustrialSection/IndustrialCompanyUI/IndustrialCompany';
 import { useLocalization } from 'cs2/l10n';
+import { Localekeys } from 'mods/locale';
 
 interface SectionConfig {
   component: JSX.Element;
@@ -23,12 +23,6 @@ export function IndustrialMenuButton(): JSX.Element {
       component: <Industrial />,
       openState: () => useValue(bindings.IndustrialDemandOpen),
       toggle: bindings.SetIndustrialDemandOpen,
-      displayName: null, // Will be set at render time
-    },
-    Products: {
-      component: <IndustrialProducts />,
-      openState: () => useValue(bindings.IndustrialProductsOpen),
-      toggle: bindings.SetIndustrialProductsOpen,
       displayName: null, // Will be set at render time
     },
     Companies: {
@@ -57,13 +51,13 @@ export function IndustrialMenuButton(): JSX.Element {
               let displayName: string | null;
               switch (name) {
                 case 'Demand':
-                  displayName = translate('InfoLoomTwo.IndustrialMenu[Button1]', 'Demand');
+                  displayName = translate(Localekeys.Demand, 'Demand');
                   break;
                 case 'Products':
-                  displayName = translate('InfoLoomTwo.IndustrialMenu[Button2]', 'Products');
+                  displayName = translate(Localekeys.Products, 'Products');
                   break;
                 case 'Companies':
-                  displayName = translate('InfoLoomTwo.IndustrialMenu[Button3]', 'Companies');
+                  displayName = translate(Localekeys.Companies, 'Companies');
                   break;
                 default:
                   displayName = name;

@@ -38,11 +38,12 @@ import {
 import { getModule } from 'cs2/modding';
 import { Entity, useCssLength } from 'cs2/utils';
 import mod from 'mod.json';
-import { ResourceInfo } from '../../../domain/CommercialCompanyDebugData';
+import {CommercialCompanyDebug, ResourceInfo} from '../../../domain/CommercialCompanyDebugData';
 import { SortingEnum } from '../../../domain/SortingEnum';
 import { CompanyNameSelector } from './Selectors/companyNameSelector';
 import { ResourceSelector } from './Selectors/resourceSelector';
-
+import { Localekeys } from 'mods/locale';
+import { useResourceTranslation, resourceKeyMap } from 'mods/domain/ResourceEnumTranslated';
 // Import VirtualList components
 type SizeProvider = {
   getRenderedRange: () => { offset: number; size: number; startIndex: number; endIndex: number };
@@ -87,135 +88,71 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) =
   const getFactorName = (factor: EfficiencyFactorEnum): string => {
     switch (factor) {
       case EfficiencyFactorEnum.Destroyed:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDestroyed]', 'Destroyed') || 'Destroyed';
+        return translate(Localekeys.Destroyed, "Destroyed") || "Destroyed";
       case EfficiencyFactorEnum.Abandoned:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyAbandoned]', 'Abandoned') || 'Abandoned';
+        return translate(Localekeys.Abandoned, "Abandoned") || "Abandoned";
       case EfficiencyFactorEnum.Disabled:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDisabled]', 'Disabled') || 'Disabled';
+        return translate(Localekeys.Disabled, "Disabled") || "Disabled";
       case EfficiencyFactorEnum.Fire:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyFire]', 'Fire') || 'Fire';
+        return translate(Localekeys.Fire, "Fire") || "Fire";
       case EfficiencyFactorEnum.ServiceBudget:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyServiceBudget]', 'Service Budget') || 'Service Budget'
-        );
+        return translate(Localekeys.ServiceBudget, "Service Budget") || "Service Budget";
       case EfficiencyFactorEnum.NotEnoughEmployees:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNotEnoughEmployees]', 'Not Enough Employees') ||
-          'Not Enough Employees'
-        );
+        return translate(Localekeys.NotEnoughEmployees, "Not Enough Employees") || "Not Enough Employees";
       case EfficiencyFactorEnum.SickEmployees:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencySickEmployees]', 'Sick Employees') || 'Sick Employees'
-        );
+        return translate(Localekeys.SickEmployees, "Sick Employees") || "Sick Employees";
       case EfficiencyFactorEnum.EmployeeHappiness:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyEmployeeHappiness]', 'Employee Happiness') ||
-          'Employee Happiness'
-        );
+        return translate(Localekeys.EmployeeHappiness, "Employee Happiness") || "Employee Happiness";
       case EfficiencyFactorEnum.ElectricitySupply:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricitySupply]', 'Lack of electricity') ||
-          'Lack of electricity'
-        );
+        return translate(Localekeys.ElectricitySupply, "Electricity Supply") || "Electricity Supply";
       case EfficiencyFactorEnum.ElectricityFee:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyElectricityFee]', 'Electricity fee') ||
-          'Electricity fee'
-        );
+        return translate(Localekeys.ElectricityFee, "Electricity Fee") || "Electricity Fee";
       case EfficiencyFactorEnum.WaterSupply:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterSupply]', 'Lack of water') || 'Lack of water'
-        );
+        return translate(Localekeys.WaterSupply, "Water Supply") || "Water Supply";
       case EfficiencyFactorEnum.DirtyWater:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyDirtyWater]', 'Polluted water') || 'Polluted water'
-        );
+        return translate(Localekeys.DirtyWater, "Dirty Water") || "Dirty Water";
       case EfficiencyFactorEnum.SewageHandling:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencySewageHandling]', 'Backed up sewer') ||
-          'Backed up sewer'
-        );
+        return translate(Localekeys.SewageHandling, "Sewage Handling") || "Sewage Handling";
       case EfficiencyFactorEnum.WaterFee:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterFee]', 'Water fee') || 'Water fee';
+        return translate(Localekeys.WaterFee, "Water Fee") || "Water Fee";
       case EfficiencyFactorEnum.Garbage:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyGarbage]', 'Piled up garbage') || 'Piled up garbage'
-        );
+        return translate(Localekeys.Garbage, "Garbage") || "Garbage";
       case EfficiencyFactorEnum.Telecom:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyTelecom]', 'Network Quality') || 'Network Quality'
-        );
+        return translate(Localekeys.Telecom, "Telecom") || "Telecom";
       case EfficiencyFactorEnum.Mail:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMail]', 'Mail Handling') || 'Mail Handling';
+        return translate(Localekeys.Mail, "Mail") || "Mail";
       case EfficiencyFactorEnum.MaterialSupply:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyMaterialSupply]', 'Lack of resources') ||
-          'Lack of resources'
-        );
+        return translate(Localekeys.MaterialSupply, "Material Supply") || "Material Supply";
       case EfficiencyFactorEnum.WindSpeed:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWindSpeed]', 'Low wind speed') || 'Low wind speed'
-        );
+        return translate(Localekeys.WindSpeed, "Wind Speed") || "Wind Speed";
       case EfficiencyFactorEnum.WaterDepth:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyWaterDepth]', 'Low water depth') || 'Low water depth'
-        );
+        return translate(Localekeys.WaterDepth, "Water Depth") || "Water Depth";
       case EfficiencyFactorEnum.SunIntensity:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencySunIntensity]', 'Lack of sunlight') ||
-          'Lack of sunlight'
-        );
+        return translate(Localekeys.SunIntensity, "Sun Intensity") || "Sun Intensity";
       case EfficiencyFactorEnum.NaturalResources:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyNaturalResources]', 'Natural Resources') ||
-          'Natural Resources'
-        );
+        return translate(Localekeys.NaturalResources, "Natural Resources") || "Natural Resources";
       case EfficiencyFactorEnum.CityModifierSoftware:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierSoftware]', 'City Effect') ||
-          'City Effect'
-        );
+        return translate(Localekeys.CityModifierSoftware, "City Modifier Software") || "City Modifier Software";
       case EfficiencyFactorEnum.CityModifierElectronics:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierElectronics]', 'City Effect') ||
-          'City Effect'
-        );
+        return translate(Localekeys.CityModifierElectronics, "City Modifier Electronics") || "City Modifier Electronics";
       case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierIndustrial]', 'Industrial Efficiency') ||
-          'Industrial Efficiency'
-        );
+        return translate(Localekeys.CityModifierIndustrialEfficiency, "City Modifier Industrial Efficiency") || "City Modifier Industrial Efficiency";
       case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierOffice]', 'Office Efficiency') ||
-          'Office Efficiency'
-        );
+        return translate(Localekeys.CityModifierOfficeEfficiency, "City Modifier Office Efficiency") || "City Modifier Office Efficiency";
       case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
-        return (
-          translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCityModifierHospital]', 'Hospital Efficiency') ||
-          'Hospital Efficiency'
-        );
+        return translate(Localekeys.CityModifierHospitalEfficiency, "City Modifier Hospital Efficiency") || "City Modifier Hospital Efficiency";
       case EfficiencyFactorEnum.SpecializationBonus:
-        return (
-          translate(
-            'InfoLoomTwo.IndustrialCompanyPanel[EfficiencySpecializationBonus]',
-            'City Production Specialization'
-          ) || 'City Production Specialization'
-        );
-      case EfficiencyFactorEnum.Count:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyCount]', 'Count') || 'Count';
+        return translate(Localekeys.SpecializationBonus, "Specialization Bonus") || "Specialization Bonus";
+      case EfficiencyFactorEnum.LackResources:
+        return translate(Localekeys.LackResources, "Lack of Resources") || "Lack of Resources";
       default:
-        return translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyUnknown]', 'Unknown Factor') || 'Unknown Factor';
+        return '';
     }
   };
 
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
-        <p>
-          {translate('InfoLoomTwo.IndustrialCompanyPanel[EfficiencyFactorsTitle]', 'Factors affecting efficiency:') ||
-            'Factors affecting efficiency:'}
-        </p>
         {company.Factors &&
           company.Factors.map((factor, index) => {
             if (!factor) return null;
@@ -248,7 +185,7 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) =
 };
 
 interface SortableHeaderProps {
-  title: string;
+  title: string | null;
   sortState: SortingEnum;
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
   className?: string;
@@ -308,6 +245,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
   const input2SortingOptions = useValue(IndustrialInput2Sorting);
   const outputSortingOptions = useValue(IndustrialOutputSorting);
   const maintenanceSortingOptions = useValue(IndustrialMaintenanceSorting);
+  const getResourceTranslation = useResourceTranslation();
 
   // Helper function to get efficiency class
   const getEfficiencyClass = (efficiency: number) => {
@@ -333,27 +271,20 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
     return (
       <div className={styles.tooltipContent}>
         <div className={styles.tooltipText}>
-          <p>
-            <strong>
-              {translate('InfoLoomTwo.IndustrialCompanyPanel[ProcessingResourcesTitle]', 'Processing Resources') ||
-                'Processing Resources'}
-            </strong>
-          </p>
           {outputResources.length > 0 ? (
             <div>
               {outputResources.map((resource, index) => (
                 <p cohinline="cohinline" key={`output-${index}`}>
                   {index === 0
-                    ? (translate('InfoLoomTwo.IndustrialCompanyPanel[Output]', 'Output:') || 'Output:') + ' '
+                    ? (translate(Localekeys.Output, 'Output:') || 'Output:') + ' '
                     : ''}
-                  {resource.resourceName}: {resource.amount}
+                    {getResourceTranslation(resource.resourceName as keyof typeof resourceKeyMap)}: {resource.amount}
                 </p>
               ))}
             </div>
           ) : (
             <p>
-              {translate('InfoLoomTwo.IndustrialCompanyPanel[NoOutputResources]', 'No output resources') ||
-                'No output resources'}
+              {translate(Localekeys.NoOutputResources, 'No output resources')}
             </p>
           )}
 
@@ -362,7 +293,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               {inputResources.map((resource, index) => (
                 <p key={`input-${index}`} cohinline="cohinline">
                   {index === 0
-                    ? (translate('InfoLoomTwo.IndustrialCompanyPanel[Input]', 'Input:') || 'Input:') + ' '
+                    ? (translate(Localekeys.Input, 'Input:') || 'Input:') + ' '
                     : ''}
                   {resource.resourceName}: {resource.amount}
                 </p>
@@ -370,8 +301,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
             </div>
           ) : (
             <p>
-              {translate('InfoLoomTwo.IndustrialCompanyPanel[NoInputResources]', 'No input resources') ||
-                'No input resources'}
+              {translate(Localekeys.NoInputResources, 'No input resources')}
             </p>
           )}
         </div>
@@ -388,20 +318,19 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
         <div className={styles.tooltipText}>
           <p>
             <strong>
-              {translate('InfoLoomTwo.IndustrialCompanyPanel[FinancialInformation]', 'Financial Information') ||
-                'Financial Information'}
+              {translate(Localekeys.FinancialInformation, 'Financial Information')}
             </strong>
           </p>
           <p>
-            {translate('InfoLoomTwo.IndustrialCompanyPanel[TotalWorth]', 'Total Worth') || 'Total Worth'}:{' '}
+            {translate(Localekeys.TotalWorth, 'Total Worth') || 'Total Worth'}:{' '}
             {formatNumber(company.LastTotalWorth)}
           </p>
           <p>
-            {translate('InfoLoomTwo.IndustrialCompanyPanel[TotalWages]', 'Total Wages') || 'Total Wages'}:{' '}
+            {translate(Localekeys.TotalWages, 'Total Wages') || 'Total Wages'}:{' '}
             {formatNumber(company.TotalWages)}
           </p>
           <p>
-            {translate('InfoLoomTwo.IndustrialCompanyPanel[DailyProduction]', 'Daily Production') || 'Daily Production'}
+            {translate(Localekeys.DailyProduction, 'Daily Production') || 'Daily Production'}
             : {formatNumber(company.ProductionPerDay)}
           </p>
           <p>
@@ -418,7 +347,32 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
       </div>
     );
   };
-
+interface CompanyMoneyTooltipProps {
+  company: IndustrialCompanyDebug;
+}
+const CompanyMoneyTooltip: FC<CompanyMoneyTooltipProps> = ({ company }) => {
+  const {translate} = useLocalization();
+    return (
+      <div className={styles.tooltipContent}>
+        <div className={styles.tooltipText}>
+          <div className={styles.tooltipRow}> {translate(Localekeys.Income, "Income")} : <LocalizedNumber value={company.Income} unit={Unit.MoneyPerMonth} /></div> 
+          <div className={styles.tooltipRow}> {translate(Localekeys.Worth, "Bank Balance")} : <LocalizedNumber value={company.Worth} unit={Unit.Money} /></div>  
+          <div className={styles.tooltipRow}> {translate(Localekeys.Profit, "Profit")} : <LocalizedNumber value={company.Profit} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.WagePaid, "Wage Paid")} : <LocalizedNumber value={company.WagePaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.RentPaid, "Rent Paid")} : <LocalizedNumber value={company.RentPaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.ElectricityPaid, "Electricity Paid")} : <LocalizedNumber value={company.ElectricityPaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.WaterFeePaid, "Water Paid")} : <LocalizedNumber value={company.WaterPaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.SewageFeePaid, "Sewage Paid")} : <LocalizedNumber value={company.SewagePaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.GarbageFeePaid, "Garbage Paid")} : <LocalizedNumber value={company.GarbagePaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.TaxesPaid, "Tax Paid")} : <LocalizedNumber value={company.TaxPaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.ResourcesBoughtPaid, "Resources Bought Paid")} : <LocalizedNumber value={company.ResourcesBoughtPaid} unit={Unit.MoneyPerMonth} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.Customers, "Current Customers")} : <LocalizedNumber value={company.CurrentCustomers} unit={Unit.Integer} /></div>
+          <div className={styles.tooltipRow}> {translate(Localekeys.DailyCustomers, "Monthly Customers")} : <LocalizedNumber value={company.MonthlyCustomers} unit={Unit.IntegerPerMonth} /></div>
+          
+        </div>
+      </div>
+    );
+};
   // Memoized CompanyRow component to prevent re-renders when props haven't changed
   const CompanyRowWithTranslation = React.memo(({ company }: { company: IndustrialCompanyDebug }) => {
     const totalEfficiency = company.TotalEfficiency;
@@ -460,6 +414,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
           <LocalizedFraction value={company.VehicleCount} total={company.VehicleCapacity} />
         </div>
         {/* Money Column */}
+        <Tooltip tooltip={<CompanyMoneyTooltip company={company} />}>
         <div className={styles.moneyColumn}>
           <div className={styles.resourceGroup}>
             <span className={styles.resourceAmount}>
@@ -467,6 +422,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
             </span>
           </div>
         </div>
+        </Tooltip>
         {/* Input 1 Column */}
         <div className={styles.input1Column}>
           {company.Input1Resources && company.Input1Resources.length > 0 ? (
@@ -566,8 +522,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 </div>
               </div>
             ) : (
-              translate('InfoLoomTwo.IndustrialCompanyPanel[None]', 'None') || 'None'
-            )}
+              translate(Localekeys.None, 'None'))}
           </div>
         </Tooltip>
 
@@ -660,15 +615,13 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
           header={
             <div className={styles.header}>
               <span className={styles.headerText}>
-                {translate('InfoLoomTwo.IndustrialCompanyPanel[Title]', 'Industrial Companies') ||
-                  'Industrial Companies'}
+                {translate(Localekeys.IndustrialCompanies, 'Industrial Companies')}
               </span>
             </div>
           }
         >
           <p className={styles.loadingText}>
-            {translate('InfoLoomTwo.IndustrialCompanyPanel[NoCompanies]', 'No Industrial Companies Found') ||
-              'No Industrial Companies Found'}
+            {translate(Localekeys.NoCompanyFound, 'No Company Found')}
           </p>
         </Panel>
       </Portal>
@@ -685,7 +638,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
         header={
           <div className={styles.header}>
             <span className={styles.headerText}>
-              {translate('InfoLoomTwo.IndustrialCompanyPanel[Title]', 'Industrial Companies') || 'Industrial Companies'}
+              {translate(Localekeys.IndustrialCompanies, 'Industrial Companies')}
             </span>
           </div>
         }
@@ -725,7 +678,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
           <div className={styles.tableHeader}>
             <div className={styles.headerRow}>
               <SortableHeader
-                title={translate('InfoLoomTwo.IndustrialCompanyPanel[Name]', 'Name') || 'Name'}
+                title={translate(Localekeys.Name, 'Name') || 'Name'}
                 sortState={nameSortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialCompanyNameSorting(SortingEnum.Ascending);
@@ -736,7 +689,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               />
 
               <SortableHeader
-                title={translate('InfoLoomTwo.IndustrialCompanyPanel[Employees]', 'Employees') || 'Employees'}
+                title={translate(Localekeys.Employees, 'Employees') || 'Employees'}
                 sortState={employeeSortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialCompanyEmployee(SortingEnum.Ascending);
@@ -749,18 +702,17 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               <Tooltip
                 tooltip={
                   translate(
-                    'InfoLoomTwo.IndustrialCompanyPanel[VehiclesTooltip]',
+                    Localekeys.VehiclesTooltip,
                     'Current vehicle count vs maximum vehicle capacity for deliveries and transportation'
-                  ) || 'Current vehicle count vs maximum vehicle capacity'
-                }
+                  )}
               >
                 <div className={`${styles.headerCell} ${styles.vehicleColumn}`}>
-                  <b>{translate('InfoLoomTwo.IndustrialCompanyPanel[Vehicles]', 'Vehicles') || 'Vehicles'}</b>
+                  <b>{translate(Localekeys.Vehicles, 'Vehicles')}</b>
                 </div>
               </Tooltip>
 
               <SortableHeader
-                title={'Money'}
+                title={translate(Localekeys.Resource_Money, 'Money')}
                 sortState={moneySortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialMoneySorting(SortingEnum.Ascending);
@@ -770,7 +722,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 className={styles.moneyColumn}
               />
               <SortableHeader
-                title={'Input 1'}
+                title={translate(Localekeys.Input, 'Input 1')}
                 sortState={input1SortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialInput1Sorting(SortingEnum.Ascending);
@@ -781,7 +733,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               />
 
               <SortableHeader
-                title={'Input 2'}
+                title={translate(Localekeys.Input, 'Input 2')}
                 sortState={input2SortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialInput2Sorting(SortingEnum.Ascending);
@@ -792,7 +744,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               />
 
               <SortableHeader
-                title={'Output'}
+                title={translate(Localekeys.Output, 'Output')}
                 sortState={outputSortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialOutputSorting(SortingEnum.Ascending);
@@ -803,7 +755,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               />
 
               <SortableHeader
-                title={'Maintenance'}
+                title={translate(Localekeys.Maintenance, 'Maintenance')}
                 sortState={maintenanceSortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialMaintenanceSorting(SortingEnum.Ascending);
@@ -816,18 +768,17 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               <Tooltip
                 tooltip={
                   translate(
-                    'InfoLoomTwo.IndustrialCompanyPanel[ProcessingTooltip]',
+                    Localekeys.ProcessingTooltip,
                     'Input and output resources processed by this company in the production chain'
-                  ) || 'Input/output resources processed by this industrial company'
-                }
+                  )}
               >
                 <div className={`${styles.headerCell} ${styles.processingColumn}`}>
-                  <b>{translate('InfoLoomTwo.IndustrialCompanyPanel[Processing]', 'Processing') || 'Processing'}</b>
+                  <b>{translate(Localekeys.Processing, 'Processing')}</b>
                 </div>
               </Tooltip>
 
               <SortableHeader
-                title={translate('InfoLoomTwo.IndustrialCompanyPanel[Efficiency]', 'Efficiency') || 'Efficiency'}
+                title={translate(Localekeys.Efficiency, 'Efficiency')}
                 sortState={efficiencySortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialCompanyEfficiency(SortingEnum.Ascending);
@@ -838,9 +789,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               />
 
               <SortableHeader
-                title={
-                  translate('InfoLoomTwo.IndustrialCompanyPanel[Profitability]', 'Profitability') || 'Profitability'
-                }
+                title={translate(Localekeys.Profitability, 'Profitability')}
                 sortState={profitabilitySortingOptions}
                 onSort={direction => {
                   if (direction === 'asc') SetIndustrialCompanyProfitability(SortingEnum.Ascending);
@@ -859,7 +808,7 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 }
               >
                 <div className={`${styles.headerCell} ${styles.locationColumn}`}>
-                  <b>{translate('InfoLoomTwo.IndustrialCompanyPanel[Location]', 'Location') || 'Location'}</b>
+                  <b>{translate(Localekeys.Location, 'Location')}</b>
                 </div>
               </Tooltip>
             </div>

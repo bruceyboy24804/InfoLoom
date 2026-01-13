@@ -19,5 +19,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.Industrial
         public float EfficiencyValue;
         public bool IsExtractor;
         public int ResourceCount;
+        
+        public bool HasStatistics;
     }
 }

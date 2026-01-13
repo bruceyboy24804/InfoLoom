@@ -1,4 +1,4 @@
-namespace InfoLoomTwo.Domain.DataDomain
+namespace InfoLoomTwo.Domain.DataDomain.Enums
 {
     public enum GroupingStrategy
     {

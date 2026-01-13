@@ -1,7 +1,10 @@
 import React, { memo, useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { useValue } from 'cs2/api';
-import { PopulationAtAge } from 'mods/domain/populationAtAge';
+import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
+import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
+import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
+import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
 import { GroupingStrategy } from '../../../domain/GroupingStrategy';
 import { createChartConfig, updateChartOptionsForGrouping } from '../chartConfig';
 import { useChartData } from '../hooks';
@@ -9,7 +12,10 @@ import { LegendLabels, DemographicsType } from '../types';
 import styles from '../Demographics.module.scss';
 
 interface DemographicsChartProps {
-	StructureDetails: PopulationAtAge[];
+	StructureDetails: PopulationDetailedGroupInfo[];
+	fiveYearDetails: PopulationFiveYearGroupInfo[];
+	tenYearDetails: PopulationTenYearGroupInfo[];
+	lifecycleDetails: PopulationLifecycleInfo[];
 	groupingStrategy: GroupingStrategy;
 	legendLabels: LegendLabels;
 	lifecycleLabels?: string[];
@@ -18,6 +24,9 @@ interface DemographicsChartProps {
 
 const DemographicsChartComponent = ({
 	StructureDetails,
+	fiveYearDetails,
+	tenYearDetails,
+	lifecycleDetails,
 	groupingStrategy,
 	legendLabels,
 	lifecycleLabels,
@@ -28,7 +37,7 @@ const DemographicsChartComponent = ({
 	const containerRef = useRef<HTMLDivElement | null>(null);
 
 	// Use custom hook for chart data transformation
-	const chartData = useChartData(StructureDetails, groupingStrategy, chartSwitch, legendLabels, lifecycleLabels);
+	const chartData = useChartData(StructureDetails, fiveYearDetails, tenYearDetails, lifecycleDetails, groupingStrategy, chartSwitch, legendLabels, lifecycleLabels);
 
 	// Initialize chart ONLY ONCE
 	useEffect(() => {

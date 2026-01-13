@@ -63,20 +63,10 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
             m_CitySystem = World.GetOrCreateSystemManaged<CitySystem>();
             m_CountCompanyDataSystem = World.GetOrCreateSystemManaged<CountCompanyDataSystem>();
             
-            m_EconomyParameterQuery = GetEntityQuery(ComponentType.ReadOnly<EconomyParameterData>());
-            m_DemandParameterQuery = GetEntityQuery(ComponentType.ReadOnly<DemandParameterData>());
-            m_FreeCommercialQuery = GetEntityQuery(
-                ComponentType.ReadOnly<CommercialProperty>(), 
-                ComponentType.ReadOnly<PropertyOnMarket>(), 
-                ComponentType.ReadOnly<PrefabRef>(), 
-                ComponentType.Exclude<Abandoned>(), 
-                ComponentType.Exclude<Destroyed>(), 
-                ComponentType.Exclude<Deleted>(), 
-                ComponentType.Exclude<Condemned>(), 
-                ComponentType.Exclude<Temp>());
-            m_CommercialProcessDataQuery = GetEntityQuery(
-                ComponentType.ReadOnly<IndustrialProcessData>(), 
-                ComponentType.ReadOnly<ServiceCompanyData>());
+             m_EconomyParameterQuery = SystemAPI.QueryBuilder().WithAll<EconomyParameterData>().Build();
+             m_DemandParameterQuery = SystemAPI.QueryBuilder().WithAll<DemandParameterData>().Build();
+             m_FreeCommercialQuery = SystemAPI.QueryBuilder().WithAll<CommercialProperty>().WithAll<PropertyOnMarket, PrefabRef>().WithNone<Abandoned, Destroyed, Deleted, Condemned, Temp >().Build();
+             m_CommercialProcessDataQuery = SystemAPI.QueryBuilder().WithAll<IndustrialProcessData, ServiceCompanyData>().Build();
 
             int resourceCount = EconomyUtils.ResourceCount;
             m_ResourceDemands = new NativeArray<int>(resourceCount, Allocator.Persistent);

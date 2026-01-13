@@ -186,7 +186,11 @@
 
 .tooltipContent {
   z-index: 10;
-  max-width: 400rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
 }
 
 .tooltipText {
@@ -201,7 +205,10 @@
   display: flex;
   flex-direction: row;
 }
-
+.tooltipRow {
+  display: flex;
+  flex-direction: row;
+}
 .factorRow {
   display: flex;
   justify-content: space-between;

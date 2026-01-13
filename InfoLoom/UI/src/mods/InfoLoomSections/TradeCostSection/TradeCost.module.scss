@@ -10,7 +10,11 @@
     height: 700rem;
   }
 }
-
+.historyPanel {
+  width: 1600rem;
+  max-width: 1600rem;
+  height: 900rem;
+}
 .header {
   display: flex;
   flex-direction: row;
@@ -235,18 +239,19 @@
 
 .graphViewContainer {
   display: flex;
-  height: 580rem;
+  height: 100%;
+  box-sizing: border-box;
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 8rem;
   padding: 15rem;
 }
 
 .resourceCheckboxes {
-  flex: 0 0 280rem;
+  flex: 0 0 240rem;
+  display: flex;
+  flex-direction: column;
   border-right: 2rem solid rgba(255, 255, 255, 0.2);
   padding-right: 20rem;
-  max-height: 550rem;
-  overflow-y: auto;
 }
 
 .checkboxHeader {
@@ -258,23 +263,104 @@
   font-size: 16rem;
 }
 
-.checkboxItem {
-  margin-bottom: 8rem;
-  padding: 6rem 0;
-  transition: background-color 0.2s ease;
-  border-radius: 4rem;
-  padding-left: 8rem;
+.historyWindowControls {
+	display: flex;
+	flex-direction: column;
+	gap: 10rem;
+	margin-bottom: 20rem;
+}
+
+.historyWindowLabel {
+	font-weight: bold;
+	color: rgba(255, 255, 255, 0.85);
+	text-transform: uppercase;
+	letter-spacing: 0.8rem;
+	font-size: 13rem;
+}
+
+.historyWindowDropdown {
+	width: 120rem;
+}
+
+.resourceToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10rem;
+  margin-bottom: 10rem;
+  padding: 8rem 12rem;
+  border-radius: 6rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13rem;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &.resourceToggleSelected {
+    background-color: rgba(76, 175, 80, 0.25);
+    color: #fff;
   }
 }
 
-.checkboxLabel {
+.resourceToggleColor {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 8rem;
+}
+
+.resourceToggleLabel {
+  flex: 1;
+  text-align: left;
+}
+
+.resourceToggleScroll {
+  flex: 1;
+  max-height: 100%;
+  padding-bottom: 20rem;
+  overflow-y: auto;
+}
+
+.historyLaunchRow {
   display: flex;
   align-items: center;
-  font-size: 14rem;
-  color: rgba(255, 255, 255, 0.8);
+  justify-content: space-between;
+  margin-bottom: 20rem;
+  padding: 12rem 18rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8rem;
+}
+
+.historyLaunchText {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.sectionTitle {
+  font-weight: bold;
+  font-size: 18rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sectionDescription {
+  font-size: 13rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.historyLaunchButton {
+  padding: 10rem 16rem;
+  border-radius: 6rem;
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #fff;
+
+  &:hover {
+    background-color: rgba(33, 150, 243, 0.35);
+  }
 }
 
 .graphArea {
@@ -294,9 +380,11 @@
 }
 
 .graphContainer {
+  display: flex;
   flex: 1;
   position: relative;
-  min-height: 450rem;
+  min-height: 0;
+  height: 100%;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
   border-radius: 12rem;
   padding: 20rem;
@@ -361,5 +449,5 @@
 }
 .outsideConnectionContainer {
   display: flex;
-  width: 50rem;
+  width: 100%;
 }

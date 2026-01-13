@@ -41,4 +41,19 @@ export interface IndustrialCompanyDebug {
   Input2Resources: ResourceInfo[];
   OutputResources: ResourceInfo[];
   MaintenanceResources: ResourceInfo[];
+
+  Income: number;
+  Worth: number;
+  Profit: number;
+  WagePaid: number;
+  RentPaid: number;
+  ElectricityPaid: number;
+  WaterPaid: number;
+  SewagePaid: number;
+  GarbagePaid: number;
+  TaxPaid: number;
+  ResourcesBoughtPaid: number;
+  CurrentCustomers: number;
+  MonthlyCustomers: number;
+  
 }

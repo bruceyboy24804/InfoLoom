@@ -6,6 +6,7 @@ using Colossal.Logging;
 using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using Game;
+using Game.Agents;
 using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
@@ -126,8 +127,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 
             m_IndustrialCompanyQuery = SystemAPI.QueryBuilder()
-                .WithAll<IndustrialCompany>()
-                .WithNone<StorageCompany>()
+                .WithAll<IndustrialCompany, PropertyRenter>()
+                .WithNone<StorageCompany, MovingAway>()
                 .Build();
 
             m_CompanyNameCache = new Dictionary<Entity, string>();
@@ -236,6 +237,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 EmployeeBufferType = SystemAPI.GetBufferTypeHandle<Employee>(true),
                 OwnedVehicleBufferType = SystemAPI.GetBufferTypeHandle<OwnedVehicle>(true),
                 ResourcesBufferType = SystemAPI.GetBufferTypeHandle<Resources>(true),
+                CompanyStatisticDataLookup = GetComponentLookup<CompanyStatisticData>(true),
 
                 TransportCompanyDataLookup = SystemAPI.GetComponentLookup<TransportCompanyData>(true),
                 IndustrialProcessDataLookup = SystemAPI.GetComponentLookup<IndustrialProcessData>(true),
@@ -600,6 +602,40 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             else
                 companyNameString = "Unknown Company";
             
+            int income = 0;
+            int worth = 0;
+            int profit = 0;
+            int wagePaid = 0;
+            int rentPaid = 0;
+            int electricityPaid = 0;
+            int waterPaid = 0;
+            int sewagePaid = 0;
+            int garbagePaid = 0;
+            int taxPaid = 0;
+            int resourcesBoughtPaid = 0;
+            int currentCustomers = 0;
+            int monthlyCustomers = 0;
+            if (jobData.HasStatistics)
+            {
+                var companyStatisticDataLookup = SystemAPI.GetComponentLookup<CompanyStatisticData>(true);
+                if (companyStatisticDataLookup.TryGetComponent(jobData.EntityId, out var companyStatisticData))
+                {
+                    income = companyStatisticData.m_Income;
+                    worth = companyStatisticData.m_Worth;
+                    profit = companyStatisticData.m_Profit;
+                    wagePaid = companyStatisticData.m_WagePaid;
+                    rentPaid = companyStatisticData.m_RentPaid;
+                    electricityPaid = companyStatisticData.m_ElectricityPaid;
+                    waterPaid = companyStatisticData.m_WaterPaid;
+                    sewagePaid = companyStatisticData.m_SewagePaid;
+                    garbagePaid = companyStatisticData.m_GarbagePaid;
+                    taxPaid = companyStatisticData.m_TaxPaid;
+                    resourcesBoughtPaid = companyStatisticData.m_CostBuyResource;
+                    currentCustomers = companyStatisticData.m_CurrentNumberOfCustomers;
+                    monthlyCustomers = companyStatisticData.m_MonthlyCustomerCount;
+                }
+            }
+            
             var dto = new IndustrialCompanyDTO
             {
                 EntityId = jobData.EntityId,
@@ -626,6 +662,19 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 Input2Resources = input2Resources,
                 OutputResources = outputResources,
                 MaintenanceResources = maintenanceResources,
+                Income = income,
+                Worth = worth,
+                Profit = profit,
+                WagePaid = wagePaid,
+                RentPaid = rentPaid,
+                ElectricityPaid = electricityPaid,
+                WaterPaid = waterPaid,
+                SewagePaid = sewagePaid,
+                GarbagePaid = garbagePaid,
+                TaxPaid = taxPaid,
+                ResourcesBoughtPaid = resourcesBoughtPaid,
+                CurrentCustomers = currentCustomers,
+                MonthlyCustomers = monthlyCustomers,
             };
             
             // Cache the result

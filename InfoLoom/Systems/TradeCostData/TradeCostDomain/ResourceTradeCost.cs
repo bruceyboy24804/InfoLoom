@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
 {
     public class ResourceTradeCost

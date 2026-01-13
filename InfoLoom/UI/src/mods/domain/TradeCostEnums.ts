@@ -11,4 +11,5 @@ export enum OutsideConnectionType
   Train = 1,
   Air = 3,
   Ship = 4,
+  All = 5,
 }

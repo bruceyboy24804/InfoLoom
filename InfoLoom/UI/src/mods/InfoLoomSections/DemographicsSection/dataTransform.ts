@@ -1,5 +1,6 @@
-import { PopulationAtAge } from 'mods/domain/populationAtAge';
+import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
 import { GroupingStrategy } from '../../domain/GroupingStrategy';
+import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
 
 export interface AgeRange {
 	label: string;
@@ -24,26 +25,27 @@ export interface AggregatedGroup {
 	childOrTeenWithNoSchool: number;
 }
 
+export function getLifecycleRangePlaceholders(): AgeRange[] {
+	return [
+		{ label: 'Child', min: 0, max: 0 },
+		{ label: 'Teen', min: 0, max: 0 },
+		{ label: 'Adult', min: 0, max: 0 },
+		{ label: 'Elderly', min: 0, max: 0 },
+	];
+}
+
 /** Generate age ranges for grouping strategies */
 export function generateRanges(step: number): AgeRange[] {
 	const ranges: AgeRange[] = [];
 	for (let i = 0; i < 120; i += step) {
 		ranges.push({
-			label: i === 0 ? `0-${step}` : i + step >= 120 ? `${i}-${120}` : `${i}-${i + step}`,
+			label: i === 0 ? `0-${step - 1}` : i + step >= 120 ? `${i}-120` : `${i}-${i + step - 1}`,
 			min: i,
-			max: i + step,
+			max: i + step - 1,
 		});
 	}
 	return ranges;
 }
-
-/** Predefined lifecycle ranges */
-export const LIFECYCLE_RANGES: AgeRange[] = [
-	{ label: 'Child', min: 0, max: 20 },
-	{ label: 'Teen', min: 21, max: 35 },
-	{ label: 'Adult', min: 36, max: 83 },
-	{ label: 'Elderly', min: 84, max: 120 },
-];
 
 /** Create empty aggregated group */
 function createEmptyGroup(label: string): AggregatedGroup {
@@ -66,7 +68,7 @@ function createEmptyGroup(label: string): AggregatedGroup {
 }
 
 /** Aggregate a single data point into a group */
-function aggregateDataPoint(group: AggregatedGroup, data: PopulationAtAge): void {
+function aggregateDataPoint(group: AggregatedGroup, data: PopulationDetailedGroupInfo): void {
 	group.work += data.Work;
 	group.elementary += data.School1;
 	group.highSchool += data.School2;
@@ -82,33 +84,22 @@ function aggregateDataPoint(group: AggregatedGroup, data: PopulationAtAge): void
 	group.childOrTeenWithNoSchool += data.ChildOrTeenWithNoSchool;
 }
 
-/** Aggregate data by predefined ranges (lifecycle or custom) */
-function aggregateByRanges(
-	data: PopulationAtAge[],
-	ranges: AgeRange[]
-): AggregatedGroup[] {
-	const groups = ranges.map(range => createEmptyGroup(range.label));
 
-	data.forEach(d => {
-		if (d.Age > 120) return;
-		const idx = ranges.findIndex(range => d.Age >= range.min && d.Age <= range.max);
-		if (idx !== -1) {
-			aggregateDataPoint(groups[idx], d);
-		}
-	});
-
-	return groups;
-}
 
 /** Aggregate data by fixed step intervals (5-year, 10-year) */
 function aggregateByStep(
-	data: PopulationAtAge[],
+	data: PopulationDetailedGroupInfo[],
 	step: number
 ): AggregatedGroup[] {
 	const groups: AggregatedGroup[] = [];
 	
 	for (let i = 0; i < 120; i += step) {
-		groups.push(createEmptyGroup(`${i}-${i + step}`));
+		const label = i === 0
+			? `0-${step - 1}`
+			: i + step >= 120
+				? `${i}-120`
+				: `${i}-${i + step - 1}`;
+		groups.push(createEmptyGroup(label));
 	}
 
 	data.forEach(d => {
@@ -124,8 +115,8 @@ function aggregateByStep(
 
 /** Get value for a specific attribute at a specific age (detailed view) */
 function getValueAtAge(
-	data: PopulationAtAge[],
-	attr: keyof PopulationAtAge,
+	data: PopulationDetailedGroupInfo[],
+	attr: keyof PopulationDetailedGroupInfo,
 	age: number
 ): number {
 	return data
@@ -135,7 +126,7 @@ function getValueAtAge(
 
 /** Transform data based on grouping strategy */
 export function transformDataByStrategy(
-	data: PopulationAtAge[],
+	data: PopulationDetailedGroupInfo[],
 	strategy: GroupingStrategy
 ): { labels: string[]; groups: AggregatedGroup[] | null } {
 	if (!data.length) {
@@ -168,10 +159,7 @@ export function transformDataByStrategy(
 			return { labels, groups };
 		}
 
-		case GroupingStrategy.LifeCycle: {
-			const groups = aggregateByRanges(data, LIFECYCLE_RANGES);
-			return { labels: groups.map(g => g.label), groups };
-		}
+		
 
 		case GroupingStrategy.FiveYear: {
 			const groups = aggregateByStep(data, 5);
