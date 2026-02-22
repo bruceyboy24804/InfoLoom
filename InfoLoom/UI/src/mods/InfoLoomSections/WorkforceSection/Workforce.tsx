@@ -9,12 +9,10 @@ import { workforceInfo } from '../../domain/workforceInfo';
 import { LocalizedNumber, LocalizedPercentage, useLocalization } from 'cs2/l10n';
 import mod from 'mod.json';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
-import { hideColumnsBinding } from '../WorkplacesSection/Workplaces';
 import { DistrictSelector } from '../../InfoloomInfoviewContents/DistrictSelector/districtSelector';
 import { infoview } from 'cs2/bindings';
 import classNames from 'classnames';
 import { useRem } from 'cs2/utils';
-import { formatPercentage1, formatPercentage2 } from '../utils/formatText';
 import { Localekeys } from 'mods/locale';
 
 const ShowExtraWorkforce = bindValue<number>(mod.id, 'ShowExtraWorkforce', 0);
@@ -331,9 +329,7 @@ const WorkforceLine: React.FC<WorkforceLineProps> = ({
       )}
       {value < 4 && (
         <div className={styles.col6}>
-          <span>
-              {levelValues.UnemploymentRate.toFixed(1)}%
-          </span>
+          <span>{levelValues.UnemploymentRate.toFixed(1)}%</span>
         </div>
       )}
       {value < 3 && (

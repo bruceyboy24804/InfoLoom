@@ -8,6 +8,7 @@ import { ILCitizenInfoSection } from 'mods/InfoLoomSections/ILInfoSections/Secti
 import { ILBuildingInfoSection } from './mods/InfoLoomSections/ILInfoSections/Sections/buildingInfoComponent';
 import { ILRentInfoSection } from 'mods/InfoLoomSections/ILInfoSections/Sections/rentInfoComponent';
 import { ILPropertyInfoSection } from 'mods/InfoLoomSections/ILInfoSections/Sections/propertyCountSection';
+import { ILEffectsInfoSection } from 'mods/InfoLoomSections/ILInfoSections/Sections/effectInfoComponent';
 
 const register: ModRegistrar = moduleRegistry => {
   VanillaComponentResolver.setRegistry(moduleRegistry);
@@ -31,6 +32,11 @@ const register: ModRegistrar = moduleRegistry => {
     'game-ui/game/components/selected-info-panel/selected-info-sections/selected-info-sections.tsx',
     'selectedInfoSectionComponents',
     ILPropertyInfoSection
+  );
+  moduleRegistry.extend(
+    'game-ui/game/components/selected-info-panel/selected-info-sections/selected-info-sections.tsx',
+    'selectedInfoSectionComponents',
+    ILEffectsInfoSection
   );
 };
 

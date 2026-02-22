@@ -56,6 +56,7 @@ namespace InfoLoomTwo.Systems
         private const string WorkplacesOpen = "WorkplacesOpen";
         private const string CommercialCompanyDebugOpen = "CommercialCompanyDebugOpen";
         private const string IndustrialCompanyDebugOpen = "IndustrialCompanyDebugOpen";
+        private const string EffectsOpen = "EffectsOpen";
         public static Entity CityWide { get; } = Entity.Null;
         public Entity selectedDistrict { get; set; } = CityWide;
         private EntityQuery m_DistrictQuery;
@@ -285,6 +286,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _wPPVBinding;
         private ValueBinding<bool> _householdsDataVisibleBinding;
         private ValueBinding<bool> _TrafficDataVisibleBinding;
+        private ValueBinding<bool> _effectsVisibleBinding;
         
         
         private ILog m_Log;
@@ -375,6 +377,10 @@ namespace InfoLoomTwo.Systems
              _TrafficDataVisibleBinding = new ValueBinding<bool>(ModID, "TrafficDataVisible", false);
                 AddBinding(_TrafficDataVisibleBinding);
                AddBinding(new TriggerBinding<bool>(ModID, "TrafficDataVisible", SetTrafficDataVisibility));
+
+             _effectsVisibleBinding = new ValueBinding<bool>(ModID, EffectsOpen, false);
+             AddBinding(_effectsVisibleBinding);
+             AddBinding(new TriggerBinding<bool>(ModID, EffectsOpen, SetEffectsVisibility));
              
               
 
@@ -1024,6 +1030,10 @@ namespace InfoLoomTwo.Systems
             {
                 m_uiTrafficData.Update();
             }
+        }
+        private void SetEffectsVisibility(bool open)
+        {
+            _effectsVisibleBinding.Update(open);
         }
         private void CheckForDistrictChange()
         {

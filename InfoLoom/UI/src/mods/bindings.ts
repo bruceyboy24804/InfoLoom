@@ -1,20 +1,20 @@
 import { bindValue, trigger } from 'cs2/api';
 import mod from 'mod.json';
-import { CommercialProductData } from './domain/commercialProductData';
-import { PopulationAtAge } from 'mods/domain/populationAtAge';
 import { District } from './domain/District';
-import { industrialProductData } from './domain/industrialProductData';
-import { ResourceTradeCost } from './domain/tradeCostData';
 import { workforceInfo } from './domain/workforceInfo';
 import { workplacesInfo } from './domain/WorkplacesInfo';
 import { GroupingStrategy } from './domain/GroupingStrategy';
 import { CommercialCompanyDebug } from './domain/CommercialCompanyDebugData';
 import { IndustrialCompanyDebug } from './domain/IndustrialCompanyDebugData';
-import {
-  SortingEnum,
-  OutsideConnectionType,
-} from 'mods/domain/TradeCostEnums';
+import { PopulationDetailedGroupInfo } from './domain/populationDetailedGroupInfo';
+import { PopulationFiveYearGroupInfo } from './domain/populationFiveYearGroupInfo';
+import { PopulationTenYearGroupInfo } from './domain/populationTenYearGroupInfo';
+import { PopulationLifecycleInfo } from './domain/populationLifecycleInfo';
+import { SortingEnum, OutsideConnectionType } from 'mods/domain/TradeCostEnums';
 import { Demographics1, Demographics2 } from 'mods/domain/DemographicsEnums';
+import { ResourceTradeCost } from 'mods/domain/tradeCostData';
+import { StorageCompanyInfo } from './domain/StorageCompanyInfo';
+import {EntityModifierData} from "./domain/EffectsData";
 
 const INFO_LOOM_MENU_OPEN = 'InfoLoomMenuOpen';
 const COMMERCIAL_MENU_OPEN = 'CommercialMenuOpen';
@@ -49,7 +49,6 @@ export const DISTRICT_EMPLOYEE_DATA = 'DistrictEmployeeData';
 export const DISTRICT_COUNT = 'DistrictCount';
 export const INDUSTRIAL_DATA = 'IndustrialData';
 export const INDUSTRIAL_DATA_EX_RES = 'IndustrialDataExRes';
-export const INDUSTRIAL_PRODUCTS_DATA = 'IndustrialProductsData';
 export const RESIDENTIAL_DATA = 'ResidentialData';
 export const TRADE_COSTS_DATA = 'TradeCostsData';
 export const TRADE_COSTS_DATA_IMPORTS = 'TradeCostsDataImports';
@@ -79,19 +78,18 @@ export const WorkplacesOpen = bindValue<boolean>(mod.id, WORKPLACES_OPEN, false)
 
 export const CommercialData = bindValue<number[]>(mod.id, 'CommercialData');
 export const CommercialDataExRes = bindValue<string[]>(mod.id, 'CommercialDataExRes', []);
-export const CommercialProductsData = bindValue<CommercialProductData[]>(mod.id, 'CommercialProductsData', []);
 export const CommercialCompanyDebugData = bindValue<CommercialCompanyDebug[]>(mod.id, 'CommercialCompanyDebugData');
 export const BuildingDemandData = bindValue<number[]>(mod.id, 'BuildingDemandData', []);
-export const DemographicsDataDetails = bindValue<PopulationAtAge[]>("InfoLoomTwo", 'DemographicsDataDetails', []);
 export const DemographicsDataTotals = bindValue<number[]>(mod.id, 'DemographicsDataTotals', []);
 export const DemographicsDataOldestCitizen = bindValue<number>(mod.id, 'DemographicsDataOldestCitizen', 0);
 export const DistrictData$ = bindValue<District[]>('InfoLoomTwo', 'DistrictData');
 export const IndustrialData = bindValue<number[]>(mod.id, 'IndustrialData', []);
 export const IndustrialDataExRes = bindValue<string[]>(mod.id, 'IndustrialDataExRes', []);
-export const IndustrialProductsData = bindValue<industrialProductData[]>(mod.id, 'IndustrialProductsData', []);
 export const IndustrialCompanyDebugData = bindValue<IndustrialCompanyDebug[]>(mod.id, 'IndustrialCompanyDebugData', []);
 export const ResidentialData = bindValue<number[]>(mod.id, 'ResidentialData', []);
 export const TradeCostsData = bindValue<ResourceTradeCost[]>(mod.id, 'TradeCostsData', []);
+
+export const TradeCostsSelectedResources = bindValue<string[]>(mod.id, 'TradeCostsSelectedResources', []);
 export const WorkforceData = bindValue<workforceInfo[]>(mod.id, 'WorkforceData', []);
 export const WorkplacesData = bindValue<workplacesInfo[]>(mod.id, 'WorkplacesData', []);
 
@@ -113,6 +111,7 @@ export const SetResidentialDemandOpen = (open: boolean) => trigger(mod.id, RESID
 export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_OPEN, open);
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
+
 export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) =>
   trigger(mod.id, 'SetDemoGroupingStrategy', strategy);
 
@@ -224,11 +223,51 @@ export const SetProfitMarginSorting = (sorting: SortingEnum) => trigger(mod.id, 
 export const ResourceNameSorting = bindValue<SortingEnum>(mod.id, 'ResourceName', SortingEnum.Off);
 export const SetResourceNameSorting = (sorting: SortingEnum) => trigger(mod.id, 'SetResourceName', sorting);
 
-
-export const HistoricalData = bindValue<number[]>(mod.id, 'ResourceHistoricalData', []);
-export const SetHistoricalData = (resourceName: string) => trigger(mod.id, 'GetResourceHistoricalData', resourceName);
-
 export const DemographicsOne = bindValue<Demographics1>(mod.id, 'Demographics1', Demographics1.All);
 export const SetDemographicsOne = (demographics: Demographics1) => trigger(mod.id, 'SetDemographics1', demographics);
 export const DemographicsTwo = bindValue<Demographics2>(mod.id, 'Demographics2', Demographics2.All);
 export const SetDemographicsTwo = (demographics: Demographics2) => trigger(mod.id, 'SetDemographics2', demographics);
+export const DemographicsLifecycleTotals = bindValue<number[]>(
+  'InfoLoomTwo',
+  'DemographicsLifecycleTotals',
+  [0, 0, 0, 0]
+);
+
+export const DemographicsDetailedData = bindValue<PopulationDetailedGroupInfo[]>(
+  'InfoLoomTwo',
+  'DemographicsDetailedData',
+  []
+);
+
+export const DemographicsLifecycleDetails = bindValue<PopulationLifecycleInfo[]>(
+  'InfoLoomTwo',
+  'DemographicsLifecycleDetails',
+  []
+);
+
+export const DemographicsFiveYearDetails = bindValue<PopulationFiveYearGroupInfo[]>(
+  'InfoLoomTwo',
+  'DemographicsFiveYearDetails',
+  []
+);
+
+export const DemographicsTenYearDetails = bindValue<PopulationTenYearGroupInfo[]>(
+  'InfoLoomTwo',
+  'DemographicsTenYearDetails',
+  []
+);
+
+export const StorageCompaniesBinding = bindValue<StorageCompanyInfo[]>(mod.id, 'StorageCompanies', []);
+export const storagePanelVisibleBinding = bindValue<boolean>(mod.id, 'StoragePanelVisible', false);
+export const SetStoragePanelVisible = (visible: boolean) => trigger(mod.id, 'SetStoragePanelVisible', visible);
+
+export const EffectCountBinding = bindValue<number[]>(mod.id, 'EffectCount', [0, 0, 0]);
+export const EffectsBinding = bindValue<EntityModifierData[]>(mod.id, 'Effects', []);
+export const ShowEffectsButton = bindValue<boolean>(mod.id, 'showButton', true);
+export const EffectsOpen = bindValue<boolean>(mod.id, 'EffectsOpen', false);
+export const SetEffectsOpen = (open: boolean) => trigger(mod.id, 'EffectsOpen', open);
+export const OverlayEffects = bindValue<string[]>(mod.id, 'OverlayEffects', []);
+export const ToggleOverlay = (key: string) => trigger(mod.id, 'ToggleOverlay', key);
+export interface EffectColorInfo { Type: string; R: number; G: number; B: number; A: number; }
+export const EffectColors = bindValue<EffectColorInfo[]>(mod.id, 'EffectColors', []);
+export const ChangeEffectColor = (packed: string) => trigger(mod.id, 'ChangeEffectColor', packed);

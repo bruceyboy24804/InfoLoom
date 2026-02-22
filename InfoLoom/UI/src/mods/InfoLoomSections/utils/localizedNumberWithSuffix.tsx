@@ -12,7 +12,7 @@ export const LocalizedNumberWithSuffix: FC<LocalizedNumberWithSuffixProps> = ({
   value,
   unit,
   suffix,
-  suffixSpacing = true
+  suffixSpacing = true,
 }) => {
   const formatSuffix = (text: string): ReactNode => {
     // Replace ² with proper <sup>2</sup>

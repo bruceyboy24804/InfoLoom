@@ -1,0 +1,19 @@
+.panel{
+  width: 630rem;
+  background-color: var(--panelColorDark);
+  height: 400rem
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 18rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: -5rem;
+  font-size: 110%;
+}

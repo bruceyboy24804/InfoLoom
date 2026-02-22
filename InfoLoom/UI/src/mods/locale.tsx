@@ -379,6 +379,12 @@ export class Localekeys {
   public static TotalWages: string = 'InfoLoomTwo.Common[TotalWages]';
   public static DailyProduction: string = 'InfoLoomTwo.Common[DailyProduction]';
   public static Refresh: string = 'InfoLoomTwo.Common[Refresh]';
+  public static GroupByCompany: string = 'InfoLoomTwo.CompanyPanels[GroupByCompany]';
+  public static Buildings: string = 'InfoLoomTwo.CompanyPanels[Buildings]';
+  public static AvgEfficiency: string = 'InfoLoomTwo.CompanyPanels[AvgEfficiency]';
+  public static AvgProfitability: string = 'InfoLoomTwo.CompanyPanels[AvgProfitability]';
+  public static TotalMoney: string = 'InfoLoomTwo.CompanyPanels[TotalMoney]';
+  public static TotalEmployees: string = 'InfoLoomTwo.CompanyPanels[TotalEmployees]';
 
   
 

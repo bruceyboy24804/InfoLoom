@@ -21,10 +21,7 @@ import {
   SetExportAmountSorting,
 } from '../../bindings';
 import { ResourceTradeCost } from 'mods/domain/tradeCostData';
-import {
-  SortingEnum,
-  OutsideConnectionType,
-} from 'mods/domain/TradeCostEnums';
+import { SortingEnum, OutsideConnectionType } from 'mods/domain/TradeCostEnums';
 import { formatWords } from '../utils/formatText';
 import { OutsideConnectionSelector } from './Selectors/outsideConnectionSelector';
 import { Localekeys } from 'mods/locale';
@@ -46,7 +43,7 @@ function calculateProfitMargin(data: ResourceTradeCost) {
 }
 
 interface SortableHeaderProps {
-  label: string | null
+  label: string | null;
   tooltip?: string | null;
   sortState: number;
   onSort: (direction: 'asc' | 'desc' | 'off') => void;
@@ -143,15 +140,11 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
           className={styles.panel}
           header={
             <div className={styles.header}>
-              <span className={styles.headerText}>
-                {translate?.(Localekeys.TradeCosts, 'Trade Costs')}
-              </span>
+              <span className={styles.headerText}>{translate?.(Localekeys.TradeCosts, 'Trade Costs')}</span>
             </div>
           }
         >
-          <p className={styles.loadingText}>
-            {translate?.(Localekeys.Waiting, 'Waiting')}
-          </p>
+          <p className={styles.loadingText}>{translate?.(Localekeys.Waiting, 'Waiting')}</p>
         </Panel>
       </Portal>
     );
@@ -166,15 +159,13 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
         className={styles.panel}
         header={
           <div className={styles.header}>
-            <span className={styles.headerText}>
-              {translate?.(Localekeys.TradeCosts, 'Trade Costs')}
-            </span>
+            <span className={styles.headerText}>{translate?.(Localekeys.TradeCosts, 'Trade Costs')}</span>
           </div>
         }
       >
         <div className={styles.panelContent}>
           <div className={styles.outsideConnectionContainer}>
-          <OutsideConnectionSelector />
+            <OutsideConnectionSelector />
           </div>
 
           <div className={styles.tableHeader}>
@@ -251,7 +242,9 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                     <Icon src={row.ResourceIcon} className={styles.resourceIcon} />
                   </div>
 
-                  <div className={styles.resourceColumn}><LocalizedString id={formatWords(row.Resource)} showIdOnFail={true} /></div>
+                  <div className={styles.resourceColumn}>
+                    <LocalizedString id={formatWords(row.Resource)} showIdOnFail={true} />
+                  </div>
 
                   <div className={styles.buyCostColumn}>
                     <LocalizedNumber value={row.BuyCost} unit={Unit.FloatTwoFractions} />

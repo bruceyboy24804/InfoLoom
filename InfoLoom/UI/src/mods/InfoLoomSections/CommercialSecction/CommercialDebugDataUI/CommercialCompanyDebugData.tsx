@@ -1,40 +1,40 @@
-import React, {FC, ReactElement, useCallback, useEffect, useMemo, useState} from 'react';
-import {trigger, useValue} from 'cs2/api';
-import {Button, DraggablePanelProps, Icon, Panel, Portal, Tooltip} from 'cs2/ui';
-import {AutoNavigationScope, FocusActivation} from 'cs2/input';
-import {formatNumber, formatPercentage1, formatPercentage2,} from 'mods/InfoLoomSections/utils/formatText';
-import {CommercialCompanyDebug} from '../../../domain/CommercialCompanyDebugData';
+import React, { FC, ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { trigger, useValue } from 'cs2/api';
+import { Button, DraggablePanelProps, Icon, Panel, Portal, Tooltip } from 'cs2/ui';
+import { AutoNavigationScope, FocusActivation } from 'cs2/input';
+import { formatNumber, formatPercentage1, formatPercentage2 } from 'mods/InfoLoomSections/utils/formatText';
+import { CommercialCompanyDebug } from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
 import {
-    CommercialCompanyDebugData,
-    CommercialCompanyEfficiency,
-    CommercialCompanyEmployee,
-    CommercialCompanyIndexSorting,
-    CommercialCompanyNameSorting,
-    CommercialCompanyProfitability,
-    CommercialCompanyServiceUsage,
-    CommercialInput1Sorting,
-    CommercialMaintenanceSorting,
-    CommercialMoneySorting,
-    CommercialOutputSorting,
-    SetCommercialCompanyEfficiency,
-    SetCommercialCompanyEmployee,
-    SetCommercialCompanyNameSorting,
-    SetCommercialCompanyProfitability,
-    SetCommercialCompanyServiceUsage,
-    SetCommercialInput1Sorting,
-    SetCommercialMaintenanceSorting,
-    SetCommercialMoneySorting,
-    SetCommercialOutputSorting,
+  CommercialCompanyDebugData,
+  CommercialCompanyEfficiency,
+  CommercialCompanyEmployee,
+  CommercialCompanyIndexSorting,
+  CommercialCompanyNameSorting,
+  CommercialCompanyProfitability,
+  CommercialCompanyServiceUsage,
+  CommercialInput1Sorting,
+  CommercialMaintenanceSorting,
+  CommercialMoneySorting,
+  CommercialOutputSorting,
+  SetCommercialCompanyEfficiency,
+  SetCommercialCompanyEmployee,
+  SetCommercialCompanyNameSorting,
+  SetCommercialCompanyProfitability,
+  SetCommercialCompanyServiceUsage,
+  SetCommercialInput1Sorting,
+  SetCommercialMaintenanceSorting,
+  SetCommercialMoneySorting,
+  SetCommercialOutputSorting,
 } from 'mods/bindings';
-import {getModule} from 'cs2/modding';
-import {Entity, useCssLength} from 'cs2/utils';
-import {LocalizedNumber, Unit, useLocalization} from 'cs2/l10n';
-import {EfficiencyFactorEnum} from 'mods/domain/EfficiencyFactorInfo';
-import {SortingEnum} from 'mods/domain/SortingEnum';
-import {CompanyNameSelector} from './Selectors/companyNameSelector';
-import {ResourceSelector} from './Selectors/resourceSelector';
-import {Localekeys} from "mods/locale"
+import { getModule } from 'cs2/modding';
+import { Entity, useCssLength } from 'cs2/utils';
+import { LocalizedNumber, Unit, useLocalization } from 'cs2/l10n';
+import { EfficiencyFactorEnum } from 'mods/domain/EfficiencyFactorInfo';
+import { SortingEnum } from 'mods/domain/SortingEnum';
+import { CompanyNameSelector } from './Selectors/companyNameSelector';
+import { ResourceSelector } from './Selectors/resourceSelector';
+import { Localekeys } from 'mods/locale';
 // Import VirtualList components
 type SizeProvider = {
   getRenderedRange: () => { offset: number; size: number; startIndex: number; endIndex: number };
@@ -79,63 +79,74 @@ const EfficiencyTooltip: FC<EfficiencyTooltipProps> = ({ company, translate }) =
   const getFactorName = (factor: EfficiencyFactorEnum): string => {
     switch (factor) {
       case EfficiencyFactorEnum.Destroyed:
-        return translate(Localekeys.Destroyed, "Destroyed") || "Destroyed";
+        return translate(Localekeys.Destroyed, 'Destroyed') || 'Destroyed';
       case EfficiencyFactorEnum.Abandoned:
-        return translate(Localekeys.Abandoned, "Abandoned") || "Abandoned";
+        return translate(Localekeys.Abandoned, 'Abandoned') || 'Abandoned';
       case EfficiencyFactorEnum.Disabled:
-        return translate(Localekeys.Disabled, "Disabled") || "Disabled";
+        return translate(Localekeys.Disabled, 'Disabled') || 'Disabled';
       case EfficiencyFactorEnum.Fire:
-        return translate(Localekeys.Fire, "Fire") || "Fire";
+        return translate(Localekeys.Fire, 'Fire') || 'Fire';
       case EfficiencyFactorEnum.ServiceBudget:
-        return translate(Localekeys.ServiceBudget, "Service Budget") || "Service Budget";
+        return translate(Localekeys.ServiceBudget, 'Service Budget') || 'Service Budget';
       case EfficiencyFactorEnum.NotEnoughEmployees:
-        return translate(Localekeys.NotEnoughEmployees, "Not Enough Employees") || "Not Enough Employees";
+        return translate(Localekeys.NotEnoughEmployees, 'Not Enough Employees') || 'Not Enough Employees';
       case EfficiencyFactorEnum.SickEmployees:
-        return translate(Localekeys.SickEmployees, "Sick Employees") || "Sick Employees";
+        return translate(Localekeys.SickEmployees, 'Sick Employees') || 'Sick Employees';
       case EfficiencyFactorEnum.EmployeeHappiness:
-        return translate(Localekeys.EmployeeHappiness, "Employee Happiness") || "Employee Happiness";
+        return translate(Localekeys.EmployeeHappiness, 'Employee Happiness') || 'Employee Happiness';
       case EfficiencyFactorEnum.ElectricitySupply:
-        return translate(Localekeys.ElectricitySupply, "Electricity Supply") || "Electricity Supply";
+        return translate(Localekeys.ElectricitySupply, 'Electricity Supply') || 'Electricity Supply';
       case EfficiencyFactorEnum.ElectricityFee:
-        return translate(Localekeys.ElectricityFee, "Electricity Fee") || "Electricity Fee";
+        return translate(Localekeys.ElectricityFee, 'Electricity Fee') || 'Electricity Fee';
       case EfficiencyFactorEnum.WaterSupply:
-        return translate(Localekeys.WaterSupply, "Water Supply") || "Water Supply";
+        return translate(Localekeys.WaterSupply, 'Water Supply') || 'Water Supply';
       case EfficiencyFactorEnum.DirtyWater:
-        return translate(Localekeys.DirtyWater, "Dirty Water") || "Dirty Water";
+        return translate(Localekeys.DirtyWater, 'Dirty Water') || 'Dirty Water';
       case EfficiencyFactorEnum.SewageHandling:
-        return translate(Localekeys.SewageHandling, "Sewage Handling") || "Sewage Handling";
+        return translate(Localekeys.SewageHandling, 'Sewage Handling') || 'Sewage Handling';
       case EfficiencyFactorEnum.WaterFee:
-        return translate(Localekeys.WaterFee, "Water Fee") || "Water Fee";
+        return translate(Localekeys.WaterFee, 'Water Fee') || 'Water Fee';
       case EfficiencyFactorEnum.Garbage:
-        return translate(Localekeys.Garbage, "Garbage") || "Garbage";
+        return translate(Localekeys.Garbage, 'Garbage') || 'Garbage';
       case EfficiencyFactorEnum.Telecom:
-        return translate(Localekeys.Telecom, "Telecom") || "Telecom";
+        return translate(Localekeys.Telecom, 'Telecom') || 'Telecom';
       case EfficiencyFactorEnum.Mail:
-        return translate(Localekeys.Mail, "Mail") || "Mail";
+        return translate(Localekeys.Mail, 'Mail') || 'Mail';
       case EfficiencyFactorEnum.MaterialSupply:
-        return translate(Localekeys.MaterialSupply, "Material Supply") || "Material Supply";
+        return translate(Localekeys.MaterialSupply, 'Material Supply') || 'Material Supply';
       case EfficiencyFactorEnum.WindSpeed:
-        return translate(Localekeys.WindSpeed, "Wind Speed") || "Wind Speed";
+        return translate(Localekeys.WindSpeed, 'Wind Speed') || 'Wind Speed';
       case EfficiencyFactorEnum.WaterDepth:
-        return translate(Localekeys.WaterDepth, "Water Depth") || "Water Depth";
+        return translate(Localekeys.WaterDepth, 'Water Depth') || 'Water Depth';
       case EfficiencyFactorEnum.SunIntensity:
-        return translate(Localekeys.SunIntensity, "Sun Intensity") || "Sun Intensity";
+        return translate(Localekeys.SunIntensity, 'Sun Intensity') || 'Sun Intensity';
       case EfficiencyFactorEnum.NaturalResources:
-        return translate(Localekeys.NaturalResources, "Natural Resources") || "Natural Resources";
+        return translate(Localekeys.NaturalResources, 'Natural Resources') || 'Natural Resources';
       case EfficiencyFactorEnum.CityModifierSoftware:
-        return translate(Localekeys.CityModifierSoftware, "City Modifier Software") || "City Modifier Software";
+        return translate(Localekeys.CityModifierSoftware, 'City Modifier Software') || 'City Modifier Software';
       case EfficiencyFactorEnum.CityModifierElectronics:
-        return translate(Localekeys.CityModifierElectronics, "City Modifier Electronics") || "City Modifier Electronics";
+        return (
+          translate(Localekeys.CityModifierElectronics, 'City Modifier Electronics') || 'City Modifier Electronics'
+        );
       case EfficiencyFactorEnum.CityModifierIndustrialEfficiency:
-        return translate(Localekeys.CityModifierIndustrialEfficiency, "City Modifier Industrial Efficiency") || "City Modifier Industrial Efficiency";
+        return (
+          translate(Localekeys.CityModifierIndustrialEfficiency, 'City Modifier Industrial Efficiency') ||
+          'City Modifier Industrial Efficiency'
+        );
       case EfficiencyFactorEnum.CityModifierOfficeEfficiency:
-        return translate(Localekeys.CityModifierOfficeEfficiency, "City Modifier Office Efficiency") || "City Modifier Office Efficiency";
+        return (
+          translate(Localekeys.CityModifierOfficeEfficiency, 'City Modifier Office Efficiency') ||
+          'City Modifier Office Efficiency'
+        );
       case EfficiencyFactorEnum.CityModifierHospitalEfficiency:
-        return translate(Localekeys.CityModifierHospitalEfficiency, "City Modifier Hospital Efficiency") || "City Modifier Hospital Efficiency";
+        return (
+          translate(Localekeys.CityModifierHospitalEfficiency, 'City Modifier Hospital Efficiency') ||
+          'City Modifier Hospital Efficiency'
+        );
       case EfficiencyFactorEnum.SpecializationBonus:
-        return translate(Localekeys.SpecializationBonus, "Specialization Bonus") || "Specialization Bonus";
+        return translate(Localekeys.SpecializationBonus, 'Specialization Bonus') || 'Specialization Bonus';
       case EfficiencyFactorEnum.LackResources:
-        return translate(Localekeys.LackResources, "Lack of Resources") || "Lack of Resources";
+        return translate(Localekeys.LackResources, 'Lack of Resources') || 'Lack of Resources';
       default:
         return '';
     }
@@ -213,24 +224,74 @@ interface CompanyMoneyTooltipProps {
   company: CommercialCompanyDebug;
 }
 const CompanyMoneyTooltip: FC<CompanyMoneyTooltipProps> = ({ company }) => {
- const {translate} = useLocalization();
+  const { translate } = useLocalization();
   return (
     <div className={styles.tooltipContent}>
       <div className={styles.tooltipText}>
-        <div className={styles.tooltipRow}> {translate(Localekeys.Income, "Income")} : <LocalizedNumber value={company.Income} unit={Unit.MoneyPerMonth} /></div> 
-        <div className={styles.tooltipRow}> {translate(Localekeys.Worth, "Bank Balance")} : <LocalizedNumber value={company.Worth} unit={Unit.Money} /></div>  
-        <div className={styles.tooltipRow}> {translate(Localekeys.Profit, "Profit")} : <LocalizedNumber value={company.Profit} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.WagePaid, "Wage Paid")} : <LocalizedNumber value={company.WagePaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.RentPaid, "Rent Paid")} : <LocalizedNumber value={company.RentPaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.ElectricityPaid, "Electricity Paid")} : <LocalizedNumber value={company.ElectricityPaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.WaterFeePaid, "Water Paid")} : <LocalizedNumber value={company.WaterPaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.SewageFeePaid, "Sewage Paid")} : <LocalizedNumber value={company.SewagePaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.GarbageFeePaid, "Garbage Paid")} : <LocalizedNumber value={company.GarbagePaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.TaxesPaid, "Tax Paid")} : <LocalizedNumber value={company.TaxPaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.ResourcesBoughtPaid, "Resources Bought Paid")} : <LocalizedNumber value={company.ResourcesBoughtPaid} unit={Unit.MoneyPerMonth} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.Customers, "Current Customers")} : <LocalizedNumber value={company.CurrentCustomers} unit={Unit.Integer} /></div>
-        <div className={styles.tooltipRow}> {translate(Localekeys.DailyCustomers, "Monthly Customers")} : <LocalizedNumber value={company.MonthlyCustomers} unit={Unit.IntegerPerMonth} /></div>
-        
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.Income, 'Income')} :{' '}
+          <LocalizedNumber value={company.Income} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.Worth, 'Bank Balance')} : <LocalizedNumber value={company.Worth} unit={Unit.Money} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.Profit, 'Profit')} :{' '}
+          <LocalizedNumber value={company.Profit} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.WagePaid, 'Wage Paid')} :{' '}
+          <LocalizedNumber value={company.WagePaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.RentPaid, 'Rent Paid')} :{' '}
+          <LocalizedNumber value={company.RentPaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.ElectricityPaid, 'Electricity Paid')} :{' '}
+          <LocalizedNumber value={company.ElectricityPaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.WaterFeePaid, 'Water Paid')} :{' '}
+          <LocalizedNumber value={company.WaterPaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.SewageFeePaid, 'Sewage Paid')} :{' '}
+          <LocalizedNumber value={company.SewagePaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.GarbageFeePaid, 'Garbage Paid')} :{' '}
+          <LocalizedNumber value={company.GarbagePaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.TaxesPaid, 'Tax Paid')} :{' '}
+          <LocalizedNumber value={company.TaxPaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.ResourcesBoughtPaid, 'Resources Bought Paid')} :{' '}
+          <LocalizedNumber value={company.ResourcesBoughtPaid} unit={Unit.MoneyPerMonth} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.Customers, 'Current Customers')} :{' '}
+          <LocalizedNumber value={company.CurrentCustomers} unit={Unit.Integer} />
+        </div>
+        <div className={styles.tooltipRow}>
+          {' '}
+          {translate(Localekeys.DailyCustomers, 'Monthly Customers')} :{' '}
+          <LocalizedNumber value={company.MonthlyCustomers} unit={Unit.IntegerPerMonth} />
+        </div>
       </div>
     </div>
   );
@@ -301,40 +362,32 @@ const CompanyRowWithTranslation = React.memo(({ company }: { company: Commercial
       <div className={styles.tooltipContent}>
         <div className={styles.tooltipText}>
           <p>
-            <strong>
-              {translate(Localekeys.ProcessingResourcesTitle, 'Processing Resources')}
-            </strong>
+            <strong>{translate(Localekeys.ProcessingResourcesTitle, 'Processing Resources')}</strong>
           </p>
           {outputResources.length > 0 ? (
             <div>
               {outputResources.map((resource, index) => (
                 <p cohinline="cohinline" key={`output-${index}`}>
-                  {index === 0
-                    ? (translate(Localekeys.Output, 'Output:')) + ' ' : ''}
+                  {index === 0 ? translate(Localekeys.Output, 'Output:') + ' ' : ''}
                   {resource.resourceName}: {resource.amount}
                 </p>
               ))}
             </div>
           ) : (
-            <p>
-              {translate(Localekeys.NoOutputResources, 'No output resources')}
-            </p>
+            <p>{translate(Localekeys.NoOutputResources, 'No output resources')}</p>
           )}
 
           {inputResources.length > 0 ? (
             <div>
               {inputResources.map((resource, index) => (
                 <p key={`input-${index}`} cohinline="cohinline">
-                  {index === 0
-                    ? (translate(Localekeys.Input, 'Input:') + ' ') : ''}
+                  {index === 0 ? translate(Localekeys.Input, 'Input:') + ' ' : ''}
                   {resource.resourceName}: {resource.amount}
                 </p>
               ))}
             </div>
           ) : (
-            <p>
-              {translate(Localekeys.NoInputResources, 'No input resources')}
-            </p>
+            <p>{translate(Localekeys.NoInputResources, 'No input resources')}</p>
           )}
         </div>
       </div>
@@ -390,13 +443,12 @@ const CompanyRowWithTranslation = React.memo(({ company }: { company: Commercial
 
       {/* Money Column */}
       <Tooltip tooltip={<CompanyMoneyTooltip company={company} />}>
-         <div className={styles.moneyColumn}>
-        <div className={styles.resourceGroup}>
-          <span className={styles.resourceAmount}>{formatNumber(company.MoneyAmount)}</span>
+        <div className={styles.moneyColumn}>
+          <div className={styles.resourceGroup}>
+            <span className={styles.resourceAmount}>{formatNumber(company.MoneyAmount)}</span>
+          </div>
         </div>
-      </div> 
-      </Tooltip>  
-      
+      </Tooltip>
 
       {/* Input 1 Column */}
       <div className={styles.input1Column}>
@@ -476,7 +528,8 @@ const CompanyRowWithTranslation = React.memo(({ company }: { company: Commercial
               </div>
             </div>
           ) : (
-            translate(Localekeys.None, 'None'))}
+            translate(Localekeys.None, 'None')
+          )}
         </div>
       </Tooltip>
 
@@ -509,11 +562,36 @@ const CompanyRowWithTranslation = React.memo(({ company }: { company: Commercial
   );
 });
 
+const arrowDownSrc = 'coui://uil/Standard/ArrowDownTriangle.svg';
+const arrowLeftSrc = 'coui://uil/Standard/ArrowLeftTriangle.svg';
+
+// Types for grouped view
+type CommercialGroupHeaderItem = {
+  type: 'group';
+  companyName: string;
+  count: number;
+  totalEmployees: number;
+  totalMaxWorkers: number;
+  totalVehicles: number;
+  totalVehicleCapacity: number;
+  totalMoney: number;
+  avgEfficiency: number;
+  avgProfitability: number;
+  avgServiceUsage: number;
+  totalIncome: number;
+  totalProfit: number;
+  companies: CommercialCompanyDebug[];
+};
+type CommercialChildItem = { type: 'child'; company: CommercialCompanyDebug };
+type CommercialGroupedListItem = CommercialGroupHeaderItem | CommercialChildItem;
+
 const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) => {
   const { translate } = useLocalization();
   const companiesData = useValue(CommercialCompanyDebugData);
   const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
   const [heightFull, setHeightFull] = useState(600);
+  const [groupByCompany, setGroupByCompany] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const indexSortingOptions = useValue(CommercialCompanyIndexSorting);
   const nameSortingOptions = useValue(CommercialCompanyNameSorting);
   const serviceUsageSortingOptions = useValue(CommercialCompanyServiceUsage);
@@ -525,51 +603,187 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
   const outputSortingOptions = useValue(CommercialOutputSorting);
   const maintenanceSortingOptions = useValue(CommercialMaintenanceSorting);
 
+  const toggleGroup = useCallback((companyName: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(companyName)) next.delete(companyName);
+      else next.add(companyName);
+      return next;
+    });
+  }, []);
+
+  const groupedItems = useMemo<CommercialGroupedListItem[]>(() => {
+    if (!groupByCompany || !companiesData.length) return [];
+    const groups = new Map<string, CommercialCompanyDebug[]>();
+    for (const c of companiesData) {
+      const name = c.CompanyName || 'Unknown';
+      if (!groups.has(name)) groups.set(name, []);
+      groups.get(name)!.push(c);
+    }
+    const items: CommercialGroupedListItem[] = [];
+    for (const [name, companies] of groups) {
+      const count = companies.length;
+      const totalEmployees = companies.reduce((s, c) => s + c.TotalEmployees, 0);
+      const totalMaxWorkers = companies.reduce((s, c) => s + c.MaxWorkers, 0);
+      const totalVehicles = companies.reduce((s, c) => s + c.VehicleCount, 0);
+      const totalVehicleCapacity = companies.reduce((s, c) => s + c.VehicleCapacity, 0);
+      const totalMoney = companies.reduce((s, c) => s + c.MoneyAmount, 0);
+      const avgEfficiency = companies.reduce((s, c) => s + c.TotalEfficiency, 0) / count;
+      const avgProfitability = companies.reduce((s, c) => s + c.Profitability, 0) / count;
+      const avgServiceUsage = companies.reduce((s, c) => {
+        const usage = c.MaxService > 0 ? 1 - c.ServiceAvailable / c.MaxService : 0;
+        return s + usage;
+      }, 0) / count;
+      const totalIncome = companies.reduce((s, c) => s + c.Income, 0);
+      const totalProfit = companies.reduce((s, c) => s + c.Profit, 0);
+      items.push({
+        type: 'group',
+        companyName: name,
+        count,
+        totalEmployees,
+        totalMaxWorkers,
+        totalVehicles,
+        totalVehicleCapacity,
+        totalMoney,
+        avgEfficiency,
+        avgProfitability,
+        avgServiceUsage,
+        totalIncome,
+        totalProfit,
+        companies,
+      });
+      if (expandedGroups.has(name)) {
+        for (const company of companies) {
+          items.push({ type: 'child', company });
+        }
+      }
+    }
+    return items;
+  }, [groupByCompany, companiesData, expandedGroups]);
+
+  const getEfficiencyClass = (efficiency: number) => {
+    if (efficiency >= 0.8) return styles.efficiencyHigh;
+    if (efficiency >= 0.5) return styles.efficiencyMedium;
+    return styles.efficiencyLow;
+  };
+
+  const getProfitabilityClass = (profitability: number) => {
+    return profitability >= 0 ? styles.profitabilityPositive : styles.profitabilityNegative;
+  };
+
+  const getServiceClass = (service: number) => {
+    if (service >= 0.8) return styles.serviceHigh;
+    if (service >= 0.5) return styles.serviceMedium;
+    return styles.serviceLow;
+  };
+
   // Dynamic height calculation
-    const calculateHeights = useCallback(() => {
-      const wrapperElement = document.querySelector('.info-layout_BVk') as HTMLElement | null;
-      const newHeightFull = wrapperElement?.offsetHeight ?? 600;
-      setHeightFull(newHeightFull);
-    }, []);
-  
-    useEffect(() => {
+  const calculateHeights = useCallback(() => {
+    const wrapperElement = document.querySelector('.info-layout_BVk') as HTMLElement | null;
+    const newHeightFull = wrapperElement?.offsetHeight ?? 600;
+    setHeightFull(newHeightFull);
+  }, []);
+
+  useEffect(() => {
+    calculateHeights();
+    const observer = new MutationObserver(() => {
       calculateHeights();
-      const observer = new MutationObserver(() => {
-        calculateHeights();
-      });
-  
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-  
-      return () => observer.disconnect();
-    }, [calculateHeights]);
-    // Optimized memoization - only calculate height, let virtual list handle rendering
-    const maxListHeight = useMemo(() => {
-      // Calculate max height: reserve 250px for header, footer, and padding
-      // Don't limit by item count - let virtual list fill available space
-      const calculatedHeight = heightFull - 250;
-      return Math.max(200, calculatedHeight); // Minimum 200px
-    }, [heightFull]);
-  
-    // Size provider - row height in rem units, total items count, 5 extra items for smooth scrolling
-    const sizeProvider = useUniformSizeProvider(useCssLength('32rem'), companiesData.length, 5);
-  
-    const handleRenderedRangeChange = useCallback((startIndex: number, endIndex: number) => {
-      setVisibleRange({ startIndex, endIndex });
-    }, []);
-    const renderItem: RenderItemFn = useCallback(
-      (itemIndex: number, indexInRange: number) => {
-        if (itemIndex < 0 || itemIndex >= companiesData.length) return null;
-  
-        const company = companiesData[itemIndex];
-        if (!company) return null;
-  
-        return <CompanyRowWithTranslation key={`industrial-company-${itemIndex}`} company={company} />;
-      },
-      [companiesData]
-    );
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [calculateHeights]);
+  // Optimized memoization - only calculate height, let virtual list handle rendering
+  const maxListHeight = useMemo(() => {
+    // Calculate max height: reserve 250px for header, footer, and padding
+    // Don't limit by item count - let virtual list fill available space
+    const calculatedHeight = heightFull - 250;
+    return Math.max(200, calculatedHeight); // Minimum 200px
+  }, [heightFull]);
+
+  // Size provider - row height in rem units, total items count, 5 extra items for smooth scrolling
+  const listItemCount = groupByCompany ? groupedItems.length : companiesData.length;
+  const sizeProvider = useUniformSizeProvider(useCssLength('32rem'), listItemCount, 5);
+
+  const handleRenderedRangeChange = useCallback((startIndex: number, endIndex: number) => {
+    setVisibleRange({ startIndex, endIndex });
+  }, []);
+  const renderItem: RenderItemFn = useCallback(
+    (itemIndex: number, indexInRange: number) => {
+      if (groupByCompany) {
+        if (itemIndex < 0 || itemIndex >= groupedItems.length) return null;
+        const item = groupedItems[itemIndex];
+        if (!item) return null;
+        if (item.type === 'group') {
+          const isExpanded = expandedGroups.has(item.companyName);
+          return (
+            <div
+              key={`group-${item.companyName}`}
+              className={styles.groupHeaderRow}
+              onClick={() => toggleGroup(item.companyName)}
+            >
+              <Icon
+                src={isExpanded ? arrowDownSrc : arrowLeftSrc}
+                className={`${styles.expandIcon} ${isExpanded ? styles.expandIconExpanded : ''}`}
+              />
+              <div className={styles.nameColumn}>
+                <span className={styles.groupName}>{item.companyName}</span>
+                <span className={styles.groupBuildingCount}>
+                  ({item.count} {translate(Localekeys.Buildings, 'buildings') || 'buildings'})
+                </span>
+              </div>
+              <div className={`${styles.serviceColumn} ${styles.groupStat}`}>
+                <span className={getServiceClass(item.avgServiceUsage)}>
+                  {formatPercentage1(item.avgServiceUsage)}
+                </span>
+              </div>
+              <div className={`${styles.employeeColumn} ${styles.groupStat}`}>
+                {formatNumber(item.totalEmployees)}/{formatNumber(item.totalMaxWorkers)}
+              </div>
+              <div className={`${styles.vehicleColumn} ${styles.groupStat}`}>
+                {formatNumber(item.totalVehicles)}/{formatNumber(item.totalVehicleCapacity)}
+              </div>
+              <div className={`${styles.moneyColumn} ${styles.groupStat}`}>
+                {formatNumber(item.totalMoney)}
+              </div>
+              <div className={`${styles.input1Column} ${styles.groupStat}`}></div>
+              <div className={`${styles.outputColumn} ${styles.groupStat}`}></div>
+              <div className={`${styles.maintenanceColumn} ${styles.groupStat}`}></div>
+              <div className={`${styles.processingColumn} ${styles.groupStat}`}></div>
+              <div className={`${styles.efficiencyColumn} ${styles.groupStat}`}>
+                <span className={getEfficiencyClass(item.avgEfficiency)}>
+                  {formatPercentage2(item.avgEfficiency)}
+                </span>
+              </div>
+              <div className={`${styles.profitabilityColumn} ${styles.groupStat}`}>
+                <span className={getProfitabilityClass(item.avgProfitability)}>
+                  {formatPercentage2(item.avgProfitability)}
+                </span>
+              </div>
+              <div className={styles.locationColumn}></div>
+            </div>
+          );
+        } else {
+          return (
+            <div key={`child-${item.company.EntityId.index}`} className={styles.childRow}>
+              <CompanyRowWithTranslation company={item.company} />
+            </div>
+          );
+        }
+      }
+
+      if (itemIndex < 0 || itemIndex >= companiesData.length) return null;
+      const company = companiesData[itemIndex];
+      if (!company) return null;
+      return <CompanyRowWithTranslation key={`commercial-company-${itemIndex}`} company={company} />;
+    },
+    [companiesData, groupByCompany, groupedItems, expandedGroups, toggleGroup, translate,
+     getEfficiencyClass, getProfitabilityClass, getServiceClass]
+  );
 
   // Early return for no data (use translate + fallback)
   if (!companiesData.length) {
@@ -588,9 +802,7 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
             </div>
           }
         >
-          <p className={styles.loadingText}>
-            {translate(Localekeys.NoCompanyFound, 'No Companies Found')}
-          </p>
+          <p className={styles.loadingText}>{translate(Localekeys.NoCompanyFound, 'No Companies Found')}</p>
         </Panel>
       </Portal>
     );
@@ -613,28 +825,41 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
       >
         <div>
           <div className={styles.resourceFilterRow}>
-                      <div className={styles.nameColumn}>
-                        <CompanyNameSelector />
-                      </div>
-                      <div className={styles.serviceColumn}></div>
-                      <div className={styles.employeeColumn}></div>
-                      <div className={styles.vehicleColumn}></div>
-                      <div className={styles.moneyColumn}></div>
-                      <div className={styles.input1Column}>
-                        <ResourceSelector 
-                          resourceType="input1" 
-                          label="Input 1" 
-                          tooltipText="Select an input 1 resource to filter companies by their first input."
-                        />
-                      </div>
-                      <div className={styles.outputColumn}>
-                        <ResourceSelector 
-                          resourceType="output" 
-                          label="Output" 
-                          tooltipText="Select an output resource to filter companies by what they produce."
-                        />
-                      </div>
-                    </div>
+            <div className={styles.nameColumn}>
+              <CompanyNameSelector />
+            </div>
+            <div className={styles.serviceColumn}>
+              <Button
+                variant="flat"
+                className={`${styles.groupToggleButton} ${groupByCompany ? styles.groupToggleButtonActive : ''}`}
+                selected={groupByCompany}
+                onSelect={() => {
+                  setGroupByCompany(prev => !prev);
+                  setExpandedGroups(new Set());
+                }}
+              >
+                <Icon src={arrowDownSrc} className={styles.groupToggleIcon} />
+                {translate(Localekeys.GroupByCompany, 'Group by Company') || 'Group by Company'}
+              </Button>
+            </div>
+            <div className={styles.employeeColumn}></div>
+            <div className={styles.vehicleColumn}></div>
+            <div className={styles.moneyColumn}></div>
+            <div className={styles.input1Column}>
+              <ResourceSelector
+                resourceType="input1"
+                label="Input 1"
+                tooltipText="Select an input 1 resource to filter companies by their first input."
+              />
+            </div>
+            <div className={styles.outputColumn}>
+              <ResourceSelector
+                resourceType="output"
+                label="Output"
+                tooltipText="Select an output resource to filter companies by what they produce."
+              />
+            </div>
+          </div>
           <div className={styles.tableHeader}>
             <div className={styles.headerRow}>
               <SortableHeader
@@ -722,12 +947,10 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 className={styles.maintenanceColumn}
               />
               <Tooltip
-                tooltip={
-                  translate(
-                    Localekeys.ProcessingTooltip,
-                    'Input and output resources processed by this company in the production chain'
-                  )
-                }
+                tooltip={translate(
+                  Localekeys.ProcessingTooltip,
+                  'Input and output resources processed by this company in the production chain'
+                )}
               >
                 <div className={`${styles.headerCell} ${styles.processingColumn}`}>
                   <b>{translate(Localekeys.Processing, 'Processing')}</b>
@@ -756,11 +979,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 className={styles.profitabilityColumn}
               />
 
-              
-                <div className={`${styles.headerCell} ${styles.locationColumn}`}>
-                  <b>{translate(Localekeys.Location, 'Location')}</b>
-                </div>
-              
+              <div className={`${styles.headerCell} ${styles.locationColumn}`}>
+                <b>{translate(Localekeys.Location, 'Location')}</b>
+              </div>
             </div>
           </div>
 

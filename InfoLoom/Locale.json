@@ -151,7 +151,14 @@
 	"InfoLoomTwo.Common[TotalWorth]": "Total Worth",
 	"InfoLoomTwo.Common[TotalWages]": "Total Wages",
 	"InfoLoomTwo.Common[DailyProduction]": "Daily Production",
-	"InfoLoomTwo.Common[Refresh]": "Refresh"
+	"InfoLoomTwo.Common[Refresh]": "Refresh",
+
+	"InfoLoomTwo.CompanyPanels[GroupByCompany]": "Group by Company",
+	"InfoLoomTwo.CompanyPanels[Buildings]": "buildings",
+	"InfoLoomTwo.CompanyPanels[AvgEfficiency]": "Avg Efficiency",
+	"InfoLoomTwo.CompanyPanels[AvgProfitability]": "Avg Profitability",
+	"InfoLoomTwo.CompanyPanels[TotalMoney]": "Total Money",
+	"InfoLoomTwo.CompanyPanels[TotalEmployees]": "Total Employees"
 }
 
   

@@ -2,11 +2,7 @@ import { IndicatorValue, SelectedInfoSectionBase, Theme } from 'cs2/bindings';
 import { getModule } from 'cs2/modding';
 import { PanelSectionRow, FOCUS_AUTO, PanelFoldout, Tooltip, Icon, FOCUS_DISABLED } from 'cs2/ui';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
-import { InfoSectionFoldout } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Section/info-section-foldout';
 import classNames from 'classnames';
-import { formatPercentage1 } from 'mods/InfoLoomSections/utils/formatText';
-import styles from './buildingInfoComponent.module.scss';
-import { FC } from 'react';
 import { LocalizedNumber, Unit } from 'cs2/l10n';
 import { LocalizedNumberWithSuffix } from 'mods/InfoLoomSections/utils/localizedNumberWithSuffix';
 
@@ -82,14 +78,13 @@ export const ILPropertyInfoSection = (componentList: any): any => {
       props.NoOfOffProperties +
       props.NoOfStorageProperties;
     return (
-      <InfoSectionFoldout
+      <PanelFoldout
         header={
           <div className={InfoRowTheme.infoRow}>
             <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Info Loom</div>
           </div>
         }
         initialExpanded={PanelOpen}
-        expandFromContent={false}
         focusKey={FOCUS_DISABLED}
         onToggleExpanded={(value: boolean) => {
           PanelOpen = value;
@@ -137,167 +132,167 @@ export const ILPropertyInfoSection = (componentList: any): any => {
         {props.hasSchool && (
           <>
             <PanelFoldout
-            header={
-              <div className={InfoRowTheme.infoRow}>
-                <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>School Info</div>
-              </div>
-            }
-            initialExpanded={false}
-            focusKey={FOCUS_DISABLED}
-          >
-            <PanelFoldout
               header={
                 <div className={InfoRowTheme.infoRow}>
-                  <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Capacity</div>
+                  <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>School Info</div>
                 </div>
               }
               initialExpanded={false}
+              focusKey={FOCUS_DISABLED}
             >
-              <PanelSectionRow
-                left={'Elementary'}
-                right={<LocalizedNumber value={props.ElementaryCapacity} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'High School'}
-                right={<LocalizedNumber value={props.HighSchoolCapacity} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'College'}
-                right={<LocalizedNumber value={props.CollegeCapacity} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'University'}
-                right={<LocalizedNumber value={props.UniversityCapacity} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-            </PanelFoldout>
-            <PanelFoldout
-              header={
-                <div className={InfoRowTheme.infoRow}>
-                  <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Students</div>
-                </div>
-              }
-              initialExpanded={false}
-            >
-              <PanelSectionRow
-                left={'Elementary'}
-                right={<LocalizedNumber value={props.ElementaryStudents} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'High School'}
-                right={<LocalizedNumber value={props.HighSchoolStudents} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'College'}
-                right={<LocalizedNumber value={props.CollegeStudents} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'University'}
-                right={<LocalizedNumber value={props.UniversityStudents} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-            </PanelFoldout>
-            <PanelFoldout
-              header={
-                <div className={InfoRowTheme.infoRow}>
-                  <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Eligible Students</div>
-                </div>
-              }
-              initialExpanded={false}
-            >
-              <PanelSectionRow
-                left={'Elementary'}
-                right={<LocalizedNumber value={props.ElementaryEligible} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'High School'}
-                right={<LocalizedNumber value={props.HighSchoolEligible} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'College'}
-                right={<LocalizedNumber value={props.CollegeEligible} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-              <PanelSectionRow
-                left={'University'}
-                right={<LocalizedNumber value={props.UniversityEligible} unit={Unit.Integer} />}
-                subRow={true}
-                disableFocus={true}
-              />
-            </PanelFoldout>
-            <PanelFoldout
-              header={
-                <div className={InfoRowTheme.infoRow}>
-                  <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Availability</div>
-                </div>
-              }
-              initialExpanded={false}
-            >
-              <PanelSectionRow
-                left={'Elementary'}
-                right={
-                  <span style={{ color: getAvailabilityColor(elementaryAvailability) }}>
-                    {<LocalizedNumber value={elementaryAvailability} unit={Unit.Percentage} />}
-                  </span>
+              <PanelFoldout
+                header={
+                  <div className={InfoRowTheme.infoRow}>
+                    <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Capacity</div>
+                  </div>
                 }
-                subRow={true}
-                disableFocus={true}
-                tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
-              />
-              <PanelSectionRow
-                left={'High School'}
-                right={
-                  <span style={{ color: getAvailabilityColor(highSchoolAvailability) }}>
-                    {<LocalizedNumber value={highSchoolAvailability} unit={Unit.Percentage} />}
-                  </span>
+                initialExpanded={false}
+              >
+                <PanelSectionRow
+                  left={'Elementary'}
+                  right={<LocalizedNumber value={props.ElementaryCapacity} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'High School'}
+                  right={<LocalizedNumber value={props.HighSchoolCapacity} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'College'}
+                  right={<LocalizedNumber value={props.CollegeCapacity} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'University'}
+                  right={<LocalizedNumber value={props.UniversityCapacity} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+              </PanelFoldout>
+              <PanelFoldout
+                header={
+                  <div className={InfoRowTheme.infoRow}>
+                    <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Students</div>
+                  </div>
                 }
-                subRow={true}
-                disableFocus={true}
-                tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
-              />
-              <PanelSectionRow
-                left={'College'}
-                right={
-                  <span style={{ color: getAvailabilityColor(collegeAvailability) }}>
-                    {<LocalizedNumber value={collegeAvailability} unit={Unit.Percentage} />}
-                  </span>
+                initialExpanded={false}
+              >
+                <PanelSectionRow
+                  left={'Elementary'}
+                  right={<LocalizedNumber value={props.ElementaryStudents} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'High School'}
+                  right={<LocalizedNumber value={props.HighSchoolStudents} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'College'}
+                  right={<LocalizedNumber value={props.CollegeStudents} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'University'}
+                  right={<LocalizedNumber value={props.UniversityStudents} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+              </PanelFoldout>
+              <PanelFoldout
+                header={
+                  <div className={InfoRowTheme.infoRow}>
+                    <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Eligible Students</div>
+                  </div>
                 }
-                subRow={true}
-                disableFocus={true}
-                tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
-              />
-              <PanelSectionRow
-                left={'University'}
-                right={
-                  <span style={{ color: getAvailabilityColor(universityAvailability) }}>
-                    {<LocalizedNumber value={universityAvailability} unit={Unit.Percentage} />}
-                  </span>
+                initialExpanded={false}
+              >
+                <PanelSectionRow
+                  left={'Elementary'}
+                  right={<LocalizedNumber value={props.ElementaryEligible} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'High School'}
+                  right={<LocalizedNumber value={props.HighSchoolEligible} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'College'}
+                  right={<LocalizedNumber value={props.CollegeEligible} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+                <PanelSectionRow
+                  left={'University'}
+                  right={<LocalizedNumber value={props.UniversityEligible} unit={Unit.Integer} />}
+                  subRow={true}
+                  disableFocus={true}
+                />
+              </PanelFoldout>
+              <PanelFoldout
+                header={
+                  <div className={InfoRowTheme.infoRow}>
+                    <div className={classNames(InfoRowSCSS.left, InfoRowSCSS.uppercase)}>Availability</div>
+                  </div>
                 }
-                subRow={true}
-                disableFocus={true}
-                tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
-              />
+                initialExpanded={false}
+              >
+                <PanelSectionRow
+                  left={'Elementary'}
+                  right={
+                    <span style={{ color: getAvailabilityColor(elementaryAvailability) }}>
+                      {<LocalizedNumber value={elementaryAvailability} unit={Unit.Percentage} />}
+                    </span>
+                  }
+                  subRow={true}
+                  disableFocus={true}
+                  tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
+                />
+                <PanelSectionRow
+                  left={'High School'}
+                  right={
+                    <span style={{ color: getAvailabilityColor(highSchoolAvailability) }}>
+                      {<LocalizedNumber value={highSchoolAvailability} unit={Unit.Percentage} />}
+                    </span>
+                  }
+                  subRow={true}
+                  disableFocus={true}
+                  tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
+                />
+                <PanelSectionRow
+                  left={'College'}
+                  right={
+                    <span style={{ color: getAvailabilityColor(collegeAvailability) }}>
+                      {<LocalizedNumber value={collegeAvailability} unit={Unit.Percentage} />}
+                    </span>
+                  }
+                  subRow={true}
+                  disableFocus={true}
+                  tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
+                />
+                <PanelSectionRow
+                  left={'University'}
+                  right={
+                    <span style={{ color: getAvailabilityColor(universityAvailability) }}>
+                      {<LocalizedNumber value={universityAvailability} unit={Unit.Percentage} />}
+                    </span>
+                  }
+                  subRow={true}
+                  disableFocus={true}
+                  tooltip={'-100 means no capacity, 0 means at capacity, 100 means full capacity available'}
+                />
+              </PanelFoldout>
             </PanelFoldout>
-          </PanelFoldout>
           </>
         )}
         <PanelSectionRow
@@ -320,12 +315,13 @@ export const ILPropertyInfoSection = (componentList: any): any => {
         />
         <PanelSectionRow
           left={'Population Density'}
-          right={<LocalizedNumberWithSuffix value={props.PopulationDensity} unit={Unit.FloatSingleFraction} suffix="/km²"/>}
+          right={
+            <LocalizedNumberWithSuffix value={props.PopulationDensity} unit={Unit.FloatSingleFraction} suffix="/km²" />
+          }
           subRow={true}
           disableFocus={true}
         />
-
-      </InfoSectionFoldout>
+      </PanelFoldout>
     );
   };
 

@@ -5,7 +5,7 @@ import { Entity } from 'cs2/utils';
 
 import styles from './districtSelector.module.scss';
 import mod from 'mod.json';
-import { ModuleResolver } from '../ModuleResolver/moduleResolver';
+import { ModuleResolver } from '../../ModuleResolver/moduleResolver';
 
 // Define district info passed from C#.
 type DistrictInfo = {

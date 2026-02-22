@@ -16,6 +16,7 @@ import IndustrialMenuButton from './IndustrialMenu/IndustrialMenu';
 import Residential from 'mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential';
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 import { Entity } from 'cs2/utils';
+import mod from "mod.json"
 import { Localekeys } from 'mods/locale';
 interface SectionItem {
   component: JSX.Element;
@@ -43,6 +44,8 @@ function InfoLoomButton(): JSX.Element {
   const industrialMenuOpen = useValue(bindings.IndustrialMenuOpen);
   const tradeCostsOpen = useValue(bindings.TradeCostsOpen);
   const commercialMenuOpen = useValue(bindings.CommercialMenuOpen);
+  const showButton = useValue(bindings.ShowEffectsButton);
+  const effectsOpen = useValue(bindings.EffectsOpen);
   // Define sections without translations - move translations to render time
   const sections = useMemo<SectionsType>(
     () => ({
@@ -107,6 +110,8 @@ function InfoLoomButton(): JSX.Element {
       industrialMenuOpen,
       tradeCostsOpen,
       commercialMenuOpen,
+      effectsOpen,
+      showButton,
     ]
   );
 
@@ -197,6 +202,9 @@ function InfoLoomButton(): JSX.Element {
                   break;
                 case 'Commercial Menu':
                   displayName = translate(Localekeys.MenuCommercial, 'Commercial Menu');
+                  break;
+                case 'Effects':
+                  displayName = 'Effects';
                   break;
                 default:
                   displayName = name;

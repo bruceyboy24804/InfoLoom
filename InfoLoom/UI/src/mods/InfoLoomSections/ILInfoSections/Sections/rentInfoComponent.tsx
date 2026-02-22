@@ -5,7 +5,7 @@ import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-R
 import { InfoSectionFoldout } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Section/info-section-foldout';
 import classNames from 'classnames';
 import { formatPercentage1 } from 'mods/InfoLoomSections/utils/formatText';
-import { LocalizedFraction, LocalizedNumber, LocalizedNumber$1, LocalizedString, Unit } from 'cs2/l10n';
+import { LocalizedFraction, LocalizedNumber, LocalizedString, Unit } from 'cs2/l10n';
 
 export const InfoRowTheme: Theme | any = getModule(
   'game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.module.scss',
@@ -154,7 +154,8 @@ export const ILRentInfoSection = (componentList: any): any => {
                 <span style={{ margin: '0 4rem' }}>+</span>
                 (<LocalizedNumber value={props.BaseRent} unit={Unit.Integer} />
                 <span style={{ margin: '0 4rem' }}>×</span>
-                <LocalizedNumber value={props.Level} unit={Unit.Integer} />))
+                <LocalizedNumber value={props.Level} unit={Unit.Integer} />
+                ))
                 <span style={{ margin: '0 4rem' }}>×</span>
                 <LocalizedNumber value={props.LotSize} unit={Unit.Integer} />
                 <span style={{ margin: '0 4rem' }}>×</span>

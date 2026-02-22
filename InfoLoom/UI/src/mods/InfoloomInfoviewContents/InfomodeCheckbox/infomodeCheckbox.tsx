@@ -2,7 +2,7 @@ import { trigger } from 'cs2/api';
 
 import styles from 'infomodeCheckBox.module.scss';
 import mod from 'mod.json';
-import { ModuleResolver } from '../ModuleResolver/moduleResolver';
+import { ModuleResolver } from '../../ModuleResolver/moduleResolver';
 
 // Props for InfomodeCheckBox.
 export interface InfomodeCheckBoxProps {

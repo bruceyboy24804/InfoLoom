@@ -22,12 +22,10 @@ namespace InfoLoomTwo.Systems.DemographicsData
     public partial class Demographics : GameSystemBase
     {
         private const int DEFAULT_AGE_CAP = 120;
+		private const int FIVE_YEAR_GROUP_COUNT = DEFAULT_AGE_CAP / 5;
+		private const int TEN_YEAR_GROUP_COUNT = DEFAULT_AGE_CAP / 10;
 		private const int TOTALS_COUNT = 10;
 		private const int LIFECYCLE_TOTALS_COUNT = 4;
-		private const int FIVE_YEAR_GROUP_COUNT = DEFAULT_AGE_CAP / 5;  // 24 groups
-		private const int TEN_YEAR_GROUP_COUNT = DEFAULT_AGE_CAP / 10;  // 12 groups
-		
-		
 		private enum LifecycleTotals
 		{
 			Child = 0,
@@ -129,11 +127,10 @@ namespace InfoLoomTwo.Systems.DemographicsData
 
                 // Calculate age and get age category
                 int ageInDays = m_CurrentDay - citizen.m_BirthDay;
-                CitizenAge ageCategory = citizen.GetAge();
-                
                 if (ageInDays < 0 || ageInDays >= m_Results.Length)
                     return;
 
+                CitizenAge ageCategory = citizen.GetAge();
                 int educationLevel = citizen.GetEducationLevel();
 
                 // Update age info
@@ -370,6 +367,7 @@ namespace InfoLoomTwo.Systems.DemographicsData
         public void UpdateDemographics()
         {
             ResetResults();
+            EntityQuery citizenQuery = SystemAPI.QueryBuilder().WithAll<Citizen, HouseholdMember>().WithNone<Deleted, Temp>().Build();
             PopulationStructureJob job = new PopulationStructureJob
             {
                 m_Students = SystemAPI.GetComponentLookup<Game.Citizens.Student>(true),
@@ -389,8 +387,10 @@ namespace InfoLoomTwo.Systems.DemographicsData
                 m_CurrentDay = TimeSystem.GetDay(m_SimulationSystem.frameIndex, SystemAPI.GetSingleton<TimeData>()),
                 m_SelectedDistrict = SelectedDistrict,
             };
-            EntityQuery citizenQuery = SystemAPI.QueryBuilder().WithAll<Citizen, HouseholdMember>().WithNone<Deleted, Temp>().Build();
-            job.Run(citizenQuery);
+            var jobHandle = job.Schedule(citizenQuery, Dependency);
+            Dependency = jobHandle;
+            jobHandle.Complete();
+            
             
             m_Totals[(int)Totals.HomelessCitizens] = m_CountHouseholdDataSystem.HomelessCitizenCount;
             UpdateAgeGroupDetails();

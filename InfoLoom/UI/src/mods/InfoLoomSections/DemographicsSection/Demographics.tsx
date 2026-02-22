@@ -4,7 +4,6 @@ import { useLocalization } from 'cs2/l10n';
 import { bindLocalValue, bindValue, useValue, trigger } from 'cs2/api';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { DraggablePanelProps, Dropdown, DropdownToggle, Panel, Scrollable, DropdownItem, Button } from 'cs2/ui';
-import { GroupingStrategy } from '../../domain/GroupingStrategy';
 import {
   DemographicsDataOldestCitizen,
   DemographicsDataTotals,
@@ -24,12 +23,8 @@ import { DistrictSelector } from 'mods/InfoloomInfoviewContents/DistrictSelector
 import { ToggleButton, StatisticsPanel, DemographicsChart, ErrorBoundary, LoadingSpinner } from './components';
 import mod from 'mod.json';
 import { Localekeys } from 'mods/locale';
-import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
-import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
-import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
-import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
 
-const demographics = bindValue<boolean>(mod.id, 'demographics', false)
+const demographics = bindValue<boolean>(mod.id, 'demographics', false);
 const updateDemographics = (value: boolean) => trigger(mod.id, 'updateDemographics', value);
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
@@ -78,7 +73,7 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
             isChecked={demoStatsToggledOn}
             onToggle={SetDemoStatsToggledOn}
           />
-             <Button
+          <Button
             onSelect={() => updateDemographics(true)}
             className={styles.refreshButton}
             variant="flat"
@@ -135,7 +130,6 @@ const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
           >
             {translate(Localekeys.Education, 'Education')}
           </ToggleButton>
-         
         </div>
         <Scrollable vertical trackVisibility="always" style={{ flex: 1 }}>
           <div className={styles.chartContainer}>

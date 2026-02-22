@@ -6,7 +6,7 @@ import { Entity } from 'cs2/utils';
 import { Name, NameType } from 'cs2/bindings';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
 import { InfoSectionFoldout } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Section/info-section-foldout';
-import { useLocalization, LocalizedNumber, Unit, Localized } from 'cs2/l10n';
+import { useLocalization, Unit, Localized, LocalizedNumber } from 'cs2/l10n';
 import classNames from 'classnames';
 import { formatWords } from '../../utils/formatText';
 import { trigger } from 'cs2/api';

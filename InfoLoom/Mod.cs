@@ -24,6 +24,7 @@ using Unity.Entities;
 using Game.Settings;
 using InfoLoomTwo.Systems.ChirpSystem_s_;
 using Game.Simulation;
+using InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems;
 
 
 // Mod namespace
@@ -98,15 +99,20 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomChirpSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<EffectTrackerSystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<ILEffectsSection>(SystemUpdatePhase.Rendering);
+            
             
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<StoragePropertyCompanies>(SystemUpdatePhase.UIUpdate);
             ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
             ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
             ILRentSection ilRentSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();
             ILDistrictSection ilDistrictSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILDistrictSection>();
-
+            ILEffectsSection ilEffectsSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILEffectsSection>();
+            
             // Register RealLife settings updater to initialize after all mods are loaded
         }
         // Method that runs when the mod is disposed of

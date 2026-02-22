@@ -359,3 +359,90 @@
 .serviceLow {
   color: #f44336;
 }
+
+.groupToggleRow {
+  display: flex;
+  align-items: center;
+  padding: 4rem 25rem;
+  margin-bottom: 4rem;
+}
+
+.groupToggleButton {
+  display: flex;
+  align-items: center;
+  padding: 4rem 10rem;
+  border-radius: 4rem;
+  cursor: pointer;
+  font-size: 13rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1rem solid rgba(255, 255, 255, 0.15);
+  transition: background 0.15s;
+}
+
+.groupToggleButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.groupToggleButtonActive {
+  background: rgba(80, 160, 255, 0.25);
+  border-color: rgba(80, 160, 255, 0.5);
+  color: #ffffff;
+}
+
+.groupToggleIcon {
+  width: 16rem;
+  height: 16rem;
+}
+
+.groupHeaderRow {
+  width: 100%;
+  height: 34rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 25rem;
+  background: rgba(80, 160, 255, 0.1);
+  border-bottom: 1rem solid rgba(80, 160, 255, 0.25);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.groupHeaderRow:hover {
+  background: rgba(80, 160, 255, 0.18);
+}
+
+.expandIcon {
+  width: 14rem;
+  height: 14rem;
+  margin-right: 6rem;
+  transition: transform 0.2s;
+}
+
+.expandIconExpanded {
+  transform: rotate(90deg);
+}
+
+.groupName {
+  font-weight: bold;
+  font-size: 13rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.groupBuildingCount {
+  font-size: 12rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-left: 8rem;
+}
+
+.groupStat {
+  font-size: 12rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.childRow {
+  background: rgba(255, 255, 255, 0.03);
+}

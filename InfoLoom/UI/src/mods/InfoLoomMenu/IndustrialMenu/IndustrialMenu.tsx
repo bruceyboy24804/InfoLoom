@@ -4,9 +4,10 @@ import React, { useCallback } from 'react';
 import { Button, Panel } from 'cs2/ui';
 import styles from '../IndustrialMenu/IndustrialMenu.module.scss';
 import Industrial from 'mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand';
-import IndustryCompany from 'mods/InfoLoomSections/IndustrialSection/IndustrialCompanyUI/IndustrialCompany';
+import IndustrialCompany from 'mods/InfoLoomSections/IndustrialSection/IndustrialCompanyUI/IndustrialCompany';
 import { useLocalization } from 'cs2/l10n';
 import { Localekeys } from 'mods/locale';
+import StorageCompanyComponent from '../../InfoLoomSections/IndustrialSection/StorageCompanyUI/StorageCompanyComponent';
 
 interface SectionConfig {
   component: JSX.Element;
@@ -26,9 +27,15 @@ export function IndustrialMenuButton(): JSX.Element {
       displayName: null, // Will be set at render time
     },
     Companies: {
-      component: <IndustryCompany />,
+      component: <IndustrialCompany />,
       openState: () => useValue(bindings.IndustrialCompanyDebugOpen),
       toggle: bindings.SetIndustrialCompanyDebugOpen,
+      displayName: null, // Will be set at render time
+    },
+    Storages: {
+      component: <StorageCompanyComponent />,
+      openState: () => useValue(bindings.storagePanelVisibleBinding),
+      toggle: bindings.SetStoragePanelVisible,
       displayName: null, // Will be set at render time
     },
   };
@@ -56,8 +63,8 @@ export function IndustrialMenuButton(): JSX.Element {
                 case 'Products':
                   displayName = translate(Localekeys.Products, 'Products');
                   break;
-                case 'Companies':
-                  displayName = translate(Localekeys.Companies, 'Companies');
+                case 'Storage':
+                  displayName = translate(Localekeys.Storage, 'Storage');
                   break;
                 default:
                   displayName = name;

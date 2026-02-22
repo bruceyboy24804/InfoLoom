@@ -1,0 +1,23 @@
+.headerRow {
+  width: 100%;
+  height: 40rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 25rem;
+  border-bottom: 2rem solid rgba(255, 255, 255, 0.3);
+  font-weight: bold;
+  font-size: 14rem;
+  color: rgba(255, 255, 255, 0.9);
+  > div {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 10rem;
+    text-align: center;
+    &:first-child {
+      flex-grow: 1;
+      flex-shrink: 1;
+      text-align: left;
+    }
+  }
+}

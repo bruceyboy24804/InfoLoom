@@ -17,8 +17,8 @@ using Unity.Mathematics;
 namespace InfoLoomTwo
 {
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, ChirpsGroup)]
-    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, ChirpsGroup)]
+    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup)]
+    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup)]
     [SettingsUITabOrder(GeneralTab, CustomChirpsTab)]
     public class Setting : ModSetting
     {
@@ -30,7 +30,8 @@ namespace InfoLoomTwo
         public const string InfoviewChirps = "InfoviewChirps";
         public const string Data = "Data";
         public const string DemographicsGroup = "Demographics";
-        public bool data;
+        public const string EffectGroup = "EffectGroup";
+        
         // ===== General Tab =====
         [SettingsUISection(GeneralTab, SectionsGroup)]
         public bool hideBuildingSection { get; set; }
@@ -43,6 +44,49 @@ namespace InfoLoomTwo
         
         [SettingsUISection(GeneralTab, SectionsGroup)]
         public bool hideRentSection { get; set; }
+        [SettingsUISection(GeneralTab, EffectGroup)]
+        public bool showEffectsButton { get; set; }
+
+        [SettingsUIHidden]
+        public int crimeColorR { get; set; }
+        [SettingsUIHidden]
+        public int crimeColorG { get; set; }
+        [SettingsUIHidden]
+        public int crimeColorB { get; set; }
+        [SettingsUIHidden]
+        public int crimeColorA { get; set; }
+        [SettingsUIHidden]
+        public int wellbeingColorR { get; set; }
+        [SettingsUIHidden]
+        public int wellbeingColorG { get; set; }
+        [SettingsUIHidden]
+        public int wellbeingColorB { get; set; }
+        [SettingsUIHidden]
+        public int wellbeingColorA { get; set; }
+        [SettingsUIHidden]
+        public int healthColorR { get; set; }
+        [SettingsUIHidden]
+        public int healthColorG { get; set; }
+        [SettingsUIHidden]
+        public int healthColorB { get; set; }
+        [SettingsUIHidden]
+        public int healthColorA { get; set; }
+        [SettingsUIHidden]
+        public int fireHazardColorR { get; set; }
+        [SettingsUIHidden]
+        public int fireHazardColorG { get; set; }
+        [SettingsUIHidden]
+        public int fireHazardColorB { get; set; }
+        [SettingsUIHidden]
+        public int fireHazardColorA { get; set; }
+        [SettingsUIHidden]
+        public int fireResponseColorR { get; set; }
+        [SettingsUIHidden]
+        public int fireResponseColorG { get; set; }
+        [SettingsUIHidden]
+        public int fireResponseColorB { get; set; }
+        [SettingsUIHidden]
+        public int fireResponseColorA { get; set; }
         [SettingsUISection(GeneralTab, DemandPanelResources)]
         [SettingsUISlider(min = 0f, max = 100f, step = 1f, unit = Unit.kInteger)]
         public int comResDemValue { get; set; }
@@ -105,7 +149,8 @@ namespace InfoLoomTwo
         public bool enableWaterAndSweageChirps { get; set; }
         
 
-        
+        [SettingsUIHidden]
+        public float2 panelPosition { get; set; }
         
         public Setting(IMod mod) : base(mod)
         {
@@ -118,6 +163,12 @@ namespace InfoLoomTwo
             hideCitizenSection = false;
             hideDistrictSection = false;
             hideRentSection = false;
+            showEffectsButton = true;
+            crimeColorR = 255; crimeColorG = 50; crimeColorB = 50; crimeColorA = 230;
+            wellbeingColorR = 50; wellbeingColorG = 200; wellbeingColorB = 50; wellbeingColorA = 230;
+            healthColorR = 50; healthColorG = 150; healthColorB = 255; healthColorA = 230;
+            fireHazardColorR = 255; fireHazardColorG = 128; fireHazardColorB = 0; fireHazardColorA = 230;
+            fireResponseColorR = 255; fireResponseColorG = 200; fireResponseColorB = 0; fireResponseColorA = 230;
             comResDemValue = 100;
             indResDemValue = 100;
             
@@ -137,6 +188,7 @@ namespace InfoLoomTwo
             
             enableElectrictyChirps = true;
             enableWaterAndSweageChirps = true;
+            panelPosition= new float2(0.5f, 0.5f);
             
         }
     }
@@ -208,6 +260,7 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionGroupLocaleID(Setting.ChirpsGroup), "Chirp Settings" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.Data), "Data" },
                 { m_Setting.GetOptionGroupLocaleID(Setting.DemographicsGroup), "Demographics Age Limits" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.EffectGroup), "Effect Settings" },
                 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideBuildingSection)), "Hide Building Section"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideBuildingSection)), "Toggle to hide the Building Section" },
@@ -217,7 +270,8 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideDistrictSection)), "Toggle to hide the District Section" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.hideRentSection)), "Hide Rent Section"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.hideRentSection)), "Toggle to hide the Rent Section" },
-                
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.showEffectsButton)), "Show Effects Button"  },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.showEffectsButton)), "Toggle to show the Effects Button"},
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.enableUnemploymentChirps)), "Enable Unemployment Chirps"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.enableUnemploymentChirps)), "Receive chirps when unemployment exceeds threshold" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.enableUnderemploymentChirps)), "Enable Underemployment Chirps"  },
