@@ -106,6 +106,7 @@ namespace InfoLoomTwo.Systems.TradeCostData
 
             // Create outside connection type binding
             outsideConnectionTypeBinding = CreateBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.All, OnOutsideConnectionTypeChanged);
+
         }
 
         protected override void OnDestroy()
@@ -184,6 +185,8 @@ namespace InfoLoomTwo.Systems.TradeCostData
         {
             UpdateAllTradeCosts();
             UpdateSortedData();
+            // Reset history when connection type changes since prices change
+            
         }
 
         private void OnVisibilityChanged(bool isVisible)

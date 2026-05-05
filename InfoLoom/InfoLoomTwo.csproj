@@ -35,6 +35,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="Colossal.PSI.Common">
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="Colossal.Mathematics">
 			<Private>False</Private>
 		</Reference>
@@ -183,6 +186,7 @@
 	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Folder Include="Exporter\" />
 	  <Folder Include="UI\src\mods\components\" />
 	</ItemGroup>
 	<ItemGroup>

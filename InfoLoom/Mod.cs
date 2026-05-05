@@ -25,6 +25,8 @@ using Game.Settings;
 using InfoLoomTwo.Systems.ChirpSystem_s_;
 using Game.Simulation;
 using InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems;
+using InfoLoomTwo.Systems.SankeyUISystems;
+using InfoLoomTwo.Exporter;
 
 
 // Mod namespace
@@ -77,6 +79,9 @@ namespace InfoLoomTwo
             setting.RegisterInOptionsUI();
            AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
 
+            // Initialize the data exporter output directory (must be before locale registration)
+            DataExporter.EnsureOutputDirectory();
+
              //Load localization
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
 
@@ -107,6 +112,8 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<StoragePropertyCompanies>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<BudgetUISankeySystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<WorkforcePipelineSankeySystem>(SystemUpdatePhase.UIUpdate);
             ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
             ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
             ILRentSection ilRentSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();

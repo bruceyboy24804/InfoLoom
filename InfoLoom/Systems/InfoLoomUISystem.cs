@@ -44,6 +44,7 @@ namespace InfoLoomTwo.Systems
         private const string IndustrialMenuOpen = "IndustrialMenuOpen";
         private const string DistrictMenuOpen = "DistrictMenuOpen";
         private const string ResidentialMenuOpen = "ResidentialMenuOpen";
+        private const string SankeyMenuOpen = "SankeyMenuOpen";
         private const string BuildingDemandOpen = "BuildingDemandOpen";
         private const string CommercialDemandOpen = "CommercialDemandOpen";
         private const string CommercialProductsOpen = "CommercialProductsOpen";
@@ -274,6 +275,7 @@ namespace InfoLoomTwo.Systems
         private ValueBinding<bool> _industrialPanelVisibleBinding;
         private ValueBinding<bool> _districtPanelVisibleBinding;
         private ValueBinding<bool> _residentialPanelVisibleBinding;
+        private ValueBinding<bool> _sankeyPanelVisibleBinding;
         private ValueBinding<bool> _bDPVBinding;
         private ValueBinding<bool> _cDPVBinding;
         private ValueBinding<bool> _cPPVBinding;
@@ -344,6 +346,11 @@ namespace InfoLoomTwo.Systems
             AddBinding(_residentialPanelVisibleBinding);
             AddBinding(new TriggerBinding<bool>(ModID, ResidentialMenuOpen, SetResidentialMenuVisibility));
             
+            //SankeyMenu
+            _sankeyPanelVisibleBinding = new ValueBinding<bool>(ModID, SankeyMenuOpen, false);
+            AddBinding(_sankeyPanelVisibleBinding);
+            AddBinding(new TriggerBinding<bool>(ModID, SankeyMenuOpen, SetSankeyMenuVisibility));
+            
             
             _bDPVBinding = new ValueBinding<bool>(ModID, BuildingDemandOpen, false);
             AddBinding(_bDPVBinding);
@@ -381,8 +388,6 @@ namespace InfoLoomTwo.Systems
              _effectsVisibleBinding = new ValueBinding<bool>(ModID, EffectsOpen, false);
              AddBinding(_effectsVisibleBinding);
              AddBinding(new TriggerBinding<bool>(ModID, EffectsOpen, SetEffectsVisibility));
-             
-              
 
             positionXBinding = CreateBinding("LoadPositionX", 0f);
             positionYBinding = CreateBinding("LoadPositionY", 0f);
@@ -822,6 +827,10 @@ namespace InfoLoomTwo.Systems
         private void SetResidentialMenuVisibility(bool open)
         {
             _residentialPanelVisibleBinding.Update(open);
+        }
+        private void SetSankeyMenuVisibility(bool open)
+        {
+            _sankeyPanelVisibleBinding.Update(open);
         }
         
         private void SetBuildingDemandVisibility(bool open)

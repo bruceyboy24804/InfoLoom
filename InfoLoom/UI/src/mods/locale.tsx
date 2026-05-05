@@ -232,6 +232,9 @@ export class Localekeys {
   public static MenuIndustrial: string = 'InfoLoomTwo.Menu[Industrial]';
   public static MenuDistrict: string = 'InfoLoomTwo.Menu[District]';
   public static MenuCommercial: string = 'InfoLoomTwo.Menu[Commercial]';
+  public static MenuSankey: string = 'InfoLoomTwo.Menu[Sankey]';
+  public static MenuSankeyBudget: string = 'InfoLoomTwo.Menu[SankeyBudget]';
+  public static MenuSankeyWorkforce: string = 'InfoLoomTwo.Menu[SankeyWorkforce]';
 
   public static Products: string = 'InfoLoomTwo.Menus[Products]';
   public static Companies: string = 'InfoLoomTwo.Menus[Companies]';

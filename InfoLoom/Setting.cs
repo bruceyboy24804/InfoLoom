@@ -17,9 +17,9 @@ using Unity.Mathematics;
 namespace InfoLoomTwo
 {
     [FileLocation(nameof(InfoLoomTwo))]
-    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup)]
-    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup)]
-    [SettingsUITabOrder(GeneralTab, CustomChirpsTab)]
+    [SettingsUIGroupOrder(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup, ExportGroup, ExportWorkforceGroup, ExportDemographicsGroup, ExportWorkplacesGroup)]
+    [SettingsUIShowGroupName(SectionsGroup, Data, DemandPanelResources, DemographicsGroup, EffectGroup, ChirpsGroup, ExportGroup, ExportWorkforceGroup, ExportDemographicsGroup, ExportWorkplacesGroup)]
+    [SettingsUITabOrder(GeneralTab, CustomChirpsTab, ExportTab)]
     public class Setting : ModSetting
     {
         public const string SectionsGroup = "Sections";
@@ -31,6 +31,11 @@ namespace InfoLoomTwo
         public const string Data = "Data";
         public const string DemographicsGroup = "Demographics";
         public const string EffectGroup = "EffectGroup";
+        public const string ExportTab = "Export";
+        public const string ExportGroup = "ExportSettings";
+        public const string ExportWorkforceGroup = "ExportWorkforce";
+        public const string ExportDemographicsGroup = "ExportDemographics";
+        public const string ExportWorkplacesGroup = "ExportWorkplaces";
         
         // ===== General Tab =====
         [SettingsUISection(GeneralTab, SectionsGroup)]
@@ -152,6 +157,115 @@ namespace InfoLoomTwo
         [SettingsUIHidden]
         public float2 panelPosition { get; set; }
         
+        // ===== Export Tab – Shared Settings =====
+        [SettingsUISection(ExportTab, ExportGroup)]
+        [SettingsUIMultilineText]
+        public string ExportOutputPathDisplay => string.Empty;
+
+        [SettingsUISection(ExportTab, ExportGroup)]
+        [SettingsUISlider(min = 1f, max = 20f, step = 1f, unit = Unit.kInteger)]
+        public int exportFilesRetentionCount { get; set; }
+
+        [SettingsUISection(ExportTab, ExportGroup)]
+        public bool exportReplaceExisting { get; set; }
+
+        [SettingsUIButton]
+        [SettingsUISection(ExportTab, ExportGroup)]
+        public bool ExportAllButton
+        {
+            set => InfoLoomTwo.Exporter.DataExporter.ExportAll();
+        }
+
+        // ===== Export Tab – Workforce =====
+        [SettingsUISection(ExportTab, ExportWorkforceGroup)]
+        public bool exportWorkforce { get; set; }
+
+        /// <summary>When true, ignores the current district selection in the UI and always exports city-wide workforce data.</summary>
+        [SettingsUISection(ExportTab, ExportWorkforceGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsWorkforceExportDisabled))]
+        public bool exportWorkforceCityWide { get; set; }
+
+        [SettingsUIButton]
+        [SettingsUISection(ExportTab, ExportWorkforceGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsWorkforceExportDisabled))]
+        public bool ExportWorkforceButton
+        {
+            set => InfoLoomTwo.Exporter.DataExporter.ExportWorkforce();
+        }
+
+        // ===== Export Tab – Demographics =====
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        public bool exportDemographics { get; set; }
+
+        /// <summary>Export per-year (single-age) detail CSV — mirrors UI's finest-grained view.</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoPerAge { get; set; }
+
+        /// <summary>Export 5-year grouped CSV — mirrors UI's Five-Year grouping strategy.</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoFiveYear { get; set; }
+
+        /// <summary>Export 10-year grouped CSV — mirrors UI's Ten-Year grouping strategy.</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoTenYear { get; set; }
+
+        /// <summary>Export lifecycle (Child/Teen/Adult/Elderly) grouped CSV — mirrors UI's Lifecycle grouping.</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoLifecycle { get; set; }
+
+        /// <summary>Export city-wide totals CSV (AllCitizens, Workers, Tourists, etc.).</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoTotals { get; set; }
+
+        /// <summary>When true, ignores the current district selection and always exports city-wide data.</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoCityWide { get; set; }
+
+        /// <summary>Include employment columns — Work, School1-4, Unemployed, Retired (mirrors Employment chart type).</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoEmploymentCols { get; set; }
+
+        /// <summary>Include education columns — Uneducated, PoorlyEducated, Educated, WellEducated, HighlyEducated (mirrors Education chart type).</summary>
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool exportDemoEducationCols { get; set; }
+
+        [SettingsUIButton]
+        [SettingsUISection(ExportTab, ExportDemographicsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsDemographicsExportDisabled))]
+        public bool ExportDemographicsButton
+        {
+            set => InfoLoomTwo.Exporter.DataExporter.ExportDemographics();
+        }
+
+        // ===== Export Tab – Workplaces =====
+        [SettingsUISection(ExportTab, ExportWorkplacesGroup)]
+        public bool exportWorkplaces { get; set; }
+
+        /// <summary>When true, ignores the current district selection in the UI and always exports city-wide workplaces data.</summary>
+        [SettingsUISection(ExportTab, ExportWorkplacesGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsWorkplacesExportDisabled))]
+        public bool exportWorkplacesCityWide { get; set; }
+
+        [SettingsUIButton]
+        [SettingsUISection(ExportTab, ExportWorkplacesGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsWorkplacesExportDisabled))]
+        public bool ExportWorkplacesButton
+        {
+            set => InfoLoomTwo.Exporter.DataExporter.ExportWorkplaces();
+        }
+
+        public bool IsWorkforceExportDisabled() => !exportWorkforce;
+        public bool IsDemographicsExportDisabled() => !exportDemographics;
+        public bool IsWorkplacesExportDisabled() => !exportWorkplaces;
+        
         public Setting(IMod mod) : base(mod)
         {
             SetDefaults();
@@ -189,6 +303,22 @@ namespace InfoLoomTwo
             enableElectrictyChirps = true;
             enableWaterAndSweageChirps = true;
             panelPosition= new float2(0.5f, 0.5f);
+            
+            exportFilesRetentionCount = 5;
+            exportReplaceExisting = false;
+            exportWorkforce = true;
+            exportWorkforceCityWide = true;
+            exportDemographics = true;
+            exportDemoPerAge = true;
+            exportDemoFiveYear = false;
+            exportDemoTenYear = false;
+            exportDemoLifecycle = false;
+            exportDemoTotals = false;
+            exportDemoCityWide = true;
+            exportDemoEmploymentCols = true;
+            exportDemoEducationCols = true;
+            exportWorkplaces = true;
+            exportWorkplacesCityWide = true;
             
         }
     }
@@ -304,6 +434,52 @@ namespace InfoLoomTwo
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.enableElectrictyChirps)), "Receive chirps when when you are consuming less electricity than you are producing" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.enableWaterAndSweageChirps)), "Enable Water and Sewage Chirps"  },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.enableWaterAndSweageChirps)), "Receive chirps when when you are consuming less water than you are producing" },
+                
+                // Export tab
+                { m_Setting.GetOptionTabLocaleID(Setting.ExportTab), "Export" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.ExportGroup), "General" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.ExportWorkforceGroup), "Workforce" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.ExportDemographicsGroup), "Demographics" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.ExportWorkplacesGroup), "Workplaces" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ExportOutputPathDisplay)), "Output Folder:\n" + System.IO.Path.Combine(Colossal.PSI.Environment.EnvPath.kUserDataPath, "ModsData", "InfoLoomTwo") },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportFilesRetentionCount)), "Files to Keep Per Data Type" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportFilesRetentionCount)), "Maximum number of CSV files to retain for each data type. Oldest are deleted first." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportReplaceExisting)), "Replace Existing File" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportReplaceExisting)), "When enabled, overwrites a single file per data type (e.g. workforce.csv) instead of creating a new timestamped file each export." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ExportAllButton)), "Export All Now" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ExportAllButton)), "Export all enabled data types immediately." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportWorkforce)), "Include in Export" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportWorkforce)), "Include workforce data when exporting." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportWorkforceCityWide)), "Always Export City-Wide" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportWorkforceCityWide)), "When enabled, the export always uses city-wide workforce data regardless of which district is selected in the Workforce UI. When disabled, the export reflects whichever district (or city-wide) is currently active." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ExportWorkforceButton)), "Export Workforce Now" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ExportWorkforceButton)), "Export workforce CSV immediately." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemographics)), "Include in Export" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemographics)), "Include demographics data when exporting. All enabled sections below are written into a single demographics.csv, identified by the 'grouping' column." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoPerAge)), "Include Per-Age Rows (1-year groups)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoPerAge)), "Adds 120 rows (one per year of age, 0-119) to the demographics CSV. Matches the finest-grained view available in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoFiveYear)), "Include 5-Year Group Rows" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoFiveYear)), "Adds rows for each 5-year age band to the demographics CSV. Matches the Five-Year grouping in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoTenYear)), "Include 10-Year Group Rows" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoTenYear)), "Adds rows for each 10-year age band to the demographics CSV. Matches the Ten-Year grouping in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoLifecycle)), "Include Lifecycle Group Rows (Child/Teen/Adult/Elderly)" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoLifecycle)), "Adds four rows (Child, Teen, Adult, Elderly) to the demographics CSV. Matches the Lifecycle grouping in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoTotals)), "Include City Totals Rows" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoTotals)), "Adds city-wide summary rows to the demographics CSV: AllCitizens, Workers, Tourists, Commuters, Students, and more." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoCityWide)), "Always Export City-Wide" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoCityWide)), "When enabled, the export always uses city-wide data regardless of which district is selected in the Demographics UI. When disabled, the export reflects whichever district (or city-wide) is currently active in the UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoEmploymentCols)), "Include Employment Columns" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoEmploymentCols)), "Adds Work, School (Elementary/High/College/University), Unemployed, and Retired columns to each row. Corresponds to the Employment chart type in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportDemoEducationCols)), "Include Education Columns" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportDemoEducationCols)), "Adds Uneducated, Poorly Educated, Educated, Well Educated, and Highly Educated columns to each row. Corresponds to the Education chart type in the Demographics UI." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ExportDemographicsButton)), "Export Demographics Now" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ExportDemographicsButton)), "Writes all enabled demographics sections into a single demographics.csv immediately." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportWorkplaces)), "Include in Export" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportWorkplaces)), "Include workplaces data when exporting." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.exportWorkplacesCityWide)), "Always Export City-Wide" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.exportWorkplacesCityWide)), "When enabled, the export always uses city-wide workplaces data regardless of which district is selected in the Workplaces UI. When disabled, the export reflects whichever district (or city-wide) is currently active." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ExportWorkplacesButton)), "Export Workplaces Now" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ExportWorkplacesButton)), "Export workplaces CSV immediately." },
             };
         }
 

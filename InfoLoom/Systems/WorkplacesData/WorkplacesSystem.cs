@@ -69,6 +69,16 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             return 512;
         }
 
+        /// <summary>Runs the workplaces calculation immediately on the calling thread. Used by the exporter.</summary>
+        public void RecalculateNow()
+        {
+            ForceUpdate = false;
+            ResetResults();
+            CalculateWorkplaceData();
+            CountWorkingCommuters();
+            CalculateTotals();
+        }
+
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)

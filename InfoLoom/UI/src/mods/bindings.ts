@@ -15,12 +15,14 @@ import { Demographics1, Demographics2 } from 'mods/domain/DemographicsEnums';
 import { ResourceTradeCost } from 'mods/domain/tradeCostData';
 import { StorageCompanyInfo } from './domain/StorageCompanyInfo';
 import {EntityModifierData} from "./domain/EffectsData";
+import { BudgetSankeyData } from './domain/budgetSankeyData';
 
 const INFO_LOOM_MENU_OPEN = 'InfoLoomMenuOpen';
 const COMMERCIAL_MENU_OPEN = 'CommercialMenuOpen';
 const INDUSTRIAL_MENU_OPEN = 'IndustrialMenuOpen';
 const DISTRICT_MENU_OPEN = 'DistrictMenuOpen';
 const RESIDENTIAL_MENU_OPEN = 'ResidentialMenuOpen';
+const SANKEY_MENU_OPEN = 'SankeyMenuOpen';
 const BUILDING_DEMAND_OPEN = 'BuildingDemandOpen';
 const COMMERCIAL_DEMAND_OPEN = 'CommercialDemandOpen';
 const COMMERCIAL_PRODUCTS_OPEN = 'CommercialProductsOpen';
@@ -34,6 +36,8 @@ const WORKPLACES_OPEN = 'WorkplacesOpen';
 const COMMERCIAL_COMPANY_DEBUG_OPEN = 'CommercialCompanyDebugOpen';
 const INDUSTRIAL_COMPANY_DEBUG_OPEN = 'IndustrialCompanyDebugOpen';
 const HOUSEHOLDS_DATA_OPEN = 'HouseholdsDataOpen';
+const BUDGET_SANKEY_OPEN = 'BudgetSankeyOpen';
+const WORKFORCE_PIPELINE_SANKEY_OPEN = 'WorkforcePipelineSankeyOpen';
 export const BUILDING_DEMAND_DATA = 'BuildingDemandData';
 export const COMMERCIAL_DATA = 'CommercialData';
 export const COMMERCIAL_DATA_EX_RES = 'CommercialDataExRes';
@@ -75,6 +79,9 @@ export const ResidentialDemandOpen = bindValue<boolean>(mod.id, RESIDENTIAL_DEMA
 export const TradeCostsOpen = bindValue<boolean>(mod.id, TRADE_COSTS_OPEN, false);
 export const WorkforceOpen = bindValue<boolean>(mod.id, WORKFORCE_OPEN, false);
 export const WorkplacesOpen = bindValue<boolean>(mod.id, WORKPLACES_OPEN, false);
+export const BudgetSankeyOpen = bindValue<boolean>(mod.id, BUDGET_SANKEY_OPEN, false);
+export const WorkforcePipelineSankeyOpen = bindValue<boolean>(mod.id, WORKFORCE_PIPELINE_SANKEY_OPEN, false);
+export const SankeyMenuOpen = bindValue<boolean>(mod.id, SANKEY_MENU_OPEN, false);
 
 export const CommercialData = bindValue<number[]>(mod.id, 'CommercialData');
 export const CommercialDataExRes = bindValue<string[]>(mod.id, 'CommercialDataExRes', []);
@@ -89,9 +96,10 @@ export const IndustrialCompanyDebugData = bindValue<IndustrialCompanyDebug[]>(mo
 export const ResidentialData = bindValue<number[]>(mod.id, 'ResidentialData', []);
 export const TradeCostsData = bindValue<ResourceTradeCost[]>(mod.id, 'TradeCostsData', []);
 
-export const TradeCostsSelectedResources = bindValue<string[]>(mod.id, 'TradeCostsSelectedResources', []);
 export const WorkforceData = bindValue<workforceInfo[]>(mod.id, 'WorkforceData', []);
 export const WorkplacesData = bindValue<workplacesInfo[]>(mod.id, 'WorkplacesData', []);
+
+export const BudgetSankeyData$ = bindValue<BudgetSankeyData>(mod.id, 'budgetSankeyData');
 
 export const SetInfoLoomMenuOpen = (open: boolean) => trigger(mod.id, INFO_LOOM_MENU_OPEN, open);
 export const SetCommercialMenuOpen = (open: boolean) => trigger(mod.id, COMMERCIAL_MENU_OPEN, open);
@@ -111,6 +119,9 @@ export const SetResidentialDemandOpen = (open: boolean) => trigger(mod.id, RESID
 export const SetTradeCostsOpen = (open: boolean) => trigger(mod.id, TRADE_COSTS_OPEN, open);
 export const SetWorkforceOpen = (open: boolean) => trigger(mod.id, WORKFORCE_OPEN, open);
 export const SetWorkplacesOpen = (open: boolean) => trigger(mod.id, WORKPLACES_OPEN, open);
+export const SetBudgetSankeyOpen = (open: boolean) => trigger(mod.id, BUDGET_SANKEY_OPEN, open);
+export const SetWorkforcePipelineSankeyOpen = (open: boolean) => trigger(mod.id, WORKFORCE_PIPELINE_SANKEY_OPEN, open);
+export const SetSankeyMenuOpen = (open: boolean) => trigger(mod.id, SANKEY_MENU_OPEN, open);
 
 export const SetDemoGroupingStrategy = (strategy: GroupingStrategy) =>
   trigger(mod.id, 'SetDemoGroupingStrategy', strategy);

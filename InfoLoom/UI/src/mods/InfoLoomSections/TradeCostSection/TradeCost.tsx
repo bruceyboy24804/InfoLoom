@@ -274,7 +274,6 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
             })}
           </div>
 
-          <DataDivider />
         </div>
       </Panel>
     </Portal>

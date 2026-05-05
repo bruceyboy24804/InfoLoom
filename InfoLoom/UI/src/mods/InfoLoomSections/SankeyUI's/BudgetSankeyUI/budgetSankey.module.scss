@@ -1,0 +1,66 @@
+.panel {
+  width: 480rem;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--panelColorDark);
+  overflow: visible;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 18rem;
+  text-transform: none;
+}
+
+.title {
+  font-size: 115%;
+  font-weight: bold;
+  color: var(--accentColorNormal);
+  margin-left: -5rem;
+}
+
+// ── Summary strip ──────────────────────────────────────────────────────────
+.summaryBar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6rem 12rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4rem;
+  margin-bottom: 8rem;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summaryLabel {
+  font-size: 80%;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summaryValuePos {
+  font-size: 105%;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.summaryValueNeg {
+  font-size: 105%;
+  font-weight: bold;
+  color: #ef5350;
+}
+
+// ── Chart canvas wrapper ───────────────────────────────────────────────────
+.chartWrapper {
+  flex: 1;
+  min-height: 480rem;
+  position: relative;
+  width: 100%;
+}

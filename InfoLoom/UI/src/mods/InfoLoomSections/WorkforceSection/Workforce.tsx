@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect, useRef, useMemo } from 'react';
 import { useValue, bindLocalValue, bindValue } from 'cs2/api';
 import { WorkforceData } from 'mods/bindings';
 import { SelectedInfoSectionBase, Theme } from 'cs2/bindings';
@@ -12,7 +12,7 @@ import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-R
 import { DistrictSelector } from '../../InfoloomInfoviewContents/DistrictSelector/districtSelector';
 import { infoview } from 'cs2/bindings';
 import classNames from 'classnames';
-import { useRem } from 'cs2/utils';
+import Chart from 'chart.js/auto';
 import { Localekeys } from 'mods/locale';
 
 const ShowExtraWorkforce = bindValue<number>(mod.id, 'ShowExtraWorkforce', 0);
@@ -36,168 +36,201 @@ export const panelTrigger = (state: boolean) => {
   panelVisibleBinding.update(state);
 };
 
-interface StackedBarProps {
-  levelName: string | null;
-  levelColor: string;
-  levelValues: workforceInfo;
-  total: number;
-  translations: {
-    segments: Array<{ label: string }>;
-    segmentTooltipCount: string;
-    segmentTooltipWithin: string;
-    segmentTooltipOfTotal: string;
-    barTooltipHeader: string;
-    barTooltipTotal: string;
-    barTooltipPercentage: string;
+interface WorkforceChartProps {
+  workforce: workforceInfo[];
+  educationLevels: Array<{ name: string | null; color: string; data: workforceInfo }>;
+  segmentLabels: {
+    worker: string | null;
+    unemployed: string | null;
+    under: string | null;
+    outside: string | null;
+    homeless: string | null;
   };
-}
-enum SegmentsType {
-  Worker = 0,
-  Unemployed = 1,
-  Under = 2,
-  Outside = 3,
-  Homeless = 4,
+  totalLabel: string | null;
+  chartTitle: string | null;
 }
 
-const StackedBar: React.FC<StackedBarProps> = ({ levelName, levelColor, levelValues, total, translations }) => {
-  if (total === 0 || levelValues.Total === 0) return null;
+const WorkforceStackedBarChart: React.FC<WorkforceChartProps> = ({
+  workforce,
+  educationLevels,
+  segmentLabels,
+  totalLabel,
+  chartTitle,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const chartRef = useRef<Chart | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const rem = useRem();
-  const barWidthInRem = 600;
-  const barHeightInRem = 24;
-  const barWidth = barWidthInRem * rem;
-  const barHeight = barHeightInRem * rem;
+  const labels = useMemo(
+    () => [...educationLevels.map(l => l.name ?? ''), totalLabel ?? ''],
+    [educationLevels, totalLabel]
+  );
 
-  const segments = [
-    {
-      label: translations.segments[SegmentsType.Worker].label,
-      value: levelValues.Worker,
-      color: '#4CAF50',
-    },
-    {
-      label: translations.segments[SegmentsType.Unemployed].label,
-      value: levelValues.Unemployed,
-      color: '#F44336',
-    },
-    {
-      label: translations.segments[SegmentsType.Under].label,
-      value: levelValues.Under,
-      color: '#9C27B0',
-    },
-    {
-      label: translations.segments[SegmentsType.Outside].label,
-      value: levelValues.Outside,
-      color: '#607D8B',
-    },
-    {
-      label: translations.segments[SegmentsType.Homeless].label,
-      value: levelValues.Homeless,
-      color: '#795548',
-    },
-  ];
+  const allLevels = useMemo(
+    () => [...educationLevels.map(l => l.data), workforce[5]],
+    [educationLevels, workforce]
+  );
 
-  const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
+  // Use non-overlapping segments that sum to Total:
+  // Employee = Worker - Outside (city workers, includes underemployed)
+  // Unemployed = Total - Worker (truly not working, no Worker component)
+  // Outside = workers at outside connections
+  // Note: Under ⊂ Employee, Homeless is orthogonal — shown in tooltip only
+  const chartData = useMemo(() => ({
+    labels,
+    datasets: [
+      {
+        label: segmentLabels.worker ?? 'Employee',
+        data: allLevels.map(d => d.Worker - d.Outside),
+        backgroundColor: '#4CAF50',
+      },
+      {
+        label: segmentLabels.unemployed ?? 'Unemployed',
+        data: allLevels.map(d => d.Total - d.Worker),
+        backgroundColor: '#F44336',
+      },
+      {
+        label: segmentLabels.outside ?? 'Outside',
+        data: allLevels.map(d => d.Outside),
+        backgroundColor: '#607D8B',
+      },
+    ],
+  }), [labels, allLevels, segmentLabels]);
 
-  // Calculate segment widths in pixels
-  let x = 0;
-  const svgSegments = segments
-    .filter(segment => segment.value > 0)
-    .map((segment, idx) => {
-      const width = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * barWidth : 0;
-      const rect = <rect key={idx} x={x} y={0} width={width} height={barHeight} fill={segment.color} />;
-      x += width;
-      return rect;
+  // Initialize chart once
+  useEffect(() => {
+    if (!canvasRef.current || !containerRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    chartRef.current = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        indexAxis: 'y',
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        plugins: {
+          title: {
+            display: true,
+            text: chartTitle ?? '',
+            color: '#ffffff',
+            font: { size: 14, family: 'Overpass' },
+          },
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#ffffff',
+              padding: 10,
+              font: { size: 12, family: 'Overpass' },
+            },
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: '#171d2b',
+            titleFont: { weight: 'bold', size: 13, family: 'Overpass' },
+            bodyFont: { size: 11, family: 'Overpass' },
+            footerFont: { weight: 'bold', size: 11, family: 'Overpass' },
+            padding: 8,
+            callbacks: {
+              label: (context) => {
+                const val = (context.raw as number) || 0;
+                return `${context.dataset.label}: ${val.toLocaleString()}`;
+              },
+              afterBody: (tooltipItems) => {
+                const idx = tooltipItems[0]?.dataIndex;
+                if (idx === undefined || !allLevels[idx]) return '';
+                const d = allLevels[idx];
+                const lines: string[] = [];
+                lines.push(`${segmentLabels.under ?? 'Under'}: ${d.Under.toLocaleString()}`);
+                lines.push(`${segmentLabels.homeless ?? 'Homeless'}: ${d.Homeless.toLocaleString()}`);
+                return lines;
+              },
+              footer: (tooltipItems) => {
+                const idx = tooltipItems[0]?.dataIndex;
+                if (idx === undefined || !allLevels[idx]) return '';
+                return `Total: ${allLevels[idx].Total.toLocaleString()}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#ffffff', font: { size: 11, family: 'Overpass' } },
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#ffffff', font: { size: 12, family: 'Overpass' } },
+          },
+        },
+        datasets: {
+          bar: {
+            barThickness: 20,
+            maxBarThickness: 30,
+          },
+        },
+      },
     });
 
-  return (
-    <PanelFoldout
-      header={
-        <div className={InfoRowTheme.infoRow}>
-          <div className={styles.barLabel}>
-            <div className={styles.barLabelSymbol} style={{ backgroundColor: levelColor }}></div>
-            <div className={styles.barLabelText}>{levelName}</div>
-            <div className={classNames(InfoRowTheme.infoRow, InfoRowSCSS.right)}>
-              <div className={styles.barLabelValue}>{levelValues.Total.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
       }
-      initialExpanded={false}
-      className={styles.stackedBarContainer}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: `${barWidthInRem}rem`,
-          height: `${barHeightInRem}rem`,
-          paddingLeft: '10rem',
-          paddingRight: '10rem',
-        }}
-      >
-        <svg width={barWidth} height={barHeight} style={{ display: 'block' }}>
-          {svgSegments}
-        </svg>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '10rem', fontSize: '15rem' }}>
-        {segments.map((segment, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
-            <div
-              style={{
-                width: '15rem',
-                height: '15rem',
-                backgroundColor: segment.color,
-                marginRight: '5rem',
-                marginLeft: '10rem',
-                borderRadius: '4rem',
-              }}
-            ></div>
-            <div style={{ marginRight: '10rem', display: 'flex', flexDirection: 'row' }}>
-              {segment.label}: {segment.value}
-            </div>
-          </div>
-        ))}
-      </div>
-    </PanelFoldout>
-  );
-};
+    };
+  }, []);
 
-const WorkforceChart: React.FC<{
-  workforce: workforceInfo[];
-  chartTitle: string | null;
-  educationLevels: Array<{ name: string | null; color: string; data: workforceInfo }>;
-  legendItems: Array<{ label: string | null; color: string }>;
-  legendTooltipSuffix: string | null;
-  translations: any;
-}> = ({ workforce, chartTitle, educationLevels, legendItems, legendTooltipSuffix, translations }) => {
-  return (
-    <PanelFoldout
-      header={
-        <div className={InfoRowTheme.infoRow}>
-          <div className={classNames(InfoRowSCSS.left)}>{chartTitle}</div>
-        </div>
+  // Update chart data when workforce changes
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    const hiddenStates = chartRef.current.data.datasets.map((_, index) =>
+      chartRef.current!.getDatasetMeta(index).hidden
+    );
+
+    chartRef.current.data = chartData;
+
+    chartRef.current.data.datasets.forEach((_, index) => {
+      if (hiddenStates[index] !== undefined && hiddenStates[index] !== null) {
+        chartRef.current!.getDatasetMeta(index).hidden = hiddenStates[index];
       }
-      initialExpanded={false}
-      className={styles.chartSection}
-    >
-      {educationLevels.map((level, index) => (
-        <StackedBar
-          key={index}
-          levelName={level.name}
-          levelColor={level.color}
-          levelValues={level.data}
-          total={workforce[5].Total}
-          translations={translations}
-        />
-      ))}
+    });
 
-      <StackedBar
-        levelName={translations.totalLabel}
-        levelColor="#FFFFFF"
-        levelValues={workforce[5]}
-        total={workforce[5].Total}
-        translations={translations}
-      />
-    </PanelFoldout>
+    chartRef.current.update('none');
+  }, [chartData]);
+
+  // Handle resize
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      if (!entries[0]) return;
+      const { width, height } = entries[0].contentRect;
+      if (canvasRef.current && width > 0 && height > 0) {
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '300rem', position: 'relative' }}
+    >
+      <canvas ref={canvasRef} style={{ height: '0', width: '0', display: 'block' }} />
+    </div>
   );
 };
 
@@ -208,44 +241,44 @@ const WorkforceTableHeader: React.FC<{ translations: any }> = ({ translations })
   return (
     <div className={styles.headerRow}>
       <div className={styles.col1}>
-        <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
-          <span>Education</span>
-        </Tooltip>
+        <span>Education</span>
       </div>
       <div className={styles.col2}>
-        <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
+        <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
           <span>Total</span>
         </Tooltip>
       </div>
       {value < 7 && (
         <div className={styles.col3}>
-          <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
+          <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
             <span>%</span>
           </Tooltip>
         </div>
       )}
       {value < 6 && (
         <div className={styles.col4}>
-          <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
+          <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
             <span>Worker</span>
           </Tooltip>
         </div>
       )}
       {value < 5 && (
         <div className={styles.col5}>
-          <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+          <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
             <span>Unemployed</span>
           </Tooltip>
         </div>
       )}
       {value < 4 && (
         <div className={styles.col6}>
-          <span>%</span>
+          <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+            <span>%</span>
+          </Tooltip>
         </div>
       )}
       {value < 3 && (
         <div className={styles.col7}>
-          <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+          <Tooltip tooltip={translations?.underTooltip} direction="down" alignment="center">
             <span>Under</span>
           </Tooltip>
         </div>
@@ -452,8 +485,15 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
             levelValues={workforce[5]}
             total={workforce[5].Total}
           />
-          <Scrollable smooth={true} vertical={true} trackVisibility={'scrollable'}>
-            <WorkforceChart
+          <PanelFoldout
+            header={
+              <div className={InfoRowTheme.infoRow}>
+                {translate('InfoLoomTwo.WorkforcePanel[StackedBarTitle]', 'Workforce Distribution by Education Level')}
+              </div>
+            }
+            initialExpanded={false}
+          >
+            <WorkforceStackedBarChart
               workforce={workforce}
               chartTitle={translate(
                 'InfoLoomTwo.WorkforcePanel[StackedBarTitle]',
@@ -486,69 +526,16 @@ const Workforce: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
                   data: workforce[4],
                 },
               ]}
-              legendItems={[
-                {
-                  label: translate(Localekeys.Worker, 'Worker'),
-                  color: '#4CAF50',
-                },
-                {
-                  label: translate(Localekeys.Unemployed, 'Unemployed'),
-                  color: '#F44336',
-                },
-                {
-                  label: translate(Localekeys.WorkforcePanelUnder, 'Under Employed'),
-                  color: '#9C27B0',
-                },
-                {
-                  label: translate(Localekeys.WorkforcePanelOutside, 'Outside'),
-                  color: '#607D8B',
-                },
-                {
-                  label: translate(Localekeys.Homeless, 'Homeless'),
-                  color: '#795548',
-                },
-              ]}
-              legendTooltipSuffix={translate(
-                'InfoLoomTwo.WorkforcePanel[LegendTooltipSuffix]',
-                'Click on bar segments above to see detailed breakdown'
-              )}
-              translations={{
-                segments: [
-                  {
-                    label: translate(Localekeys.Worker, 'Worker'),
-                  },
-                  {
-                    label: translate(Localekeys.Unemployed, 'Unemployed'),
-                  },
-                  {
-                    label: translate(Localekeys.WorkforcePanelUnder, 'Under Employed'),
-                  },
-                  {
-                    label: translate(Localekeys.WorkforcePanelOutside, 'Outside'),
-                  },
-                  {
-                    label: translate(Localekeys.Homeless, 'Homeless'),
-                  },
-                ],
-                segmentTooltipCount: translate('InfoLoomTwo.WorkforcePanel[SegmentTooltipCount]', 'Count'),
-                segmentTooltipWithin: translate(
-                  'InfoLoomTwo.WorkforcePanel[SegmentTooltipWithin]',
-                  'Within Education Level'
-                ),
-                segmentTooltipOfTotal: translate(
-                  'InfoLoomTwo.WorkforcePanel[SegmentTooltipOfTotal]',
-                  'Of Total Workforce'
-                ),
-                barTooltipHeader: translate('InfoLoomTwo.WorkforcePanel[BarTooltipHeader]', 'Summary'),
-                barTooltipTotal: translate(Localekeys.Total, 'Total'),
-                barTooltipPercentage: translate(
-                  'InfoLoomTwo.WorkforcePanel[BarTooltipPercentage]',
-                  '% of Total Workforce'
-                ),
-                totalLabel: translate(Localekeys.Total, 'TOTAL'),
+              segmentLabels={{
+                worker: translate(Localekeys.Worker, 'Worker'),
+                unemployed: translate(Localekeys.Unemployed, 'Unemployed'),
+                under: translate(Localekeys.WorkforcePanelUnder, 'Under Employed'),
+                outside: translate(Localekeys.WorkforcePanelOutside, 'Outside'),
+                homeless: translate(Localekeys.Homeless, 'Homeless'),
               }}
+              totalLabel={translate(Localekeys.Total, 'TOTAL')}
             />
-          </Scrollable>
+          </PanelFoldout>
         </div>
       )}
     </Panel>

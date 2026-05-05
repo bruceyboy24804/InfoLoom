@@ -26,8 +26,8 @@
 ### Demographics
 - Key information about current city demographics in one place.
 - Age distribution histogram that also shows cims' activity structure.
-NEW - show grouped age view.
-NEW - summary statistics for each age group.
+- show grouped age view.
+- summary statistics for each age group.
 
 ### Workforce structure
 - Shows workforce structure by education level.
@@ -122,17 +122,16 @@ NEW - summary statistics for each age group.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/info-loom.1707423/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.20.1" />
+	<ModVersion Value="1.21.2" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.5.4*" />
+	<GameVersion Value="1.5.7*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="74417" DisplayName="Unified Icon Library" Version="1.0.13" />
    
 
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>## Version 1.20.1
-- Bumped to game version 1.5.4
-- Fixed small ui bug
+	<ChangeLog>## Version 1.21.2
+- Fixed memory leak issue with commercial demand system 
 </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
 	<ExternalLink Type="github" Url="https://github.com/bruceyboy24804/InfoLoom" />

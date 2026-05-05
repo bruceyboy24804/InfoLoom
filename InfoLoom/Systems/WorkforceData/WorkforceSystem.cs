@@ -233,6 +233,33 @@ namespace InfoLoomTwo.Systems.WorkforceData
             return UPDATE_INTERVAL;
         }
 
+        /// <summary>Runs the workforce calculation immediately on the calling thread. Used by the exporter.</summary>
+        public void RecalculateNow()
+        {
+            ForceUpdate = false;
+            ResetResults();
+            var jobData = new CountEmploymentJob
+            {
+                m_EntityType = SystemAPI.GetEntityTypeHandle(),
+                m_CitizenType = SystemAPI.GetComponentTypeHandle<Citizen>(isReadOnly: true),
+                m_HouseholdMemberType = SystemAPI.GetComponentTypeHandle<HouseholdMember>(isReadOnly: true),
+                m_Workers = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true),
+                m_MovingAways = SystemAPI.GetComponentLookup<MovingAway>(isReadOnly: true),
+                m_PropertyRenters = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true),
+                m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(isReadOnly: true),
+                m_OutsideConnections = SystemAPI.GetComponentLookup<OutsideConnection>(isReadOnly: true),
+                m_Households = SystemAPI.GetComponentLookup<Household>(isReadOnly: true),
+                m_CurrentDistrictLookup = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true),
+                m_Students = SystemAPI.GetComponentLookup<Game.Citizens.Student>(isReadOnly: true),
+                m_Citizens = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true),
+                m_HealthProblems = SystemAPI.GetComponentLookup<HealthProblem>(isReadOnly: true),
+                m_SelectedDistrict = SelectedDistrict,
+                m_Results = m_Results
+            };
+            JobChunkExtensions.Schedule(jobData, m_AllAdultGroup, base.Dependency).Complete();
+            CalculateTotals();
+        }
+
         protected override void OnUpdate()
         {
             if (!IsPanelVisible)

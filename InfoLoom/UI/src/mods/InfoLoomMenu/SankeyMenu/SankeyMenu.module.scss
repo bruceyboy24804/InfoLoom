@@ -1,0 +1,81 @@
+.panel {
+  width: 200rem;
+  z-index: 10;
+  background-color: var(--panelColorNormal);
+  backdrop-filter: var(--panelBlur);
+  border-top-left-radius: var(--panelRadiusInner);
+  border-top-right-radius: var(--panelRadiusInner);
+  border-bottom-left-radius: var(--panelRadiusInner);
+  border-bottom-right-radius: var(--panelRadiusInner);
+
+  pointer-events: auto;
+  overflow: hidden;
+  animation: scale-up-center-alternate 0.25s ease 0s 1 alternate none;
+  position: absolute;
+  left: 200rem !important;
+  top: 230rem;
+}
+
+.header {
+  display: flex;
+  border-radius: 4rem;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 4rem;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--accentColorNormal);
+  font-size: var(--fontSizeL);
+  font-weight: 600;
+  color: var(--accentColorNormal);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background-color: var(--sectionHeaderColor);
+  pointer-events: none;
+}
+
+.buttonRow {
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 6rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.InfoLoomButton {
+  width: 100%;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 3rem 0;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  border: none;
+  background-color: var(--dividerColor);
+  color: var(--menuText1Normal);
+  font-size: var(--fontSizeM);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background-color: var(--hoverColorBright);
+  }
+}
+
+.buttonSelected {
+  background-color: var(--selectedColor);
+  &:hover {
+    background-color: var(--selectedColor);
+  }
+}
+
+@keyframes scale-up-center-alternate {
+  0% {
+    transform: scale(0.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

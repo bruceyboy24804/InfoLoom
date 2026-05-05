@@ -191,7 +191,8 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
             var resourceDatas = SystemAPI.GetComponentLookup<ResourceData>(true);
             var resourcePrefabs = m_ResourceSystem.GetPrefabs();
             var taxRates = m_TaxSystem.GetTaxRates();
-            var employables = m_CountHouseholdDataSystem.GetEmployables();
+            var employables = m_CountHouseholdDataSystem.GetEmployables(out JobHandle deps1);
+            deps1.Complete();
             var freeWorkplaces = m_CountWorkplacesSystem.GetFreeWorkplaces();
             var demandParams = m_DemandParameterQuery.GetSingleton<DemandParameterData>();
             var population = EntityManager.GetComponentData<Population>(m_CitySystem.City);
@@ -289,6 +290,7 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
             m_Results[7] = resourceCount > 0 ? Mathf.RoundToInt(1000f * totalEmpCapacity / resourceCount) : 0;
 
             gameDemands.Dispose();
+            employables.Dispose();
         }
     }
 }

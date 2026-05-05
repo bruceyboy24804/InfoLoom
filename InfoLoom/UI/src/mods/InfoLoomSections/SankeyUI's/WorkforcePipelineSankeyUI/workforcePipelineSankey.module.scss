@@ -1,0 +1,128 @@
+.panel {
+  width: 1250rem;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--panelColorDark);
+  overflow: visible;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 18rem;
+  text-transform: none;
+}
+
+.title {
+  font-size: 115%;
+  font-weight: bold;
+  color: var(--accentColorNormal);
+  margin-left: -5rem;
+}
+
+// ── View toggle toolbar ──────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  > * {
+    margin-right: 8rem;
+    margin-left: 8rem;
+  }
+  padding: 6rem 12rem 2rem;
+}
+
+.toggleBtn {
+  padding: 4rem 16rem;
+  border: 1rem solid rgba(255, 255, 255, 0.25);
+  border-radius: 4rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 85%;
+  font-family: Overpass, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  &.active {
+    background: var(--accentColorNormal, rgba(0, 170, 120, 0.8));
+    border-color: transparent;
+    color: #ffffff;
+    font-weight: bold;
+  }
+}
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 82%;
+  font-family: Overpass, sans-serif;
+  margin-left: 8rem;
+  white-space: nowrap;
+}
+
+// ── Column headers ──────────────────────────────────────────────────────────
+.columnHeaders {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 4rem 16rem 2rem 12rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 85%;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// ── Chart area ──────────────────────────────────────────────────────────────
+.chartWrapper {
+  flex: 1;
+  min-height: 520rem;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+// ── Legend ───────────────────────────────────────────────────────────────────
+.legend {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  > * {
+    margin-right: 5rem;
+    margin-bottom: 5rem;
+  }
+  padding: 8rem 12rem 12rem;
+  border-top: 1rem solid rgba(255, 255, 255, 0.1);
+  margin-top: 4rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+}
+
+.legendDot {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 82%;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+// ── Interaction hint ─────────────────────────────────────────────────────────
+.hint {
+  font-size: 76%;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  padding: 4rem 12rem 8rem;
+  font-style: italic;
+}

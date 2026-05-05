@@ -286,7 +286,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 			var resourceDatas = SystemAPI.GetComponentLookup<ResourceData>(true);
 			var resourcePrefabs = m_ResourceSystem.GetPrefabs();
 			var taxRates = m_TaxSystem.GetTaxRates();
-			var employables = m_CountHouseholdDataSystem.GetEmployables();
+			var employables = m_CountHouseholdDataSystem.GetEmployables(out JobHandle deps);
+			deps.Complete();
 			var freeWorkplaces = m_CountWorkplacesSystem.GetFreeWorkplaces();
 			var processDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true);
 
@@ -428,6 +429,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData
 			processChunks.Dispose();
 			gameDemands.Dispose();
 			buildingDemands.Dispose();
+			employables.Dispose();
+			
 		}
 
         

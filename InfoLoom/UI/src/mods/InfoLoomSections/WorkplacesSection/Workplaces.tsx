@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect, useRef, useMemo } from 'react';
 import { bindLocalValue, useValue } from 'cs2/api';
 import { WorkplacesData } from 'mods/bindings';
 import { DraggablePanelProps, Panel, Tooltip, Button, PanelFoldout } from 'cs2/ui';
@@ -8,7 +8,7 @@ import { LocalizedPercentage, useLocalization } from 'cs2/l10n';
 import { InfoCheckbox } from 'mods/components/InfoCheckbox/InfoCheckbox';
 import { DistrictSelector } from '../../InfoloomInfoviewContents/DistrictSelector/districtSelector';
 import { SelectedInfoSectionBase, Theme } from 'cs2/bindings';
-import { useRem } from 'cs2/utils';
+import Chart from 'chart.js/auto';
 import { getModule } from 'cs2/modding';
 import classNames from 'classnames';
 import { InfoRowSCSS } from 'mods/InfoLoomSections/ILInfoSections/Modules/info-Row/info-Row.module.scss';
@@ -59,53 +59,265 @@ interface WorkplaceLevelProps {
   people?: Array<{ id: number; isEmployee: boolean; isCommuter: boolean }>;
 }
 
-interface StackedBarProps {
-  levelName: string | null;
-  levelColor: string;
-  levelValues: workplacesInfo;
-  total: number;
-  barType?: 'sector' | 'employment';
-  translations: {
-    segments: Array<{ label: string }>;
-    segmentTooltipCount: string | null;
-    segmentTooltipWithin: string | null;
-    segmentTooltipOfTotal: string | null;
-    barTooltipHeader: string | null;
-    barTooltipTotal: string | null;
-    barTooltipPercentage: string | null;
+interface WorkplaceStackedBarChartProps {
+  workplaces: workplacesInfo[];
+  educationLevels: Array<{ name: string | null; color: string; data: workplacesInfo }>;
+  chartType: 'sector' | 'employment';
+  sectorLabels: {
+    service: string | null;
+    commercial: string | null;
+    leisure: string | null;
+    extractor: string | null;
+    industrial: string | null;
+    office: string | null;
   };
+  employmentLabels: {
+    employee: string | null;
+    commuter: string | null;
+    open: string | null;
+  };
+  totalLabel: string | null;
+  chartTitle: string | null;
 }
+
+const WorkplaceStackedBarChart: React.FC<WorkplaceStackedBarChartProps> = ({
+  workplaces,
+  educationLevels,
+  chartType,
+  sectorLabels,
+  employmentLabels,
+  totalLabel,
+  chartTitle,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const chartRef = useRef<Chart | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const labels = useMemo(
+    () => [...educationLevels.map(l => l.name ?? ''), totalLabel ?? ''],
+    [educationLevels, totalLabel]
+  );
+
+  const allLevels = useMemo(
+    () => [...educationLevels.map(l => l.data), workplaces[5]],
+    [educationLevels, workplaces]
+  );
+
+  const chartData = useMemo(() => {
+    if (chartType === 'employment') {
+      return {
+        labels,
+        datasets: [
+          {
+            label: employmentLabels.employee ?? 'Employee',
+            data: allLevels.map(d => d.Employee),
+            backgroundColor: '#4CAF50',
+          },
+          {
+            label: employmentLabels.commuter ?? 'Commuter',
+            data: allLevels.map(d => d.Commuter),
+            backgroundColor: '#FF9800',
+          },
+          {
+            label: employmentLabels.open ?? 'Open',
+            data: allLevels.map(d => d.Open),
+            backgroundColor: '#F44336',
+          },
+        ],
+      };
+    }
+    return {
+      labels,
+      datasets: [
+        {
+          label: sectorLabels.service ?? 'Service',
+          data: allLevels.map(d => d.Service),
+          backgroundColor: '#4287f5',
+        },
+        {
+          label: sectorLabels.commercial ?? 'Commercial',
+          data: allLevels.map(d => d.Commercial),
+          backgroundColor: '#f5d142',
+        },
+        {
+          label: sectorLabels.leisure ?? 'Leisure',
+          data: allLevels.map(d => d.Leisure),
+          backgroundColor: '#f542a7',
+        },
+        {
+          label: sectorLabels.extractor ?? 'Extractor',
+          data: allLevels.map(d => d.Extractor),
+          backgroundColor: '#8c42f5',
+        },
+        {
+          label: sectorLabels.industrial ?? 'Industrial',
+          data: allLevels.map(d => d.Industrial),
+          backgroundColor: '#f55142',
+        },
+        {
+          label: sectorLabels.office ?? 'Office',
+          data: allLevels.map(d => d.Office),
+          backgroundColor: '#42f5b3',
+        },
+      ],
+    };
+  }, [labels, allLevels, chartType, sectorLabels, employmentLabels]);
+
+  // Initialize chart once
+  useEffect(() => {
+    if (!canvasRef.current || !containerRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    chartRef.current = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        indexAxis: 'y',
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        plugins: {
+          title: {
+            display: true,
+            text: chartTitle ?? '',
+            color: '#ffffff',
+            font: { size: 14, family: 'Overpass' },
+          },
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#ffffff',
+              padding: 10,
+              font: { size: 12, family: 'Overpass' },
+            },
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: '#171d2b',
+            titleFont: { weight: 'bold', size: 13, family: 'Overpass' },
+            bodyFont: { size: 11, family: 'Overpass' },
+            footerFont: { weight: 'bold', size: 11, family: 'Overpass' },
+            padding: 8,
+            callbacks: {
+              label: (context) => {
+                const val = (context.raw as number) || 0;
+                return `${context.dataset.label}: ${val.toLocaleString()}`;
+              },
+              footer: (tooltipItems) => {
+                let total = 0;
+                tooltipItems.forEach(item => {
+                  total += (Number(item.raw) || 0);
+                });
+                return `Total: ${total.toLocaleString()}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#ffffff', font: { size: 11, family: 'Overpass' } },
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#ffffff', font: { size: 12, family: 'Overpass' } },
+          },
+        },
+        datasets: {
+          bar: {
+            barThickness: 20,
+            maxBarThickness: 30,
+          },
+        },
+      },
+    });
+
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update chart data when workplaces or chartType changes
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    chartRef.current.data = chartData;
+
+    if (chartRef.current.options.plugins?.title) {
+      (chartRef.current.options.plugins.title as any).text = chartTitle ?? '';
+    }
+
+    chartRef.current.update('none');
+  }, [chartData, chartTitle]);
+
+  // Handle resize
+  useEffect(() => {
+    if (!containerRef.current || !canvasRef.current) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      if (!entries[0]) return;
+      const { width, height } = entries[0].contentRect;
+      if (canvasRef.current && width > 0 && height > 0) {
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '300rem', position: 'relative' }}
+    >
+      <canvas ref={canvasRef} style={{ height: '0', width: '0', display: 'block' }} />
+    </div>
+  );
+};
+
 const WorkplaceTableHeader: React.FC<{ translations: any }> = ({ translations }) => {
   const hideColumns = useValue(hideColumnsBinding);
   return (
     <div className={styles.headerRow}>
       <div className={styles.col1}>
-        <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
-          <span>Education</span>
-        </Tooltip>
+        <span>Education</span>
       </div>
       <div className={styles.col2}>
-        <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
+        <Tooltip tooltip={translations?.totalTooltip} direction="down" alignment="center">
           <span>Total</span>
         </Tooltip>
       </div>
       <div className={styles.col3}>
-        <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
+        <Tooltip tooltip={translations?.percentTooltip} direction="down" alignment="center">
           <span>%</span>
         </Tooltip>
       </div>
       <div className={styles.col4}>
-        <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
+        <Tooltip tooltip={translations?.workerTooltip} direction="down" alignment="center">
           <span>Employee</span>
         </Tooltip>
       </div>
       <div className={styles.col5}>
-        <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+        <Tooltip tooltip={translations?.unemployedTooltip} direction="down" alignment="center">
           <span>Commuter</span>
         </Tooltip>
       </div>
       <div className={styles.col6}>
-        <span>Open</span>
+        <Tooltip tooltip={translations?.unemploymentTooltip} direction="down" alignment="center">
+          <span>Open</span>
+        </Tooltip>
       </div>
       <div className={styles.col7}>
         <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
@@ -115,7 +327,7 @@ const WorkplaceTableHeader: React.FC<{ translations: any }> = ({ translations })
       {!hideColumns && (
         <>
           <div className={styles.col8}>
-            <Tooltip tooltip={translations?.outsideTooltip} direction="down" alignment="center">
+            <Tooltip tooltip={translations?.homelessTooltip} direction="down" alignment="center">
               <span>Service</span>
             </Tooltip>
           </div>
@@ -232,203 +444,6 @@ const WorkplaceLevel: React.FC<WorkplaceLevelProps> = ({ levelColor, levelName, 
   );
 };
 
-const StackedBar: React.FC<StackedBarProps> = ({
-  levelName,
-  levelColor,
-  levelValues,
-  total,
-  barType = 'sector',
-  translations,
-}) => {
-  if (total === 0 || levelValues.Total === 0) return null;
-
-  const sectorSegments = [
-    {
-      label: translations.segments[0]?.label || 'Service',
-      value: levelValues.Service,
-      color: '#4287f5',
-    },
-    {
-      label: translations.segments[1]?.label || 'Commercial',
-      value: levelValues.Commercial,
-      color: '#f5d142',
-    },
-    {
-      label: translations.segments[2]?.label || 'Leisure',
-      value: levelValues.Leisure,
-      color: '#f542a7',
-    },
-    {
-      label: translations.segments[3]?.label || 'Extractor',
-      value: levelValues.Extractor,
-      color: '#8c42f5',
-    },
-    {
-      label: translations.segments[4]?.label || 'Industrial',
-      value: levelValues.Industrial,
-      color: '#f55142',
-    },
-    {
-      label: translations.segments[5]?.label || 'Office',
-      value: levelValues.Office,
-      color: '#42f5b3',
-    },
-  ];
-
-  const employmentSegments = [
-    {
-      label: translations.segments[0]?.label || 'Employee',
-      value: levelValues.Employee,
-      color: '#4CAF50',
-    },
-    {
-      label: translations.segments[1]?.label || 'Commuter',
-      value: levelValues.Commuter,
-      color: '#FF9800',
-    },
-    { label: translations.segments[2]?.label || 'Open', value: levelValues.Open, color: '#F44336' },
-  ];
-
-  const segments = barType === 'employment' ? employmentSegments : sectorSegments;
-  const totalSegmentValue = segments.reduce((sum, segment) => sum + segment.value, 0);
-
-  // SVG bar dimensions
-  const rem = useRem();
-  const barWidthInRem = 860;
-  const barHeightInRem = 24;
-  const barWidth = barWidthInRem * rem;
-  const barHeight = barHeightInRem * rem;
-
-  // Calculate segment widths
-  let x = 0;
-  const svgSegments = segments.map((segment, idx) => {
-    const width = totalSegmentValue > 0 ? (segment.value / totalSegmentValue) * barWidth : 0;
-    const rect = <rect key={idx} x={x} y={0} width={width} height={barHeight} fill={segment.color} />;
-    x += width;
-    return rect;
-  });
-
-  return (
-    <PanelFoldout
-      header={
-        <div className={InfoRowTheme.infoRow}>
-          <div className={styles.barLabel}>
-            <div className={styles.barLabelSymbol} style={{ backgroundColor: levelColor }}></div>
-            <div className={styles.barLabelText}>{levelName}</div>
-            <div className={styles.barLabelValue}>{levelValues.Total.toLocaleString()}</div>
-          </div>
-        </div>
-      }
-      initialExpanded={false}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: `${barWidthInRem}rem`,
-          height: `${barHeightInRem}rem`,
-          paddingLeft: '10rem',
-          paddingRight: '10rem',
-        }}
-      >
-        <svg width={barWidth} height={barHeight} style={{ display: 'block' }}>
-          {svgSegments}
-        </svg>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '10rem', fontSize: '15rem' }}>
-        {segments.map((segment, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center' }}>
-            <div
-              style={{
-                width: '15rem',
-                height: '15rem',
-                backgroundColor: segment.color,
-                marginRight: '5rem',
-                marginLeft: '10rem',
-                borderRadius: '4rem',
-              }}
-            ></div>
-            <span style={{ marginRight: '10rem' }}>
-              {segment.label}: {segment.value.toLocaleString()}
-            </span>
-          </div>
-        ))}
-      </div>
-    </PanelFoldout>
-  );
-};
-
-interface WorkplaceChartProps {
-  workplaces: workplacesInfo[];
-  chartType: 'sector' | 'employment';
-  onChartTypeChange: (type: 'sector' | 'employment') => void;
-  chartTitle: string | null;
-  toggleButton1: string | null;
-  toggleButton2: string | null;
-  legendItems: Array<{ label: string | null; color: string }>;
-  legendTooltipSuffix: string | null;
-  educationLevels: Array<{ name: string | null; color: string; data: workplacesInfo }>;
-  translations: any;
-  totalLabel: string | null;
-}
-
-const WorkplaceChart: React.FC<WorkplaceChartProps> = ({
-  workplaces,
-  chartType,
-  onChartTypeChange,
-  chartTitle,
-  toggleButton1,
-  toggleButton2,
-  educationLevels,
-  translations,
-  totalLabel,
-}) => {
-  return (
-    <PanelFoldout
-      header={
-        <div className={InfoRowTheme.infoRow}>
-          <div className={classNames(InfoRowSCSS.left)}>{chartTitle}</div>
-        </div>
-      }
-      initialExpanded={false}
-      className={styles.chartSection}
-    >
-      <div className={styles.chartToggle}>
-        <button
-          className={`${styles.toggleButton} ${chartType === 'sector' ? styles.buttonSelected : ''}`}
-          onClick={() => onChartTypeChange('sector')}
-        >
-          {toggleButton1}
-        </button>
-        <button
-          className={`${styles.toggleButton} ${chartType === 'employment' ? styles.buttonSelected : ''}`}
-          onClick={() => onChartTypeChange('employment')}
-        >
-          {toggleButton2}
-        </button>
-      </div>
-      {educationLevels.map((level, index) => (
-        <StackedBar
-          key={index}
-          levelName={level.name}
-          levelColor={level.color}
-          levelValues={level.data}
-          total={workplaces[5].Total}
-          barType={chartType}
-          translations={translations}
-        />
-      ))}
-
-      <StackedBar
-        levelName={totalLabel}
-        levelColor="#FFFFFF"
-        levelValues={workplaces[5]}
-        total={workplaces[5].Total}
-        barType={chartType}
-        translations={translations}
-      />
-    </PanelFoldout>
-  );
-};
 const HideColumnsToggle: FC = () => {
   const hideColumns = useValue(hideColumnsBinding);
 
@@ -537,140 +552,81 @@ const Workplaces: FC<DraggablePanelProps> = ({ onClose, initialPosition }) => {
             levelValues={workplaces[5]}
             total={workplaces[5].Total}
           />
-          <WorkplaceChart
-            workplaces={workplaces}
-            chartType={chartType}
-            onChartTypeChange={setChartType}
-            chartTitle={
-              chartType === 'employment'
-                ? translate('InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]', 'Employment Status by Education Level')
-                : translate('InfoLoomTwo.WorkplacesPanel[ChartTitleSector]', 'Workplace Distribution by Sector')
+          <PanelFoldout
+            header={
+              <div className={InfoRowTheme.infoRow}>
+                {chartType === 'employment'
+                  ? translate('InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]', 'Employment Status by Education Level')
+                  : translate('InfoLoomTwo.WorkplacesPanel[ChartTitleSector]', 'Workplace Distribution by Sector')}
+              </div>
             }
-            toggleButton1={translate('InfoLoomTwo.WorkplacesPanel[ToggleButton1]', 'By Sector')}
-            toggleButton2={translate('InfoLoomTwo.WorkplacesPanel[ToggleButton2]', 'By Employment')}
-            legendItems={
-              chartType === 'employment'
-                ? [
-                    {
-                      label: translate(Localekeys.Employees, 'Employee'),
-                      color: '#4CAF50',
-                    },
-                    {
-                      label: translate(Localekeys.Commuter, 'Commuter'),
-                      color: '#FF9800',
-                    },
-                    {
-                      label: translate(Localekeys.Open, 'Open'),
-                      color: '#F44336',
-                    },
-                  ]
-                : [
-                    {
-                      label: translate(Localekeys.Services, 'Service'),
-                      color: '#4287f5',
-                    },
-                    {
-                      label: translate(Localekeys.Commercial, 'Commercial'),
-                      color: '#f5d142',
-                    },
-                    {
-                      label: translate(Localekeys.Leisure, 'Leisure'),
-                      color: '#f542a7',
-                    },
-                    {
-                      label: translate(Localekeys.Extractors, 'Extractor'),
-                      color: '#8c42f5',
-                    },
-                    {
-                      label: translate(Localekeys.Industrial, 'Industrial'),
-                      color: '#f55142',
-                    },
-                    {
-                      label: translate(Localekeys.Office, 'Office'),
-                      color: '#42f5b3',
-                    },
-                  ]
-            }
-            legendTooltipSuffix={translate(
-              'InfoLoomTwo.WorkplacesPanel[LegendTooltipSuffix]',
-              'Click on bar segments above to see detailed breakdown'
-            )}
-            educationLevels={[
-              {
-                name: translate(Localekeys.Uneducated, 'Uneducated'),
-                color: '#808080',
-                data: workplaces[0],
-              },
-              {
-                name: translate(Localekeys.PoorlyEducated, 'Poorly Educated'),
-                color: '#B09868',
-                data: workplaces[1],
-              },
-              {
-                name: translate(Localekeys.Educated, 'Educated'),
-                color: '#368A2E',
-                data: workplaces[2],
-              },
-              {
-                name: translate(Localekeys.WellEducated, 'Well Educated'),
-                color: '#B981C0',
-                data: workplaces[3],
-              },
-              {
-                name: translate(Localekeys.HighlyEducated, 'Highly Educated'),
-                color: '#5796D1',
-                data: workplaces[4],
-              },
-            ]}
-            translations={{
-              segments:
+            initialExpanded={false}
+          >
+            <div className={styles.chartToggle}>
+              <button
+                className={`${styles.toggleButton} ${chartType === 'sector' ? styles.buttonSelected : ''}`}
+                onClick={() => setChartType('sector')}
+              >
+                {translate('InfoLoomTwo.WorkplacesPanel[ToggleButton1]', 'By Sector')}
+              </button>
+              <button
+                className={`${styles.toggleButton} ${chartType === 'employment' ? styles.buttonSelected : ''}`}
+                onClick={() => setChartType('employment')}
+              >
+                {translate('InfoLoomTwo.WorkplacesPanel[ToggleButton2]', 'By Employment')}
+              </button>
+            </div>
+            <WorkplaceStackedBarChart
+              workplaces={workplaces}
+              chartType={chartType}
+              chartTitle={
                 chartType === 'employment'
-                  ? [
-                      {
-                        label: translate(Localekeys.Employees, 'Employee'),
-                      },
-                      {
-                        label: translate(Localekeys.Commuter, 'Commuter'),
-                      },
-                      {
-                        label: translate(Localekeys.Open, 'Open'),
-                      },
-                    ]
-                  : [
-                      {
-                        label: translate(Localekeys.Services, 'Services'),
-                      },
-                      {
-                        label: translate(Localekeys.Commercial, 'Commercial'),
-                      },
-                      {
-                        label: translate(Localekeys.Leisure, 'Leisure'),
-                      },
-                      {
-                        label: translate(Localekeys.Extractors, 'Extractor'),
-                      },
-                      {
-                        label: translate(Localekeys.Industrial, 'Industrial'),
-                      },
-                      {
-                        label: translate(Localekeys.Office, 'Office'),
-                      },
-                    ],
-              segmentTooltipCount: translate('InfoLoomTwo.WorkplacesPanel[SegmentTooltipCount]', 'Count'),
-              segmentTooltipWithin: translate('InfoLoomTwo.WorkplacesPanel[SegmentTooltipWithin]', 'Within '),
-              segmentTooltipOfTotal: translate(
-                'InfoLoomTwo.WorkplacesPanel[SegmentTooltipOfTotal]',
-                'Of Total Workplaces'
-              ),
-              barTooltipHeader: translate('InfoLoomTwo.WorkplacesPanel[BarTooltipHeader]', 'Summary'),
-              barTooltipTotal: translate(Localekeys.Total, 'Total'),
-              barTooltipPercentage: translate(
-                'InfoLoomTwo.WorkplacesPanel[BarTooltipPercentage]',
-                '% of Total Workplaces'
-              ),
-            }}
-            totalLabel={translate(Localekeys.Total, 'TOTAL')}
-          />
+                  ? translate('InfoLoomTwo.WorkplacesPanel[ChartTitleEmployment]', 'Employment Status by Education Level')
+                  : translate('InfoLoomTwo.WorkplacesPanel[ChartTitleSector]', 'Workplace Distribution by Sector')
+              }
+              educationLevels={[
+                {
+                  name: translate(Localekeys.Uneducated, 'Uneducated'),
+                  color: '#808080',
+                  data: workplaces[0],
+                },
+                {
+                  name: translate(Localekeys.PoorlyEducated, 'Poorly Educated'),
+                  color: '#B09868',
+                  data: workplaces[1],
+                },
+                {
+                  name: translate(Localekeys.Educated, 'Educated'),
+                  color: '#368A2E',
+                  data: workplaces[2],
+                },
+                {
+                  name: translate(Localekeys.WellEducated, 'Well Educated'),
+                  color: '#B981C0',
+                  data: workplaces[3],
+                },
+                {
+                  name: translate(Localekeys.HighlyEducated, 'Highly Educated'),
+                  color: '#5796D1',
+                  data: workplaces[4],
+                },
+              ]}
+              sectorLabels={{
+                service: translate(Localekeys.Services, 'Service'),
+                commercial: translate(Localekeys.Commercial, 'Commercial'),
+                leisure: translate(Localekeys.Leisure, 'Leisure'),
+                extractor: translate(Localekeys.Extractors, 'Extractor'),
+                industrial: translate(Localekeys.Industrial, 'Industrial'),
+                office: translate(Localekeys.Office, 'Office'),
+              }}
+              employmentLabels={{
+                employee: translate(Localekeys.Employees, 'Employee'),
+                commuter: translate(Localekeys.Commuter, 'Commuter'),
+                open: translate(Localekeys.Open, 'Open'),
+              }}
+              totalLabel={translate(Localekeys.Total, 'TOTAL')}
+            />
+          </PanelFoldout>
         </div>
       )}
     </Panel>

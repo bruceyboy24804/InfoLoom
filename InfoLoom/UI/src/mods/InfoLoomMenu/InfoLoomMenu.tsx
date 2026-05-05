@@ -15,6 +15,7 @@ import { CommercialMenuButton } from 'mods/InfoLoomMenu/CommercialMenu/Commercia
 import IndustrialMenuButton from './IndustrialMenu/IndustrialMenu';
 import Residential from 'mods/InfoLoomSections/ResidentialSection/ResidentialDemandUI/residential';
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
+import SankeyMenuButton from './SankeyMenu/SankeyMenu';
 import { Entity } from 'cs2/utils';
 import mod from "mod.json"
 import { Localekeys } from 'mods/locale';
@@ -46,6 +47,7 @@ function InfoLoomButton(): JSX.Element {
   const commercialMenuOpen = useValue(bindings.CommercialMenuOpen);
   const showButton = useValue(bindings.ShowEffectsButton);
   const effectsOpen = useValue(bindings.EffectsOpen);
+  const sankeyMenuOpen = useValue(bindings.SankeyMenuOpen);
   // Define sections without translations - move translations to render time
   const sections = useMemo<SectionsType>(
     () => ({
@@ -88,6 +90,13 @@ function InfoLoomButton(): JSX.Element {
         displayName: null, // Will be set at render time
         src: 'Media/Glyphs/FilledArrowRight.svg',
       },
+      'Sankey Menu': {
+        component: <SankeyMenuButton />,
+        isOpen: sankeyMenuOpen,
+        toggle: bindings.SetSankeyMenuOpen,
+        displayName: null,
+        src: 'Media/Glyphs/FilledArrowRight.svg',
+      },
       Demand: {
         component: <Demand />,
         isOpen: buildingDemandOpen,
@@ -101,7 +110,7 @@ function InfoLoomButton(): JSX.Element {
         displayName: null, // Will be set at render time
       },
     }),
-    [
+      [
       demographicsOpen,
       workforceOpen,
       workplacesOpen,
@@ -112,6 +121,7 @@ function InfoLoomButton(): JSX.Element {
       commercialMenuOpen,
       effectsOpen,
       showButton,
+      sankeyMenuOpen,
     ]
   );
 
@@ -134,7 +144,7 @@ function InfoLoomButton(): JSX.Element {
     // If we're closing the main menu, only close the menu buttons
     // but do NOT close any child sections/components
     if (isClosing) {
-      const menuSectionsToClose = ['Residential Menu', 'Industrial Menu', 'Commercial Menu'];
+    const menuSectionsToClose = ['Residential Menu', 'Industrial Menu', 'Commercial Menu', 'Sankey Menu'];
 
       // Only close the menu sections UIs, but explicitly preserve all child component states
       menuSectionsToClose.forEach(sectionName => {
@@ -152,6 +162,8 @@ function InfoLoomButton(): JSX.Element {
             bindings.SetDistrictMenuOpen(false);
           } else if (sectionName === 'Commercial Menu') {
             bindings.SetCommercialMenuOpen(false);
+          } else if (sectionName === 'Sankey Menu') {
+            bindings.SetSankeyMenuOpen(false);
           }
         }
       });
@@ -203,6 +215,9 @@ function InfoLoomButton(): JSX.Element {
                 case 'Commercial Menu':
                   displayName = translate(Localekeys.MenuCommercial, 'Commercial Menu');
                   break;
+                case 'Sankey Menu':
+                  displayName = translate(Localekeys.MenuSankey, 'Sankey Menu');
+                  break;
                 case 'Effects':
                   displayName = 'Effects';
                   break;
@@ -233,7 +248,7 @@ function InfoLoomButton(): JSX.Element {
       {/* Render non-menu sections based on their own open state */}
       {Object.entries(sections).map(([name, section]) => {
         // Skip menu type sections from this regular rendering
-        if (['Residential Menu', 'Industrial Menu', 'District Menu', 'Commercial Menu'].includes(name)) {
+        if (['Residential Menu', 'Industrial Menu', 'District Menu', 'Commercial Menu', 'Sankey Menu'].includes(name)) {
           return null;
         }
 
@@ -259,6 +274,7 @@ function InfoLoomButton(): JSX.Element {
       <ResidentialMenuButton />
       <IndustrialMenuButton />
       <CommercialMenuButton />
+      <SankeyMenuButton />
     </div>
   );
 }
