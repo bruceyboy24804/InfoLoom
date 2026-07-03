@@ -117,7 +117,7 @@ const SingleValue = ({ value, flag, width, small }: SingleValueProps): JSX.Eleme
 
 const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Element => {
   const { translate } = useLocalization();
-  const ilResidential = useValue(ResidentialData);
+  const ilResidential = useValue(ResidentialData.binding);
 
   const homelessThreshold = ilResidential.length > 13 ? Math.round((ilResidential[12] * ilResidential[13]) / 1000) : 0;
 
@@ -169,10 +169,7 @@ const Residential = ({ onClose, initialPosition }: DraggablePanelProps): JSX.Ele
           <div className="row_S2v small_ExK" style={{ width: '2%' }}></div>
           <div className="row_S2v small_ExK" style={{ width: '34%' }}>
             <Tooltip
-              tooltip={translate(
-                Localekeys.OccupiedPropertiesTooltip,
-                'Properties currently occupied by households'
-              )}
+              tooltip={translate(Localekeys.OccupiedPropertiesTooltip, 'Properties currently occupied by households')}
             >
               <span>{translate(Localekeys.DemandPanelsOccupiedProperties, '- Occupied properties')}</span>
             </Tooltip>

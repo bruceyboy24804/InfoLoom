@@ -337,9 +337,6 @@ namespace InfoLoomTwo.Systems.WorkplacesData
             int total = 0;
             for (int i = 0; i < (int)EducationIndex.Totals; i++)
                 total += commutersByEducation[i];
-
-            string districtInfo = SelectedDistrict == Entity.Null ? "Citywide" : $"District {SelectedDistrict.Index}";
-            Mod.log.Info($"Working commuters ({districtInfo}): U={commutersByEducation[0]}, P={commutersByEducation[1]}, E={commutersByEducation[2]}, W={commutersByEducation[3]}, H={commutersByEducation[4]} | Total={total}");
         }
 
         private void CalculateTotals()

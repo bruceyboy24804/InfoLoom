@@ -1,0 +1,1 @@
+export { SimplifiedWorkplacesMain } from './SimplifiedWorkplacesMain';

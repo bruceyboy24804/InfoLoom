@@ -23,7 +23,7 @@ namespace InfoLoomTwo.Systems.TradeCostData.TradeCostDomain
         };
         public static string GetName(OutsideConnectionType tradeCostsUtils)
         {
-            return Mod.Name + tradeCostsUtils.ToString();
+            return InfoLoomMod.Instance.ModName + tradeCostsUtils;
         }
         public static OutsideConnectionTransferType GetTransferType(OutsideConnectionType tradeCostsUtils)
         {

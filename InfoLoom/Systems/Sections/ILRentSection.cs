@@ -1,17 +1,19 @@
+﻿using ModsCommon.Extensions;
 using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game.Buildings;
 using Game.Net;
 using Game.Prefabs;
 using Game.Zones;
-using InfoLoomTwo.Extensions;
 using Unity.Entities;
 using UnityEngine;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.Sections
 {
     public partial class ILRentSection : ExtendedInfoSectionBase
     {
+	    protected override string ModId => InfoLoomMod.Instance.Id;
 	    private string _AreaType;
 	    private int _Level;
 	    private int _LotSize;

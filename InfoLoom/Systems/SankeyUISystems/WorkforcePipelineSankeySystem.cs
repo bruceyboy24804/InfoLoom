@@ -1,3 +1,6 @@
+﻿using ModsCommon.Extensions;
+using ModsCommon.Systems;
+using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game;
 using Game.Agents;
@@ -13,8 +16,10 @@ using Game.Tools;
 using Game.UI;
 using InfoLoomTwo.Extensions;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.SankeyUISystems
@@ -23,22 +28,24 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
     /// Provides Sankey diagram data for the Workforce & Education Pipeline panel.
     ///
     /// Workforce view (viewMode=false):
-    ///   ageEdu[ageGroup * 5 + eduLevel]           — Demographics → Education       (4×5 = 20)
-    ///   eduNonWork[eduLevel * 4 + status]         — Education → non-work status    (5×4 = 20)
+    ///   ageEdu[ageGroup * 5 + eduLevel]           â€” Demographics â†’ Education       (4Ã—5 = 20)
+    ///   eduNonWork[eduLevel * 4 + status]         â€” Education â†’ non-work status    (5Ã—4 = 20)
     ///     status: 0=NotInSchool  1=School  2=Unemployed  3=Retired
-    ///   eduWorkSector[eduLevel * 5 + sector]      — Education → sector (workers)   (5×5 = 25)
+    ///   eduWorkSector[eduLevel * 5 + sector]      â€” Education â†’ sector (workers)   (5Ã—5 = 25)
     ///     sector: 0=Commercial 1=Industrial 2=Office 3=CityService 4=OutsideCity
-    ///   eduWorkJobEdu[eduLevel * 5 + jobEdu]      — Education → job edu (workers)  (5×5 = 25)
+    ///   eduWorkJobEdu[eduLevel * 5 + jobEdu]      â€” Education â†’ job edu (workers)  (5Ã—5 = 25)
     ///
-    /// Workplace view (viewMode=true) — 4-column:
-    ///   livingWorkerEdu[living * 5 + workerEdu]    — Living Place   → Worker Edu   (2×5 = 10)
-    ///   workerEduJobEdu[workerEdu * 5 + jobEdu]    — Worker Edu     → Job Edu      (5×5 = 25)
-    ///   jobEduSector[jobEdu * 5 + sector]          — Job Edu Needed → Sector       (5×5 = 25)
+    /// Workplace view (viewMode=true) â€” 4-column:
+    ///   livingWorkerEdu[living * 5 + workerEdu]    â€” Living Place   â†’ Worker Edu   (2Ã—5 = 10)
+    ///   workerEduJobEdu[workerEdu * 5 + jobEdu]    â€” Worker Edu     â†’ Job Edu      (5Ã—5 = 25)
+    ///   jobEduSector[jobEdu * 5 + sector]          â€” Job Edu Needed â†’ Sector       (5Ã—5 = 25)
     ///   living: 0=OutsideCity 1=WithinCity
     ///   sector: 0=Commercial 1=Industrial 2=Office 3=CityService 4=OutsideCity
     /// </summary>
-    public partial class WorkforcePipelineSankeySystem : ExtendedUISystemBase
+    public partial class WorkforcePipelineSankeySystem : CommonUISystemBase
     {
+        protected override string ModId => InfoLoomMod.Instance.Id;
+
         private const string kGroup   = "InfoLoomTwo";
         private const string kOpenKey = "WorkforcePipelineSankeyOpen";
 
@@ -55,6 +62,12 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
         private EntityQuery m_CitizenQuery;
         private EntityQuery m_WorkerQuery;
 
+        // ComponentTypeHandles
+        private EntityTypeHandle m_EntityTypeHandle;
+        private ComponentTypeHandle<Citizen> m_CitizenTypeHandle;
+        private ComponentTypeHandle<HouseholdMember> m_HouseholdMemberTypeHandle;
+        private ComponentTypeHandle<Worker> m_WorkerTypeHandle;
+
         // Tracks whether a job was scheduled and data is ready to be pushed
         private bool m_JobScheduled;
         private bool m_ViewModeWhenScheduled;
@@ -69,10 +82,14 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
         public NativeArray<int> m_WorkerEduJobEdu;    // [workerEdu * 5 + jobEdu]       25
         public NativeArray<int> m_JobEduSector;       // [jobEdu * 5 + sector]          25
 
-        // ── Burst job — workforce view ─────────────────────────────────────────
+        private UIUpdateState _updateState;
+        // â”€â”€ Burst job â€” workforce view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [BurstCompile]
-        private partial struct WorkforcePipelineJob : IJobEntity
+        private partial struct WorkforcePipelineJob : IJobChunk
         {
+            [ReadOnly] public EntityTypeHandle                                  m_EntityTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<Citizen>                      m_CitizenTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<HouseholdMember>              m_HouseholdMemberTypeHandle;
             [ReadOnly] public ComponentLookup<Worker>                          m_Workers;
             [ReadOnly] public ComponentLookup<Game.Citizens.Student>           m_Students;
             [ReadOnly] public ComponentLookup<HealthProblem>                   m_HealthProblems;
@@ -89,77 +106,93 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             public NativeArray<int> m_EduWorkSectorCounts;  // [edu*5+sector]
             public NativeArray<int> m_EduWorkJobEduCounts;  // [edu*5+jobEdu]
 
-            private void Execute(Entity entity, in Citizen citizen, in HouseholdMember member)
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                Entity household = member.m_Household;
+                var entityArray = chunk.GetNativeArray(m_EntityTypeHandle);
+                var citizenArray = chunk.GetNativeArray(ref m_CitizenTypeHandle);
+                var memberArray = chunk.GetNativeArray(ref m_HouseholdMemberTypeHandle);
 
-                if (!m_Households.TryGetComponent(household, out Household hh)) return;
-                if ((hh.m_Flags & HouseholdFlags.MovedIn) == 0) return;
-                if ((citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != 0) return;
-                if (m_MovingAways.HasComponent(household)) return;
-                if (m_HealthProblems.TryGetComponent(entity, out HealthProblem hp) && CitizenUtils.IsDead(hp)) return;
-
-                CitizenAge ageGroup = citizen.GetAge();
-                int        eduLevel = citizen.GetEducationLevel();
-                int        ageIdx   = (int)ageGroup;
-
-                m_AgeEduCounts[ageIdx * EDU_LEVELS + eduLevel]++;
-
-                if (m_Workers.TryGetComponent(entity, out Worker worker))
+                var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                while (enumerator.NextEntityIndex(out int i))
                 {
-                    Entity workplace = worker.m_Workplace;
-                    if (workplace == Entity.Null) return;
+                    Entity entity = entityArray[i];
+                    Citizen citizen = citizenArray[i];
+                    HouseholdMember member = memberArray[i];
 
-                    // Sector
-                    int sector;
-                    if (m_OutsideConnections.HasComponent(workplace))
-                        sector = 4; // Outside City
-                    else if (m_CommercialCompanies.HasComponent(workplace))
-                        sector = 0; // Commercial
-                    else if (m_IndustrialCompanies.HasComponent(workplace))
+                    Entity household = member.m_Household;
+
+                    if (!m_Households.TryGetComponent(household, out Household hh)) continue;
+                    if ((hh.m_Flags & HouseholdFlags.MovedIn) == 0) continue;
+                    if ((citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != 0) continue;
+                    if (m_MovingAways.HasComponent(household)) continue;
+                    if (m_HealthProblems.TryGetComponent(entity, out HealthProblem hp) && CitizenUtils.IsDead(hp)) continue;
+
+                    CitizenAge ageGroup = citizen.GetAge();
+                    int        eduLevel = citizen.GetEducationLevel();
+                    int        ageIdx   = (int)ageGroup;
+
+                    m_AgeEduCounts[ageIdx * EDU_LEVELS + eduLevel]++;
+
+                    if (m_Workers.TryGetComponent(entity, out Worker worker))
                     {
-                        if (m_PrefabRefs.TryGetComponent(workplace, out PrefabRef prefabRef) &&
-                            m_IndustrialProcessDatas.TryGetComponent(prefabRef.m_Prefab, out IndustrialProcessData process))
+                        Entity workplace = worker.m_Workplace;
+                        if (workplace == Entity.Null) continue;
+
+                        // Sector
+                        int sector;
+                        if (m_OutsideConnections.HasComponent(workplace))
+                            sector = 4; // Outside City
+                        else if (m_CommercialCompanies.HasComponent(workplace))
+                            sector = 0; // Commercial
+                        else if (m_IndustrialCompanies.HasComponent(workplace))
                         {
-                            Resource output = process.m_Output.m_Resource;
-                            sector = (output & (Resource.Software | Resource.Telecom | Resource.Financial | Resource.Media)) != Resource.NoResource
-                                ? 2 : 1;
+                            if (m_PrefabRefs.TryGetComponent(workplace, out PrefabRef prefabRef) &&
+                                m_IndustrialProcessDatas.TryGetComponent(prefabRef.m_Prefab, out IndustrialProcessData process))
+                            {
+                                Resource output = process.m_Output.m_Resource;
+                                sector = (output & (Resource.Software | Resource.Telecom | Resource.Financial | Resource.Media)) != Resource.NoResource
+                                    ? 2 : 1;
+                            }
+                            else
+                                sector = 1; // Industrial
                         }
                         else
-                            sector = 1; // Industrial
+                            sector = 3; // City Service
+
+                        m_EduWorkSectorCounts[eduLevel * SECTOR_COUNT + sector]++;
+
+                        // Job edu level
+                        int jobEdu = worker.m_Level;
+                        if (jobEdu < 0 || jobEdu >= EDU_LEVELS) jobEdu = 0;
+                        m_EduWorkJobEduCounts[eduLevel * EDU_LEVELS + jobEdu]++;
+                    }
+                    else if (m_Students.HasComponent(entity))
+                    {
+                        m_EduNonWorkCounts[eduLevel * NON_WORK_COUNT + 1]++; // School
                     }
                     else
-                        sector = 3; // City Service
-
-                    m_EduWorkSectorCounts[eduLevel * SECTOR_COUNT + sector]++;
-
-                    // Job edu level
-                    int jobEdu = worker.m_Level;
-                    if (jobEdu < 0 || jobEdu >= EDU_LEVELS) jobEdu = 0;
-                    m_EduWorkJobEduCounts[eduLevel * EDU_LEVELS + jobEdu]++;
-                }
-                else if (m_Students.HasComponent(entity))
-                {
-                    m_EduNonWorkCounts[eduLevel * NON_WORK_COUNT + 1]++; // School
-                }
-                else
-                {
-                    int nonWorkIdx = ageGroup switch
                     {
-                        CitizenAge.Elderly => 3,  // Retired
-                        CitizenAge.Child   => 0,  // Not in School
-                        CitizenAge.Teen    => 0,  // Not in School
-                        _                  => 2,  // Unemployed
-                    };
-                    m_EduNonWorkCounts[eduLevel * NON_WORK_COUNT + nonWorkIdx]++;
+                        int nonWorkIdx = ageGroup switch
+                        {
+                            CitizenAge.Elderly => 3,  // Retired
+                            CitizenAge.Child   => 0,  // Not in School
+                            CitizenAge.Teen    => 0,  // Not in School
+                            _                  => 2,  // Unemployed
+                        };
+                        m_EduNonWorkCounts[eduLevel * NON_WORK_COUNT + nonWorkIdx]++;
+                    }
                 }
             }
         }
 
-        // ── Workplace view — iterates all workers (including commuters) ───────
+        // â”€â”€ Workplace view â€” iterates all workers (including commuters) â”€â”€â”€â”€â”€â”€â”€
         [BurstCompile]
-        private partial struct WorkplaceSankeyJob : IJobEntity
+        private partial struct WorkplaceSankeyJob : IJobChunk
         {
+            [ReadOnly] public EntityTypeHandle                                  m_EntityTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<Citizen>                      m_CitizenTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<HouseholdMember>              m_HouseholdMemberTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<Worker>                       m_WorkerTypeHandle;
             [ReadOnly] public ComponentLookup<Household>             m_Households;
             [ReadOnly] public ComponentLookup<MovingAway>            m_MovingAways;
             [ReadOnly] public ComponentLookup<HealthProblem>         m_HealthProblems;
@@ -173,67 +206,81 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             public NativeArray<int> m_WorkerEduJobEdu;  // [workerEdu * 5 + jobEdu]
             public NativeArray<int> m_JobEduSector;     // [jobEdu * 5 + sector]
 
-            private void Execute(Entity entity, in Citizen citizen, in HouseholdMember member, in Worker worker)
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                Entity household = member.m_Household;
+                var entityArray = chunk.GetNativeArray(m_EntityTypeHandle);
+                var citizenArray = chunk.GetNativeArray(ref m_CitizenTypeHandle);
+                var memberArray = chunk.GetNativeArray(ref m_HouseholdMemberTypeHandle);
+                var workerArray = chunk.GetNativeArray(ref m_WorkerTypeHandle);
 
-                if (!m_Households.TryGetComponent(household, out Household hh)) return;
-                bool isCommuter = (citizen.m_State & CitizenFlags.Commuter) != 0;
-                // Non-commuters must be MovedIn; skip tourists
-                if (!isCommuter)
+                var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                while (enumerator.NextEntityIndex(out int i))
                 {
-                    if ((hh.m_Flags & HouseholdFlags.MovedIn) == 0) return;
-                    if ((citizen.m_State & CitizenFlags.Tourist) != 0) return;
-                }
-                if (m_MovingAways.HasComponent(household)) return;
-                if (m_HealthProblems.TryGetComponent(entity, out HealthProblem hp) && CitizenUtils.IsDead(hp)) return;
+                    Entity entity = entityArray[i];
+                    Citizen citizen = citizenArray[i];
+                    HouseholdMember member = memberArray[i];
+                    Worker worker = workerArray[i];
 
-                Entity workplace = worker.m_Workplace;
-                if (workplace == Entity.Null) return;
+                    Entity household = member.m_Household;
 
-                int workerEdu = citizen.GetEducationLevel();
-                int jobEdu    = worker.m_Level;
-                if (workerEdu < 0 || workerEdu >= EDU_LEVELS) workerEdu = 0;
-                if (jobEdu < 0 || jobEdu >= EDU_LEVELS) jobEdu = 0;
-
-                // Living place
-                int living = isCommuter ? 0 : 1; // 0=Outside City, 1=Within City
-
-                // Sector
-                int sector;
-                if (m_OutsideConnections.HasComponent(workplace))
-                    sector = 4; // Outside City
-                else if (m_CommercialCompanies.HasComponent(workplace))
-                    sector = 0; // Commercial
-                else if (m_IndustrialCompanies.HasComponent(workplace))
-                {
-                    // Check for office
-                    if (m_PrefabRefs.TryGetComponent(workplace, out PrefabRef prefabRef) &&
-                        m_IndustrialProcessDatas.TryGetComponent(prefabRef.m_Prefab, out IndustrialProcessData process))
+                    if (!m_Households.TryGetComponent(household, out Household hh)) continue;
+                    bool isCommuter = (citizen.m_State & CitizenFlags.Commuter) != 0;
+                    // Non-commuters must be MovedIn; skip tourists
+                    if (!isCommuter)
                     {
-                        Resource output = process.m_Output.m_Resource;
-                        sector = (output & (Resource.Software | Resource.Telecom | Resource.Financial | Resource.Media)) != Resource.NoResource
-                            ? 2   // Office
-                            : 1;  // Industrial
+                        if ((hh.m_Flags & HouseholdFlags.MovedIn) == 0) continue;
+                        if ((citizen.m_State & CitizenFlags.Tourist) != 0) continue;
+                    }
+                    if (m_MovingAways.HasComponent(household)) continue;
+                    if (m_HealthProblems.TryGetComponent(entity, out HealthProblem hp) && CitizenUtils.IsDead(hp)) continue;
+
+                    Entity workplace = worker.m_Workplace;
+                    if (workplace == Entity.Null) continue;
+
+                    int workerEdu = citizen.GetEducationLevel();
+                    int jobEdu    = worker.m_Level;
+                    if (workerEdu < 0 || workerEdu >= EDU_LEVELS) workerEdu = 0;
+                    if (jobEdu < 0 || jobEdu >= EDU_LEVELS) jobEdu = 0;
+
+                    // Living place
+                    int living = isCommuter ? 0 : 1; // 0=Outside City, 1=Within City
+
+                    // Sector
+                    int sector;
+                    if (m_OutsideConnections.HasComponent(workplace))
+                        sector = 4; // Outside City
+                    else if (m_CommercialCompanies.HasComponent(workplace))
+                        sector = 0; // Commercial
+                    else if (m_IndustrialCompanies.HasComponent(workplace))
+                    {
+                        // Check for office
+                        if (m_PrefabRefs.TryGetComponent(workplace, out PrefabRef prefabRef) &&
+                            m_IndustrialProcessDatas.TryGetComponent(prefabRef.m_Prefab, out IndustrialProcessData process))
+                        {
+                            Resource output = process.m_Output.m_Resource;
+                            sector = (output & (Resource.Software | Resource.Telecom | Resource.Financial | Resource.Media)) != Resource.NoResource
+                                ? 2   // Office
+                                : 1;  // Industrial
+                        }
+                        else
+                            sector = 1; // Industrial
                     }
                     else
-                        sector = 1; // Industrial
-                }
-                else
-                    sector = 3; // City Service
+                        sector = 3; // City Service
 
-                m_LivingWorkerEdu[living * EDU_LEVELS + workerEdu]++;
-                m_WorkerEduJobEdu[workerEdu * EDU_LEVELS + jobEdu]++;
-                m_JobEduSector[jobEdu * SECTOR_COUNT + sector]++;
+                    m_LivingWorkerEdu[living * EDU_LEVELS + workerEdu]++;
+                    m_WorkerEduJobEdu[workerEdu * EDU_LEVELS + jobEdu]++;
+                    m_JobEduSector[jobEdu * SECTOR_COUNT + sector]++;
+                }
             }
         }
 
-        // ── Lifecycle ─────────────────────────────────────────────────────────
+        // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Preserve]
         protected override void OnCreate()
         {
             base.OnCreate();
-
+            _updateState = UIUpdateState.Create(World, 512);
             m_AgeEduCounts        = new NativeArray<int>(AGE_GROUPS * EDU_LEVELS,   Allocator.Persistent);
             m_EduNonWorkCounts    = new NativeArray<int>(EDU_LEVELS * NON_WORK_COUNT, Allocator.Persistent);
             m_EduWorkSectorCounts = new NativeArray<int>(EDU_LEVELS * SECTOR_COUNT, Allocator.Persistent);
@@ -241,6 +288,11 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             m_LivingWorkerEdu     = new NativeArray<int>(LIVING_COUNT * EDU_LEVELS, Allocator.Persistent);
             m_WorkerEduJobEdu     = new NativeArray<int>(EDU_LEVELS * EDU_LEVELS,   Allocator.Persistent);
             m_JobEduSector        = new NativeArray<int>(EDU_LEVELS * SECTOR_COUNT, Allocator.Persistent);
+
+            m_EntityTypeHandle = SystemAPI.GetEntityTypeHandle();
+            m_CitizenTypeHandle = SystemAPI.GetComponentTypeHandle<Citizen>(true);
+            m_HouseholdMemberTypeHandle = SystemAPI.GetComponentTypeHandle<HouseholdMember>(true);
+            m_WorkerTypeHandle = SystemAPI.GetComponentTypeHandle<Worker>(true);
 
             m_CitizenQuery = SystemAPI.QueryBuilder()
                 .WithAll<Citizen, HouseholdMember>()
@@ -252,7 +304,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
                 .WithNone<Deleted, Temp>()
                 .Build();
 
-            // Do not RequireForUpdate here — OnUpdate decides which query is active.
+            // Do not RequireForUpdate here â€” OnUpdate decides which query is active.
 
             m_OpenBinding     = new ValueBinding<bool>(kGroup, kOpenKey, false);
             m_ViewModeBinding = new ValueBinding<bool>(kGroup, "WorkforcePipelineViewMode", false);
@@ -283,26 +335,25 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
         {
             if (!m_OpenBinding.value)
             {
-                // Panel closed — reset state so next open starts fresh
+                // Panel closed â€” reset state so next open starts fresh
                 m_JobScheduled = false;
                 return;
             }
-
             bool isWorkplaceMode = m_ViewModeBinding.value;
 
-            // ── Step 1: Complete any in-flight job and push its results ──────────
+            // â”€â”€ Step 1: Complete any in-flight job and push its results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // After 512 ticks the worker threads have been idle; Complete() is near-instant.
             if (m_JobScheduled)
             {
                 CompleteDependency();
                 // Only push data if the view mode hasn't changed since the job was scheduled.
-                // If it changed, the arrays contain stale-mode data — skip the UI push.
+                // If it changed, the arrays contain stale-mode data â€” skip the UI push.
                 if (m_ViewModeWhenScheduled == isWorkplaceMode)
                     m_DataBinding.Update();
                 m_JobScheduled = false;
             }
 
-            // ── Step 2: Guard — skip if the active query has no entities ─────────
+            // â”€â”€ Step 2: Guard â€” skip if the active query has no entities â”€â”€â”€â”€â”€â”€â”€â”€â”€
             bool activeQueryEmpty = isWorkplaceMode
                 ? m_WorkerQuery.IsEmptyIgnoreFilter
                 : m_CitizenQuery.IsEmptyIgnoreFilter;
@@ -310,33 +361,45 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             if (activeQueryEmpty)
                 return;
 
-            // ── Step 3: Zero output arrays ────────────────────────────────────────
+            // â”€â”€ Step 3: Gate â€” only reschedule every N ticks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            if (!_updateState.Advance())
+                return;
+
+            // â”€â”€ Step 4: Update component type handles for current frame â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            m_EntityTypeHandle = SystemAPI.GetEntityTypeHandle();
+            m_CitizenTypeHandle = SystemAPI.GetComponentTypeHandle<Citizen>(true);
+            m_HouseholdMemberTypeHandle = SystemAPI.GetComponentTypeHandle<HouseholdMember>(true);
+            m_WorkerTypeHandle = SystemAPI.GetComponentTypeHandle<Worker>(true);
+
+            // â”€â”€ Step 5: Zero output arrays and schedule job â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (!isWorkplaceMode)
             {
                 for (int i = 0; i < m_AgeEduCounts.Length;        i++) m_AgeEduCounts[i]        = 0;
                 for (int i = 0; i < m_EduNonWorkCounts.Length;    i++) m_EduNonWorkCounts[i]    = 0;
                 for (int i = 0; i < m_EduWorkSectorCounts.Length; i++) m_EduWorkSectorCounts[i] = 0;
                 for (int i = 0; i < m_EduWorkJobEduCounts.Length; i++) m_EduWorkJobEduCounts[i] = 0;
-
-                var job = new WorkforcePipelineJob
-                {
-                    m_Workers              = SystemAPI.GetComponentLookup<Worker>(true),
-                    m_Students             = SystemAPI.GetComponentLookup<Game.Citizens.Student>(true),
-                    m_HealthProblems       = SystemAPI.GetComponentLookup<HealthProblem>(true),
-                    m_MovingAways          = SystemAPI.GetComponentLookup<MovingAway>(true),
-                    m_Households           = SystemAPI.GetComponentLookup<Household>(true),
-                    m_OutsideConnections   = SystemAPI.GetComponentLookup<Game.Objects.OutsideConnection>(true),
-                    m_CommercialCompanies  = SystemAPI.GetComponentLookup<CommercialCompany>(true),
-                    m_IndustrialCompanies  = SystemAPI.GetComponentLookup<IndustrialCompany>(true),
-                    m_PrefabRefs           = SystemAPI.GetComponentLookup<PrefabRef>(true),
-                    m_IndustrialProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true),
-                    m_AgeEduCounts         = m_AgeEduCounts,
-                    m_EduNonWorkCounts     = m_EduNonWorkCounts,
-                    m_EduWorkSectorCounts  = m_EduWorkSectorCounts,
-                    m_EduWorkJobEduCounts  = m_EduWorkJobEduCounts,
-                };
-                // Schedule non-blocking: job runs on worker threads across the next 512 ticks.
-                Dependency = job.Schedule(m_CitizenQuery, Dependency);
+                
+                WorkforcePipelineJob job = default(WorkforcePipelineJob);
+                job.m_EntityTypeHandle     = m_EntityTypeHandle;
+                job.m_CitizenTypeHandle    = m_CitizenTypeHandle;
+                job.m_HouseholdMemberTypeHandle = m_HouseholdMemberTypeHandle;
+                job.m_Workers              = SystemAPI.GetComponentLookup<Worker>(true);
+                job.m_Students             = SystemAPI.GetComponentLookup<Game.Citizens.Student>(true);
+                job.m_HealthProblems       = SystemAPI.GetComponentLookup<HealthProblem>(true);
+                job.m_MovingAways          = SystemAPI.GetComponentLookup<MovingAway>(true);
+                job.m_Households           = SystemAPI.GetComponentLookup<Household>(true);
+                job.m_OutsideConnections   = SystemAPI.GetComponentLookup<Game.Objects.OutsideConnection>(true);
+                job.m_CommercialCompanies  = SystemAPI.GetComponentLookup<CommercialCompany>(true);
+                job.m_IndustrialCompanies  = SystemAPI.GetComponentLookup<IndustrialCompany>(true);
+                job.m_PrefabRefs           = SystemAPI.GetComponentLookup<PrefabRef>(true);
+                job.m_IndustrialProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true);
+                job.m_AgeEduCounts         = m_AgeEduCounts;
+                job.m_EduNonWorkCounts     = m_EduNonWorkCounts;
+                job.m_EduWorkSectorCounts  = m_EduWorkSectorCounts;
+                job.m_EduWorkJobEduCounts  = m_EduWorkJobEduCounts;
+                
+                // Schedule with ScheduleParallel for true parallelization across chunks
+                Dependency = JobChunkExtensions.ScheduleParallel(job, m_CitizenQuery, Dependency);
             }
             else
             {
@@ -344,22 +407,25 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
                 for (int i = 0; i < m_WorkerEduJobEdu.Length; i++) m_WorkerEduJobEdu[i] = 0;
                 for (int i = 0; i < m_JobEduSector.Length;    i++) m_JobEduSector[i]    = 0;
 
-                var wpJob = new WorkplaceSankeyJob
-                {
-                    m_Households           = SystemAPI.GetComponentLookup<Household>(true),
-                    m_MovingAways          = SystemAPI.GetComponentLookup<MovingAway>(true),
-                    m_HealthProblems       = SystemAPI.GetComponentLookup<HealthProblem>(true),
-                    m_OutsideConnections   = SystemAPI.GetComponentLookup<Game.Objects.OutsideConnection>(true),
-                    m_CommercialCompanies  = SystemAPI.GetComponentLookup<CommercialCompany>(true),
-                    m_IndustrialCompanies  = SystemAPI.GetComponentLookup<IndustrialCompany>(true),
-                    m_PrefabRefs           = SystemAPI.GetComponentLookup<PrefabRef>(true),
-                    m_IndustrialProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true),
-                    m_LivingWorkerEdu      = m_LivingWorkerEdu,
-                    m_WorkerEduJobEdu      = m_WorkerEduJobEdu,
-                    m_JobEduSector         = m_JobEduSector,
-                };
-                // Schedule non-blocking: job runs on worker threads across the next 512 ticks.
-                Dependency = wpJob.Schedule(m_WorkerQuery, Dependency);
+                WorkplaceSankeyJob wpJob = default(WorkplaceSankeyJob);
+                wpJob.m_EntityTypeHandle   = m_EntityTypeHandle;
+                wpJob.m_CitizenTypeHandle  = m_CitizenTypeHandle;
+                wpJob.m_HouseholdMemberTypeHandle = m_HouseholdMemberTypeHandle;
+                wpJob.m_WorkerTypeHandle   = m_WorkerTypeHandle;
+                wpJob.m_Households           = SystemAPI.GetComponentLookup<Household>(true);
+                wpJob.m_MovingAways          = SystemAPI.GetComponentLookup<MovingAway>(true);
+                wpJob.m_HealthProblems       = SystemAPI.GetComponentLookup<HealthProblem>(true);
+                wpJob.m_OutsideConnections   = SystemAPI.GetComponentLookup<Game.Objects.OutsideConnection>(true);
+                wpJob.m_CommercialCompanies  = SystemAPI.GetComponentLookup<CommercialCompany>(true);
+                wpJob.m_IndustrialCompanies  = SystemAPI.GetComponentLookup<IndustrialCompany>(true);
+                wpJob.m_PrefabRefs           = SystemAPI.GetComponentLookup<PrefabRef>(true);
+                wpJob.m_IndustrialProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true);
+                wpJob.m_LivingWorkerEdu      = m_LivingWorkerEdu;
+                wpJob.m_WorkerEduJobEdu      = m_WorkerEduJobEdu;
+                wpJob.m_JobEduSector         = m_JobEduSector;
+                
+                // Schedule with ScheduleParallel for true parallelization across chunks
+                Dependency = JobChunkExtensions.ScheduleParallel(wpJob, m_WorkerQuery, Dependency);
             }
 
             m_JobScheduled = true;
@@ -379,7 +445,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             m_JobScheduled = false;
         }
 
-        // ── JSON writer ───────────────────────────────────────────────────────
+        // â”€â”€ JSON writer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private void WriteData(IJsonWriter writer)
         {
             writer.TypeBegin("WorkforcePipelineData");
@@ -430,3 +496,5 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
         }
     }
 }
+
+

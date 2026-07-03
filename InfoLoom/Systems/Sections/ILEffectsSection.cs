@@ -1,20 +1,20 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using ModsCommon.Extensions;
 using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game.Buildings;
-using Game.Objects;
 using Game.Prefabs;
 using Game.Rendering;
-using Game.UI;
-using InfoLoomTwo.Extensions;
 using Unity.Entities;
 using Unity.Mathematics;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.Sections
 {
 	public partial class ILEffectsSection : ExtendedInfoSectionBase
 	{
+		protected override string ModId => InfoLoomMod.Instance.Id;
 		public class LocalInfo
 		{
 			public string Type { get; set; }

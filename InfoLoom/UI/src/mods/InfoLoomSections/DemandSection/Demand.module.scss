@@ -32,15 +32,15 @@
   font-size: 80%;
   width: 20%;
   margin-left: 10%;
-  
+
   &.negative {
     color: red;
   }
-  
+
   &.positive {
-    color: #00CC00;
+    color: #00cc00;
   }
-  
+
   &.neutral {
     color: white;
   }
@@ -95,5 +95,5 @@
 }
 
 .positiveValue {
-  color: #00CC00;
+  color: #00cc00;
 }

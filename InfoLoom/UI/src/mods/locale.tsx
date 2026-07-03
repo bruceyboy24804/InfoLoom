@@ -31,7 +31,7 @@ export class Localekeys {
   public static WaterFee: string = 'SelectedInfoPanel.EFFICIENCY_FACTORS[WaterFee]';
   public static WaterSupply: string = 'SelectedInfoPanel.EFFICIENCY_FACTORS[WaterSupply]';
   public static WindSpeed: string = 'SelectedInfoPanel.EFFICIENCY_FACTORS[WindSpeed]';
-  public static LackResources: string = 'SelectedInfoPanel.EFFICIENCY_FACTORS[LackResources]'
+  public static LackResources: string = 'SelectedInfoPanel.EFFICIENCY_FACTORS[LackResources]';
 
   public static Educated: string = 'EducationInfoPanel.LEVEL[Educated]';
   public static HighlyEducated: string = 'EducationInfoPanel.LEVEL[Highly Educated]';
@@ -89,8 +89,7 @@ export class Localekeys {
   public static Resource_Vegetables: string = 'Resources.TITLE[Vegetables]';
   public static Resource_Vehicles: string = 'Resources.TITLE[Vehicles]';
   public static Resource_Wood: string = 'Resources.TITLE[Wood]';
-  public static Resource_Fish: string = 'Resources.TITLE[Fish]'
-  
+  public static Resource_Fish: string = 'Resources.TITLE[Fish]';
 
   public static Tourists: string = 'SelectedInfoPanel.CITIZEN_TYPE[Tourist]';
   public static Commuter: string = 'SelectedInfoPanel.CITIZEN_TYPE[Commuter]';
@@ -150,9 +149,9 @@ export class Localekeys {
   public static OpenPositions: string = 'SelectedInfoPanel.OPEN_POSITIONS';
 
   public static BuildingDemand: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[BuildingDemand]';
-  public static ResLow: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialLow]'
-  public static ResMedium: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialMedium]'
-  public static ResHigh: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialHigh]'
+  public static ResLow: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialLow]';
+  public static ResMedium: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialMedium]';
+  public static ResHigh: string = 'CityInfoPanel.DEMAND_TITLE[ResidentialHigh]';
   public static CommercialDemand: string = 'CityInfoPanel.TOOLTIP_TITLE_DEMAND[Commercial]';
   public static IndustrialDemand: string = 'CityInfoPanel.TOOLTIP_TITLE_DEMAND[Industrial]';
   public static OfficeDemand: string = 'CityInfoPanel.TOOLTIP_TITLE_DEMAND[Office]';
@@ -160,23 +159,22 @@ export class Localekeys {
   public static EmptyBuildings: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[EmptyBuildings]';
   public static Warehouses: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[Warehouses]';
   public static StorageLevels: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[StorageLevels]';
-  public static PositivePetrol: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[PetrolLocalDemand]'
-  public static NegativePetrol: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[PetrolLocalDemand]'
-  public static PositiveUnemployment: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Unemployment]'
-  public static NegativeUnemployment: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[Unemployment]'
-  public static UneducatedWorkforce: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[UneducatedWorkforce]'
-  public static EducatedWorkforce: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[EducatedWorkforce]'
-  public static CompanyWealth: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[CompanyWealth]'
-  public static LocalInputs: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[LocalInputs]'
-  public static FreeWorkplaces: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[FreeWorkplaces]'
-  public static Happiness: string = 'CityInfoPanel.DEMAND_FACTOR[Happiness]'
-  public static Homelessness: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Homelessness]'
-  public static TouristDemand: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[TouristDemand]'
-  public static Taxes: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Taxes]'
-  public static StudentsFactor: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Students]'
-  public static EmptyZones: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[EmptyZones]'
-  public static PoorZoneLocation: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[PoorZoneLocation]'
-
+  public static PositivePetrol: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[PetrolLocalDemand]';
+  public static NegativePetrol: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[PetrolLocalDemand]';
+  public static PositiveUnemployment: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Unemployment]';
+  public static NegativeUnemployment: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[Unemployment]';
+  public static UneducatedWorkforce: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[UneducatedWorkforce]';
+  public static EducatedWorkforce: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[EducatedWorkforce]';
+  public static CompanyWealth: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[CompanyWealth]';
+  public static LocalInputs: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[LocalInputs]';
+  public static FreeWorkplaces: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[FreeWorkplaces]';
+  public static Happiness: string = 'CityInfoPanel.DEMAND_FACTOR[Happiness]';
+  public static Homelessness: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Homelessness]';
+  public static TouristDemand: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[TouristDemand]';
+  public static Taxes: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Taxes]';
+  public static StudentsFactor: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[Students]';
+  public static EmptyZones: string = 'CityInfoPanel.DEMAND_FACTOR_NEGATIVE[EmptyZones]';
+  public static PoorZoneLocation: string = 'CityInfoPanel.DEMAND_FACTOR_POSITIVE[PoorZoneLocation]';
 
   public static CitizenHappiness: string = 'SelectedInfoPanel.CITIZEN_HAPPINESS';
   public static CitizenHappinessTitleNeutral: string = 'SelectedInfoPanel.CITIZEN_HAPPINESS_TITLE[Neutral]';
@@ -210,21 +208,21 @@ export class Localekeys {
   public static Output: string = 'InfoPanels.OUTPUT';
   public static Input: string = 'Options.SECTION[Input]';
 
-  public static Income: string = 'SelectedInfoPanel.COMPANY_INCOME'
-  public static Worth: string = 'SelectedInfoPanel.COMPANY_BANK_BALANCE'
-  public static Profit: string = 'SelectedInfoPanel.COMPANY_PROFIT'
-  public static WagePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[WagesPaid]'
-  public static TaxesPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[TaxesPaid]'
-  public static RentPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[RentPaid]'
-  public static ResourcesBoughtPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[ResourcesBoughtPaid]'
-  public static GarbageFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[GarbageFeePaid]'
-  public static ElectricityPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[ElectricityPaid]'
-  public static SewageFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[SewageFeePaid]'
-  public static WaterFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[WaterFeePaid]'
-  public static DailyCustomers: string = 'SelectedInfoPanel.DAILY_CUSTOMERS'
-  public static Customers: string = 'SelectedInfoPanel.CUSTOMERS'
+  public static Income: string = 'SelectedInfoPanel.COMPANY_INCOME';
+  public static Worth: string = 'SelectedInfoPanel.COMPANY_BANK_BALANCE';
+  public static Profit: string = 'SelectedInfoPanel.COMPANY_PROFIT';
+  public static WagePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[WagesPaid]';
+  public static TaxesPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[TaxesPaid]';
+  public static RentPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[RentPaid]';
+  public static ResourcesBoughtPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[ResourcesBoughtPaid]';
+  public static GarbageFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[GarbageFeePaid]';
+  public static ElectricityPaid: string = 'SelectedInfoPanel.COMPANY_COSTS[ElectricityPaid]';
+  public static SewageFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[SewageFeePaid]';
+  public static WaterFeePaid: string = 'SelectedInfoPanel.COMPANY_COSTS[WaterFeePaid]';
+  public static DailyCustomers: string = 'SelectedInfoPanel.DAILY_CUSTOMERS';
+  public static Customers: string = 'SelectedInfoPanel.CUSTOMERS';
 
-  public static Maintenance: string = 'SelectedInfoPanel.PARK_MAINTENANCE'
+  public static Maintenance: string = 'SelectedInfoPanel.PARK_MAINTENANCE';
 
   //InfoLoom localization keys
   public static ModName: string = 'InfoLoomTwo.ModName';
@@ -322,15 +320,15 @@ export class Localekeys {
   public static DemandedTypesTooltip: string = 'InfoLoomTwo.DemandPanels[DemandedTypesTooltip]';
   public static NoDemand: string = 'InfoLoomTwo.DemandPanels[NoDemand]';
   public static NoDemandTooltip: string = 'InfoLoomTwo.DemandPanels[NoDemandTooltip]';
-  public static ServiceUtilization: string = 'InfoLoomTwo.DemandPanels[ServiceUtilization]';
-  public static ProductionCapacity: string = 'InfoLoomTwo.DemandPanels[ProductionCapacity]';
-  public static ServiceUtilizationTooltip: string = 'InfoLoomTwo.DemandPanels[ServiceUtilizationTooltip]';
-  public static ProductionCapacityTooltip: string = 'InfoLoomTwo.DemandPanels[ProductionCapacityTooltip]';
+  public static ShopStocking: string = 'InfoLoomTwo.DemandPanels[ShopStocking]';
+  public static HotelOccupancy: string = 'InfoLoomTwo.DemandPanels[HotelOccupancy]';
+  public static ShopStockingTooltip: string = 'InfoLoomTwo.DemandPanels[ShopStockingTooltip]';
+  public static HotelOccupancyTooltip: string = 'InfoLoomTwo.DemandPanels[HotelOccupancyTooltip]';
   public static AvailableWorkforceTooltip: string = 'InfoLoomTwo.DemandPanels[AvailableWorkforceTooltip]';
   public static EducatedWorkforceTooltip: string = 'InfoLoomTwo.DemandPanels[EducatedWorkforceTooltip]';
   public static UneducatedWorkforceTooltip: string = 'InfoLoomTwo.DemandPanels[UneducatedWorkforceTooltip]';
   public static IncludedResourcesTooltip: string = 'InfoLoomTwo.DemandPanels[IncludedResourcesTooltip]';
-  public static DemandFor: string = 'InfoLoomTwo.DemandPanels[DemandFor]'
+  public static DemandFor: string = 'InfoLoomTwo.DemandPanels[DemandFor]';
 
   public static ResourceHeaderTooltip: string = 'InfoLoomTwo.TradeCostsPanel[ResourceHeaderTooltip]';
   public static BuyCostHeaderTooltip: string = 'InfoLoomTwo.TradeCostsPanel[BuyCostHeaderTooltip]';
@@ -366,7 +364,7 @@ export class Localekeys {
   public static EfficiencyTooltip: string = 'InfoLoomTwo.CompanyPanels[EfficiencyTooltip]';
   public static ProfitabilityTooltip: string = 'InfoLoomTwo.CompanyPanels[ProfitabilityTooltip]';
   public static ProcessingTooltip: string = 'InfoLoomTwo.CompanyPanels[ProcessingTooltip]';
-  public static NoCompanyFound: string = 'InfoLoomTwo.CompanyPanels[NoCompanyFound]'
+  public static NoCompanyFound: string = 'InfoLoomTwo.CompanyPanels[NoCompanyFound]';
 
   public static Demographics: string = 'InfoLoomTwo.Common[Demographics]';
   public static TradeCosts: string = 'InfoLoomTwo.Common[TradeCosts]';
@@ -388,7 +386,4 @@ export class Localekeys {
   public static AvgProfitability: string = 'InfoLoomTwo.CompanyPanels[AvgProfitability]';
   public static TotalMoney: string = 'InfoLoomTwo.CompanyPanels[TotalMoney]';
   public static TotalEmployees: string = 'InfoLoomTwo.CompanyPanels[TotalEmployees]';
-
-  
-
 }

@@ -9,11 +9,11 @@ import { OutsideConnectionType } from 'mods/domain/TradeCostEnums';
 // Define bindings for outside connection type
 const OutsideConnectionTypeSorting = bindValue<OutsideConnectionType>(
   mod.id,
-  'OutsideConnectionType',
+  'BINDING:OutsideConnectionType',
   OutsideConnectionType.All
 );
 const SetOutsideConnectionTypeSorting = (type: OutsideConnectionType) =>
-  trigger(mod.id, 'SetOutsideConnectionType', type);
+  trigger(mod.id, 'TRIGGER:SetOutsideConnectionType', type);
 
 // Custom selector for outside connection type
 export const OutsideConnectionSelector = () => {

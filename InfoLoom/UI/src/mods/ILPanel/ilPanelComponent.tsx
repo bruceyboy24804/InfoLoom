@@ -216,10 +216,15 @@ export const ILPanel = ({
       header={
         header || (
           <div className={styles.ilPanelHeader} onMouseDown={e => onMouseDown(e)}>
-            <Icon className={styles.ilPanelIcon} src={statsSrc} />
+            <Icon className={styles.ilPanelIcon} src={'coui://il/Statistics.svg'} />
             <div className={styles.ilPanelHeaderTitle}>{title || panelTitle || 'InfoLoom Panel'}</div>
-            <Button id={elementIDILPanelClose} className={styles.ilPanelHeaderClose} onClick={() => onCloseClick()} variant="round">
-              <Icon src='Media/Glyphs/Close.svg' tinted className={styles.ilPanelCloseIcon}/>
+            <Button
+              id={elementIDILPanelClose}
+              className={styles.ilPanelHeaderClose}
+              onClick={() => onCloseClick()}
+              variant="round"
+            >
+              <Icon src="Media/Glyphs/Close.svg" tinted className={styles.ilPanelCloseIcon} />
             </Button>
           </div>
         )

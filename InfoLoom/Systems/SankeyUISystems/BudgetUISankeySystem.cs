@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using ModsCommon.Extensions;
+using ModsCommon.Systems;
 using Colossal.UI.Binding;
 using Game.City;
 using Game.Prefabs;
@@ -11,8 +13,10 @@ using UnityEngine.Scripting;
 
 namespace InfoLoomTwo.Systems.SankeyUISystems
 {
-    public partial class BudgetUISankeySystem : ExtendedUISystemBase
+    public partial class BudgetUISankeySystem : CommonUISystemBase
     {
+        protected override string ModId => InfoLoomMod.Instance.Id;
+
         private const string kGroup = "InfoLoomTwo";
         private const string kBudgetSankeyOpen = "BudgetSankeyOpen";
 
@@ -177,7 +181,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
             writer.PropertyName("links");
             writer.ArrayBegin((uint)linkCount);
 
-            // Income sources → Revenue
+            // Income sources â†’ Revenue
             for (int i = 0; i < incomeItems.Length; i++)
             {
                 if (incomeGroupValues[i] <= 0) continue;
@@ -191,7 +195,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
                 writer.TypeEnd();
             }
 
-            // Revenue → Expense
+            // Revenue â†’ Expense
             if (totalExpenses > 0)
             {
                 writer.TypeBegin("SankeyLink");
@@ -204,7 +208,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
                 writer.TypeEnd();
             }
 
-            // Revenue → Surplus
+            // Revenue â†’ Surplus
             if (surplus > 0)
             {
                 writer.TypeBegin("SankeyLink");
@@ -217,7 +221,7 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
                 writer.TypeEnd();
             }
 
-            // Expense → expense categories
+            // Expense â†’ expense categories
             for (int i = 0; i < expenseItems.Length; i++)
             {
                 if (expenseGroupValues[i] <= 0) continue;
@@ -237,3 +241,4 @@ namespace InfoLoomTwo.Systems.SankeyUISystems
         }
     }
 }
+

@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ModsCommon.Extensions;
+using ModsCommon.Systems;
 using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game;
@@ -27,8 +29,10 @@ using StorageCompany = Game.Companies.StorageCompany;
 
 namespace InfoLoomTwo.Systems.TradeCostData
 {
-    public partial class TradeCostsSystem : ExtendedUISystemBase
+    public partial class TradeCostsSystem : CommonUISystemBase
     {
+        protected override string ModId => InfoLoomMod.Instance.Id;
+        
         private Dictionary<Resource, ResourceTradeCost> m_TradeCosts = new ();
 
         // Trade balance tracking
@@ -37,13 +41,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private NativeArray<int> m_ExportAmounts;
 
         // Sorting state
-        private SortingEnum m_buyCostSorting = SortingEnum.Off;
-        private SortingEnum m_sellCostSorting = SortingEnum.Off;
-        private SortingEnum m_importAmountSorting = SortingEnum.Off;
-        private SortingEnum m_exportAmountSorting = SortingEnum.Off;
-        private SortingEnum m_profitSorting = SortingEnum.Off;
-        private SortingEnum m_profitMarginSorting = SortingEnum.Off;
-        private SortingEnum m_resourceNameSorting = SortingEnum.Off;
         private string m_currentSortColumn = "";
 
         // System references
@@ -60,6 +57,13 @@ namespace InfoLoomTwo.Systems.TradeCostData
         private ValueBindingHelper<List<ResourceTradeCost>> m_TradeCostsBinding;
         private ValueBinding<bool> _tCPVBinding;
         private ValueBindingHelper<OutsideConnectionType> outsideConnectionTypeBinding;
+        private ValueBindingHelper<SortingEnum> m_BuyCostSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_SellCostSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ImportAmountSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ExportAmountSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ProfitSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ProfitMarginSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ResourceNameSortingBinding;
 
         protected override void OnCreate()
         {
@@ -87,25 +91,17 @@ namespace InfoLoomTwo.Systems.TradeCostData
             AddBinding(new TriggerBinding<bool>("InfoLoomTwo", "TradeCostsOpen", OnVisibilityChanged));
 
             // Create sorting triggers
-            CreateTrigger<SortingEnum>("SetBuyCost", OnBuyCostChanged);
-            CreateTrigger<SortingEnum>("SetSellCost", OnSellCostChanged);
-            CreateTrigger<SortingEnum>("SetImportAmount", OnImportAmountChanged);
-            CreateTrigger<SortingEnum>("SetExportAmount", OnExportAmountChanged);
-            CreateTrigger<SortingEnum>("SetProfit", OnProfitChanged);
-            CreateTrigger<SortingEnum>("SetProfitMargin", OnProfitMarginChanged);
-            CreateTrigger<SortingEnum>("SetResourceName", OnResourceNameChanged);
-
-            // Create value bindings for sorting enums
-            CreateBinding("BuyCost", () => m_buyCostSorting);
-            CreateBinding("SellCost", () => m_sellCostSorting);
-            CreateBinding("ImportAmount", () => m_importAmountSorting);
-            CreateBinding("ExportAmount", () => m_exportAmountSorting);
-            CreateBinding("Profit", () => m_profitSorting);
-            CreateBinding("ProfitMargin", () => m_profitMarginSorting);
-            CreateBinding("ResourceName", () => m_resourceNameSorting);
-
+            m_BuyCostSortingBinding = CreateGenericBinding("BuyCost", SortingEnum.Off, OnBuyCostChanged);
+            m_SellCostSortingBinding = CreateGenericBinding("SellCost", SortingEnum.Off, OnSellCostChanged);
+            m_ImportAmountSortingBinding = CreateGenericBinding("ImportAmount", SortingEnum.Off, OnImportAmountChanged);
+            m_ExportAmountSortingBinding = CreateGenericBinding("ExportAmount", SortingEnum.Off, OnExportAmountChanged);
+            m_ProfitSortingBinding = CreateGenericBinding("Profit", SortingEnum.Off, OnProfitChanged);
+            m_ProfitMarginSortingBinding = CreateGenericBinding("ProfitMargin", SortingEnum.Off, OnProfitMarginChanged);
+            m_ResourceNameSortingBinding = CreateGenericBinding("ResourceName", SortingEnum.Off, OnResourceNameChanged);
+            
+            
             // Create outside connection type binding
-            outsideConnectionTypeBinding = CreateBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.All, OnOutsideConnectionTypeChanged);
+            outsideConnectionTypeBinding = CreateGenericBinding("OutsideConnectionType", "SetOutsideConnectionType", OutsideConnectionType.All, OnOutsideConnectionTypeChanged);
 
         }
 
@@ -134,49 +130,51 @@ namespace InfoLoomTwo.Systems.TradeCostData
         // Sorting change handlers
         private void OnBuyCostChanged(SortingEnum value)
         {
-            m_buyCostSorting = value;
+            
+            
+            m_BuyCostSortingBinding.Value = value;
             m_currentSortColumn = "BuyCost";
             UpdateSortedData();
         }
 
         private void OnSellCostChanged(SortingEnum value)
         {
-            m_sellCostSorting = value;
+            m_SellCostSortingBinding.Value = value;
             m_currentSortColumn = "SellCost";
             UpdateSortedData();
         }
 
         private void OnImportAmountChanged(SortingEnum value)
         {
-            m_importAmountSorting = value;
+            m_ImportAmountSortingBinding.Value = value;
             m_currentSortColumn = "ImportAmount";
             UpdateSortedData();
         }
 
         private void OnExportAmountChanged(SortingEnum value)
         {
-            m_exportAmountSorting = value;
+            m_ExportAmountSortingBinding.Value = value;
             m_currentSortColumn = "ExportAmount";
             UpdateSortedData();
         }
 
         private void OnProfitChanged(SortingEnum value)
         {
-            m_profitSorting = value;
+            m_ProfitSortingBinding.Value = value;
             m_currentSortColumn = "Profit";
             UpdateSortedData();
         }
 
         private void OnProfitMarginChanged(SortingEnum value)
         {
-            m_profitMarginSorting = value;
+            m_ProfitMarginSortingBinding.Value = value;
             m_currentSortColumn = "ProfitMargin";
             UpdateSortedData();
         }
 
         private void OnResourceNameChanged(SortingEnum value)
         {
-            m_resourceNameSorting = value;
+            m_ResourceNameSortingBinding.Value = value;
             m_currentSortColumn = "ResourceName";
             UpdateSortedData();
         }
@@ -185,8 +183,6 @@ namespace InfoLoomTwo.Systems.TradeCostData
         {
             UpdateAllTradeCosts();
             UpdateSortedData();
-            // Reset history when connection type changes since prices change
-            
         }
 
         private void OnVisibilityChanged(bool isVisible)
@@ -406,13 +402,13 @@ namespace InfoLoomTwo.Systems.TradeCostData
             {
                 var currentSorting = m_currentSortColumn switch
                 {
-                    "BuyCost" => m_buyCostSorting,
-                    "SellCost" => m_sellCostSorting,
-                    "ImportAmount" => m_importAmountSorting,
-                    "ExportAmount" => m_exportAmountSorting,
-                    "Profit" => m_profitSorting,
-                    "ProfitMargin" => m_profitMarginSorting,
-                    "ResourceName" => m_resourceNameSorting,
+                    "BuyCost" => m_BuyCostSortingBinding.Value,
+                    "SellCost" => m_SellCostSortingBinding.Value,
+                    "ImportAmount" => m_ImportAmountSortingBinding.Value,
+                    "ExportAmount" => m_ExportAmountSortingBinding.Value,
+                    "Profit" => m_ProfitSortingBinding.Value,
+                    "ProfitMargin" => m_ProfitMarginSortingBinding.Value,
+                    "ResourceName" => m_ResourceNameSortingBinding.Value,
                     _ => SortingEnum.Off
                 };
 
@@ -483,3 +479,5 @@ namespace InfoLoomTwo.Systems.TradeCostData
         }
     }
 }
+
+

@@ -1,12 +1,10 @@
-export enum SortingEnum
-{
+export enum TCSortingEnum {
   Ascending = 1,
   Descending = 2,
   Off = 0,
 }
 
-export enum OutsideConnectionType
-{
+export enum OutsideConnectionType {
   Road = 0,
   Train = 1,
   Air = 3,

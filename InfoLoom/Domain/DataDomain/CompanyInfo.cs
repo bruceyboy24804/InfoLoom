@@ -21,7 +21,7 @@ namespace InfoLoomTwo.Domain.DataDomain
 		/// </summary>
 		public void Write(IJsonWriter writer)
 		{
-			writer.TypeBegin(Mod.Name + ".CompanyInfo");
+			writer.TypeBegin(InfoLoomMod.Instance.ModName + ".CompanyInfo");
 			writer.PropertyName("brandEntity");
 			writer.Write(brandEntity);
 			writer.PropertyName("name");

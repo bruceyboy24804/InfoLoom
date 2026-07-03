@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Game.Economy;
 
-namespace InfoLoomTwo.Systems
+namespace InfoLoomTwo.Systems.UI
 {
     public static class UIUtil
     {

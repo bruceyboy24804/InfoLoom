@@ -1,15 +1,9 @@
-﻿using System;
-using Colossal.IO.AssetDatabase;
-using Colossal.Logging;
+using Colossal;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
-using HarmonyLib;
-using InfoLoomTwo.Systems;
-using System.Linq;
-using System.Reflection;
-using Game.UI.InGame;
 using InfoLoomTwo.Extensions;
+using InfoLoomTwo.Systems;
 using InfoLoomTwo.Systems.ResidentialData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialCompanyDebugData;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
@@ -19,125 +13,75 @@ using InfoLoomTwo.Systems.IndustrialSystems.IndustrialDemandData;
 using InfoLoomTwo.Systems.WorkforceData;
 using InfoLoomTwo.Systems.WorkplacesData;
 using InfoLoomTwo.Systems.Sections;
-using InfoLoomTwo.Systems.TradeCostData; 
-using Unity.Entities;
-using Game.Settings;
+using InfoLoomTwo.Systems.TradeCostData;
 using InfoLoomTwo.Systems.ChirpSystem_s_;
-using Game.Simulation;
 using InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems;
 using InfoLoomTwo.Systems.SankeyUISystems;
 using InfoLoomTwo.Exporter;
+using Colossal.Logging;
+using Unity.Entities;
+using Game.Settings;
+using InfoLoomTwo.Systems.UI;
+using ModsCommon.Mod;
 
-
-// Mod namespace
 namespace InfoLoomTwo
 {
-    // Mod class implementing IMod interface
-    public class Mod : IMod
+    public sealed class InfoLoomMod : ModsCommonBase<InfoLoomMod>, IMod
     {
-        public static readonly string harmonyId = "Bruceyboy24804" + nameof(InfoLoomTwo);
-        // Static fields and properties
-       public static Setting setting;
-        public static Mod Instance { get; private set; }
-         public static string Version => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
-        public static string Name => Assembly.GetExecutingAssembly().GetName().Name;
-        public static string InformationalVersion => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-        
-        internal ILog Log { get; private set; }
-        public static string modName => nameof(InfoLoomTwo);
-        
-        // Static logger instance with custom logger name and settings
-        public static ILog log = LogManager.GetLogger($"{nameof(InfoLoomTwo)}.{nameof(Mod)}")
-            .SetShowsErrorsInUI(false);
+        // Static accessors kept for backward compatibility with all callers across the codebase.
+        public static Setting setting => Instance?.Settings as Setting;
+        public static ILog log => Instance?.Log;
 
-       
-        
 
-    
+        #region BruceyModBase abstract members
 
-        // Method that runs when the mod is loaded
-        public void OnLoad(UpdateSystem updateSystem)
+        public override string ModName => nameof(InfoLoomTwo);
+        public override string Id => nameof(InfoLoomTwo);
+        protected override string UiHostPrefix => "il";
+
+        protected override ModSetting CreateSettings(IMod mod) => new Setting(mod);
+
+        protected override IDictionarySource CreateEnUsLocalization(ModSetting settings)
+            => new LocaleEN((Setting)settings);
+
+        protected override void RegisterSystems(UpdateSystem updateSystem)
         {
-            
-            foreach (var item in new LocaleHelper("InfoLoomTwo.Locale.json").GetAvailableLanguages())
-            {
-                GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
-            }
-            // Log entry for debugging purposes
-            log.Info(nameof(OnLoad));
-            Instance = this;
-#if DEBUG
-            log.effectivenessLevel = Level.Debug;
-#endif
-            //Try to fetch the mod asset from the mod manager
-            setting = new Setting(this);
-            if (setting == null)
-            {
-                Log.Error("Failed to initialize settings.");
-                return;
-            }
-            setting.RegisterInOptionsUI();
-           AssetDatabase.global.LoadSettings(nameof(InfoLoomTwo), setting, new Setting(this));
-
-            // Initialize the data exporter output directory (must be before locale registration)
-            DataExporter.EnsureOutputDirectory();
-
-             //Load localization
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(setting));
-
-            var harmony = new Harmony(harmonyId);
-            harmony.PatchAll(typeof(Mod).Assembly);
-            var patchedMethods = harmony.GetPatchedMethods().ToArray();
-            log.Info($"Plugin {harmonyId} made patches! Patched methods: " + patchedMethods.Length);
-            foreach (var patchedMethod in patchedMethods)
-            {
-                log.Info($"Patched method: {patchedMethod.Module.Name}:{patchedMethod.DeclaringType.Name}.{patchedMethod.Name}");
-            }
-           
-
-            // Register custom update systems for UI updates
             updateSystem.UpdateAt<Demographics>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<WorkforceSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<WorkplacesSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<ResidentialSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CommercialSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CommercialSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomChirpSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<EffectTrackerSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<ILEffectsSection>(SystemUpdatePhase.Rendering);
-            
-            
-            updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<StoragePropertyCompanies>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<BudgetUISankeySystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<WorkforcePipelineSankeySystem>(SystemUpdatePhase.UIUpdate);
-            ILCitizenSection ilCitizenSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
-            ILBuildingSection ilBuildingSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
-            ILRentSection ilRentSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();
-            ILDistrictSection ilDistrictSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILDistrictSection>();
-            ILEffectsSection ilEffectsSection = World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILEffectsSection>();
-            
-            // Register RealLife settings updater to initialize after all mods are loaded
+
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILCitizenSection>();
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILBuildingSection>();
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILRentSection>();
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILDistrictSection>();
+            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<ILEffectsSection>();
         }
-        // Method that runs when the mod is disposed of
-        public void OnDispose()
+
+        #endregion
+
+        protected override void OnAfterLoad(UpdateSystem updateSystem)
         {
-            //Log entry for debugging purposes
-            log.Info(nameof(OnDispose));
-            if (setting != null)
+            // Load UI panel locale strings (en-US and all other languages) from Locale.json.
+            // These are separate from the settings strings handled by CreateEnUsLocalization.
+            foreach (var item in new LocaleHelper("InfoLoomTwo.Locale.json").GetAvailableLanguages())
             {
-                setting.UnregisterInOptionsUI();
-                setting = null;
+                GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
             }
 
-            // Cleanup RealLife integration
-
-            var harmony = new Harmony(harmonyId);
-            harmony.UnpatchAll(harmonyId);
-
+            DataExporter.EnsureOutputDirectory();
         }
     }
 }

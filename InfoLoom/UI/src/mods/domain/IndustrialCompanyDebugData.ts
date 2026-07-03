@@ -55,5 +55,4 @@ export interface IndustrialCompanyDebug {
   ResourcesBoughtPaid: number;
   CurrentCustomers: number;
   MonthlyCustomers: number;
-  
 }

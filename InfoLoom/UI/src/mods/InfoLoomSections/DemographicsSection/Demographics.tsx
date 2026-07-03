@@ -24,8 +24,8 @@ import { ToggleButton, StatisticsPanel, DemographicsChart, ErrorBoundary, Loadin
 import mod from 'mod.json';
 import { Localekeys } from 'mods/locale';
 
-const demographics = bindValue<boolean>(mod.id, 'demographics', false);
-const updateDemographics = (value: boolean) => trigger(mod.id, 'updateDemographics', value);
+const demographics = bindValue<boolean>(mod.id, 'BINDING:demographics', false);
+const updateDemographics = (value: boolean) => trigger(mod.id, 'TRIGGER:updateDemographics', value);
 
 const DropdownStyle = getModule('game-ui/menu/themes/dropdown.module.scss', 'classes');
 
@@ -37,14 +37,14 @@ const SetChartSwitch = (switchTo: DemographicsType) => {
 // === Main Demographics Component ===
 const Demographics = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const { translate } = useLocalization();
-  const demographicsDataStructureDetails = useValue(DemographicsDetailedData);
-  const fiveYearDetails = useValue(DemographicsFiveYearDetails);
-  const tenYearDetails = useValue(DemographicsTenYearDetails);
-  const lifecycleDetails = useValue(DemographicsLifecycleDetails);
-  const demographicsDataStructureTotals = useValue(DemographicsDataTotals);
+  const demographicsDataStructureDetails = useValue(DemographicsDetailedData.binding);
+  const fiveYearDetails = useValue(DemographicsFiveYearDetails.binding);
+  const tenYearDetails = useValue(DemographicsTenYearDetails.binding);
+  const lifecycleDetails = useValue(DemographicsLifecycleDetails.binding);
+  const demographicsDataStructureTotals = useValue(DemographicsDataTotals.binding);
   const demographicsDataOldestCitizen = useValue(DemographicsDataOldestCitizen);
   const demoStatsToggledOn = useValue(DemoStatsToggledOn);
-  const demoGroupingStrategy = useValue(DemoGroupingStrategy);
+  const demoGroupingStrategy = useValue(DemoGroupingStrategy.binding);
   const chartSwitch = useValue(ChartSwitch);
   const demographicsValue = useValue(demographics);
 

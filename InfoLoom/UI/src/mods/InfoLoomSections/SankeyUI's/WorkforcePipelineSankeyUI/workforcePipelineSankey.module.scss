@@ -40,7 +40,9 @@
   font-size: 85%;
   font-family: Overpass, sans-serif;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.12);

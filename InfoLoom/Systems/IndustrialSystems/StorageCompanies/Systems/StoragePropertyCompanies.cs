@@ -1,4 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using ModsCommon.Extensions;
+using ModsCommon.Systems;
 using Colossal.UI.Binding;
 using Game.Buildings;
 using Game.Citizens;
@@ -11,14 +13,14 @@ using InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Jobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems
 {
-    public partial class StoragePropertyCompanies : ExtendedUISystemBase
+    public partial class StoragePropertyCompanies : CommonUISystemBase
     {
-        
-        
-        
+        protected override string ModId => InfoLoomMod.Instance.Id;
+
         private ValueBindingHelper<List<StorageCompanyUI>> m_StorageCompanyInfoBinding;
         private ValueBindingHelper<bool> _storageCompaniesVisibleBinding;
         private RawValueBinding _bindingStorageCompanyUISettings;
@@ -30,7 +32,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems
         {
             base.OnCreate();
             
-            AddBinding(new TriggerBinding<float2>(Mod.modName, "StoragePanelMoved",   StorageCompanyPanelMoved   ));
+            AddBinding(new TriggerBinding<float2>(Mod.Instance.ModName, "StoragePanelMoved",   StorageCompanyPanelMoved   ));
             
             
             storageCompanyQuery = SystemAPI.QueryBuilder().WithAll<StorageCompany, CompanyData>().Build();
@@ -38,8 +40,8 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems
             nameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_JobResults = new NativeList<StorageCompanyInfo>(Allocator.Persistent);
             m_StorageCompanyInfoBinding = CreateBinding("StorageCompanies", new List<StorageCompanyUI>());
-            _storageCompaniesVisibleBinding = CreateBinding("StoragePanelVisible", "SetStoragePanelVisible", false, SetStorageVisibility);
-            AddBinding(_bindingStorageCompanyUISettings     = new RawValueBinding(Mod.modName, "StorageCompanyUISettings",  WriteStorageCompanyUISettings));
+            _storageCompaniesVisibleBinding = CreateGenericBinding("StoragePanelVisible", "SetStoragePanelVisible", false, SetStorageVisibility);
+            AddBinding(_bindingStorageCompanyUISettings     = new RawValueBinding(Mod.Instance.ModName, "StorageCompanyUISettings",  WriteStorageCompanyUISettings));
         }
 
         protected override void OnDestroy()
@@ -62,7 +64,7 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems
         
         private void WriteStorageCompanyUISettings(IJsonWriter writer)
         {
-			writer.TypeBegin(Mod.modName + ".StorageCompanyUISettings");
+			writer.TypeBegin(Mod.Instance.ModName + ".StorageCompanyUISettings");
 			writer.PropertyName("panelPositionX");
 			writer.Write(Mod.setting.panelPosition.x);
 			writer.PropertyName("panelPositionY");
@@ -121,3 +123,4 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.StorageCompanies.Systems
         }
     }
 }
+

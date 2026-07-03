@@ -12,33 +12,10 @@ import { IndustrialCompanyDebug, ProcessResourceInfo } from '../../../domain/Ind
 import { EfficiencyFactorEnum } from '../../../domain/EfficiencyFactorInfo';
 import { LocalizedFraction, LocalizedNumber, LocalizedPercentage, Unit, useLocalization } from 'cs2/l10n';
 import styles from './IndustrialCompany.module.scss';
-import {
-  IndustrialCompanyDebugData,
-  SetIndustrialCompanyEfficiency,
-  SetIndustrialCompanyEmployee,
-  SetIndustrialCompanyNameSorting,
-  SetIndustrialCompanyIndexSorting,
-  SetIndustrialCompanyProfitability,
-  SetIndustrialMoneySorting,
-  SetIndustrialInput1Sorting,
-  SetIndustrialInput2Sorting,
-  SetIndustrialOutputSorting,
-  SetIndustrialMaintenanceSorting,
-  IndustrialCompanyEmployee,
-  IndustrialCompanyIndexSorting,
-  IndustrialCompanyNameSorting,
-  IndustrialCompanyProfitability,
-  IndustrialCompanyEfficiency,
-  IndustrialMoneySorting,
-  IndustrialInput1Sorting,
-  IndustrialInput2Sorting,
-  IndustrialOutputSorting,
-  IndustrialMaintenanceSorting,
-} from 'mods/bindings';
+import { IndustrialCompanyDebugData, INDUSTRIAL } from 'mods/bindings';
 import { getModule } from 'cs2/modding';
 import { Entity, useCssLength } from 'cs2/utils';
 import mod from 'mod.json';
-import { CommercialCompanyDebug, ResourceInfo } from '../../../domain/CommercialCompanyDebugData';
 import { SortingEnum } from '../../../domain/SortingEnum';
 import { CompanyNameSelector } from './Selectors/companyNameSelector';
 import { ResourceSelector } from './Selectors/resourceSelector';
@@ -263,21 +240,20 @@ type GroupedListItem = GroupHeaderItem | ChildItem;
 
 const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
   const { translate } = useLocalization();
-  const companiesData = useValue(IndustrialCompanyDebugData);
+  const companiesData = useValue(IndustrialCompanyDebugData.binding);
   const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
   const [heightFull, setHeightFull] = useState(600); // Default fallback height
   const [groupByCompany, setGroupByCompany] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const indexSortingOptions = useValue(IndustrialCompanyIndexSorting);
-  const nameSortingOptions = useValue(IndustrialCompanyNameSorting);
-  const employeeSortingOptions = useValue(IndustrialCompanyEmployee);
-  const efficiencySortingOptions = useValue(IndustrialCompanyEfficiency);
-  const profitabilitySortingOptions = useValue(IndustrialCompanyProfitability);
-  const moneySortingOptions = useValue(IndustrialMoneySorting);
-  const input1SortingOptions = useValue(IndustrialInput1Sorting);
-  const input2SortingOptions = useValue(IndustrialInput2Sorting);
-  const outputSortingOptions = useValue(IndustrialOutputSorting);
-  const maintenanceSortingOptions = useValue(IndustrialMaintenanceSorting);
+  const nameSortingOptions = useValue(INDUSTRIAL.Name.binding);
+  const employeeSortingOptions = useValue(INDUSTRIAL.Employees.binding);
+  const efficiencySortingOptions = useValue(INDUSTRIAL.Efficiency.binding);
+  const profitabilitySortingOptions = useValue(INDUSTRIAL.Profitability.binding);
+  const moneySortingOptions = useValue(INDUSTRIAL.Money.binding);
+  const input1SortingOptions = useValue(INDUSTRIAL.Input1.binding);
+  const input2SortingOptions = useValue(INDUSTRIAL.Input1.binding);
+  const outputSortingOptions = useValue(INDUSTRIAL.Output.binding);
+  const maintenanceSortingOptions = useValue(INDUSTRIAL.Maintenance.binding);
   const getResourceTranslation = useResourceTranslation();
 
   const toggleGroup = useCallback((companyName: string) => {
@@ -747,18 +723,14 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
               <div className={`${styles.vehicleColumn} ${styles.groupStat}`}>
                 {formatNumber(item.totalVehicles)}/{formatNumber(item.totalVehicleCapacity)}
               </div>
-              <div className={`${styles.moneyColumn} ${styles.groupStat}`}>
-                {formatNumber(item.totalMoney)}
-              </div>
+              <div className={`${styles.moneyColumn} ${styles.groupStat}`}>{formatNumber(item.totalMoney)}</div>
               <div className={`${styles.input1Column} ${styles.groupStat}`}></div>
               <div className={`${styles.input2Column} ${styles.groupStat}`}></div>
               <div className={`${styles.outputColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.maintenanceColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.processingColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.efficiencyColumn} ${styles.groupStat}`}>
-                <span className={getEfficiencyClass(item.avgEfficiency)}>
-                  {formatPercentage2(item.avgEfficiency)}
-                </span>
+                <span className={getEfficiencyClass(item.avgEfficiency)}>{formatPercentage2(item.avgEfficiency)}</span>
               </div>
               <div className={`${styles.profitabilityColumn} ${styles.groupStat}`}>
                 <span className={getProfitabilityClass(item.avgProfitability)}>
@@ -782,8 +754,16 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
       if (!company) return null;
       return <CompanyRowWithTranslation key={`industrial-company-${itemIndex}`} company={company} />;
     },
-    [companiesData, groupByCompany, groupedItems, expandedGroups, toggleGroup, translate,
-     getEfficiencyClass, getProfitabilityClass]
+    [
+      companiesData,
+      groupByCompany,
+      groupedItems,
+      expandedGroups,
+      toggleGroup,
+      translate,
+      getEfficiencyClass,
+      getProfitabilityClass,
+    ]
   );
 
   // Early return for no data
@@ -874,9 +854,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Name, 'Name') || 'Name'}
                 sortState={nameSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyNameSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialCompanyNameSorting(SortingEnum.Descending);
-                  else SetIndustrialCompanyNameSorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Name.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Name.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Name.set(SortingEnum.Off);
                 }}
                 className={styles.nameColumn}
               />
@@ -885,9 +865,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Employees, 'Employees') || 'Employees'}
                 sortState={employeeSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyEmployee(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialCompanyEmployee(SortingEnum.Descending);
-                  else SetIndustrialCompanyEmployee(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Employees.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Employees.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Employees.set(SortingEnum.Off);
                 }}
                 className={styles.employeeColumn}
               />
@@ -907,9 +887,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Resource_Money, 'Money')}
                 sortState={moneySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialMoneySorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialMoneySorting(SortingEnum.Descending);
-                  else SetIndustrialMoneySorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Money.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Money.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Money.set(SortingEnum.Off);
                 }}
                 className={styles.moneyColumn}
               />
@@ -917,9 +897,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Input, 'Input 1')}
                 sortState={input1SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialInput1Sorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialInput1Sorting(SortingEnum.Descending);
-                  else SetIndustrialInput1Sorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Input1.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Input1.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Input1.set(SortingEnum.Off);
                 }}
                 className={styles.input1Column}
               />
@@ -928,9 +908,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Input, 'Input 2')}
                 sortState={input2SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialInput2Sorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialInput2Sorting(SortingEnum.Descending);
-                  else SetIndustrialInput2Sorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Input2.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Input2.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Input2.set(SortingEnum.Off);
                 }}
                 className={styles.input2Column}
               />
@@ -939,9 +919,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Output, 'Output')}
                 sortState={outputSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialOutputSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialOutputSorting(SortingEnum.Descending);
-                  else SetIndustrialOutputSorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Output.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Output.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Output.set(SortingEnum.Off);
                 }}
                 className={styles.outputColumn}
               />
@@ -950,9 +930,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Maintenance, 'Maintenance')}
                 sortState={maintenanceSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialMaintenanceSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialMaintenanceSorting(SortingEnum.Descending);
-                  else SetIndustrialMaintenanceSorting(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Maintenance.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Maintenance.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Maintenance.set(SortingEnum.Off);
                 }}
                 className={styles.maintenanceColumn}
               />
@@ -972,9 +952,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Efficiency, 'Efficiency')}
                 sortState={efficiencySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyEfficiency(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialCompanyEfficiency(SortingEnum.Descending);
-                  else SetIndustrialCompanyEfficiency(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Efficiency.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Efficiency.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Efficiency.set(SortingEnum.Off);
                 }}
                 className={styles.efficiencyColumn}
               />
@@ -983,9 +963,9 @@ const IndustrialCompany: FC<DraggablePanelProps> = ({ onClose }) => {
                 title={translate(Localekeys.Profitability, 'Profitability')}
                 sortState={profitabilitySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetIndustrialCompanyProfitability(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetIndustrialCompanyProfitability(SortingEnum.Descending);
-                  else SetIndustrialCompanyProfitability(SortingEnum.Off);
+                  if (direction === 'asc') INDUSTRIAL.Profitability.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') INDUSTRIAL.Profitability.set(SortingEnum.Descending);
+                  else INDUSTRIAL.Profitability.set(SortingEnum.Off);
                 }}
                 className={styles.profitabilityColumn}
               />

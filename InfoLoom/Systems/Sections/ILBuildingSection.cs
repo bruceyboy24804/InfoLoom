@@ -1,28 +1,22 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Colossal;
-using Colossal.Entities;
+using ModsCommon.Extensions;
+using Colossal.PSI.Common;
 using Colossal.UI.Binding;
-using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
-using Game.City;
 using Game.Companies;
 using Game.Economy;
+using Game.Pathfind;
 using Game.Prefabs;
 using Game.Rendering;
-using Game.Simulation;
-using Game.UI;
 using Game.UI.InGame;
 using Game.Vehicles;
 using Game.Zones;
-using InfoLoomTwo.Extensions;
-using Unity.Burst;
-using Unity.Burst.Intrinsics;
-using Unity.Collections;
 using Unity.Entities;
-using UnityEngine;
-using DeliveryTruck = Game.Prefabs.DeliveryTruck;
+using DeliveryTruck = Game.Vehicles.DeliveryTruck;
+using Park = Game.Buildings.Park;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.Sections
 {
@@ -35,6 +29,8 @@ namespace InfoLoomTwo.Systems.Sections
 
     public partial class ILBuildingSection : ExtendedInfoSectionBase
     {
+        protected override string ModId => InfoLoomMod.Instance.Id;
+
         // Private fields following naming conventions
         private Entity _BuildingEntity;
         private Entity _CompanyEntity;
@@ -110,14 +106,14 @@ namespace InfoLoomTwo.Systems.Sections
             _CostPayer = Entity.Null;
             _MeanInputTripLength = 0f;
             _VehicleTarget = Entity.Null;
-            _TruckState = (DeliveryTruckFlags)0;
+            _TruckState = 0;
             _Input1 = Resource.NoResource;
             _Input2 = Resource.NoResource;
             _Output = Resource.NoResource;
 
             _TradeCosts.Clear();
-            _EducationDataEmployees = default(EmploymentData);
-            _EducationDataWorkplaces = default(EmploymentData);
+            _EducationDataEmployees = default;
+            _EducationDataWorkplaces = default;
 
             m_OvereducatedByEducationLevel.Clear();
             m_CommuterByEducationLevel.Clear();
@@ -128,7 +124,8 @@ namespace InfoLoomTwo.Systems.Sections
         private bool Visible()
         {
             _BuildingEntity = selectedEntity;
-            return HasEmployees(_BuildingEntity, selectedPrefab) && !Mod.setting.hideBuildingSection;;
+            return HasEmployees(_BuildingEntity, selectedPrefab) && !Mod.setting.hideBuildingSection;
+            ;
         }
 
         protected override void OnUpdate()
@@ -146,10 +143,10 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessCompanyData()
         {
-            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(true);
             if (!renterLookup.TryGetBuffer(_BuildingEntity, out var renterBuffer)) return;
 
-            for (int i = 0; i < renterBuffer.Length; i++)
+            for (var i = 0; i < renterBuffer.Length; i++)
             {
                 _CompanyEntity = renterBuffer[i].m_Renter;
 
@@ -162,8 +159,8 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessCompanyInputsOutputs()
         {
-            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
-            var processDataLookup = SystemAPI.GetComponentLookup<IndustrialProcessData>(isReadOnly: true);
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(true);
+            var processDataLookup = SystemAPI.GetComponentLookup<IndustrialProcessData>(true);
 
             if (!prefabRefLookup.TryGetComponent(_CompanyEntity, out var prefabRef)) return;
 
@@ -177,8 +174,8 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessTradePartner()
         {
-            var buyingCompanyLookup = SystemAPI.GetComponentLookup<BuyingCompany>(isReadOnly: true);
-            
+            var buyingCompanyLookup = SystemAPI.GetComponentLookup<BuyingCompany>(true);
+
             if (buyingCompanyLookup.TryGetComponent(_CompanyEntity, out var buyingCompany))
             {
                 _TradePartnerEntity = buyingCompany.m_LastTradePartner;
@@ -188,13 +185,12 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessVehicleData()
         {
-            
-            var vehicleLookup = SystemAPI.GetBufferLookup<OwnedVehicle>(isReadOnly: true);
-            var deliveryTruckLookup = SystemAPI.GetComponentLookup<Game.Vehicles.DeliveryTruck>(isReadOnly: true);
+            var vehicleLookup = SystemAPI.GetBufferLookup<OwnedVehicle>(true);
+            var deliveryTruckLookup = SystemAPI.GetComponentLookup<DeliveryTruck>(true);
 
             if (!vehicleLookup.TryGetBuffer(_CompanyEntity, out var vehicleBuffer)) return;
 
-            for (int i = 0; i < vehicleBuffer.Length; i++)
+            for (var i = 0; i < vehicleBuffer.Length; i++)
             {
                 var vehicleEntity = vehicleBuffer[i].m_Vehicle;
 
@@ -214,8 +210,8 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessTransportCost(Entity vehicleEntity)
         {
-            var pathInfoLookup = SystemAPI.GetComponentLookup<Game.Pathfind.PathInformation>(isReadOnly: true);
-            var resourceDatas = SystemAPI.GetComponentLookup<ResourceData>(isReadOnly: true);
+            var pathInfoLookup = SystemAPI.GetComponentLookup<PathInformation>(true);
+            var resourceDatas = SystemAPI.GetComponentLookup<ResourceData>(true);
 
             if (!pathInfoLookup.TryGetComponent(vehicleEntity, out var pathInfo)) return;
 
@@ -224,17 +220,17 @@ namespace InfoLoomTwo.Systems.Sections
             var resourcePrefabs = m_ResourceSystem.GetPrefabs();
             if (resourcePrefabs[_Resource] == Entity.Null) return;
 
-            float weight = EconomyUtils.GetWeight(_Resource, resourcePrefabs, ref resourceDatas);
+            var weight = EconomyUtils.GetWeight(_Resource, resourcePrefabs, ref resourceDatas);
             _TransportCost = EconomyUtils.GetTransportCost(pathInfo.m_Distance, _Resource, _ResourceAmount, weight);
         }
 
         private void ProcessTradeCosts()
         {
-            var tradeCostLookup = SystemAPI.GetBufferLookup<TradeCost>(isReadOnly: true);
-            
+            var tradeCostLookup = SystemAPI.GetBufferLookup<TradeCost>(true);
+
             if (!tradeCostLookup.TryGetBuffer(_CompanyEntity, out var tradeCostBuffer)) return;
 
-            for (int i = 0; i < tradeCostBuffer.Length; i++)
+            for (var i = 0; i < tradeCostBuffer.Length; i++)
             {
                 var tradeCost = tradeCostBuffer[i];
                 _TradeCosts.Add(new TradeCostData
@@ -248,11 +244,11 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessEmploymentData()
         {
-            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
-            
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(true);
+
             if (!renterLookup.TryGetBuffer(_BuildingEntity, out var renterBuffer)) return;
 
-            for (int renterIndex = 0; renterIndex < renterBuffer.Length; renterIndex++)
+            for (var renterIndex = 0; renterIndex < renterBuffer.Length; renterIndex++)
             {
                 var companyEntity = renterBuffer[renterIndex].m_Renter;
                 ProcessCompanyEmployees(companyEntity);
@@ -264,27 +260,25 @@ namespace InfoLoomTwo.Systems.Sections
 
         private void ProcessCompanyEmployees(Entity companyEntity)
         {
-            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
-            var workerLookup = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true);
-            var citizenLookup = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true);
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(true);
+            var workerLookup = SystemAPI.GetComponentLookup<Worker>(true);
+            var citizenLookup = SystemAPI.GetComponentLookup<Citizen>(true);
 
             if (!employeeLookup.TryGetBuffer(companyEntity, out var employeeBuffer)) return;
 
-            for (int i = 0; i < employeeBuffer.Length; i++)
+            for (var i = 0; i < employeeBuffer.Length; i++)
             {
                 var workerEntity = employeeBuffer[i].m_Worker;
 
                 if (workerLookup.TryGetComponent(workerEntity, out var worker) &&
                     citizenLookup.TryGetComponent(workerEntity, out var citizen))
-                {
                     ProcessWorkerData(worker, citizen);
-                }
             }
         }
 
         private void ProcessWorkerData(Worker worker, Citizen citizen)
         {
-            int educationLevel = citizen.GetEducationLevel();
+            var educationLevel = citizen.GetEducationLevel();
             int workerLevel = worker.m_Level;
 
             // Process overeducated workers
@@ -311,7 +305,8 @@ namespace InfoLoomTwo.Systems.Sections
             dictionary[educationLevel]++;
         }
 
-        private void UpdateWorkplaceEducationCount(Dictionary<int, Dictionary<int, int>> dictionary, int workerLevel, int educationLevel)
+        private void UpdateWorkplaceEducationCount(Dictionary<int, Dictionary<int, int>> dictionary, int workerLevel,
+            int educationLevel)
         {
             if (!dictionary.ContainsKey(workerLevel))
                 dictionary[workerLevel] = new Dictionary<int, int>();
@@ -322,115 +317,99 @@ namespace InfoLoomTwo.Systems.Sections
 
         private bool HasEmployees(Entity entity, Entity prefab)
         {
-            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
-            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
-            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(isReadOnly: true);
-            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
-            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(isReadOnly: true);
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(true);
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(true);
+            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(true);
+            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(true);
+            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(true);
 
             if (!renterLookup.TryGetBuffer(entity, out var buffer))
-            {
                 return employeeLookup.HasBuffer(entity) && workProviderLookup.HasComponent(entity);
-            }
 
             if (buffer.Length == 0 && spawnableBuildingLookup.TryGetComponent(prefab, out var component))
             {
                 if (m_PrefabSystem.TryGetPrefab<ZonePrefab>(component.m_ZonePrefab, out var prefab2))
-                {
-                    return prefab2.m_AreaType == Game.Zones.AreaType.Commercial ||
-                           prefab2.m_AreaType == Game.Zones.AreaType.Industrial;
-                }
+                    return prefab2.m_AreaType == AreaType.Commercial ||
+                           prefab2.m_AreaType == AreaType.Industrial;
                 return false;
             }
 
-            for (int i = 0; i < buffer.Length; i++)
+            for (var i = 0; i < buffer.Length; i++)
             {
-                Entity renter = buffer[i].m_Renter;
+                var renter = buffer[i].m_Renter;
                 if (companyDataLookup.HasComponent(renter))
-                {
                     return employeeLookup.HasComponent(renter) && workProviderLookup.HasComponent(renter);
-                }
             }
+
             return false;
         }
 
         private void AddEmployees()
         {
-            var serviceUsageLookup = SystemAPI.GetComponentLookup<ServiceUsage>(isReadOnly: true);
-            
+            var serviceUsageLookup = SystemAPI.GetComponentLookup<ServiceUsage>(true);
+
             if (serviceUsageLookup.HasComponent(_BuildingEntity))
-            {
                 tooltipKeys.Add("ServiceUsage");
-            }
             else
-            {
                 AddEmployees(_BuildingEntity);
-            }
         }
 
         private void AddEmployees(Entity entity)
         {
-            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
-            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(isReadOnly: true);
-            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(isReadOnly: true);
-            var workplaceDataLookup = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true);
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(true);
+            var employeeLookup = SystemAPI.GetBufferLookup<Employee>(true);
+            var workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(true);
+            var workplaceDataLookup = SystemAPI.GetComponentLookup<WorkplaceData>(true);
 
             var prefab = prefabRefLookup[entity].m_Prefab;
             var companyEntity = GetCompanyEntity(entity);
             var companyPrefab = prefabRefLookup[companyEntity].m_Prefab;
 
-            int buildingLevel = GetBuildingLevel(entity, prefab);
+            var buildingLevel = GetBuildingLevel(entity, prefab);
 
             if (employeeLookup.TryGetBuffer(companyEntity, out var buffer) &&
                 workProviderLookup.TryGetComponent(companyEntity, out var workProvider))
             {
                 _EmployeeCount += buffer.Length;
                 var complexity = workplaceDataLookup[companyPrefab].m_Complexity;
-                var workplacesData = EmploymentData.GetWorkplacesData(workProvider.m_MaxWorkers, buildingLevel, complexity);
+                var workplacesData =
+                    EmploymentData.GetWorkplacesData(workProvider.m_MaxWorkers, buildingLevel, complexity);
                 _MaxEmployees += workplacesData.total;
                 _EducationDataWorkplaces += workplacesData;
-                _EducationDataEmployees += EmploymentData.GetEmployeesData(buffer, workplacesData.total - buffer.Length);
+                _EducationDataEmployees +=
+                    EmploymentData.GetEmployeesData(buffer, workplacesData.total - buffer.Length);
             }
         }
 
         private int GetBuildingLevel(Entity entity, Entity prefab)
         {
-            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(isReadOnly: true);
-            var propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
-            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+            var spawnableBuildingLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(true);
+            var propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>(true);
+            var prefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(true);
 
-            if (spawnableBuildingLookup.TryGetComponent(prefab, out var component))
-            {
-                return component.m_Level;
-            }
+            if (spawnableBuildingLookup.TryGetComponent(prefab, out var component)) return component.m_Level;
 
             if (propertyRenterLookup.TryGetComponent(entity, out var propertyRenter) &&
                 prefabRefLookup.TryGetComponent(propertyRenter.m_Property, out var propertyPrefabRef) &&
                 spawnableBuildingLookup.TryGetComponent(propertyPrefabRef.m_Prefab, out var propertyComponent))
-            {
                 return propertyComponent.m_Level;
-            }
 
             return 1;
         }
 
         private Entity GetCompanyEntity(Entity entity)
         {
-            var parkLookup = SystemAPI.GetComponentLookup<Game.Buildings.Park>(isReadOnly: true);
-            var renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
-            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(isReadOnly: true);
+            var parkLookup = SystemAPI.GetComponentLookup<Park>(true);
+            var renterLookup = SystemAPI.GetBufferLookup<Renter>(true);
+            var companyDataLookup = SystemAPI.GetComponentLookup<CompanyData>(true);
 
             if (!parkLookup.HasComponent(entity) && renterLookup.TryGetBuffer(entity, out var buffer))
-            {
-                for (int i = 0; i < buffer.Length; i++)
+                for (var i = 0; i < buffer.Length; i++)
                 {
-                    Entity renter = buffer[i].m_Renter;
-                    if (companyDataLookup.HasComponent(renter))
-                    {
-                        return renter;
-                    }
+                    var renter = buffer[i].m_Renter;
+                    if (companyDataLookup.HasComponent(renter)) return renter;
                 }
-            }
+
             return entity;
         }
 
@@ -454,21 +433,27 @@ namespace InfoLoomTwo.Systems.Sections
             writer.PropertyName("OvereductedEmployees");
             writer.Write(_OvereducatedEmployees);
 
-            WriteEducationLevelData(writer, "OvereductedByEducationLevel", "OvereducatedLevelData", m_OvereducatedByEducationLevel);
-            WriteWorkplaceEducationData(writer, "OvereductedByWorkplaceAndEducationLevel", "OvereducatedWorkplaceLevelData", "OvereducatedEducationLevelData", m_OvereducatedByWorkplaceAndEducationLevel);
+            WriteEducationLevelData(writer, "OvereductedByEducationLevel", "OvereducatedLevelData",
+                m_OvereducatedByEducationLevel);
+            WriteWorkplaceEducationData(writer, "OvereductedByWorkplaceAndEducationLevel",
+                "OvereducatedWorkplaceLevelData", "OvereducatedEducationLevelData",
+                m_OvereducatedByWorkplaceAndEducationLevel);
 
             writer.PropertyName("CommuterEmployees");
             writer.Write(_CommuterEmployees);
 
-            WriteEducationLevelData(writer, "CommuterByEducationLevel", "CommuterLevelData", m_CommuterByEducationLevel);
-            WriteWorkplaceEducationData(writer, "CommuterByWorkplaceAndEducationLevel", "CommuterWorkplaceLevelData", "CommuterEducationLevelData", m_CommuterByWorkplaceAndEducationLevel);
+            WriteEducationLevelData(writer, "CommuterByEducationLevel", "CommuterLevelData",
+                m_CommuterByEducationLevel);
+            WriteWorkplaceEducationData(writer, "CommuterByWorkplaceAndEducationLevel", "CommuterWorkplaceLevelData",
+                "CommuterEducationLevelData", m_CommuterByWorkplaceAndEducationLevel);
 
             WriteTradeCosts(writer);
             WriteVehicleData(writer);
             WriteCompanyInputOutput(writer);
         }
 
-        private void WriteEducationLevelData(IJsonWriter writer, string propertyName, string typeName, Dictionary<int, int> data)
+        private void WriteEducationLevelData(IJsonWriter writer, string propertyName, string typeName,
+            Dictionary<int, int> data)
         {
             writer.PropertyName(propertyName);
             writer.ArrayBegin((uint)data.Count);
@@ -481,10 +466,12 @@ namespace InfoLoomTwo.Systems.Sections
                 writer.Write(kvp.Value);
                 writer.TypeEnd();
             }
+
             writer.ArrayEnd();
         }
 
-        private void WriteWorkplaceEducationData(IJsonWriter writer, string propertyName, string workplaceTypeName, string educationTypeName, Dictionary<int, Dictionary<int, int>> data)
+        private void WriteWorkplaceEducationData(IJsonWriter writer, string propertyName, string workplaceTypeName,
+            string educationTypeName, Dictionary<int, Dictionary<int, int>> data)
         {
             writer.PropertyName(propertyName);
             writer.ArrayBegin((uint)data.Count);
@@ -504,9 +491,11 @@ namespace InfoLoomTwo.Systems.Sections
                     writer.Write(eduKvp.Value);
                     writer.TypeEnd();
                 }
+
                 writer.ArrayEnd();
                 writer.TypeEnd();
             }
+
             writer.ArrayEnd();
         }
 
@@ -525,6 +514,7 @@ namespace InfoLoomTwo.Systems.Sections
                 writer.Write(tradeCost.SellCost);
                 writer.TypeEnd();
             }
+
             writer.ArrayEnd();
         }
 
@@ -557,7 +547,8 @@ namespace InfoLoomTwo.Systems.Sections
             if (m_CameraUpdateSystem.orbitCameraController != null && entity != Entity.Null)
             {
                 m_CameraUpdateSystem.orbitCameraController.followedEntity = entity;
-                m_CameraUpdateSystem.orbitCameraController.TryMatchPosition(m_CameraUpdateSystem.activeCameraController);
+                m_CameraUpdateSystem.orbitCameraController.TryMatchPosition(m_CameraUpdateSystem
+                    .activeCameraController);
                 m_CameraUpdateSystem.activeCameraController = m_CameraUpdateSystem.orbitCameraController;
             }
         }

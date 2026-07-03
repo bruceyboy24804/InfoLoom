@@ -65,7 +65,13 @@ module.exports = {
               },
             },
           },
-          "sass-loader",
+          "postcss-loader",
+          {
+            loader: "sass-loader",
+            options: {
+            api: "modern",
+            },
+          },
         ],
       },
       {
@@ -79,7 +85,11 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-    modules: ["node_modules", path.join(__dirname, "src")],
+    modules: [
+      "node_modules",
+      path.join(__dirname, "src"),
+      path.join(__dirname, "..", "Common", "ui"),   // <-- add this (Stats/Common/ui)
+    ],
     alias: {
       "mod.json": path.resolve(__dirname, "mod.json"),
     },

@@ -3,7 +3,6 @@ import { useValue } from 'cs2/api';
 import { useLocalization } from 'cs2/l10n';
 import { Button, FloatingButton, Tooltip, Icon } from 'cs2/ui';
 import { trigger } from 'cs2/api';
-import icon from 'images/Statistics.svg';
 import styles from './InfoLoomMenu.module.scss';
 import Demographics from 'mods/InfoLoomSections/DemographicsSection/Demographics';
 import Workforce from 'mods/InfoLoomSections/WorkforceSection/Workforce';
@@ -17,7 +16,7 @@ import Residential from 'mods/InfoLoomSections/ResidentialSection/ResidentialDem
 import ResidentialMenuButton from './ResidentialMenu/ResidentialMenu';
 import SankeyMenuButton from './SankeyMenu/SankeyMenu';
 import { Entity } from 'cs2/utils';
-import mod from "mod.json"
+import mod from 'mod.json';
 import { Localekeys } from 'mods/locale';
 interface SectionItem {
   component: JSX.Element;
@@ -34,7 +33,7 @@ enum InfoLoomState {
 }
 function InfoLoomButton(): JSX.Element {
   const { translate } = useLocalization();
-
+  const icon = 'coui://il/Statistics.svg'
   // Move all hook calls to the component level instead of inside functions
   const infoLoomMenuOpen = useValue(bindings.InfoLoomMenuOpen);
   const demographicsOpen = useValue(bindings.DemographicsOpen);
@@ -110,7 +109,7 @@ function InfoLoomButton(): JSX.Element {
         displayName: null, // Will be set at render time
       },
     }),
-      [
+    [
       demographicsOpen,
       workforceOpen,
       workplacesOpen,
@@ -144,7 +143,7 @@ function InfoLoomButton(): JSX.Element {
     // If we're closing the main menu, only close the menu buttons
     // but do NOT close any child sections/components
     if (isClosing) {
-    const menuSectionsToClose = ['Residential Menu', 'Industrial Menu', 'Commercial Menu', 'Sankey Menu'];
+      const menuSectionsToClose = ['Residential Menu', 'Industrial Menu', 'Commercial Menu', 'Sankey Menu'];
 
       // Only close the menu sections UIs, but explicitly preserve all child component states
       menuSectionsToClose.forEach(sectionName => {
@@ -172,7 +171,7 @@ function InfoLoomButton(): JSX.Element {
 
   return (
     <div>
-      <Tooltip tooltip={translate(Localekeys.ModName, "Info Loom")}>
+      <Tooltip tooltip={translate(Localekeys.ModName, 'Info Loom')}>
         <Button
           variant="floating"
           src={icon}
@@ -184,7 +183,7 @@ function InfoLoomButton(): JSX.Element {
       {infoLoomMenuOpen && (
         <div draggable className={styles.panel}>
           <header className={styles.header}>
-            <div>{translate(Localekeys.ModName, "Info Loom")}</div>
+            <div>{translate(Localekeys.ModName, 'Info Loom')}</div>
           </header>
           <div className={styles.buttonRow}>
             {Object.keys(sections).map(name => {

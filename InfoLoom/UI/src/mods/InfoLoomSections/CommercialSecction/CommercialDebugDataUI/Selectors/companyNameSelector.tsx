@@ -5,18 +5,19 @@ import { Dropdown, DropdownItem, DropdownToggle, FOCUS_DISABLED } from 'cs2/ui';
 import styles from './companyNameSelector.module.scss';
 import mod from 'mod.json';
 import { ModuleResolver } from '../../../../ModuleResolver/moduleResolver';
+import {OneWayBinding} from "utils/onewayBinding";
+import Trigger from "utils/trigger";
+import {TwoWayBinding} from "utils/bidirectionalBinding";
 
-const companyNames$ = bindValue<string[]>(mod.id, 'listOfCommercialCompanyNames', []);
-const selectedCompanyName$ = bindValue<string>(mod.id, 'selectedCommercialCompanyName', '');
-const setSelectedCompanyName$ = (companyName: string) =>
-  trigger(mod.id, 'SetSelectedCommercialCompanyName', companyName);
+const companyNames$ = new OneWayBinding<string[]>('listOfCommercialCompanyNames', []);
+const companyName$ = new TwoWayBinding<string>("CommercialCompanyName", "All Companies");
 
 export const CompanyNameSelector = () => {
   const { translate } = useLocalization();
 
   // Get list of company names and currently selected company
-  const companyNamesList: string[] = useValue(companyNames$);
-  const selectedCompany: string = useValue(selectedCompanyName$);
+  const companyNamesList: string[] = useValue(companyNames$.binding);
+  const selectedCompany: string = useValue(companyName$.binding);
 
   // Create dropdown items for each company
   const companyDropdownItems: JSX.Element[] = companyNamesList.map((companyName, index) => {
@@ -31,7 +32,7 @@ export const CompanyNameSelector = () => {
         closeOnSelect={true}
         selected={selected}
         className={selected ? styles.selectedCompanyNameDropdownItem : ''}
-        onChange={() => setSelectedCompanyName$(companyName)}
+        onChange={() => companyName$.set(companyName)}
       >
         {companyName}
       </DropdownItem>

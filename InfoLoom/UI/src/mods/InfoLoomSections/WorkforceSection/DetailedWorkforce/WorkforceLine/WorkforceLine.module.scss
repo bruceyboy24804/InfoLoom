@@ -1,0 +1,77 @@
+.row_S2v {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  top: 0;
+  z-index: 1;
+}
+.col1 {
+  width: 130rem;
+  text-align: left;
+  margin-left: 15rem;
+  font-size: var(--fontSizeS);
+}
+.colorLegend {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  line-height: 110%;
+}
+.symbol {
+  width: 1.2em;
+  height: 1.2em;
+  border-top-left-radius: 4rem 4rem;
+  border-top-right-radius: 4rem 4rem;
+  border-bottom-left-radius: 4rem 4rem;
+  border-bottom-right-radius: 4rem 4rem;
+  margin-right: 0.5em;
+}
+.label {
+  flex-shrink: 1;
+  margin-right: 0.4em;
+}
+.col2 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col3 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col4 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col5 {
+  width: 75rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col6 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col7 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col8 {
+  width: 60rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col9 {
+  width: 60rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}

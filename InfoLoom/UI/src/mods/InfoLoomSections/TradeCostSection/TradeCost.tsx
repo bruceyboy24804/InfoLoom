@@ -5,23 +5,10 @@ import { useValue } from 'cs2/api';
 import { LocalizedNumber, useLocalization, Unit, LocalizedString } from 'cs2/l10n';
 import {
   TradeCostsData,
-  SetResourceNameSorting,
-  SetBuyCostSorting,
-  SetSellCostSorting,
-  SetProfitSorting,
-  SetProfitMarginSorting,
-  ResourceNameSorting,
-  BuyCostSorting,
-  SellCostSorting,
-  ProfitSorting,
-  ProfitMarginSorting,
-  ImportAmountSorting,
-  ExportAmountSorting,
-  SetImportAmountSorting,
-  SetExportAmountSorting,
+  TC
 } from '../../bindings';
 import { ResourceTradeCost } from 'mods/domain/tradeCostData';
-import { SortingEnum, OutsideConnectionType } from 'mods/domain/TradeCostEnums';
+import { TCSortingEnum, OutsideConnectionType } from 'mods/domain/TradeCostEnums';
 import { formatWords } from '../utils/formatText';
 import { OutsideConnectionSelector } from './Selectors/outsideConnectionSelector';
 import { Localekeys } from 'mods/locale';
@@ -45,31 +32,41 @@ function calculateProfitMargin(data: ResourceTradeCost) {
 interface SortableHeaderProps {
   label: string | null;
   tooltip?: string | null;
-  sortState: number;
-  onSort: (direction: 'asc' | 'desc' | 'off') => void;
+  sortState: TCSortingEnum;
+  onSort: (next: TCSortingEnum) => void;
   className?: string;
 }
 
+// Clicking a header cycles Off -> Ascending -> Descending -> Off.
+const NEXT_SORT: Record<TCSortingEnum, TCSortingEnum> = {
+  [TCSortingEnum.Off]: TCSortingEnum.Ascending,
+  [TCSortingEnum.Ascending]: TCSortingEnum.Descending,
+  [TCSortingEnum.Descending]: TCSortingEnum.Off,
+};
+
+const SORT_ICON: Record<TCSortingEnum, string | null> = {
+  [TCSortingEnum.Off]: null,
+  [TCSortingEnum.Ascending]: 'coui://il/Sorting/ArrowSortHighDown.svg',
+  [TCSortingEnum.Descending]: 'coui://il/Sorting/ArrowSortLowDown.svg',
+};
+
 const SortableHeader: FC<SortableHeaderProps> = ({ label, tooltip, sortState, onSort, className }) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (sortState === 0) onSort('asc');
-    else if (sortState === 1) onSort('desc');
-    else onSort('off');
-  };
+  const icon = SORT_ICON[sortState];
 
   return (
     <Tooltip tooltip={tooltip}>
       <div
         className={`${styles.sortableHeader} ${styles.headerCell} ${className || ''}`}
-        onClick={handleClick}
+        onClick={(e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onSort(NEXT_SORT[sortState]);
+        }}
         style={{ cursor: 'pointer' }}
       >
         <span>{label}</span>
         <div className={styles.sortArrows}>
-          {sortState === 1 && <Icon src="coui://uil/Standard/ArrowSortHighDown.svg" className={styles.sortIcon} />}
-          {sortState === 2 && <Icon src="coui://uil/Standard/ArrowSortLowDown.svg" className={styles.sortIcon} />}
+          {icon && <Icon src={icon} className={styles.sortIcon} />}
         </div>
       </div>
     </Tooltip>
@@ -82,52 +79,14 @@ interface TradeCostPanelProps {
 
 const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
   const { translate } = useLocalization();
-  const tradeCosts = useValue(TradeCostsData);
-  const resourceNameSorting = useValue(ResourceNameSorting);
-  const buyCostSorting = useValue(BuyCostSorting);
-  const sellCostSorting = useValue(SellCostSorting);
-  const profitSorting = useValue(ProfitSorting);
-  const profitMarginSorting = useValue(ProfitMarginSorting);
-  const importAmountSorting = useValue(ImportAmountSorting);
-  const exportAmountSorting = useValue(ExportAmountSorting);
-
-  const onSort = {
-    ResourceName: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetResourceNameSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetResourceNameSorting(SortingEnum.Descending);
-      else SetResourceNameSorting(SortingEnum.Off);
-    },
-    BuyCost: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetBuyCostSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetBuyCostSorting(SortingEnum.Descending);
-      else SetBuyCostSorting(SortingEnum.Off);
-    },
-    SellCost: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetSellCostSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetSellCostSorting(SortingEnum.Descending);
-      else SetSellCostSorting(SortingEnum.Off);
-    },
-    Profit: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetProfitSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetProfitSorting(SortingEnum.Descending);
-      else SetProfitSorting(SortingEnum.Off);
-    },
-    ProfitMargin: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetProfitMarginSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetProfitMarginSorting(SortingEnum.Descending);
-      else SetProfitMarginSorting(SortingEnum.Off);
-    },
-    ImportAmount: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetImportAmountSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetImportAmountSorting(SortingEnum.Descending);
-      else SetImportAmountSorting(SortingEnum.Off);
-    },
-    ExportAmount: (direction: 'asc' | 'desc' | 'off') => {
-      if (direction === 'asc') SetExportAmountSorting(SortingEnum.Ascending);
-      else if (direction === 'desc') SetExportAmountSorting(SortingEnum.Descending);
-      else SetExportAmountSorting(SortingEnum.Off);
-    },
-  };
+  const tradeCosts = useValue(TradeCostsData.binding);
+  const resourceNameSorting = useValue(TC.ResourceName.binding);
+  const buyCostSorting = useValue(TC.BuyCost.binding);
+  const sellCostSorting = useValue(TC.SellCost.binding);
+  const profitSorting = useValue(TC.Profit.binding);
+  const profitMarginSorting = useValue(TC.ProfitMargin.binding);
+  const importAmountSorting = useValue(TC.ImportAmount.binding);
+  const exportAmountSorting = useValue(TC.ExportAmount.binding);
 
   // Early return for no data
   if (!tradeCosts || tradeCosts.length === 0) {
@@ -178,7 +137,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.Resources)}
                 tooltip={translate(Localekeys.ResourceHeaderTooltip)}
                 sortState={resourceNameSorting}
-                onSort={onSort.ResourceName}
+                onSort={next => TC.ResourceName.set(next)}
                 className={styles.resourceColumn}
               />
 
@@ -186,7 +145,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.BuyCostHeader)}
                 tooltip={translate(Localekeys.BuyCostHeaderTooltip)}
                 sortState={buyCostSorting}
-                onSort={onSort.BuyCost}
+                onSort={next => TC.BuyCost.set(next)}
                 className={styles.buyCostColumn}
               />
 
@@ -194,7 +153,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.SellCostHeader)}
                 tooltip={translate(Localekeys.SellCostHeaderTooltip)}
                 sortState={sellCostSorting}
-                onSort={onSort.SellCost}
+                onSort={next => TC.SellCost.set(next)}
                 className={styles.sellCostColumn}
               />
 
@@ -202,7 +161,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.ProfitHeader)}
                 tooltip={translate(Localekeys.ProfitHeaderTooltip)}
                 sortState={profitSorting}
-                onSort={onSort.Profit}
+                onSort={next => TC.Profit.set(next)}
                 className={styles.profitColumn}
               />
 
@@ -210,7 +169,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.ProfitMarginHeader)}
                 tooltip={translate(Localekeys.ProfitMarginHeaderTooltip)}
                 sortState={profitMarginSorting}
-                onSort={onSort.ProfitMargin}
+                onSort={next => TC.ProfitMargin.set(next)}
                 className={styles.profitMarginColumn}
               />
 
@@ -218,7 +177,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.ImportAmountHeader)}
                 tooltip={translate(Localekeys.ImportAmountHeaderTooltip)}
                 sortState={importAmountSorting}
-                onSort={onSort.ImportAmount}
+                onSort={next => TC.ImportAmount.set(next)}
                 className={styles.importAmountColumn}
               />
 
@@ -226,7 +185,7 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
                 label={translate(Localekeys.ExportAmountHeader)}
                 tooltip={translate(Localekeys.ExportAmountHeaderTooltip)}
                 sortState={exportAmountSorting}
-                onSort={onSort.ExportAmount}
+                onSort={next => TC.ExportAmount.set(next)}
                 className={styles.exportAmountColumn}
               />
             </div>
@@ -273,7 +232,6 @@ const TradeCostPanel: FC<TradeCostPanelProps> = ({ onClose }) => {
               );
             })}
           </div>
-
         </div>
       </Panel>
     </Portal>

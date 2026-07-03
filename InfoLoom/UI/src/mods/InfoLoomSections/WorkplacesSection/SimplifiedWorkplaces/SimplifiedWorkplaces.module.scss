@@ -1,0 +1,77 @@
+.root {
+  padding: 8rem 10rem 12rem;
+}
+
+.waiting {
+  margin: 0;
+  padding: 8rem 0 12rem;
+}
+
+.educationGrid {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.educationCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 8rem;
+  min-width: 0;
+}
+
+.educationCard:last-child {
+  margin-right: 0;
+}
+
+.educationCircle {
+  position: relative;
+  width: 68rem;
+  height: 68rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.educationSvg {
+  width: 68rem;
+  height: 68rem;
+  display: block;
+}
+
+.educationTrack {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+}
+
+.educationCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  font-family: Overpass;
+  color: white;
+}
+
+.educationPercent {
+  color: white;
+  font-family: Overpass;
+  font-size: 12rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.educationLabel {
+  margin-top: 4rem;
+  font-size: 11rem;
+  line-height: 1.1;
+  text-align: center;
+  max-width: 72rem;
+  font-family: Overpass;
+  color: white;
+}

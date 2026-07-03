@@ -43,7 +43,6 @@ namespace InfoLoomTwo.Exporter
                 Directory.CreateDirectory(OutputPath);
 
             s_Initialized = true;
-            Mod.log.Info($"[DataExporter] Output path: {OutputPath}");
         }
 
         /// <summary>
@@ -82,8 +81,7 @@ namespace InfoLoomTwo.Exporter
                 filePath = Path.Combine(OutputPath, $"{dataType}{citySegment}_{ts:yyyyMMdd_HHmmss}.csv");
             }
 
-            try
-            {
+            
                 using (var sw = new StreamWriter(filePath, false, new UTF8Encoding(true)))
                 {
                     sw.WriteLine(header);
@@ -91,14 +89,10 @@ namespace InfoLoomTwo.Exporter
                         sw.WriteLine(row);
                 }
 
-                Mod.log.Info($"[DataExporter] Exported '{dataType}' to {filePath}");
                 if (!replaceExisting)
                     PruneOldFiles(dataType, maxFilesToKeep);
-            }
-            catch (Exception ex)
-            {
-                Mod.log.Error($"[DataExporter] Failed to export '{dataType}': {ex.Message}");
-            }
+            
+           
         }
 
         /// <summary>
@@ -141,8 +135,8 @@ namespace InfoLoomTwo.Exporter
             if (maxFilesToKeep <= 0)
                 return;
 
-            try
-            {
+            
+            
                 var dir = new DirectoryInfo(OutputPath);
                 FileInfo[] files = dir
                     .GetFiles($"{dataType}*.csv")
@@ -152,14 +146,10 @@ namespace InfoLoomTwo.Exporter
                 int toDelete = files.Length - maxFilesToKeep;
                 for (int i = 0; i < toDelete; i++)
                 {
-                    Mod.log.Info($"[DataExporter] Pruning old export: {files[i].Name}");
                     files[i].Delete();
                 }
-            }
-            catch (Exception ex)
-            {
-                Mod.log.Warn($"[DataExporter] Could not prune old files for '{dataType}': {ex.Message}");
-            }
+            
+            
         }
 
         /// <summary>Strips characters that are invalid in Windows file/folder names.</summary>
@@ -176,7 +166,7 @@ namespace InfoLoomTwo.Exporter
 
         public static void ExportAll()
         {
-            var s = Mod.setting;
+            var s = InfoLoomMod.setting;
             if (s == null) return;
             if (s.exportWorkforce)    ExportWorkforce();
             if (s.exportDemographics) ExportDemographics();
@@ -185,13 +175,12 @@ namespace InfoLoomTwo.Exporter
 
         public static void ExportWorkforce()
         {
-            var s = Mod.setting;
+            var s = InfoLoomMod.setting;
             if (s == null) return;
             var world = World.DefaultGameObjectInjectionWorld;
             var system = world?.GetExistingSystemManaged<WorkforceSystem>();
             if (system == null || !system.m_Results.IsCreated || system.m_Results.Length == 0)
             {
-                Mod.log.Warn("[DataExporter] workforce: no data available.");
                 return;
             }
 
@@ -222,19 +211,18 @@ namespace InfoLoomTwo.Exporter
 
         public static void ExportDemographics()
         {
-            var s = Mod.setting;
+            var s = InfoLoomMod.setting;
             if (s == null) return;
             var world = World.DefaultGameObjectInjectionWorld;
             var system = world?.GetExistingSystemManaged<Demographics>();
             if (system == null)
             {
-                Mod.log.Warn("[DataExporter] demographics: system not found.");
                 return;
             }
 
             // If the user wants city-wide data but a district is currently selected,
             // temporarily clear the selection, recalculate, then restore afterwards.
-            Unity.Entities.Entity savedDistrict = system.SelectedDistrict;
+            Entity savedDistrict = system.SelectedDistrict;
             bool didOverride = s.exportDemoCityWide && savedDistrict != Unity.Entities.Entity.Null;
             if (didOverride)
             {
@@ -312,7 +300,7 @@ namespace InfoLoomTwo.Exporter
             if (rows.Count > 0)
                 ExportCsv(world, "demographics", header, rows, s.exportFilesRetentionCount, s.exportReplaceExisting);
             else
-                Mod.log.Warn("[DataExporter] demographics: no groupings enabled, nothing to export.");
+                InfoLoomMod.log.Warn("[DataExporter] demographics: no groupings enabled, nothing to export.");
 
             // Restore the original district selection — the next OnUpdate() will recalculate for the UI.
             if (didOverride)
@@ -372,13 +360,13 @@ namespace InfoLoomTwo.Exporter
 
         public static void ExportWorkplaces()
         {
-            var s = Mod.setting;
+            var s = InfoLoomMod.setting;
             if (s == null) return;
             var world = World.DefaultGameObjectInjectionWorld;
             var system = world?.GetExistingSystemManaged<WorkplacesSystem>();
             if (system == null || !system.m_Results.IsCreated || system.m_Results.Length == 0)
             {
-                Mod.log.Warn("[DataExporter] workplaces: no data available.");
+                InfoLoomMod.log.Warn("[DataExporter] workplaces: no data available.");
                 return;
             }
 

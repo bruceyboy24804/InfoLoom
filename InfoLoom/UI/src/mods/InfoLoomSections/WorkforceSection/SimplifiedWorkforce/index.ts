@@ -1,0 +1,1 @@
+export { SimplifiedWorkforceMain } from './SimplifiedWorkforceMain';

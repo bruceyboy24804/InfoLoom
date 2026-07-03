@@ -1,31 +1,25 @@
-using System;
-using Colossal;
+﻿using ModsCommon.Extensions;
 using Colossal.Entities;
+using Colossal.PSI.Common;
 using Colossal.UI.Binding;
-using Game;
 using Game.Buildings;
 using Game.Citizens;
-using Game.Companies;
 using Game.Economy;
-using Game.Objects;
 using Game.Prefabs;
-using Game.SceneFlow;
-using Game.UI;
 using Game.UI.InGame;
-using InfoLoomTwo.Extensions;
-using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.Sections
 {
     public partial class ILCitizenSection : ExtendedInfoSectionBase
     {
+        protected override string ModId => InfoLoomMod.Instance.Id;
         // Private fields following naming conventions from other sections
         private Entity citizenEntity;
         private Entity householdEntity;
         private Entity companyEntity;
-        
+
         private string _Household;
         private int _HouseholdMoney;
         private int _HouseholdSpendableMoney;
@@ -49,7 +43,7 @@ namespace InfoLoomTwo.Systems.Sections
             citizenEntity = Entity.Null;
             householdEntity = Entity.Null;
             companyEntity = Entity.Null;
-            
+
             _Household = "";
             _HouseholdMoney = 0;
             _HouseholdSpendableMoney = 0;
@@ -80,6 +74,7 @@ namespace InfoLoomTwo.Systems.Sections
                 citizenEntity = selectedEntity;
                 return true;
             }
+
             return false;
         }
 
@@ -123,28 +118,27 @@ namespace InfoLoomTwo.Systems.Sections
             }
 
             // Household money
-            if (EntityManager.HasBuffer<Game.Economy.Resources>(householdEntity))
+            if (EntityManager.HasBuffer<Resources>(householdEntity))
             {
-                
-                 EntityManager.TryGetBuffer<Game.Economy.Resources>(householdEntity, isReadOnly: true, out var resourceBuffer);
-                _HouseholdMoney = EconomyUtils.GetResources(Game.Economy.Resource.Money, resourceBuffer);
+                EntityManager.TryGetBuffer<Resources>(householdEntity, true, out var resourceBuffer);
+                _HouseholdMoney = EconomyUtils.GetResources(Resource.Money, resourceBuffer);
 
                 // Spendable money calculation
                 if (EntityManager.TryGetComponent<PropertyRenter>(householdEntity, out var propertyRenter))
                 {
-                    var renterBufs = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
-                    var consumptionDatas = SystemAPI.GetComponentLookup<Game.Prefabs.ConsumptionData>(isReadOnly: true);
-                    var prefabRefs = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
+                    var renterBufs = SystemAPI.GetBufferLookup<Renter>(true);
+                    var consumptionDatas = SystemAPI.GetComponentLookup<ConsumptionData>(true);
+                    var prefabRefs = SystemAPI.GetComponentLookup<PrefabRef>(true);
 
                     _HouseholdSpendableMoney = EconomyUtils.GetHouseholdSpendableMoney(
-                        default(Household),
+                        default,
                         resourceBuffer,
                         ref renterBufs,
                         ref consumptionDatas,
                         ref prefabRefs,
                         propertyRenter
                     );
-                    
+
                     _Rent = propertyRenter.m_Rent;
                 }
             }
@@ -152,7 +146,7 @@ namespace InfoLoomTwo.Systems.Sections
             // Number of citizens in household
             if (EntityManager.HasBuffer<HouseholdCitizen>(householdEntity))
             {
-                EntityManager.TryGetBuffer<HouseholdCitizen>(householdEntity, isReadOnly: true, out var householdCitizens);
+                EntityManager.TryGetBuffer<HouseholdCitizen>(householdEntity, true, out var householdCitizens);
                 _NumberOfCitizensInHousehold = householdCitizens.Length;
             }
         }
@@ -161,9 +155,7 @@ namespace InfoLoomTwo.Systems.Sections
         {
             // Worker shift
             if (EntityManager.TryGetComponent<Worker>(citizenEntity, out var worker))
-            {
                 _Shift = worker.m_Shift.ToString();
-            }
 
             // Citizen wellbeing and health
             if (EntityManager.TryGetComponent<Citizen>(citizenEntity, out var citizen))

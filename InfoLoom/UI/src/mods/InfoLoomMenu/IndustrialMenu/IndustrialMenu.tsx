@@ -3,11 +3,11 @@ import * as bindings from '../../bindings';
 import React, { useCallback } from 'react';
 import { Button, Panel } from 'cs2/ui';
 import styles from '../IndustrialMenu/IndustrialMenu.module.scss';
-import Industrial from 'mods/InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemand';
 import IndustrialCompany from 'mods/InfoLoomSections/IndustrialSection/IndustrialCompanyUI/IndustrialCompany';
 import { useLocalization } from 'cs2/l10n';
 import { Localekeys } from 'mods/locale';
 import StorageCompanyComponent from '../../InfoLoomSections/IndustrialSection/StorageCompanyUI/StorageCompanyComponent';
+import IndustrialDemandUI from "../../InfoLoomSections/IndustrialSection/IndustrialDemandUI/IndustrialDemandUI";
 
 interface SectionConfig {
   component: JSX.Element;
@@ -21,7 +21,7 @@ export function IndustrialMenuButton(): JSX.Element {
 
   const sections: Record<string, SectionConfig> = {
     Demand: {
-      component: <Industrial />,
+      component: <IndustrialDemandUI />,
       openState: () => useValue(bindings.IndustrialDemandOpen),
       toggle: bindings.SetIndustrialDemandOpen,
       displayName: null, // Will be set at render time
@@ -34,7 +34,7 @@ export function IndustrialMenuButton(): JSX.Element {
     },
     Storages: {
       component: <StorageCompanyComponent />,
-      openState: () => useValue(bindings.storagePanelVisibleBinding),
+      openState: () => useValue(bindings.storagePanelVisibleBinding.binding),
       toggle: bindings.SetStoragePanelVisible,
       displayName: null, // Will be set at render time
     },

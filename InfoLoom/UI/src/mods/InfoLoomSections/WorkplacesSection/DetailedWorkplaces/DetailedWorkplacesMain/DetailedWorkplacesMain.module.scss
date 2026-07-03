@@ -1,0 +1,49 @@
+.toggleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 15rem;
+}
+
+.spacingSmall {
+  height: 5rem;
+}
+
+.chartToggle {
+  display: flex;
+  justify-content: center;
+  margin: 15rem;
+  padding: 3rem 6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4rem;
+}
+
+.toggleButton {
+  width: 130rem;
+  padding: 4rem 8rem;
+  border-radius: 4rem;
+  margin: 10rem;
+  border: none;
+  background-color: var(--dividerColor);
+  color: var(--menuText1Normal);
+  font-size: var(--fontSizeS);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background-color: var(--hoverColorBright);
+  }
+
+  &.buttonSelected {
+    background-color: var(--selectedColor);
+
+    &:hover {
+      background-color: var(--selectedColor);
+    }
+  }
+}

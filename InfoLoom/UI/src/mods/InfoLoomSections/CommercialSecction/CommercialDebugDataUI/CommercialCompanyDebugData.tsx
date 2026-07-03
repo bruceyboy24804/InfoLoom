@@ -1,40 +1,20 @@
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
-import { trigger, useValue } from 'cs2/api';
-import { Button, DraggablePanelProps, Icon, Panel, Portal, Tooltip } from 'cs2/ui';
-import { AutoNavigationScope, FocusActivation } from 'cs2/input';
-import { formatNumber, formatPercentage1, formatPercentage2 } from 'mods/InfoLoomSections/utils/formatText';
-import { CommercialCompanyDebug } from '../../../domain/CommercialCompanyDebugData';
+import React, {FC, ReactElement, useCallback, useEffect, useMemo, useState} from 'react';
+import {trigger, useValue} from 'cs2/api';
+import {Button, DraggablePanelProps, Icon, Panel, Portal, Tooltip} from 'cs2/ui';
+import {AutoNavigationScope, FocusActivation} from 'cs2/input';
+import {formatNumber, formatPercentage1, formatPercentage2} from 'mods/InfoLoomSections/utils/formatText';
+import {CommercialCompanyDebug} from '../../../domain/CommercialCompanyDebugData';
 import styles from './CommercialCompanyDebugData.module.scss';
-import {
-  CommercialCompanyDebugData,
-  CommercialCompanyEfficiency,
-  CommercialCompanyEmployee,
-  CommercialCompanyIndexSorting,
-  CommercialCompanyNameSorting,
-  CommercialCompanyProfitability,
-  CommercialCompanyServiceUsage,
-  CommercialInput1Sorting,
-  CommercialMaintenanceSorting,
-  CommercialMoneySorting,
-  CommercialOutputSorting,
-  SetCommercialCompanyEfficiency,
-  SetCommercialCompanyEmployee,
-  SetCommercialCompanyNameSorting,
-  SetCommercialCompanyProfitability,
-  SetCommercialCompanyServiceUsage,
-  SetCommercialInput1Sorting,
-  SetCommercialMaintenanceSorting,
-  SetCommercialMoneySorting,
-  SetCommercialOutputSorting,
-} from 'mods/bindings';
-import { getModule } from 'cs2/modding';
-import { Entity, useCssLength } from 'cs2/utils';
-import { LocalizedNumber, Unit, useLocalization } from 'cs2/l10n';
-import { EfficiencyFactorEnum } from 'mods/domain/EfficiencyFactorInfo';
-import { SortingEnum } from 'mods/domain/SortingEnum';
-import { CompanyNameSelector } from './Selectors/companyNameSelector';
-import { ResourceSelector } from './Selectors/resourceSelector';
-import { Localekeys } from 'mods/locale';
+import {COMMERCIAL, CommercialCompanyDebugData} from 'mods/bindings';
+import {getModule} from 'cs2/modding';
+import {Entity, useCssLength} from 'cs2/utils';
+import {LocalizedNumber, Unit, useLocalization} from 'cs2/l10n';
+import {EfficiencyFactorEnum} from 'mods/domain/EfficiencyFactorInfo';
+import {SortingEnum} from 'mods/domain/SortingEnum';
+import {CompanyNameSelector} from './Selectors/companyNameSelector';
+import {Localekeys} from 'mods/locale';
+import {InputSelector} from "./Selectors/inputSelector";
+import {OutputSelector} from "./Selectors/outputSelector";
 // Import VirtualList components
 type SizeProvider = {
   getRenderedRange: () => { offset: number; size: number; startIndex: number; endIndex: number };
@@ -64,6 +44,21 @@ const useUniformSizeProvider: (height: number, visible: number, extents: number)
 );
 
 const DataDivider: FC = () => <div className={styles.dataDivider} />;
+
+const getEfficiencyClass = (efficiency: number) => {
+  if (efficiency >= 0.8) return styles.efficiencyHigh;
+  if (efficiency >= 0.5) return styles.efficiencyMedium;
+  return styles.efficiencyLow;
+};
+
+const getProfitabilityClass = (profitability: number) =>
+  profitability >= 0 ? styles.profitabilityPositive : styles.profitabilityNegative;
+
+const getServiceClass = (service: number) => {
+  if (service >= 0.8) return styles.serviceHigh;
+  if (service >= 0.5) return styles.serviceMedium;
+  return styles.serviceLow;
+};
 
 const focusEntity = (e: Entity) => {
   trigger('camera', 'focusEntity', e);
@@ -305,20 +300,15 @@ interface SortableHeaderProps {
 
 const SortableHeader: FC<SortableHeaderProps> = ({ title, sortState, onSort, className }) => {
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
-
-    // Cycle through sort states based on actual enum values:
-    // Off = 0, Ascending = 1, Descending = 2
-    // Cycle: Off -> Ascending -> Descending -> Off
     switch (sortState) {
-      case 0: // Off
+      case 0:
         onSort('asc');
         break;
-      case 1: // Ascending
+      case 1:
         onSort('desc');
         break;
-      case 2: // Descending
+      case 2:
         onSort('off');
         break;
       default:
@@ -335,8 +325,8 @@ const SortableHeader: FC<SortableHeaderProps> = ({ title, sortState, onSort, cla
     >
       <span>{title}</span>
       <div className={styles.sortArrows}>
-        {sortState === 1 && <Icon src="coui://uil/Standard/ArrowSortLowDown.svg" className={styles.sortIcon} />}
-        {sortState === 2 && <Icon src="coui://uil/Standard/ArrowSortHighDown.svg" className={styles.sortIcon} />}
+        {sortState === 1 && <Icon src="coui://il/Sorting/ArrowSortLowDown.svg" className={styles.sortIcon} />}
+        {sortState === 2 && <Icon src="coui://il/Sorting/ArrowSortHighDown.svg" className={styles.sortIcon} />}
       </div>
     </div>
   );
@@ -587,21 +577,20 @@ type CommercialGroupedListItem = CommercialGroupHeaderItem | CommercialChildItem
 
 const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) => {
   const { translate } = useLocalization();
-  const companiesData = useValue(CommercialCompanyDebugData);
+  const companiesData = useValue(CommercialCompanyDebugData.binding);
   const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
   const [heightFull, setHeightFull] = useState(600);
   const [groupByCompany, setGroupByCompany] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const indexSortingOptions = useValue(CommercialCompanyIndexSorting);
-  const nameSortingOptions = useValue(CommercialCompanyNameSorting);
-  const serviceUsageSortingOptions = useValue(CommercialCompanyServiceUsage);
-  const employeeSortingOptions = useValue(CommercialCompanyEmployee);
-  const efficiencySortingOptions = useValue(CommercialCompanyEfficiency);
-  const profitabilitySortingOptions = useValue(CommercialCompanyProfitability);
-  const moneySortingOptions = useValue(CommercialMoneySorting);
-  const input1SortingOptions = useValue(CommercialInput1Sorting);
-  const outputSortingOptions = useValue(CommercialOutputSorting);
-  const maintenanceSortingOptions = useValue(CommercialMaintenanceSorting);
+  const nameSortingOptions = useValue(COMMERCIAL.Name.binding);
+  const serviceUsageSortingOptions = useValue(COMMERCIAL.ServiceUsage.binding);
+  const employeeSortingOptions = useValue(COMMERCIAL.Employees.binding);
+  const efficiencySortingOptions = useValue(COMMERCIAL.Efficiency.binding);
+  const profitabilitySortingOptions = useValue(COMMERCIAL.Profitability.binding);
+  const moneySortingOptions = useValue(COMMERCIAL.Money.binding);
+  const input1SortingOptions = useValue(COMMERCIAL.Input1.binding);
+  const outputSortingOptions = useValue(COMMERCIAL.Output.binding);
+  const maintenanceSortingOptions = useValue(COMMERCIAL.Maintenance.binding);
 
   const toggleGroup = useCallback((companyName: string) => {
     setExpandedGroups(prev => {
@@ -630,10 +619,11 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
       const totalMoney = companies.reduce((s, c) => s + c.MoneyAmount, 0);
       const avgEfficiency = companies.reduce((s, c) => s + c.TotalEfficiency, 0) / count;
       const avgProfitability = companies.reduce((s, c) => s + c.Profitability, 0) / count;
-      const avgServiceUsage = companies.reduce((s, c) => {
-        const usage = c.MaxService > 0 ? 1 - c.ServiceAvailable / c.MaxService : 0;
-        return s + usage;
-      }, 0) / count;
+      const avgServiceUsage =
+        companies.reduce((s, c) => {
+          const usage = c.MaxService > 0 ? 1 - c.ServiceAvailable / c.MaxService : 0;
+          return s + usage;
+        }, 0) / count;
       const totalIncome = companies.reduce((s, c) => s + c.Income, 0);
       const totalProfit = companies.reduce((s, c) => s + c.Profit, 0);
       items.push({
@@ -660,22 +650,6 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
     }
     return items;
   }, [groupByCompany, companiesData, expandedGroups]);
-
-  const getEfficiencyClass = (efficiency: number) => {
-    if (efficiency >= 0.8) return styles.efficiencyHigh;
-    if (efficiency >= 0.5) return styles.efficiencyMedium;
-    return styles.efficiencyLow;
-  };
-
-  const getProfitabilityClass = (profitability: number) => {
-    return profitability >= 0 ? styles.profitabilityPositive : styles.profitabilityNegative;
-  };
-
-  const getServiceClass = (service: number) => {
-    if (service >= 0.8) return styles.serviceHigh;
-    if (service >= 0.5) return styles.serviceMedium;
-    return styles.serviceLow;
-  };
 
   // Dynamic height calculation
   const calculateHeights = useCallback(() => {
@@ -737,9 +711,7 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 </span>
               </div>
               <div className={`${styles.serviceColumn} ${styles.groupStat}`}>
-                <span className={getServiceClass(item.avgServiceUsage)}>
-                  {formatPercentage1(item.avgServiceUsage)}
-                </span>
+                <span className={getServiceClass(item.avgServiceUsage)}>{formatPercentage1(item.avgServiceUsage)}</span>
               </div>
               <div className={`${styles.employeeColumn} ${styles.groupStat}`}>
                 {formatNumber(item.totalEmployees)}/{formatNumber(item.totalMaxWorkers)}
@@ -747,17 +719,13 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
               <div className={`${styles.vehicleColumn} ${styles.groupStat}`}>
                 {formatNumber(item.totalVehicles)}/{formatNumber(item.totalVehicleCapacity)}
               </div>
-              <div className={`${styles.moneyColumn} ${styles.groupStat}`}>
-                {formatNumber(item.totalMoney)}
-              </div>
+              <div className={`${styles.moneyColumn} ${styles.groupStat}`}>{formatNumber(item.totalMoney)}</div>
               <div className={`${styles.input1Column} ${styles.groupStat}`}></div>
               <div className={`${styles.outputColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.maintenanceColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.processingColumn} ${styles.groupStat}`}></div>
               <div className={`${styles.efficiencyColumn} ${styles.groupStat}`}>
-                <span className={getEfficiencyClass(item.avgEfficiency)}>
-                  {formatPercentage2(item.avgEfficiency)}
-                </span>
+                <span className={getEfficiencyClass(item.avgEfficiency)}>{formatPercentage2(item.avgEfficiency)}</span>
               </div>
               <div className={`${styles.profitabilityColumn} ${styles.groupStat}`}>
                 <span className={getProfitabilityClass(item.avgProfitability)}>
@@ -781,8 +749,7 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
       if (!company) return null;
       return <CompanyRowWithTranslation key={`commercial-company-${itemIndex}`} company={company} />;
     },
-    [companiesData, groupByCompany, groupedItems, expandedGroups, toggleGroup, translate,
-     getEfficiencyClass, getProfitabilityClass, getServiceClass]
+    [companiesData, groupByCompany, groupedItems, expandedGroups, toggleGroup, translate]
   );
 
   // Early return for no data (use translate + fallback)
@@ -846,15 +813,13 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
             <div className={styles.vehicleColumn}></div>
             <div className={styles.moneyColumn}></div>
             <div className={styles.input1Column}>
-              <ResourceSelector
-                resourceType="input1"
+              <InputSelector
                 label="Input 1"
                 tooltipText="Select an input 1 resource to filter companies by their first input."
               />
             </div>
             <div className={styles.outputColumn}>
-              <ResourceSelector
-                resourceType="output"
+              <OutputSelector
                 label="Output"
                 tooltipText="Select an output resource to filter companies by what they produce."
               />
@@ -866,9 +831,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Name, 'Name')}
                 sortState={nameSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyNameSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyNameSorting(SortingEnum.Descending);
-                  else SetCommercialCompanyNameSorting(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Name.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Name.set(SortingEnum.Descending);
+                  else COMMERCIAL.Name.set(SortingEnum.Off);
                 }}
                 className={styles.nameColumn}
               />
@@ -877,9 +842,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.ServiceUsage, 'Service Usage')}
                 sortState={serviceUsageSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyServiceUsage(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyServiceUsage(SortingEnum.Descending);
-                  else SetCommercialCompanyServiceUsage(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.ServiceUsage.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.ServiceUsage.set(SortingEnum.Descending);
+                  else COMMERCIAL.ServiceUsage.set(SortingEnum.Off);
                 }}
                 className={styles.serviceColumn}
               />
@@ -888,9 +853,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Employees, 'Employees')}
                 sortState={employeeSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyEmployee(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyEmployee(SortingEnum.Descending);
-                  else SetCommercialCompanyEmployee(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Employees.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Employees.set(SortingEnum.Descending);
+                  else COMMERCIAL.Employees.set(SortingEnum.Off);
                 }}
                 className={styles.employeeColumn}
               />
@@ -909,9 +874,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Resource_Money, 'Money')}
                 sortState={moneySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialMoneySorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialMoneySorting(SortingEnum.Descending);
-                  else SetCommercialMoneySorting(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Money.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Money.set(SortingEnum.Descending);
+                  else COMMERCIAL.Money.set(SortingEnum.Off);
                 }}
                 className={styles.moneyColumn}
               />
@@ -920,9 +885,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Input, 'Input')}
                 sortState={input1SortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialInput1Sorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialInput1Sorting(SortingEnum.Descending);
-                  else SetCommercialInput1Sorting(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Input1.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Input1.set(SortingEnum.Descending);
+                  else COMMERCIAL.Input1.set(SortingEnum.Off);
                 }}
                 className={styles.input1Column}
               />
@@ -930,9 +895,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Output, 'Output')}
                 sortState={outputSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialOutputSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialOutputSorting(SortingEnum.Descending);
-                  else SetCommercialOutputSorting(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Output.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Output.set(SortingEnum.Descending);
+                  else COMMERCIAL.Output.set(SortingEnum.Off);
                 }}
                 className={styles.outputColumn}
               />
@@ -940,9 +905,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Maintenance, 'Maintenance')}
                 sortState={maintenanceSortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialMaintenanceSorting(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialMaintenanceSorting(SortingEnum.Descending);
-                  else SetCommercialMaintenanceSorting(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Maintenance.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Maintenance.set(SortingEnum.Descending);
+                  else COMMERCIAL.Maintenance.set(SortingEnum.Off);
                 }}
                 className={styles.maintenanceColumn}
               />
@@ -961,9 +926,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Efficiency, 'Efficiency')}
                 sortState={efficiencySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyEfficiency(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyEfficiency(SortingEnum.Descending);
-                  else SetCommercialCompanyEfficiency(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Efficiency.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Efficiency.set(SortingEnum.Descending);
+                  else COMMERCIAL.Efficiency.set(SortingEnum.Off);
                 }}
                 className={styles.efficiencyColumn}
               />
@@ -972,9 +937,9 @@ const CommercialCompanyDebugDataPanel: FC<DraggablePanelProps> = ({ onClose }) =
                 title={translate(Localekeys.Profitability, 'Profitability')}
                 sortState={profitabilitySortingOptions}
                 onSort={direction => {
-                  if (direction === 'asc') SetCommercialCompanyProfitability(SortingEnum.Ascending);
-                  else if (direction === 'desc') SetCommercialCompanyProfitability(SortingEnum.Descending);
-                  else SetCommercialCompanyProfitability(SortingEnum.Off);
+                  if (direction === 'asc') COMMERCIAL.Profitability.set(SortingEnum.Ascending);
+                  else if (direction === 'desc') COMMERCIAL.Profitability.set(SortingEnum.Descending);
+                  else COMMERCIAL.Profitability.set(SortingEnum.Off);
                 }}
                 className={styles.profitabilityColumn}
               />

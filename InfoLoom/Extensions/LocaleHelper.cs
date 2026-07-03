@@ -59,7 +59,7 @@ namespace InfoLoomTwo.Extensions
 
 		internal static string? GetTooltip(string key)
 		{
-			return Translate($"Tooltip.LABEL[{Mod.modName}.{key}]");
+			return Translate($"Tooltip.LABEL[{InfoLoomMod.Instance.ModName}.{key}]");
 		}
 
 		public IEnumerable<DictionarySource> GetAvailableLanguages()

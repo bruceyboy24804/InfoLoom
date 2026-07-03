@@ -353,16 +353,16 @@ namespace InfoLoomTwo
                     string modName = modInfo.asset.name;
                     if (modName.Contains("CustomChirps"))
                     {
-                        Mod.log.Debug($"Found: {modName} showing custom chirp settings");
+                        InfoLoomMod.log.Debug($"Found: {modName} showing custom chirp settings");
                         return true;
                     }
                 }
-                Mod.log.Debug("CustomChirps not found - chirp settings will be hidden");
+                InfoLoomMod.log.Debug("CustomChirps not found - chirp settings will be hidden");
                 return false;
             }
             catch (Exception ex)
             {
-                Mod.log.Error($"Error detecting CustomChirps: {ex.Message}");
+                InfoLoomMod.log.Error($"Error detecting CustomChirps: {ex.Message}");
                 return false;
             }
         }

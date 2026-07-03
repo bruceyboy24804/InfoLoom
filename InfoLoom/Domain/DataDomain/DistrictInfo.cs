@@ -22,7 +22,7 @@ namespace InfoLoomTwo.Domain.DataDomain
         /// </summary>
         public void Write(IJsonWriter writer)
         {
-			writer.TypeBegin(Mod.Name + ".DistrictInfo");
+			writer.TypeBegin(InfoLoomMod.Instance.ModName + ".DistrictInfo");
 			writer.PropertyName("entity");
 			writer.Write(entity);
 			writer.PropertyName("name");

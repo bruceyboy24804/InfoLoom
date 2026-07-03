@@ -1,43 +1,30 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Colossal.Entities;
-using Colossal.Logging;
-using Colossal.Serialization.Entities;
+using Colossal.Collections;
 using Colossal.UI.Binding;
-using Game;
 using Game.Agents;
 using Game.Areas;
 using Game.Buildings;
 using Game.Citizens;
-using Game.Common;
 using Game.Companies;
 using Game.Economy;
 using Game.Objects;
 using Game.Prefabs;
-using Game.SceneFlow;
-using Game.Simulation;
 using Game.UI;
-using Game.UI.InGame;
 using Game.Vehicles;
-using InfoLoomTwo.Domain.DataDomain;
-using InfoLoomTwo.Domain.DataDomain.Enums;
 using InfoLoomTwo.Domain.DataDomain.Enums.CompanyPanelEnums;
-using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.IndustrialCompanyDomain;
-using InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.Jobs;
+using ModsCommon.Extensions;
+using ModsCommon.Systems;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Burst;
-using Unity.Burst.Intrinsics;
-using Unity.Jobs.LowLevel.Unsafe;
 using DeliveryTruck = Game.Vehicles.DeliveryTruck;
 using ExtractorCompany = Game.Companies.ExtractorCompany;
-using ProcessingCompany = Game.Companies.ProcessingCompany;
 using StorageCompany = Game.Companies.StorageCompany;
-using ResourceInfo = InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.IndustrialCompanyDomain.ResourceInfo;
-
+using SubArea = Game.Areas.SubArea;
+using ResourceInfo = InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData.IndustrialCompanySystem.ResourceInfo;
 namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 {
     public struct ProcessResourceInfo : IJsonWritable
@@ -59,68 +46,183 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
     }
 
     /// <summary>
-    /// System for collecting and processing industrial company data with lazy conversion.
-    /// 
-    /// Performance optimizations:
-    /// 1. Burst-compiled job collects lightweight data from entities
-    /// 2. Results cached in NativeArray for reuse
-    /// 3. Sorting performed on lightweight data before expensive DTO conversion
-    /// 4. DTOs converted on-demand and cached per entity
-    /// 5. Resource names/icons pre-cached to avoid repeated lookups
-    /// 6. Company name cache updated only when entity count changes
-    /// 
-    /// For best performance with large datasets:
-    /// - Use GetCompanyRange(start, count) for pagination/virtualization
-    /// - Call RefreshDTOArray() only when sort criteria changes
+    /// Serializable per-company record sent to the UI. Replaces the old reflection-serialized
+    /// IndustrialCompanyDTO with an explicit <see cref="IJsonWritable"/> payload. Field names match
+    /// the React IndustrialCompanyDebug interface.
     /// </summary>
-    public partial class IndustrialCompanySystem : GameSystemBase
+    public sealed class IndustrialCompanyRecord : IJsonWritable
     {
-        private NativeArray<int> results;
-        public SortingEnum m_CurrentIndexSorting = SortingEnum.Off;
-        public SortingEnum m_CurrentCompanyNameSorting = SortingEnum.Off;
-        public SortingEnum m_CurrentEmployeesSorting = SortingEnum.Off;
-        public SortingEnum m_CurrentEfficiencySorting = SortingEnum.Off;
-        public SortingEnum m_CurrentProfitabilitySorting = SortingEnum.Off;
-        public SortingEnum m_CurrentResourceAmountSorting = SortingEnum.Off;
-        public SortingEnum m_CurrentMoneySorting = SortingEnum.Off;
-        public SortingEnum m_CurrentInput1Sorting = SortingEnum.Off;
-        public SortingEnum m_CurrentInput2Sorting = SortingEnum.Off;
-        public SortingEnum m_CurrentOutputSorting = SortingEnum.Off;
-        public SortingEnum m_CurrentMaintenanceSorting = SortingEnum.Off;
-        public ResourceFilter m_CurrentResourceFilter = ResourceFilter.ShowAll;
-        private static InfoLoomUISystem m_InfoloomUI;
+        public Entity EntityId;
+        public string CompanyName;
+        public int TotalEmployees;
+        public int MaxWorkers;
+        public int VehicleCount;
+        public int VehicleCapacity;
+        public int ResourceAmount;
+        public ProcessResourceInfo[] ProcessResources;
+        public int TotalEfficiency;
+        public IndustrialCompanySystem.EfficiencyFactorInfo[] Factors;
+        public float Profitability;
+        public int LastTotalWorth;
+        public int TotalWages;
+        public int ProductionPerDay;
+        public float EfficiencyValue;
+        public string OutputResourceName;
+        public bool IsExtractor;
+        public string ResourceIcon;
+        public string ResourceName;
+        public int MoneyAmount;
+        public ResourceInfo[] Input1Resources;
+        public ResourceInfo[] Input2Resources;
+        public ResourceInfo[] OutputResources;
+        public ResourceInfo[] MaintenanceResources;
+        // Raw process resources (not serialized) — used to build the filter dropdowns.
+        public Resource Input1Resource;
+        public Resource Input2Resource;
+        public Resource OutputResource;
+        public int Income;
+        public int Worth;
+        public int Profit;
+        public int WagePaid;
+        public int RentPaid;
+        public int ElectricityPaid;
+        public int WaterPaid;
+        public int SewagePaid;
+        public int GarbagePaid;
+        public int TaxPaid;
+        public int ResourcesBoughtPaid;
+        public int CurrentCustomers;
+        public int MonthlyCustomers;
+
+        public void Write(IJsonWriter writer)
+        {
+            writer.TypeBegin(typeof(IndustrialCompanyRecord).FullName);
+            writer.PropertyName("EntityId"); writer.Write(EntityId);
+            writer.PropertyName("CompanyName"); writer.Write(CompanyName ?? string.Empty);
+            writer.PropertyName("TotalEmployees"); writer.Write(TotalEmployees);
+            writer.PropertyName("MaxWorkers"); writer.Write(MaxWorkers);
+            writer.PropertyName("VehicleCount"); writer.Write(VehicleCount);
+            writer.PropertyName("VehicleCapacity"); writer.Write(VehicleCapacity);
+            writer.PropertyName("ResourceAmount"); writer.Write(ResourceAmount);
+            WriteItems(writer, "ProcessResources", ProcessResources);
+            writer.PropertyName("TotalEfficiency"); writer.Write(TotalEfficiency);
+            WriteItems(writer, "Factors", Factors);
+            writer.PropertyName("Profitability"); writer.Write(Profitability);
+            writer.PropertyName("LastTotalWorth"); writer.Write(LastTotalWorth);
+            writer.PropertyName("TotalWages"); writer.Write(TotalWages);
+            writer.PropertyName("ProductionPerDay"); writer.Write(ProductionPerDay);
+            writer.PropertyName("EfficiencyValue"); writer.Write(EfficiencyValue);
+            writer.PropertyName("OutputResourceName"); writer.Write(OutputResourceName ?? string.Empty);
+            writer.PropertyName("IsExtractor"); writer.Write(IsExtractor);
+            writer.PropertyName("ResourceIcon"); writer.Write(ResourceIcon ?? string.Empty);
+            writer.PropertyName("ResourceName"); writer.Write(ResourceName ?? string.Empty);
+            writer.PropertyName("MoneyAmount"); writer.Write(MoneyAmount);
+            WriteItems(writer, "Input1Resources", Input1Resources);
+            WriteItems(writer, "Input2Resources", Input2Resources);
+            WriteItems(writer, "OutputResources", OutputResources);
+            WriteItems(writer, "MaintenanceResources", MaintenanceResources);
+            WriteItems(writer, "Resources", Array.Empty<ResourceInfo>());
+            writer.PropertyName("Income"); writer.Write(Income);
+            writer.PropertyName("Worth"); writer.Write(Worth);
+            writer.PropertyName("Profit"); writer.Write(Profit);
+            writer.PropertyName("WagePaid"); writer.Write(WagePaid);
+            writer.PropertyName("RentPaid"); writer.Write(RentPaid);
+            writer.PropertyName("ElectricityPaid"); writer.Write(ElectricityPaid);
+            writer.PropertyName("WaterPaid"); writer.Write(WaterPaid);
+            writer.PropertyName("SewagePaid"); writer.Write(SewagePaid);
+            writer.PropertyName("GarbagePaid"); writer.Write(GarbagePaid);
+            writer.PropertyName("TaxPaid"); writer.Write(TaxPaid);
+            writer.PropertyName("ResourcesBoughtPaid"); writer.Write(ResourcesBoughtPaid);
+            writer.PropertyName("CurrentCustomers"); writer.Write(CurrentCustomers);
+            writer.PropertyName("MonthlyCustomers"); writer.Write(MonthlyCustomers);
+            writer.TypeEnd();
+        }
+
+        private static void WriteItems<TItem>(IJsonWriter writer, string name, TItem[] items)
+            where TItem : IJsonWritable
+        {
+            writer.PropertyName(name);
+            int length = items?.Length ?? 0;
+            writer.ArrayBegin(length);
+            for (int i = 0; i < length; i++)
+                items[i].Write(writer);
+            writer.ArrayEnd();
+        }
+    }
+
+    /// <summary>
+    /// Collects industrial company data and owns the UI bindings for the panel (data list,
+    /// per-column sorting, company-name/resource filters, visibility). A Burst job gathers the
+    /// cheap per-entity numbers; the managed name/icon/resource conversion is done inline in
+    /// OnUpdate (no DTO struct, no lazy caches). Mirrors CommercialCompanyDataSystem.
+    /// </summary>
+    public partial class IndustrialCompanySystem : CommonUISystemBase
+    {
+        protected override string ModId => InfoLoomMod.Instance.Id;
+
+        // Current sort state (driven by the UI sort triggers)
+        private SortingEnum m_CurrentIndexSorting = SortingEnum.Off;
+        private SortingEnum m_CurrentCompanyNameSorting = SortingEnum.Off;
+        private SortingEnum m_CurrentEmployeesSorting = SortingEnum.Off;
+        private SortingEnum m_CurrentEfficiencySorting = SortingEnum.Off;
+        private SortingEnum m_CurrentProfitabilitySorting = SortingEnum.Off;
+        private SortingEnum m_CurrentResourceAmountSorting = SortingEnum.Off;
+        private SortingEnum m_CurrentMoneySorting = SortingEnum.Off;
+        private SortingEnum m_CurrentInput1Sorting = SortingEnum.Off;
+        private SortingEnum m_CurrentInput2Sorting = SortingEnum.Off;
+        private SortingEnum m_CurrentOutputSorting = SortingEnum.Off;
+        private SortingEnum m_CurrentMaintenanceSorting = SortingEnum.Off;
+
+        // System dependencies
         private NameSystem m_NameSystem;
         private ImageSystem m_ImageSystem;
         private ResourceSystem m_ResourceSystem;
         private PrefabSystem m_PrefabSystem;
         private EntityQuery m_IndustrialCompanyQuery;
-        private ILog m_Log;
+        private UIUpdateState _updateState;
 
-        public bool IsPanelVisible;
-        public IndustrialCompanyDTO[] m_IndustrialCompanyDTOs;
+        // Bindings owned by this system
+        private ValueBinding<bool> _visibleBinding;
+        private ValueBindingHelper<IndustrialCompanyRecord[]> m_DataBinding;
+        private ValueBindingHelper<string[]> m_CompanyNamesBinding;
+        private ValueBindingHelper<string> m_SelectedCompanyNameBinding;
+        private ValueBindingHelper<string[]> m_Input1ResourcesBinding;
+        private ValueBindingHelper<string[]> m_Input2ResourcesBinding;
+        private ValueBindingHelper<string[]> m_OutputResourcesBinding;
+        private ValueBindingHelper<string> m_SelectedInput1Binding;
+        private ValueBindingHelper<string> m_SelectedInput2Binding;
+        private ValueBindingHelper<string> m_SelectedOutputBinding;
+        private ValueBindingHelper<SortingEnum> m_IndexSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_NameSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_EmployeesSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_EfficiencySortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ProfitabilitySortingBinding;
+        private ValueBindingHelper<SortingEnum> m_ResourceAmountSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_MoneySortingBinding;
+        private ValueBindingHelper<SortingEnum> m_Input1SortingBinding;
+        private ValueBindingHelper<SortingEnum> m_Input2SortingBinding;
+        private ValueBindingHelper<SortingEnum> m_OutputSortingBinding;
+        private ValueBindingHelper<SortingEnum> m_MaintenanceSortingBinding;
 
-        public Dictionary<Entity, string> m_CompanyNameCache;
+        // Built data (all companies, before filter/sort)
+        private IndustrialCompanyRecord[] m_AllRecords = Array.Empty<IndustrialCompanyRecord>();
+
+        // Managed caches
+        private Dictionary<Entity, string> m_CompanyNameCache;
         private Dictionary<Resource, string> m_ResourceNameCache;
         private Dictionary<Resource, string> m_ResourceIconCache;
         private bool m_CacheInitialized;
         private int m_LastCompanyCount;
         private bool m_ForceCompanyNameCacheUpdate;
         
-        // Lazy conversion cache
-        private NativeArray<IndustrialCompanyJobData> m_CachedJobData;
-        private Dictionary<Entity, IndustrialCompanyDTO> m_ConvertedDTOCache;
-        private bool m_JobDataValid;
-        
-        public Resource SelectedResource { get; set; } = Resource.NoResource;
-        private JobHandle m_JobHandle;
-        private NativeList<IndustrialCompanyJobData> m_JobResults;
-        private int m_JobWaitFrames = 0;
+        private NativeValue<Resource> m_Input1Resources;
+        private NativeValue<Resource> m_Input2Resources;
+        private NativeValue<Resource> m_OutputResources;
 
         protected override void OnCreate()
         {
             base.OnCreate();
-            m_Log = Mod.log;
-            m_IndustrialCompanyDTOs = Array.Empty<IndustrialCompanyDTO>();
+
             m_NameSystem = World.GetOrCreateSystemManaged<NameSystem>();
             m_ImageSystem = World.GetOrCreateSystemManaged<ImageSystem>();
             m_ResourceSystem = World.GetOrCreateSystemManaged<ResourceSystem>();
@@ -136,331 +238,268 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             m_ResourceIconCache = new Dictionary<Resource, string>();
             m_LastCompanyCount = 0;
             m_ForceCompanyNameCacheUpdate = false;
-            m_ConvertedDTOCache = new Dictionary<Entity, IndustrialCompanyDTO>();
-            m_JobDataValid = false;
-            results = new NativeArray<int>(13, Allocator.Persistent);
-            m_InfoloomUI = World.GetOrCreateSystemManaged<InfoLoomUISystem>();
-        }
 
-       protected override void OnDestroy()
-        { 
-            m_JobResults.Dispose();
-            m_CachedJobData.Dispose();
-            results.Dispose();
+            m_Input1Resources = new NativeValue<Resource>(Allocator.Persistent);
+            m_Input2Resources = new NativeValue<Resource>(Allocator.Persistent);
+            m_OutputResources = new NativeValue<Resource>(Allocator.Persistent);
+
+            // Visibility binding (raw, no BINDING:/TRIGGER: prefix, matching the menu trigger)
+            _visibleBinding = new ValueBinding<bool>(ModId, "IndustrialCompanyDebugOpen", false);
+            AddBinding(_visibleBinding);
+            AddBinding(new TriggerBinding<bool>(ModId, "IndustrialCompanyDebugOpen", OnVisibilityChanged));
+
+            // Data + filter list bindings
+            m_DataBinding = CreateBinding("IndustrialCompanyDebugData", Array.Empty<IndustrialCompanyRecord>());
+            m_CompanyNamesBinding = CreateBinding("listOfCompanyNames", Array.Empty<string>());
+            m_Input1ResourcesBinding = CreateBinding("listOfInput1Resources", Array.Empty<string>());
+            m_Input2ResourcesBinding = CreateBinding("listOfInput2Resources", Array.Empty<string>());
+            m_OutputResourcesBinding = CreateBinding("listOfOutputResources", Array.Empty<string>());
+
+            // Filter selection bindings (two-way, separate setter keys to match the existing UI)
+            m_SelectedCompanyNameBinding = CreateGenericBinding("selectedCompanyName",  "All Companies", OnSelectedCompanyNameChanged);
+            m_SelectedInput1Binding = CreateGenericBinding("selectedInput1Resource",  "All", OnSelectedInput1Changed);
+            m_SelectedInput2Binding = CreateGenericBinding("selectedInput2Resource", "All", OnSelectedInput2Changed);
+            m_SelectedOutputBinding = CreateGenericBinding("selectedOutputResource", "All", OnSelectedOutputChanged);
+
+            // Sorting bindings (two-way, separate setter keys to match the existing UI)
+            m_IndexSortingBinding = CreateGenericBinding("IndustrialIndexSorting", "SetIndustrialIndexSorting", SortingEnum.Off, v => { m_CurrentIndexSorting = v; RefreshDisplayed(); });
+            m_NameSortingBinding = CreateGenericBinding("IndustrialNameSorting", "SetIndustrialNameSorting", SortingEnum.Off, v => { m_CurrentCompanyNameSorting = v; RefreshDisplayed(); });
+            m_EmployeesSortingBinding = CreateGenericBinding("IndustrialEmployeesSorting", "SetIndustrialEmployeesSorting", SortingEnum.Off, v => { m_CurrentEmployeesSorting = v; RefreshDisplayed(); });
+            m_EfficiencySortingBinding = CreateGenericBinding("IndustrialEfficiencySorting", "SetIndustrialEfficiencySorting", SortingEnum.Off, v => { m_CurrentEfficiencySorting = v; RefreshDisplayed(); });
+            m_ProfitabilitySortingBinding = CreateGenericBinding("IndustrialProfitabilitySorting", "SetIndustrialProfitabilitySorting", SortingEnum.Off, v => { m_CurrentProfitabilitySorting = v; RefreshDisplayed(); });
+            m_ResourceAmountSortingBinding = CreateGenericBinding("IndustrialResourceAmountSorting", "SetIndustrialResourceAmountSorting", SortingEnum.Off, v => { m_CurrentResourceAmountSorting = v; RefreshDisplayed(); });
+            m_MoneySortingBinding = CreateGenericBinding("IndustrialMoneySorting", "SetIndustrialMoneySorting", SortingEnum.Off, v => { m_CurrentMoneySorting = v; RefreshDisplayed(); });
+            m_Input1SortingBinding = CreateGenericBinding("IndustrialInput1Sorting", "SetIndustrialInput1Sorting", SortingEnum.Off, v => { m_CurrentInput1Sorting = v; RefreshDisplayed(); });
+            m_Input2SortingBinding = CreateGenericBinding("IndustrialInput2Sorting", "SetIndustrialInput2Sorting", SortingEnum.Off, v => { m_CurrentInput2Sorting = v; RefreshDisplayed(); });
+            m_OutputSortingBinding = CreateGenericBinding("IndustrialOutputSorting", "SetIndustrialOutputSorting", SortingEnum.Off, v => { m_CurrentOutputSorting = v; RefreshDisplayed(); });
+            m_MaintenanceSortingBinding = CreateGenericBinding("IndustrialMaintenanceSorting", "SetIndustrialMaintenanceSorting", SortingEnum.Off, v => { m_CurrentMaintenanceSorting = v; RefreshDisplayed(); });
+
+            _updateState = UIUpdateState.Create(World, 512);
+        }
+        protected override void OnDestroy()
+        {
+            m_Input1Resources.Dispose();
+            m_Input2Resources.Dispose();
+            m_OutputResources.Dispose();
             base.OnDestroy();
         }
 
-        public override int GetUpdateInterval(SystemUpdatePhase phase) => 1024;
-
         protected override void OnUpdate()
         {
-            if (!IsPanelVisible) return;
-            UpdateIndustrialStatsWithBurstJob();
-            
-            // Auto-populate the DTO array after job completes for backward compatibility
-            if (m_JobDataValid)
+            if (_visibleBinding.value && _updateState.Advance())
             {
-                GetAllCompanies();
-            }
-        }
-
-        protected override void OnGameLoaded(Context serializationContext)
-        {
-            base.OnGameLoaded(serializationContext);
-            InitializeCaches();
-            m_CompanyNameCache.Clear();
-            m_ForceCompanyNameCacheUpdate = true;
-            m_LastCompanyCount = 0;
-            m_JobDataValid = false;
-            m_ConvertedDTOCache.Clear();
-        }
-
-        private void InitializeCaches()
-        {
-            if (m_CacheInitialized) return;
-
-            // Pre-populate all resource names and icons to avoid repeated lookups
-            for (int i = 0; i < 64; i++)
-            {
-                var resource = (Resource)i;
-                if (resource == Resource.NoResource) continue;
-                
-                if (!m_ResourceNameCache.ContainsKey(resource))
-                {
-                    var resourceName = EconomyUtils.GetName(resource).ToString();
-                    m_ResourceNameCache[resource] = resourceName;
-                }
-                
-                if (!m_ResourceIconCache.ContainsKey(resource))
-                {
-                    string icon;
-                    if (resource == Resource.Money)
-                    {
-                        icon = "Media/Game/Icons/Money.svg";
-                    }
-                    else
-                    {
-                        Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
-                        icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
-                    }
-                    m_ResourceIconCache[resource] = icon;
-                }
+                RebuildData();
             }
 
-            m_CacheInitialized = true;
+            // Flushes any dirty bindings (data/sort/filter) to the UI.
+            base.OnUpdate();
         }
 
-        public void UpdateIndustrialStatsWithBurstJob()
+        private void OnVisibilityChanged(bool open)
         {
-            if (!IsPanelVisible) return;
+            _visibleBinding.Update(open);
+            if (!open)
+                return;
+
+            m_SelectedInput1Binding.Value = "All";
+            m_SelectedInput2Binding.Value = "All";
+            m_SelectedOutputBinding.Value = "All";
+            m_SelectedCompanyNameBinding.Value = "All Companies";
+
+            RebuildData();
+        }
+
+        private void OnSelectedCompanyNameChanged(string companyName)
+        {
+            RefreshDisplayed();
+        }
+
+        private void OnSelectedInput1Changed(string resourceName)
+        {
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput2Binding.Value = "All";
+                m_SelectedOutputBinding.Value = "All";
+            }
+            RefreshDisplayed();
+        }
+
+        private void OnSelectedInput2Changed(string resourceName)
+        {
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput1Binding.Value = "All";
+                m_SelectedOutputBinding.Value = "All";
+            }
+            RefreshDisplayed();
+        }
+
+        private void OnSelectedOutputChanged(string resourceName)
+        {
+            if (!string.IsNullOrEmpty(resourceName) && resourceName != "All")
+            {
+                m_SelectedInput1Binding.Value = "All";
+                m_SelectedInput2Binding.Value = "All";
+            }
+            RefreshDisplayed();
+        }
+
+        // -- Data build -------------------------------------------------------
+
+        private void RebuildData()
+        {
             InitializeCaches();
             UpdateCompanyNameCacheIfNeeded();
-
+            m_Input1Resources.value = Resource.NoResource;
+            m_Input2Resources.value = Resource.NoResource;
+            m_OutputResources.value = Resource.NoResource;
             int estimatedCount = m_IndustrialCompanyQuery.CalculateEntityCount();
-            if (m_JobResults.IsCreated)
-            {
-                m_JobResults.Dispose();
-            }
-            m_JobResults = new NativeList<IndustrialCompanyJobData>(Math.Max(1, estimatedCount), Allocator.TempJob);
+            var jobResults = new NativeList<IndustrialCompanyJobData>(Math.Max(1, estimatedCount), Allocator.TempJob);
 
-            ProcessIndustrialCompaniesJob job = new ProcessIndustrialCompaniesJob
+            var job = new ProcessIndustrialCompaniesJob
             {
                 EntityType = SystemAPI.GetEntityTypeHandle(),
-                CompanyDataType = SystemAPI.GetComponentTypeHandle<Game.Companies.CompanyData>(true),
+                CompanyDataType = SystemAPI.GetComponentTypeHandle<CompanyData>(true),
                 WorkProviderType = SystemAPI.GetComponentTypeHandle<WorkProvider>(true),
                 PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
-
                 PropertyRenterType = SystemAPI.GetComponentTypeHandle<PropertyRenter>(true),
                 ProfitabilityType = SystemAPI.GetComponentTypeHandle<Profitability>(true),
                 AttachedType = SystemAPI.GetComponentTypeHandle<Attached>(true),
-
                 EmployeeBufferType = SystemAPI.GetBufferTypeHandle<Employee>(true),
                 OwnedVehicleBufferType = SystemAPI.GetBufferTypeHandle<OwnedVehicle>(true),
                 ResourcesBufferType = SystemAPI.GetBufferTypeHandle<Resources>(true),
                 CompanyStatisticDataLookup = GetComponentLookup<CompanyStatisticData>(true),
-
                 TransportCompanyDataLookup = SystemAPI.GetComponentLookup<TransportCompanyData>(true),
                 IndustrialProcessDataLookup = SystemAPI.GetComponentLookup<IndustrialProcessData>(true),
                 ResourceDataLookup = SystemAPI.GetComponentLookup<ResourceData>(true),
                 CitizenLookup = SystemAPI.GetComponentLookup<Citizen>(true),
                 DeliveryTruckLookup = SystemAPI.GetComponentLookup<DeliveryTruck>(true),
                 ExtractorCompanyLookup = SystemAPI.GetComponentLookup<ExtractorCompany>(true),
-                ExtractorLookup = SystemAPI.GetComponentLookup<Game.Areas.Extractor>(true),
+                ExtractorLookup = SystemAPI.GetComponentLookup<Extractor>(true),
                 PrefabRefLookup = SystemAPI.GetComponentLookup<PrefabRef>(true),
-                ExtractorAreaDataLookup = SystemAPI.GetComponentLookup<Game.Prefabs.ExtractorAreaData>(true),
+                ExtractorAreaDataLookup = SystemAPI.GetComponentLookup<ExtractorAreaData>(true),
                 EfficiencyLookup = SystemAPI.GetBufferLookup<Efficiency>(true),
-                SubAreaLookup = SystemAPI.GetBufferLookup<Game.Areas.SubArea>(true),
-
+                SubAreaLookup = SystemAPI.GetBufferLookup<SubArea>(true),
                 EconomyParams = SystemAPI.GetSingleton<EconomyParameterData>(),
                 ExtractorParams = SystemAPI.GetSingleton<ExtractorParameterData>(),
                 ResourcePrefabs = m_ResourceSystem.GetPrefabs(),
-                ResultWriter = m_JobResults.AsParallelWriter()
-                
+                ResultWriter = jobResults.AsParallelWriter(),
+                Input1Resource = m_Input1Resources,
+                Input2Resource = m_Input2Resources,
+                OutputResource = m_OutputResources
             };
-            var jobHandle = job.Schedule(m_IndustrialCompanyQuery, Dependency);
-            jobHandle.Complete();
+            Dependency = job.ScheduleParallel(m_IndustrialCompanyQuery, Dependency);
+            Dependency.Complete();
+
+            // Build the managed records inline (names/icons/resources/stats).
+            var resourcesLookup = GetBufferLookup<Resources>(true);
+            var efficiencyLookup = GetBufferLookup<Efficiency>(true);
+            var propertyRenterLookup = GetComponentLookup<PropertyRenter>(true);
+            var prefabRefLookup = GetComponentLookup<PrefabRef>(true);
+            var processLookup = GetComponentLookup<IndustrialProcessData>(true);
+            var statisticsLookup = GetComponentLookup<CompanyStatisticData>(true);
+
+            var records = new IndustrialCompanyRecord[jobResults.Length];
+            for (int i = 0; i < jobResults.Length; i++)
+            {
+                records[i] = BuildRecord(jobResults[i], resourcesLookup, efficiencyLookup,
+                    propertyRenterLookup, prefabRefLookup, processLookup, statisticsLookup);
+            }
+            jobResults.Dispose();
+
+            m_AllRecords = records;
+
             
-            // Cache the job results instead of immediate conversion
-            CacheJobResults(m_JobResults);
-            
-            // Clear converted DTO cache since we have new data
-            m_ConvertedDTOCache.Clear();
-            m_JobDataValid = true;
-            
-            m_JobResults.Dispose();
+            m_Input1ResourcesBinding.Value = m_Input1Resources.value == Resource.NoResource
+                    ? new string[0]: ResourceMaskToNames(m_Input1Resources.value);
+            m_Input2ResourcesBinding.Value = m_Input2Resources.value == Resource.NoResource
+                    ? new string[0]: ResourceMaskToNames(m_Input2Resources.value);
+            m_OutputResourcesBinding.Value = m_OutputResources.value == Resource.NoResource
+                    ? new string[0]: ResourceMaskToNames(m_OutputResources.value);
+
+            RefreshDisplayed();
         }
 
-        private void CacheJobResults(NativeList<IndustrialCompanyJobData> jobResults)
+        // Applies the active resource + company-name filters and current sort, then pushes the list.
+        private void RefreshDisplayed()
         {
-            // Dispose old cached data if exists
-            if (m_CachedJobData.IsCreated)
-                m_CachedJobData.Dispose();
-            
-            // Store new job data in persistent array
-            m_CachedJobData = new NativeArray<IndustrialCompanyJobData>(jobResults.Length, Allocator.Persistent);
-            jobResults.AsArray().CopyTo(m_CachedJobData);
-        }
-
-        private void UpdateCompanyNameCacheIfNeeded()
-        {
-            int currentCount = m_IndustrialCompanyQuery.CalculateEntityCount();
-            
-            // Only update if company count changed or forced
-            if (!m_ForceCompanyNameCacheUpdate && currentCount == m_LastCompanyCount)
+            if (m_AllRecords == null)
                 return;
-            
-            var entities = m_IndustrialCompanyQuery.ToEntityArray(Allocator.Temp);
-            var companyDataLookup = GetComponentLookup<Game.Companies.CompanyData>(true);
 
-            try
-            {
-                for (int i = 0; i < entities.Length; i++)
-                {
-                    var entity = entities[i];
-                    if (companyDataLookup.TryGetComponent(entity, out var companyData))
-                    {
-                        if (!m_CompanyNameCache.ContainsKey(companyData.m_Brand))
-                        {
-                            var companyName = m_NameSystem.GetRenderedLabelName(companyData.m_Brand);
-                            m_CompanyNameCache[companyData.m_Brand] = companyName;
-                        }
-                    }
-                }
-                
-                m_LastCompanyCount = currentCount;
-                m_ForceCompanyNameCacheUpdate = false;
-            }
-            finally
-            {
-                entities.Dispose();
-            }
+            string input1 = m_SelectedInput1Binding.Value ?? "All";
+            string input2 = m_SelectedInput2Binding.Value ?? "All";
+            string output = m_SelectedOutputBinding.Value ?? "All";
+
+            IEnumerable<IndustrialCompanyRecord> resourceFilteredQuery = m_AllRecords;
+            if (!string.IsNullOrEmpty(input1) && input1 != "All")
+                resourceFilteredQuery = m_AllRecords.Where(c => ContainsResource(c.Input1Resources, input1));
+            else if (!string.IsNullOrEmpty(input2) && input2 != "All")
+                resourceFilteredQuery = m_AllRecords.Where(c => ContainsResource(c.Input2Resources, input2));
+            else if (!string.IsNullOrEmpty(output) && output != "All")
+                resourceFilteredQuery = m_AllRecords.Where(c => ContainsResource(c.OutputResources, output));
+
+            var resourceFiltered = resourceFilteredQuery as IndustrialCompanyRecord[] ?? resourceFilteredQuery.ToArray();
+
+            UpdateCompanyNameList(resourceFiltered);
+
+            string companyName = m_SelectedCompanyNameBinding.Value ?? "All Companies";
+            IEnumerable<IndustrialCompanyRecord> displayed = resourceFiltered;
+            if (!string.IsNullOrEmpty(companyName) && companyName != "All Companies")
+                displayed = resourceFiltered.Where(c => c.CompanyName == companyName);
+
+            var list = displayed.ToList();
+            ApplySorts(list);
+            m_DataBinding.Value = list.ToArray();
         }
 
-
-        private void ClassifyResources(Entity entity, BufferLookup<Resources> resourcesBufferLookup,
-            Resource input1, Resource input2, Resource output,
-            out ResourceInfo[] input1List, out ResourceInfo[] input2List, out ResourceInfo[] outputList, out ResourceInfo[] maintenanceList, out int money)
+        private static bool ContainsResource(ResourceInfo[] resources, string resourceName)
         {
-            money = 0;
+            if (resources == null)
+                return false;
+            for (int i = 0; i < resources.Length; i++)
+                if (resources[i].ResourceName == resourceName)
+                    return true;
+            return false;
+        }
 
-            if (!resourcesBufferLookup.HasBuffer(entity))
+        private void UpdateCompanyNameList(IndustrialCompanyRecord[] companies)
+        {
+            var uniqueCompanyNames = new HashSet<string>();
+            foreach (var company in companies)
             {
-                input1List = Array.Empty<ResourceInfo>();
-                input2List = Array.Empty<ResourceInfo>();
-                outputList = Array.Empty<ResourceInfo>();
-                maintenanceList = Array.Empty<ResourceInfo>();
-                return;
+                if (!string.IsNullOrEmpty(company.CompanyName))
+                    uniqueCompanyNames.Add(company.CompanyName);
             }
 
-            var buffer = resourcesBufferLookup[entity];
-            int bufferLength = buffer.Length;
-            
-            // Pre-allocate arrays with max possible size to avoid List allocations
-            var input1Array = new ResourceInfo[bufferLength];
-            var input2Array = new ResourceInfo[bufferLength];
-            var outputArray = new ResourceInfo[bufferLength];
-            var maintenanceArray = new ResourceInfo[bufferLength];
-            
-            int in1Count = 0;
-            int in2Count = 0;
-            int outCount = 0;
-            int maintCount = 0;
+            var sortedNames = uniqueCompanyNames.OrderBy(name => name).ToList();
+            sortedNames.Insert(0, "All Companies");
+            m_CompanyNamesBinding.Value = sortedNames.ToArray();
+        }
 
-            for (int r = 0; r < bufferLength; r++)
+        // Decomposes a resource bitmask into the display names (matching the filter comparison),
+        // sorted, with "All" first — used to populate the resource filter dropdowns.
+        private string[] ResourceMaskToNames(Resource mask)
+        {
+            var names = new List<string>();
+            var iterator = ResourceIterator.GetIterator();
+            while (iterator.Next())
             {
-                var resource = buffer[r];
-                if (resource.m_Resource == Resource.Money)
-                {
-                    money = resource.m_Amount;
+                var res = iterator.resource;
+                if (res == Resource.NoResource || (mask & res) == 0)
                     continue;
-                }
-                
-                // Use cached values with fallback if not pre-populated
-                if (!m_ResourceNameCache.TryGetValue(resource.m_Resource, out string name))
-                {
-                    name = EconomyUtils.GetName(resource.m_Resource).ToString();
-                    m_ResourceNameCache[resource.m_Resource] = name;
-                }
-                
-                if (!m_ResourceIconCache.TryGetValue(resource.m_Resource, out string icon))
-                {
-                    if (resource.m_Resource == Resource.Money)
-                    {
-                        icon = "Media/Game/Icons/Money.svg";
-                    }
-                    else
-                    {
-                        Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource.m_Resource);
-                        icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
-                    }
-                    m_ResourceIconCache[resource.m_Resource] = icon;
-                }
-                
-                var info = new ResourceInfo(name, resource.m_Amount, icon);
-
-                if (resource.m_Resource == input1 && input1 != Resource.NoResource) 
-                {
-                    input1Array[in1Count++] = info;
-                }
-                else if (resource.m_Resource == input2 && input2 != Resource.NoResource) 
-                {
-                    input2Array[in2Count++] = info;
-                }
-                else if (resource.m_Resource == output && output != Resource.NoResource) 
-                {
-                    outputArray[outCount++] = info;
-                }
-                else 
-                {
-                    maintenanceArray[maintCount++] = info;
-                }
+                names.Add(GetCachedResourceName(res));
             }
 
-            // Trim arrays to actual size
-            input1List = in1Count == 0 ? Array.Empty<ResourceInfo>() : TrimArray(input1Array, in1Count);
-            input2List = in2Count == 0 ? Array.Empty<ResourceInfo>() : TrimArray(input2Array, in2Count);
-            outputList = outCount == 0 ? Array.Empty<ResourceInfo>() : TrimArray(outputArray, outCount);
-            maintenanceList = maintCount == 0 ? Array.Empty<ResourceInfo>() : TrimArray(maintenanceArray, maintCount);
+            names.Sort();
+            names.Insert(0, "All");
+            return names.ToArray();
         }
 
-        private ResourceInfo[] TrimArray(ResourceInfo[] source, int length)
+        // -- Sorting ----------------------------------------------------------
+
+        private void ApplySorts(List<IndustrialCompanyRecord> companies)
         {
-            var result = new ResourceInfo[length];
-            Array.Copy(source, result, length);
-            return result;
-        }
-
-        private (ProcessResourceInfo[] list, string outputName, string outputIcon) GetProcessInfo(Entity entity,
-            ComponentLookup<PrefabRef> prefabRefLookup, ComponentLookup<IndustrialProcessData> industrialProcessLookup)
-        {
-            var list = new List<ProcessResourceInfo>();
-            string outName = "";
-            string outIcon = "";
-
-            if (prefabRefLookup.TryGetComponent(entity, out var prefabRef) &&
-                industrialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var processData))
-            {
-                if (processData.m_Output.m_Resource != Resource.NoResource)
-                {
-                    outName = GetCachedResourceName(processData.m_Output.m_Resource);
-                    outIcon = GetCachedResourceIcon(processData.m_Output.m_Resource);
-                    list.Add(new ProcessResourceInfo
-                    {
-                        ResourceName = outName,
-                        ResourceIcon = outIcon,
-                        Amount = processData.m_Output.m_Amount,
-                        IsOutput = true
-                    });
-                }
-
-                if (processData.m_Input1.m_Resource != Resource.NoResource)
-                {
-                    list.Add(new ProcessResourceInfo
-                    {
-                        ResourceName = GetCachedResourceName(processData.m_Input1.m_Resource),
-                        Amount = processData.m_Input1.m_Amount,
-                        ResourceIcon = GetCachedResourceIcon(processData.m_Input1.m_Resource),
-                        IsOutput = false
-                    });
-                }
-
-                if (processData.m_Input2.m_Resource != Resource.NoResource)
-                {
-                    list.Add(new ProcessResourceInfo
-                    {
-                        ResourceName = GetCachedResourceName(processData.m_Input2.m_Resource),
-                        Amount = processData.m_Input2.m_Amount,
-                        ResourceIcon = GetCachedResourceIcon(processData.m_Input2.m_Resource),
-                        IsOutput = false
-                    });
-                }
-            }
-
-            return (list.ToArray(), outName, outIcon);
-        }
-        public void ApplySorts(List<IndustrialCompanyDTO> companies)
-        {
-            IOrderedEnumerable<IndustrialCompanyDTO> ordered = null;
+            IOrderedEnumerable<IndustrialCompanyRecord> ordered = null;
 
             if (m_CurrentCompanyNameSorting == SortingEnum.Ascending)
                 ordered = companies.OrderBy(x => x.CompanyName);
@@ -533,110 +572,62 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             return s;
         }
 
-        private string GetCachedResourceName(Resource resource)
-        {
-            if (!m_ResourceNameCache.TryGetValue(resource, out string name))
-            {
-                name = EconomyUtils.GetName(resource).ToString();
-                m_ResourceNameCache[resource] = name;
-            }
-            return name;
-        }
+        // -- Record construction ---------------------------------------------
 
-        private string GetCachedResourceIcon(Resource resource)
+        private IndustrialCompanyRecord BuildRecord(IndustrialCompanyJobData jobData,
+            BufferLookup<Resources> resourcesLookup, BufferLookup<Efficiency> efficiencyLookup,
+            ComponentLookup<PropertyRenter> propertyRenterLookup, ComponentLookup<PrefabRef> prefabRefLookup,
+            ComponentLookup<IndustrialProcessData> processLookup, ComponentLookup<CompanyStatisticData> statisticsLookup)
         {
-            if (resource == Resource.Money)
-                return "Media/Game/Icons/Money.svg";
-            
-            if (!m_ResourceIconCache.TryGetValue(resource, out string icon))
-            {
-                Entity resourcePrefab = m_ResourceSystem.GetPrefab(resource);
-                icon = m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
-                m_ResourceIconCache[resource] = icon;
-            }
-            return icon;
-        }
-        // Get all companies with lazy conversion and sorting
-        
-        
-        // Convert a single job data to DTO with caching
-        private IndustrialCompanyDTO ConvertJobDataToDTO(IndustrialCompanyJobData jobData)
-        {
-            // Check cache first
-            if (m_ConvertedDTOCache.TryGetValue(jobData.EntityId, out var cached))
-                return cached;
-            
-            // Do the expensive conversion
-            var resourcesBufferLookup = GetBufferLookup<Resources>(true);
-            var efficiencyBufferLookup = GetBufferLookup<Efficiency>(true);
-            var propertyRenterLookup = GetComponentLookup<PropertyRenter>(true);
-            var prefabRefLookup = GetComponentLookup<PrefabRef>(true);
-            var industrialProcessLookup = GetComponentLookup<IndustrialProcessData>(true);
-            
             Resource processInput1 = Resource.NoResource;
             Resource processInput2 = Resource.NoResource;
             Resource processOutput = Resource.NoResource;
             if (prefabRefLookup.TryGetComponent(jobData.EntityId, out var prefabRef) &&
-                industrialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var proc))
+                processLookup.TryGetComponent(prefabRef.m_Prefab, out var proc))
             {
                 processInput1 = proc.m_Input1.m_Resource;
                 processInput2 = proc.m_Input2.m_Resource;
                 processOutput = proc.m_Output.m_Resource;
             }
-            
-            ClassifyResources(jobData.EntityId, resourcesBufferLookup,
+
+            ClassifyResources(jobData.EntityId, resourcesLookup,
                 processInput1, processInput2, processOutput,
                 out var input1Resources, out var input2Resources, out var outputResources, out var maintenanceResources, out int moneyAmount);
-            var (processList, outputResourceName, outputResourceIcon) = GetProcessInfo(jobData.EntityId, prefabRefLookup, industrialProcessLookup);
-            
+            var (processList, outputResourceName, outputResourceIcon) = GetProcessInfo(jobData.EntityId, prefabRefLookup, processLookup);
+
             EfficiencyFactorInfo[] factors = Array.Empty<EfficiencyFactorInfo>();
             if (propertyRenterLookup.HasComponent(jobData.EntityId))
             {
                 var targetEntity = propertyRenterLookup[jobData.EntityId].m_Property;
-                factors = GetEfficiencyFactors(targetEntity, efficiencyBufferLookup);
+                factors = GetEfficiencyFactors(targetEntity, efficiencyLookup);
             }
-            
-            string companyNameString;
-            if (m_CompanyNameCache.TryGetValue(jobData.Brand, out var fixedName))
-                companyNameString = fixedName.ToString();
-            else
-                companyNameString = "Unknown Company";
-            
-            int income = 0;
-            int worth = 0;
-            int profit = 0;
-            int wagePaid = 0;
-            int rentPaid = 0;
-            int electricityPaid = 0;
-            int waterPaid = 0;
-            int sewagePaid = 0;
-            int garbagePaid = 0;
-            int taxPaid = 0;
-            int resourcesBoughtPaid = 0;
-            int currentCustomers = 0;
-            int monthlyCustomers = 0;
-            if (jobData.HasStatistics)
+
+            string companyNameString = m_CompanyNameCache.TryGetValue(jobData.Brand, out var fixedName)
+                ? fixedName
+                : "Unknown Company";
+
+            int income = 0, worth = 0, profit = 0, wagePaid = 0, rentPaid = 0, electricityPaid = 0;
+            int waterPaid = 0, sewagePaid = 0, garbagePaid = 0, taxPaid = 0, resourcesBoughtPaid = 0;
+            int currentCustomers = 0, monthlyCustomers = 0;
+
+            if (jobData.HasStatistics && statisticsLookup.TryGetComponent(jobData.EntityId, out var statistics))
             {
-                var companyStatisticDataLookup = SystemAPI.GetComponentLookup<CompanyStatisticData>(true);
-                if (companyStatisticDataLookup.TryGetComponent(jobData.EntityId, out var companyStatisticData))
-                {
-                    income = companyStatisticData.m_Income;
-                    worth = companyStatisticData.m_Worth;
-                    profit = companyStatisticData.m_Profit;
-                    wagePaid = companyStatisticData.m_WagePaid;
-                    rentPaid = companyStatisticData.m_RentPaid;
-                    electricityPaid = companyStatisticData.m_ElectricityPaid;
-                    waterPaid = companyStatisticData.m_WaterPaid;
-                    sewagePaid = companyStatisticData.m_SewagePaid;
-                    garbagePaid = companyStatisticData.m_GarbagePaid;
-                    taxPaid = companyStatisticData.m_TaxPaid;
-                    resourcesBoughtPaid = companyStatisticData.m_CostBuyResource;
-                    currentCustomers = companyStatisticData.m_CurrentNumberOfCustomers;
-                    monthlyCustomers = companyStatisticData.m_MonthlyCustomerCount;
-                }
+                income = statistics.m_Income;
+                worth = statistics.m_Worth;
+                profit = statistics.m_Profit;
+                wagePaid = statistics.m_WagePaid;
+                rentPaid = statistics.m_RentPaid;
+                electricityPaid = statistics.m_ElectricityPaid;
+                waterPaid = statistics.m_WaterPaid;
+                sewagePaid = statistics.m_SewagePaid;
+                garbagePaid = statistics.m_GarbagePaid;
+                taxPaid = statistics.m_TaxPaid;
+                resourcesBoughtPaid = statistics.m_CostBuyResource;
+                currentCustomers = statistics.m_CurrentNumberOfCustomers;
+                monthlyCustomers = statistics.m_MonthlyCustomerCount;
             }
-            
-            var dto = new IndustrialCompanyDTO
+
+            return new IndustrialCompanyRecord
             {
                 EntityId = jobData.EntityId,
                 CompanyName = companyNameString,
@@ -662,6 +653,9 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 Input2Resources = input2Resources,
                 OutputResources = outputResources,
                 MaintenanceResources = maintenanceResources,
+                Input1Resource = processInput1,
+                Input2Resource = processInput2,
+                OutputResource = processOutput,
                 Income = income,
                 Worth = worth,
                 Profit = profit,
@@ -674,16 +668,120 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
                 TaxPaid = taxPaid,
                 ResourcesBoughtPaid = resourcesBoughtPaid,
                 CurrentCustomers = currentCustomers,
-                MonthlyCustomers = monthlyCustomers,
+                MonthlyCustomers = monthlyCustomers
             };
-            
-            // Cache the result
-            m_ConvertedDTOCache[jobData.EntityId] = dto;
-            return dto;
         }
-        
-        
-        private EfficiencyFactorInfo[] GetEfficiencyFactors(Entity targetEntity, BufferLookup<Efficiency> efficiencyBufferLookup)
+
+        private void ClassifyResources(Entity entity, BufferLookup<Resources> resourcesBufferLookup,
+            Resource input1, Resource input2, Resource output,
+            out ResourceInfo[] input1List, out ResourceInfo[] input2List, out ResourceInfo[] outputList,
+            out ResourceInfo[] maintenanceList, out int money)
+        {
+            money = 0;
+
+            if (!resourcesBufferLookup.HasBuffer(entity))
+            {
+                input1List = Array.Empty<ResourceInfo>();
+                input2List = Array.Empty<ResourceInfo>();
+                outputList = Array.Empty<ResourceInfo>();
+                maintenanceList = Array.Empty<ResourceInfo>();
+                return;
+            }
+
+            var buffer = resourcesBufferLookup[entity];
+            var bufferLength = buffer.Length;
+
+            var input1Array = new ResourceInfo[bufferLength];
+            var input2Array = new ResourceInfo[bufferLength];
+            var outputArray = new ResourceInfo[bufferLength];
+            var maintenanceArray = new ResourceInfo[bufferLength];
+
+            var in1Count = 0;
+            var in2Count = 0;
+            var outCount = 0;
+            var maintCount = 0;
+
+            for (var r = 0; r < bufferLength; r++)
+            {
+                var resource = buffer[r];
+                if (resource.m_Resource == Resource.Money)
+                {
+                    money = resource.m_Amount;
+                    continue;
+                }
+
+                var info = new ResourceInfo(GetCachedResourceName(resource.m_Resource), resource.m_Amount, GetCachedResourceIcon(resource.m_Resource));
+
+                if (resource.m_Resource == input1 && input1 != Resource.NoResource)
+                    input1Array[in1Count++] = info;
+                else if (resource.m_Resource == input2 && input2 != Resource.NoResource)
+                    input2Array[in2Count++] = info;
+                else if (resource.m_Resource == output && output != Resource.NoResource)
+                    outputArray[outCount++] = info;
+                else
+                    maintenanceArray[maintCount++] = info;
+            }
+
+            input1List = in1Count == 0 ? Array.Empty<ResourceInfo>() : TrimArray(input1Array, in1Count);
+            input2List = in2Count == 0 ? Array.Empty<ResourceInfo>() : TrimArray(input2Array, in2Count);
+            outputList = outCount == 0 ? Array.Empty<ResourceInfo>() : TrimArray(outputArray, outCount);
+            maintenanceList = maintCount == 0 ? Array.Empty<ResourceInfo>() : TrimArray(maintenanceArray, maintCount);
+        }
+
+        private static ResourceInfo[] TrimArray(ResourceInfo[] source, int length)
+        {
+            var result = new ResourceInfo[length];
+            Array.Copy(source, result, length);
+            return result;
+        }
+
+        private (ProcessResourceInfo[] list, string outputName, string outputIcon) GetProcessInfo(Entity entity,
+            ComponentLookup<PrefabRef> prefabRefLookup, ComponentLookup<IndustrialProcessData> industrialProcessLookup)
+        {
+            var list = new List<ProcessResourceInfo>();
+            var outName = "";
+            var outIcon = "";
+
+            if (prefabRefLookup.TryGetComponent(entity, out var prefabRef) &&
+                industrialProcessLookup.TryGetComponent(prefabRef.m_Prefab, out var processData))
+            {
+                if (processData.m_Output.m_Resource != Resource.NoResource)
+                {
+                    outName = GetCachedResourceName(processData.m_Output.m_Resource);
+                    outIcon = GetCachedResourceIcon(processData.m_Output.m_Resource);
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = outName,
+                        ResourceIcon = outIcon,
+                        Amount = processData.m_Output.m_Amount,
+                        IsOutput = true
+                    });
+                }
+
+                if (processData.m_Input1.m_Resource != Resource.NoResource)
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = GetCachedResourceName(processData.m_Input1.m_Resource),
+                        Amount = processData.m_Input1.m_Amount,
+                        ResourceIcon = GetCachedResourceIcon(processData.m_Input1.m_Resource),
+                        IsOutput = false
+                    });
+
+                if (processData.m_Input2.m_Resource != Resource.NoResource)
+                    list.Add(new ProcessResourceInfo
+                    {
+                        ResourceName = GetCachedResourceName(processData.m_Input2.m_Resource),
+                        Amount = processData.m_Input2.m_Amount,
+                        ResourceIcon = GetCachedResourceIcon(processData.m_Input2.m_Resource),
+                        IsOutput = false
+                    });
+            }
+
+            return (list.ToArray(), outName, outIcon);
+        }
+
+        private EfficiencyFactorInfo[] GetEfficiencyFactors(Entity targetEntity,
+            BufferLookup<Efficiency> efficiencyBufferLookup)
         {
             if (!efficiencyBufferLookup.HasBuffer(targetEntity)) return Array.Empty<EfficiencyFactorInfo>();
 
@@ -698,25 +796,23 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
 
             if (totalEfficiency > 0)
             {
-                float cumulativeEffect = 100f;
-                for (int i = 0; i < sortedEfficiencies.Length; i++)
+                var cumulativeEffect = 100f;
+                for (var i = 0; i < sortedEfficiencies.Length; i++)
                 {
                     var item = sortedEfficiencies[i];
-                    float efficiency = math.max(0f, item.m_Efficiency);
+                    var efficiency = math.max(0f, item.m_Efficiency);
                     cumulativeEffect *= efficiency;
 
-                    int percentageChange = math.max(-99, (int)math.round(100f * efficiency) - 100);
-                    int result = math.max(1, (int)math.round(cumulativeEffect));
+                    var percentageChange = math.max(-99, (int)math.round(100f * efficiency) - 100);
+                    var result = math.max(1, (int)math.round(cumulativeEffect));
 
                     if (percentageChange != 0)
-                    {
                         tempFactors.Add(new EfficiencyFactorInfo(item.m_Factor, percentageChange, result));
-                    }
                 }
             }
             else
             {
-                for (int i = 0; i < sortedEfficiencies.Length; i++)
+                for (var i = 0; i < sortedEfficiencies.Length; i++)
                 {
                     var item = sortedEfficiencies[i];
                     if (math.max(0f, item.m_Efficiency) == 0f)
@@ -730,162 +826,87 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             return tempFactors.ToArray();
         }
 
-        public enum ResourceFilter
-        {
-            Wood, Grain, Livestock, Fish, Vegetables, Cotton,
-            Oil, Ore, Coal, Stone, Metals, Steel, Minerals,
-            Concrete, Machinery, Petrochemicals, Chemicals,
-            Plastics, Pharmaceuticals, Electronics, Vehicles,
-            Beverages, ConvenienceFood, Food, Textiles,
-            Timber, Paper, Furniture, Software, Telecom,
-            Financial, Media, Lodging, Meals, Entertainment, Recreation, ShowAll,
-        }
-        public IndustrialCompanyDTO[] GetAllCompanies()
-        {
-            if (!m_JobDataValid || !m_CachedJobData.IsCreated)
-                return m_IndustrialCompanyDTOs;
-            
-            var companies = new List<IndustrialCompanyDTO>(m_CachedJobData.Length);
-            for (int i = 0; i < m_CachedJobData.Length; i++)
-            {
-                var jobData = m_CachedJobData[i];
-                companies.Add(ConvertJobDataToDTO(jobData));
-            }
-            
-            ApplySorts(companies);
-            m_IndustrialCompanyDTOs = companies.ToArray();
-            return m_IndustrialCompanyDTOs;
-        }
-        public string[] GetAllCompanyNames()
-        {
-            var uniqueCompanyNames = new HashSet<string>();
-            for (int i = 0; i < m_CachedJobData.Length; i++)
-            {
-                var jobData = m_CachedJobData[i];
-                
-                if (m_CompanyNameCache.TryGetValue(jobData.Brand, out var cachedName))
-                {
-                    uniqueCompanyNames.Add(cachedName);
-                }
-            }
-            var sortedNames = uniqueCompanyNames.OrderBy(name => name).ToList();
-            sortedNames.Insert(0, "All Companies");
-            return sortedNames.ToArray();
-        }
+        // -- Caches -----------------------------------------------------------
 
-        public IndustrialCompanyDTO[] GetCompaniesByBrand(Entity brandEntity)
+        private void InitializeCaches()
         {
-            if (!m_JobDataValid || !m_CachedJobData.IsCreated)
-                return Array.Empty<IndustrialCompanyDTO>();
-            
-            var matchingCompanies = new List<IndustrialCompanyDTO>();
-            
-            for (int i = 0; i < m_CachedJobData.Length; i++)
+            if (m_CacheInitialized) return;
+
+            for (var i = 0; i < 64; i++)
             {
-                var jobData = m_CachedJobData[i];
-                
-                if (jobData.Brand.Equals(brandEntity))
-                {
-                    matchingCompanies.Add(ConvertJobDataToDTO(jobData));
-                }
+                var resource = (Resource)i;
+                if (resource == Resource.NoResource) continue;
+
+                if (!m_ResourceNameCache.ContainsKey(resource))
+                    m_ResourceNameCache[resource] = resource.ToString();
+
+                if (!m_ResourceIconCache.ContainsKey(resource))
+                    m_ResourceIconCache[resource] = ResolveResourceIcon(resource);
             }
 
-            // Apply any active sorting to filtered results
-            ApplySorts(matchingCompanies);
-            
-            return matchingCompanies.ToArray();
+            m_CacheInitialized = true;
         }
-        private static readonly Dictionary<ResourceFilter, Resource> ResourceNames = new Dictionary<ResourceFilter, Resource>()
+
+        private void UpdateCompanyNameCacheIfNeeded()
         {
-            { ResourceFilter.Wood, Resource.Wood },
-            { ResourceFilter.Grain, Resource.Grain },
-            { ResourceFilter.Livestock, Resource.Livestock },
-            { ResourceFilter.Fish, Resource.Fish },
-            { ResourceFilter.Vegetables, Resource.Vegetables },
-            { ResourceFilter.Cotton, Resource.Cotton },
-            { ResourceFilter.Oil, Resource.Oil },
-            { ResourceFilter.Ore, Resource.Ore },
-            { ResourceFilter.Coal, Resource.Coal },
-            { ResourceFilter.Stone, Resource.Stone },
-            { ResourceFilter.Metals, Resource.Metals },
-            { ResourceFilter.Steel, Resource.Steel },
-            { ResourceFilter.Minerals, Resource.Minerals },
-            { ResourceFilter.Concrete, Resource.Concrete },
-            { ResourceFilter.Machinery, Resource.Machinery },
-            { ResourceFilter.Petrochemicals, Resource.Petrochemicals },
-            { ResourceFilter.Chemicals, Resource.Chemicals },
-            { ResourceFilter.Plastics, Resource.Plastics },
-            { ResourceFilter.Pharmaceuticals, Resource.Pharmaceuticals },
-            { ResourceFilter.Electronics, Resource.Electronics },
-            { ResourceFilter.Vehicles, Resource.Vehicles },
-            { ResourceFilter.Beverages, Resource.Beverages },
-            { ResourceFilter.ConvenienceFood, Resource.ConvenienceFood },
-            { ResourceFilter.Food, Resource.Food },
-            { ResourceFilter.Textiles, Resource.Textiles },
-            { ResourceFilter.Timber, Resource.Timber },
-            { ResourceFilter.Paper, Resource.Paper },
-            { ResourceFilter.Furniture, Resource.Furniture },
-            { ResourceFilter.Software, Resource.Software },
-            { ResourceFilter.Telecom, Resource.Telecom },
-            { ResourceFilter.Financial, Resource.Financial },
-            { ResourceFilter.Media, Resource.Media },
-            { ResourceFilter.Lodging, Resource.Lodging },
-            { ResourceFilter.Meals, Resource.Meals },
-            { ResourceFilter.Entertainment, Resource.Entertainment },
-            { ResourceFilter.Recreation, Resource.Recreation },
-            { ResourceFilter.ShowAll, Resource.NoResource },
-        };
-        public string[] GetAllInput1Resources()
-        {
-            var resourceNames = new HashSet<string>();
-            foreach (var company in m_IndustrialCompanyDTOs)
+            var currentCount = m_IndustrialCompanyQuery.CalculateEntityCount();
+            if (!m_ForceCompanyNameCacheUpdate && currentCount == m_LastCompanyCount)
+                return;
+
+            var entities = m_IndustrialCompanyQuery.ToEntityArray(Allocator.Temp);
+            var companyDataLookup = GetComponentLookup<CompanyData>(true);
+
+            try
             {
-                if (company.Input1Resources != null)
+                for (var i = 0; i < entities.Length; i++)
                 {
-                    foreach (var res in company.Input1Resources)
+                    if (companyDataLookup.TryGetComponent(entities[i], out var companyData) &&
+                        !m_CompanyNameCache.ContainsKey(companyData.m_Brand))
                     {
-                        resourceNames.Add(res.ResourceName);
+                        m_CompanyNameCache[companyData.m_Brand] = m_NameSystem.GetRenderedLabelName(companyData.m_Brand);
                     }
                 }
+
+                m_LastCompanyCount = currentCount;
+                m_ForceCompanyNameCacheUpdate = false;
             }
-            var sortedNames = resourceNames.OrderBy(name => name).ToList();
-            sortedNames.Insert(0, "All");
-            return sortedNames.ToArray();
-        }
-        public string[] GetAllInput2Resources()
-        {
-            var resourceNames = new HashSet<string>();
-            foreach (var company in m_IndustrialCompanyDTOs)
+            finally
             {
-                if (company.Input2Resources != null)
-                {
-                    foreach (var res in company.Input2Resources)
-                    {
-                        resourceNames.Add(res.ResourceName);
-                    }
-                }
+                entities.Dispose();
             }
-            var sortedNames = resourceNames.OrderBy(name => name).ToList();
-            sortedNames.Insert(0, "All");
-            return sortedNames.ToArray();
         }
-        
-        public string[] GetAllOutputResources()
+
+        private string ResolveResourceIcon(Resource resource)
         {
-            var resourceNames = new HashSet<string>();
-            foreach (var company in m_IndustrialCompanyDTOs)
+            if (resource == Resource.Money)
+                return "Media/Game/Icons/Money.svg";
+            var resourcePrefab = m_ResourceSystem.GetPrefab(resource);
+            return m_ImageSystem.GetIconOrGroupIcon(resourcePrefab);
+        }
+
+        private string GetCachedResourceName(Resource resource)
+        {
+            if (!m_ResourceNameCache.TryGetValue(resource, out var name))
             {
-                if (company.OutputResources != null)
-                {
-                    foreach (var res in company.OutputResources)
-                    {
-                        resourceNames.Add(res.ResourceName);
-                    }
-                }
+                name = resource.ToString();
+                m_ResourceNameCache[resource] = name;
             }
-            var sortedNames = resourceNames.OrderBy(name => name).ToList();
-            sortedNames.Insert(0, "All");
-            return sortedNames.ToArray();
+
+            return name;
+        }
+
+        private string GetCachedResourceIcon(Resource resource)
+        {
+            if (resource == Resource.Money)
+                return "Media/Game/Icons/Money.svg";
+
+            if (!m_ResourceIconCache.TryGetValue(resource, out var icon))
+            {
+                icon = ResolveResourceIcon(resource);
+                m_ResourceIconCache[resource] = icon;
+            }
+
+            return icon;
         }
     }
 }

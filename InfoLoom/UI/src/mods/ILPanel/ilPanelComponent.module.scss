@@ -1,13 +1,13 @@
 .ilPanel {
-  position:                   absolute;
-  opacity:                    1;
-  margin:                     0px;
+  position: absolute;
+  opacity: 1;
+  margin: 0px;
 }
 
 .ilPanelHeader {
-  width:                      100%;
-  display:                    flex;
-  flex-direction:             row;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
 }
 
 .ilPanelIcon {
@@ -40,11 +40,11 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  
+
   &:hover {
     background-color: var(--hoverColorBright);
   }
-  
+
   &:active {
     background-color: var(--activeColor);
   }

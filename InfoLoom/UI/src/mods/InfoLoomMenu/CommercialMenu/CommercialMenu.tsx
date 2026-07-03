@@ -1,6 +1,7 @@
 import { useValue } from 'cs2/api';
 import * as bindings from '../../bindings';
-import Commercial from '../../InfoLoomSections/CommercialSecction/CommercialDemandUI/CommercialDemand';
+import Commercial from '../../InfoLoomSections/CommercialSecction/CommercialDemandUI/CommercialDemandUI';
+
 import CommercialCompanyDebugDataPanel from '../../InfoLoomSections/CommercialSecction/CommercialDebugDataUI/CommercialCompanyDebugData';
 import React, { useCallback } from 'react';
 import { Button, Panel } from 'cs2/ui';

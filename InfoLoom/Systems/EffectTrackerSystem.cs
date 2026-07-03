@@ -1,21 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using Colossal.Entities;
-using Game;
 using Game.Buildings;
-using Game.Objects;
 using Game.Prefabs;
 using Game.Rendering;
 using Game.UI;
-using InfoLoomTwo.Extensions;
+using ModsCommon.Extensions;
+using ModsCommon.Systems;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems
 {
-	public partial class EffectTrackerSystem : ExtendedUISystemBase
+	public partial class EffectTrackerSystem : CommonUISystemBase
 	{
+		protected override string ModId => InfoLoomMod.Instance.Id;
+		
 		public class EntityModifierInfo
 		{
 			public int EntityIndex { get; set; }

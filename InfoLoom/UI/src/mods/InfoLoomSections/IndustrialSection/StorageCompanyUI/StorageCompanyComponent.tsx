@@ -45,7 +45,7 @@ const StorageCompanyComponent = (props: PanelProps) => {
         title="Storage Companies"
         className={styles.panel}
       >
-        <Scrollable smooth vertical trackVisibility='scrollable'>
+        <Scrollable smooth vertical trackVisibility="scrollable">
           <HeaderComponent />
           <ItemComponent />
         </Scrollable>

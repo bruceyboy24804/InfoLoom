@@ -5,7 +5,7 @@
   background-color: var(--panelColorDark);
 }
 
-.compactPanel {
+.panelMinimized {
   width: 500rem;
   display: flex;
   flex-direction: column;
@@ -13,17 +13,44 @@
 }
 
 .header {
+  position: relative;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
   height: 18rem;
   text-transform: none;
+  padding-right: 34rem;
 }
 
 .headerText {
   margin-left: -5rem;
-  font-size: 110%;
+  font-size: 110%; /* Reduced from 115% */
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerControls {
+  position: absolute;
+  top: 8rem;
+  right: 6rem;
+  transform: translateY(-50%);
+}
+
+.buttonStyle {
+  width: 20rem;
+  height: 20rem;
+  min-width: 20rem;
+  min-height: 20rem;
+  padding: 0;
+}
+
+.headerIcon {
+  width: 14rem;
+  height: 14rem;
+  margin-bottom: 10rem;
 }
 
 .spacingSmall {

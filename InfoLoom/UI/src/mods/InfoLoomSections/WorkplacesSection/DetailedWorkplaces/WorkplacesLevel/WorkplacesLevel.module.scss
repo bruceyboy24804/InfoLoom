@@ -1,0 +1,102 @@
+.row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  top: 0;
+  z-index: 1;
+}
+
+.colorLegend {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  line-height: 110%;
+}
+
+.symbol {
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 4rem;
+  margin-right: 0.5em;
+}
+
+.label {
+  flex-shrink: 1;
+  margin-right: 0.4em;
+}
+
+.col1 {
+  width: 130rem;
+  text-align: left;
+  margin-left: 15rem;
+  font-size: var(--fontSizeS);
+}
+.col2 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col3 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col4 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col5 {
+  width: 75rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col6 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col7 {
+  width: 55rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col8 {
+  width: 70rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col9 {
+  width: 70rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col10 {
+  width: 70rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col11 {
+  width: 60rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col12 {
+  width: 60rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+.col13 {
+  width: 60rem;
+  text-align: center;
+  font-size: var(--fontSizeS);
+}
+
+.hideColumnsToggle {
+  font-size: 25rem;
+}

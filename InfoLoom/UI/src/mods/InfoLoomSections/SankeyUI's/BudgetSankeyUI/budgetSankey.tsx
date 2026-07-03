@@ -95,7 +95,7 @@ const BudgetSankeyChartComponent: React.FC = () => {
             bodyFont: { size: 12, family: 'Overpass' },
             padding: 10,
             callbacks: {
-              label: (ctx) => {
+              label: ctx => {
                 const d = flowsRef.current[ctx.dataIndex];
                 if (!d) return '';
                 return `${d.from} → ${d.to}: ${formatCurrency(d.flow)}`;
@@ -188,11 +188,7 @@ const BudgetSankeyChartComponent: React.FC = () => {
 const BudgetSankeyChart = memo(BudgetSankeyChartComponent);
 
 // ── Summary row ───────────────────────────────────────────────────────────────
-const SummaryBar: React.FC<{ label: string; value: number; positive: boolean }> = ({
-  label,
-  value,
-  positive,
-}) => (
+const SummaryBar: React.FC<{ label: string; value: number; positive: boolean }> = ({ label, value, positive }) => (
   <div className={styles.summaryItem}>
     <span className={styles.summaryLabel}>{label}</span>
     <span className={positive ? styles.summaryValuePos : styles.summaryValueNeg}>

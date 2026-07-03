@@ -17,6 +17,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Chirp = Game.Triggers.Chirp;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.ChirpSystem_s_
 {
