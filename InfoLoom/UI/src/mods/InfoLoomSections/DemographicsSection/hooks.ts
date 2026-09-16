@@ -1,404 +1,56 @@
 import { useMemo } from 'react';
-import { useValue } from 'cs2/api';
-import { GroupingStrategy } from '../../domain/GroupingStrategy';
-import { transformDataByStrategy, generateRanges, getLifecycleRangePlaceholders } from './dataTransform';
-import { CHART_COLORS } from './chartConfig';
-import { ChartData, LegendLabels, DemographicsType, GroupingStrategyOption } from './types';
-import { Localekeys } from 'mods/locale';
-import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
-import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
-import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
-import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
+import { ChartData, LegendLabels } from './types';
 import {
-  DemographicsDetailedData,
-  DemographicsFiveYearDetails,
-  DemographicsTenYearDetails,
-  DemographicsLifecycleDetails,
-} from 'mods/bindings';
-function generateAgeRangeLabel(age: number, step: number): string {
-  const maxAge = 120;
-  if (age === 0) {
-    return `0-${step - 1}`;
-  } else if (age + step >= maxAge) {
-    return `${age}-${maxAge}`;
-  } else {
-    return `${age}-${age + step - 1}`;
-  }
-}
+  AgeGranularity,
+  CensusDimension,
+  CensusLabels,
+  CENSUS_PALETTE,
+  formatAgeBucketLabel,
+  reshapeCrossTab,
+} from './census';
+import { Localekeys } from 'mods/locale';
 
+/**
+ * Builds Chart.js-ready data from the free-form census cross-tab. The row dimension becomes
+ * the chart's categories (bars); the column dimension becomes the stacked series within each
+ * bar. This is the only chart the Demographics panel renders — every "view" (what used to be
+ * separate Employment/Education/Wealth/Residency tabs) is just a particular choice of
+ * row/column dimension now.
+ */
 export function useChartData(
-  structureDetails: PopulationDetailedGroupInfo[],
-  fiveYearGroups: PopulationFiveYearGroupInfo[],
-  tenYearGroups: PopulationTenYearGroupInfo[],
-  lifecycleDetails: PopulationLifecycleInfo[],
-  groupingStrategy: GroupingStrategy,
-  chartType: DemographicsType,
-  legendLabels: LegendLabels,
-  lifecycleLabels?: string[]
+  censusCounts: number[],
+  censusRowDim: CensusDimension,
+  censusColDim: CensusDimension,
+  censusAgeGranularity: AgeGranularity,
+  censusLabels: CensusLabels
 ): ChartData {
-  const detailedData = structureDetails as PopulationDetailedGroupInfo[];
-  const fiveYearDetails = fiveYearGroups as PopulationFiveYearGroupInfo[];
-  const tenYearDetails = tenYearGroups as PopulationTenYearGroupInfo[];
-  const lifecycleData = lifecycleDetails as PopulationLifecycleInfo[];
-
   return useMemo((): ChartData => {
     try {
-      if (groupingStrategy === GroupingStrategy.FiveYear && fiveYearDetails?.length) {
-        const labels = fiveYearDetails.map(g => generateAgeRangeLabel(g.Age, 5));
-
-        const datasets =
-          chartType === DemographicsType.Employment
-            ? [
-                {
-                  label: legendLabels.work,
-                  data: fiveYearDetails.map(g => g.Work),
-                  backgroundColor: CHART_COLORS.work,
-                },
-                {
-                  label: legendLabels.elementary,
-                  data: fiveYearDetails.map(g => g.School1),
-                  backgroundColor: CHART_COLORS.elementary,
-                },
-                {
-                  label: legendLabels.highSchool,
-                  data: fiveYearDetails.map(g => g.School2),
-                  backgroundColor: CHART_COLORS.highSchool,
-                },
-                {
-                  label: legendLabels.college,
-                  data: fiveYearDetails.map(g => g.School3),
-                  backgroundColor: CHART_COLORS.college,
-                },
-                {
-                  label: legendLabels.university,
-                  data: fiveYearDetails.map(g => g.School4),
-                  backgroundColor: CHART_COLORS.university,
-                },
-                {
-                  label: legendLabels.retired,
-                  data: fiveYearDetails.map(g => g.Retired),
-                  backgroundColor: CHART_COLORS.Retired,
-                },
-                {
-                  label: legendLabels.unemployed,
-                  data: fiveYearDetails.map(g => g.Unemployed),
-                  backgroundColor: CHART_COLORS.Unemployed,
-                },
-                {
-                  label: legendLabels.childOrTeenWithNoSchool,
-                  data: fiveYearDetails.map(g => g.ChildOrTeenWithNoSchool),
-                  backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
-                },
-              ]
-            : [
-                {
-                  label: legendLabels.uneducated,
-                  data: fiveYearDetails.map(g => g.Uneducated),
-                  backgroundColor: CHART_COLORS.Uneducated,
-                },
-                {
-                  label: legendLabels.poorlyEducated,
-                  data: fiveYearDetails.map(g => g.PoorlyEducated),
-                  backgroundColor: CHART_COLORS.PoorlyEducated,
-                },
-                {
-                  label: legendLabels.educated,
-                  data: fiveYearDetails.map(g => g.Educated),
-                  backgroundColor: CHART_COLORS.Educated,
-                },
-                {
-                  label: legendLabels.wellEducated,
-                  data: fiveYearDetails.map(g => g.WellEducated),
-                  backgroundColor: CHART_COLORS.WellEducated,
-                },
-                {
-                  label: legendLabels.highlyEducated,
-                  data: fiveYearDetails.map(g => g.HighlyEducated),
-                  backgroundColor: CHART_COLORS.HighlyEducated,
-                },
-              ];
-
-        return { labels, datasets };
+      if (!censusCounts?.length) {
+        return { labels: [], datasets: [] };
       }
-
-      if (groupingStrategy === GroupingStrategy.TenYear && tenYearDetails?.length) {
-        const labels = tenYearDetails.map(g => generateAgeRangeLabel(g.Age, 10));
-
-        const datasets =
-          chartType === DemographicsType.Employment
-            ? [
-                {
-                  label: legendLabels.work,
-                  data: tenYearDetails.map(g => g.Work),
-                  backgroundColor: CHART_COLORS.work,
-                },
-                {
-                  label: legendLabels.elementary,
-                  data: tenYearDetails.map(g => g.School1),
-                  backgroundColor: CHART_COLORS.elementary,
-                },
-                {
-                  label: legendLabels.highSchool,
-                  data: tenYearDetails.map(g => g.School2),
-                  backgroundColor: CHART_COLORS.highSchool,
-                },
-                {
-                  label: legendLabels.college,
-                  data: tenYearDetails.map(g => g.School3),
-                  backgroundColor: CHART_COLORS.college,
-                },
-                {
-                  label: legendLabels.university,
-                  data: tenYearDetails.map(g => g.School4),
-                  backgroundColor: CHART_COLORS.university,
-                },
-                {
-                  label: legendLabels.retired,
-                  data: tenYearDetails.map(g => g.Retired),
-                  backgroundColor: CHART_COLORS.Retired,
-                },
-                {
-                  label: legendLabels.unemployed,
-                  data: tenYearDetails.map(g => g.Unemployed),
-                  backgroundColor: CHART_COLORS.Unemployed,
-                },
-                {
-                  label: legendLabels.childOrTeenWithNoSchool,
-                  data: tenYearDetails.map(g => g.ChildOrTeenWithNoSchool),
-                  backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
-                },
-              ]
-            : [
-                {
-                  label: legendLabels.uneducated,
-                  data: tenYearDetails.map(g => g.Uneducated),
-                  backgroundColor: CHART_COLORS.Uneducated,
-                },
-                {
-                  label: legendLabels.poorlyEducated,
-                  data: tenYearDetails.map(g => g.PoorlyEducated),
-                  backgroundColor: CHART_COLORS.PoorlyEducated,
-                },
-                {
-                  label: legendLabels.educated,
-                  data: tenYearDetails.map(g => g.Educated),
-                  backgroundColor: CHART_COLORS.Educated,
-                },
-                {
-                  label: legendLabels.wellEducated,
-                  data: tenYearDetails.map(g => g.WellEducated),
-                  backgroundColor: CHART_COLORS.WellEducated,
-                },
-                {
-                  label: legendLabels.highlyEducated,
-                  data: tenYearDetails.map(g => g.HighlyEducated),
-                  backgroundColor: CHART_COLORS.HighlyEducated,
-                },
-              ];
-
-        return { labels, datasets };
-      }
-
-      if (groupingStrategy === GroupingStrategy.LifeCycle && lifecycleDetails?.length) {
-        let labels = lifecycleDetails.map(g => String(g.Group));
-        if (lifecycleLabels && lifecycleLabels.length === lifecycleDetails.length) {
-          labels = lifecycleLabels;
-        }
-
-        const datasets =
-          chartType === DemographicsType.Employment
-            ? [
-                {
-                  label: legendLabels.work,
-                  data: lifecycleDetails.map(g => g.Work),
-                  backgroundColor: CHART_COLORS.work,
-                },
-                {
-                  label: legendLabels.elementary,
-                  data: lifecycleDetails.map(g => g.School1),
-                  backgroundColor: CHART_COLORS.elementary,
-                },
-                {
-                  label: legendLabels.highSchool,
-                  data: lifecycleDetails.map(g => g.School2),
-                  backgroundColor: CHART_COLORS.highSchool,
-                },
-                {
-                  label: legendLabels.college,
-                  data: lifecycleDetails.map(g => g.School3),
-                  backgroundColor: CHART_COLORS.college,
-                },
-                {
-                  label: legendLabels.university,
-                  data: lifecycleDetails.map(g => g.School4),
-                  backgroundColor: CHART_COLORS.university,
-                },
-                {
-                  label: legendLabels.retired,
-                  data: lifecycleDetails.map(g => g.Retired),
-                  backgroundColor: CHART_COLORS.Retired,
-                },
-                {
-                  label: legendLabels.unemployed,
-                  data: lifecycleDetails.map(g => g.Unemployed),
-                  backgroundColor: CHART_COLORS.Unemployed,
-                },
-                {
-                  label: legendLabels.childOrTeenWithNoSchool,
-                  data: lifecycleDetails.map(g => g.ChildOrTeenWithNoSchool),
-                  backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
-                },
-              ]
-            : [
-                {
-                  label: legendLabels.uneducated,
-                  data: lifecycleDetails.map(g => g.Uneducated),
-                  backgroundColor: CHART_COLORS.Uneducated,
-                },
-                {
-                  label: legendLabels.poorlyEducated,
-                  data: lifecycleDetails.map(g => g.PoorlyEducated),
-                  backgroundColor: CHART_COLORS.PoorlyEducated,
-                },
-                {
-                  label: legendLabels.educated,
-                  data: lifecycleDetails.map(g => g.Educated),
-                  backgroundColor: CHART_COLORS.Educated,
-                },
-                {
-                  label: legendLabels.wellEducated,
-                  data: lifecycleDetails.map(g => g.WellEducated),
-                  backgroundColor: CHART_COLORS.WellEducated,
-                },
-                {
-                  label: legendLabels.highlyEducated,
-                  data: lifecycleDetails.map(g => g.HighlyEducated),
-                  backgroundColor: CHART_COLORS.HighlyEducated,
-                },
-              ];
-
-        return {
-          labels,
-          datasets,
-        };
-      }
-
-      // Transform data using unified aggregation function
-      const transformed = transformDataByStrategy(structureDetails, groupingStrategy);
-
-      if (!transformed.groups) {
-        return {
-          labels: [],
-          datasets: [],
-        };
-      }
-
-      const groups = transformed.groups;
-      let labels = transformed.labels;
-
-      // Use translated lifecycle labels if applicable
-      if (
-        groupingStrategy === GroupingStrategy.LifeCycle &&
-        lifecycleLabels &&
-        lifecycleLabels.length === groups.length
-      ) {
-        labels = lifecycleLabels;
-      }
-
-      // Build datasets based on chart type (Employment vs Education)
-      const datasets =
-        chartType === DemographicsType.Employment
-          ? [
-              {
-                label: legendLabels.work,
-                data: groups.map(g => g.work),
-                backgroundColor: CHART_COLORS.work,
-              },
-              {
-                label: legendLabels.elementary,
-                data: groups.map(g => g.elementary),
-                backgroundColor: CHART_COLORS.elementary,
-              },
-              {
-                label: legendLabels.highSchool,
-                data: groups.map(g => g.highSchool),
-                backgroundColor: CHART_COLORS.highSchool,
-              },
-              {
-                label: legendLabels.college,
-                data: groups.map(g => g.college),
-                backgroundColor: CHART_COLORS.college,
-              },
-              {
-                label: legendLabels.university,
-                data: groups.map(g => g.university),
-                backgroundColor: CHART_COLORS.university,
-              },
-              {
-                label: legendLabels.retired,
-                data: groups.map(g => g.retired),
-                backgroundColor: CHART_COLORS.Retired,
-              },
-              {
-                label: legendLabels.unemployed,
-                data: groups.map(g => g.unemployed),
-                backgroundColor: CHART_COLORS.Unemployed,
-              },
-              {
-                label: legendLabels.childOrTeenWithNoSchool,
-                data: groups.map(g => g.childOrTeenWithNoSchool),
-                backgroundColor: CHART_COLORS.ChildOrTeenWithNoSchool,
-              },
-            ]
-          : [
-              {
-                label: legendLabels.uneducated,
-                data: groups.map(g => g.uneducated),
-                backgroundColor: CHART_COLORS.Uneducated,
-              },
-              {
-                label: legendLabels.poorlyEducated,
-                data: groups.map(g => g.poorlyEducated),
-                backgroundColor: CHART_COLORS.PoorlyEducated,
-              },
-              {
-                label: legendLabels.educated,
-                data: groups.map(g => g.educated),
-                backgroundColor: CHART_COLORS.Educated,
-              },
-              {
-                label: legendLabels.wellEducated,
-                data: groups.map(g => g.wellEducated),
-                backgroundColor: CHART_COLORS.WellEducated,
-              },
-              {
-                label: legendLabels.highlyEducated,
-                data: groups.map(g => g.highlyEducated),
-                backgroundColor: CHART_COLORS.HighlyEducated,
-              },
-            ];
-
+      const grid = reshapeCrossTab(censusCounts, censusRowDim, censusColDim, censusAgeGranularity);
+      const rowNames =
+        censusRowDim === CensusDimension.Age
+          ? censusLabels.categoryNames[CensusDimension.Age](censusAgeGranularity)
+          : censusLabels.categoryNames[censusRowDim];
+      const colNames =
+        censusColDim === CensusDimension.Age
+          ? censusLabels.categoryNames[CensusDimension.Age](censusAgeGranularity)
+          : censusLabels.categoryNames[censusColDim];
       return {
-        labels,
-        datasets,
+        labels: rowNames,
+        datasets: colNames.map((name, c) => ({
+          label: name,
+          data: grid.map(row => row[c] || 0),
+          backgroundColor: CENSUS_PALETTE[c % CENSUS_PALETTE.length],
+        })),
       };
     } catch (error) {
-      console.error('Error transforming chart data:', error);
-      return {
-        labels: [],
-        datasets: [],
-      };
+      console.error('Error transforming census chart data:', error);
+      return { labels: [], datasets: [] };
     }
-  }, [
-    structureDetails,
-    groupingStrategy,
-    chartType,
-    legendLabels,
-    lifecycleLabels,
-    lifecycleDetails,
-    fiveYearDetails,
-    tenYearDetails,
-  ]);
+  }, [censusCounts, censusRowDim, censusColDim, censusAgeGranularity, censusLabels]);
 }
 
 /**
@@ -422,6 +74,16 @@ export function useLegendLabels(translate: (key: string, fallback: string) => st
       childOrTeenWithNoSchool:
         translate('InfoLoomTwo.DemographicsPanel[LegendItem13]', 'Child/Teen with No School') ||
         'Child/Teen with No School',
+      wretched: translate(Localekeys.LegendItemWretched, 'Wretched') || 'Wretched',
+      poor: translate(Localekeys.LegendItemPoor, 'Poor') || 'Poor',
+      modest: translate(Localekeys.LegendItemModest, 'Modest') || 'Modest',
+      comfortable: translate(Localekeys.LegendItemComfortable, 'Comfortable') || 'Comfortable',
+      wealthy: translate(Localekeys.LegendItemWealthy, 'Wealthy') || 'Wealthy',
+      lowDensity: translate(Localekeys.LegendItemLowDensity, 'Low Density') || 'Low Density',
+      mediumDensity: translate(Localekeys.LegendItemMediumDensity, 'Medium Density') || 'Medium Density',
+      highDensity: translate(Localekeys.LegendItemHighDensity, 'High Density') || 'High Density',
+      mixedUse: translate(Localekeys.LegendItemMixedUse, 'Mixed Use') || 'Mixed Use',
+      unhoused: translate(Localekeys.LegendItemUnhoused, 'Unhoused') || 'Unhoused',
     }),
     [translate]
   );
@@ -443,35 +105,92 @@ export function useLifecycleLabels(translate: (key: string, fallback: string) =>
 }
 
 /**
- * Custom hook to create grouping strategy options
+ * Custom hook to create translated age-granularity labels (for the Age-axis resolution picker).
  */
-export function useGroupingStrategies(
-  translate: (key: string, fallback: string) => string | null,
-  structureDetails?: PopulationDetailedGroupInfo[]
-): GroupingStrategyOption[] {
+export function useAgeGranularityLabels(
+  translate: (key: string, fallback: string) => string | null
+): Record<AgeGranularity, string> {
   return useMemo(
-    (): GroupingStrategyOption[] => [
-      {
-        label: translate(Localekeys.DetailedView, 'Detailed View') || 'Detailed View',
-        value: GroupingStrategy.None,
-        ranges: [],
-      },
-      {
-        label: translate(Localekeys.FiveYearGroups, '5-Year Groups') || '5-Year Groups',
-        value: GroupingStrategy.FiveYear,
-        ranges: generateRanges(5),
-      },
-      {
-        label: translate(Localekeys.TenYearGroups, '10-Year Groups') || '10-Year Groups',
-        value: GroupingStrategy.TenYear,
-        ranges: generateRanges(10),
-      },
-      {
-        label: translate(Localekeys.LifeCycleGroups, 'Lifecycle Groups') || 'Lifecycle Groups',
-        value: GroupingStrategy.LifeCycle,
-        ranges: getLifecycleRangePlaceholders(),
-      },
-    ],
-    [translate, structureDetails]
+    () => ({
+      [AgeGranularity.Lifecycle]: translate(Localekeys.LifeCycleGroups, 'Lifecycle Groups') || 'Lifecycle Groups',
+      [AgeGranularity.TenYear]: translate(Localekeys.TenYearGroups, '10-Year Groups') || '10-Year Groups',
+      [AgeGranularity.FiveYear]: translate(Localekeys.FiveYearGroups, '5-Year Groups') || '5-Year Groups',
+      [AgeGranularity.Detailed]: translate(Localekeys.DetailedView, 'Detailed View') || 'Detailed View',
+    }),
+    [translate]
   );
+}
+
+/**
+ * Custom hook building the dimension names and per-category labels used by the free-form
+ * census cross-tab. Reuses the same translated strings as the legend. Category order within
+ * each dimension must stay in sync with Demographics.cs's CensusDimension classification.
+ */
+export function useCensusLabels(
+  translate: (key: string, fallback: string) => string | null,
+  legendLabels: LegendLabels,
+  lifecycleLabels: string[]
+): CensusLabels {
+  return useMemo(
+    (): CensusLabels => ({
+      dimensionNames: {
+        [CensusDimension.Age]: translate(Localekeys.CensusDimensionAge, 'Age') || 'Age',
+        [CensusDimension.Education]: translate(Localekeys.CensusDimensionEducation, 'Education') || 'Education',
+        [CensusDimension.Wealth]: translate(Localekeys.CensusDimensionWealth, 'Wealth') || 'Wealth',
+        [CensusDimension.Residency]: translate(Localekeys.CensusDimensionResidency, 'Residency') || 'Residency',
+        [CensusDimension.Activity]: translate(Localekeys.CensusDimensionActivity, 'Activity') || 'Activity',
+      },
+      categoryNames: {
+        [CensusDimension.Age]: (ageGranularity: AgeGranularity) =>
+          ageGranularity === AgeGranularity.Lifecycle
+            ? lifecycleLabels
+            : Array.from({ length: bucketCountFor(ageGranularity) }, (_, i) => formatAgeBucketLabel(i, ageGranularity)),
+        [CensusDimension.Education]: [
+          legendLabels.uneducated,
+          legendLabels.poorlyEducated,
+          legendLabels.educated,
+          legendLabels.wellEducated,
+          legendLabels.highlyEducated,
+        ],
+        [CensusDimension.Wealth]: [
+          legendLabels.wretched,
+          legendLabels.poor,
+          legendLabels.modest,
+          legendLabels.comfortable,
+          legendLabels.wealthy,
+        ],
+        [CensusDimension.Residency]: [
+          legendLabels.lowDensity,
+          legendLabels.mediumDensity,
+          legendLabels.highDensity,
+          legendLabels.mixedUse,
+          legendLabels.unhoused,
+        ],
+        [CensusDimension.Activity]: [
+          legendLabels.work,
+          legendLabels.elementary,
+          legendLabels.highSchool,
+          legendLabels.college,
+          legendLabels.university,
+          legendLabels.retired,
+          legendLabels.unemployed,
+          legendLabels.childOrTeenWithNoSchool,
+        ],
+      },
+    }),
+    [translate, legendLabels, lifecycleLabels]
+  );
+}
+
+function bucketCountFor(ageGranularity: AgeGranularity): number {
+  switch (ageGranularity) {
+    case AgeGranularity.Detailed:
+      return 120;
+    case AgeGranularity.FiveYear:
+      return 24;
+    case AgeGranularity.TenYear:
+      return 12;
+    default:
+      return 4;
+  }
 }

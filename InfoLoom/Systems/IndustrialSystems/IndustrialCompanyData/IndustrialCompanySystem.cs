@@ -262,17 +262,17 @@ namespace InfoLoomTwo.Systems.IndustrialSystems.IndustrialCompanyData
             m_SelectedOutputBinding = CreateGenericBinding("selectedOutputResource", "All", OnSelectedOutputChanged);
 
             // Sorting bindings (two-way, separate setter keys to match the existing UI)
-            m_IndexSortingBinding = CreateGenericBinding("IndustrialIndexSorting", "SetIndustrialIndexSorting", SortingEnum.Off, v => { m_CurrentIndexSorting = v; RefreshDisplayed(); });
-            m_NameSortingBinding = CreateGenericBinding("IndustrialNameSorting", "SetIndustrialNameSorting", SortingEnum.Off, v => { m_CurrentCompanyNameSorting = v; RefreshDisplayed(); });
-            m_EmployeesSortingBinding = CreateGenericBinding("IndustrialEmployeesSorting", "SetIndustrialEmployeesSorting", SortingEnum.Off, v => { m_CurrentEmployeesSorting = v; RefreshDisplayed(); });
-            m_EfficiencySortingBinding = CreateGenericBinding("IndustrialEfficiencySorting", "SetIndustrialEfficiencySorting", SortingEnum.Off, v => { m_CurrentEfficiencySorting = v; RefreshDisplayed(); });
-            m_ProfitabilitySortingBinding = CreateGenericBinding("IndustrialProfitabilitySorting", "SetIndustrialProfitabilitySorting", SortingEnum.Off, v => { m_CurrentProfitabilitySorting = v; RefreshDisplayed(); });
-            m_ResourceAmountSortingBinding = CreateGenericBinding("IndustrialResourceAmountSorting", "SetIndustrialResourceAmountSorting", SortingEnum.Off, v => { m_CurrentResourceAmountSorting = v; RefreshDisplayed(); });
-            m_MoneySortingBinding = CreateGenericBinding("IndustrialMoneySorting", "SetIndustrialMoneySorting", SortingEnum.Off, v => { m_CurrentMoneySorting = v; RefreshDisplayed(); });
-            m_Input1SortingBinding = CreateGenericBinding("IndustrialInput1Sorting", "SetIndustrialInput1Sorting", SortingEnum.Off, v => { m_CurrentInput1Sorting = v; RefreshDisplayed(); });
-            m_Input2SortingBinding = CreateGenericBinding("IndustrialInput2Sorting", "SetIndustrialInput2Sorting", SortingEnum.Off, v => { m_CurrentInput2Sorting = v; RefreshDisplayed(); });
-            m_OutputSortingBinding = CreateGenericBinding("IndustrialOutputSorting", "SetIndustrialOutputSorting", SortingEnum.Off, v => { m_CurrentOutputSorting = v; RefreshDisplayed(); });
-            m_MaintenanceSortingBinding = CreateGenericBinding("IndustrialMaintenanceSorting", "SetIndustrialMaintenanceSorting", SortingEnum.Off, v => { m_CurrentMaintenanceSorting = v; RefreshDisplayed(); });
+            m_IndexSortingBinding = CreateGenericBinding("IndustrialIndexSorting", SortingEnum.Off, v => { m_CurrentIndexSorting = v; RefreshDisplayed(); });
+            m_NameSortingBinding = CreateGenericBinding("IndustrialNameSorting", SortingEnum.Off, v => { m_CurrentCompanyNameSorting = v; RefreshDisplayed(); });
+            m_EmployeesSortingBinding = CreateGenericBinding("IndustrialEmployeesSorting", SortingEnum.Off, v => { m_CurrentEmployeesSorting = v; RefreshDisplayed(); });
+            m_EfficiencySortingBinding = CreateGenericBinding("IndustrialEfficiencySorting", SortingEnum.Off, v => { m_CurrentEfficiencySorting = v; RefreshDisplayed(); });
+            m_ProfitabilitySortingBinding = CreateGenericBinding("IndustrialProfitabilitySorting", SortingEnum.Off, v => { m_CurrentProfitabilitySorting = v; RefreshDisplayed(); });
+            m_ResourceAmountSortingBinding = CreateGenericBinding("IndustrialResourceAmountSorting", SortingEnum.Off, v => { m_CurrentResourceAmountSorting = v; RefreshDisplayed(); });
+            m_MoneySortingBinding = CreateGenericBinding("IndustrialMoneySorting", SortingEnum.Off, v => { m_CurrentMoneySorting = v; RefreshDisplayed(); });
+            m_Input1SortingBinding = CreateGenericBinding("IndustrialInput1Sorting", SortingEnum.Off, v => { m_CurrentInput1Sorting = v; RefreshDisplayed(); });
+            m_Input2SortingBinding = CreateGenericBinding("IndustrialInput2Sorting", SortingEnum.Off, v => { m_CurrentInput2Sorting = v; RefreshDisplayed(); });
+            m_OutputSortingBinding = CreateGenericBinding("IndustrialOutputSorting", SortingEnum.Off, v => { m_CurrentOutputSorting = v; RefreshDisplayed(); });
+            m_MaintenanceSortingBinding = CreateGenericBinding("IndustrialMaintenanceSorting", SortingEnum.Off, v => { m_CurrentMaintenanceSorting = v; RefreshDisplayed(); });
 
             _updateState = UIUpdateState.Create(World, 512);
         }

@@ -105,7 +105,14 @@
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 5rem;
+
+  > * {
+    margin-right: 5rem;
+  }
+
+  > *:last-child {
+    margin-right: 0;
+  }
 }
 
 .legendDot {

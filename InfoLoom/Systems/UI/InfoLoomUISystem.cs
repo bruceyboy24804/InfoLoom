@@ -9,6 +9,7 @@ using Game.Simulation;
 using Game.UI;
 using InfoLoomTwo.Domain;
 using InfoLoomTwo.Domain.DataDomain;
+using InfoLoomTwo.Systems;
 using InfoLoomTwo.Domain.DataDomain.Enums;
 using InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData;
 using InfoLoomTwo.Systems.DemographicsData;
@@ -20,6 +21,7 @@ using ModsCommon.Extensions;
 using ModsCommon.Systems;
 using Unity.Collections;
 using Unity.Entities;
+using Mod = InfoLoomTwo.InfoLoomMod;
 
 namespace InfoLoomTwo.Systems.UI
 {
@@ -94,17 +96,12 @@ namespace InfoLoomTwo.Systems.UI
         private ValueBindingHelper<int[]> m_TotalsBinding;
         public ValueBinding<bool> m_DemoStatsToggledOnBinding;
         private ValueBinding<bool> m_DemoAgeGroupingToggledOnBinding;
-        private ValueBindingHelper<GroupingStrategy> m_DemoGroupingStrategyBinding;
         private ValueBinding<Entity> m_SelectedDistrict;
         private ValueBindingHelper<Demographics1> m_Demographics1Binding;
         private ValueBindingHelper<Demographics2> m_Demographics2Binding;
         private ValueBindingHelper<bool> _RefreshDataBinding;
         private ValueBindingHelper<int[]> m_DemographicsLifecycleTotalsBinding;
-
-        private ValueBindingHelper<PopulationDetailedGroupInfo[]> m_DemographicsDetailedGroupDetailsBinding;
-        private ValueBindingHelper<PopulationFiveYearGroupInfo[]> m_DemographicsFiveYearDetailsBinding;
-        private ValueBindingHelper<PopulationTenYearGroupInfo[]> m_DemographicsTenYearDetailsBinding;
-        private ValueBindingHelper<PopulationLifecycleInfo[]> m_DemographicsLifecycleDetailsBinding;
+        private ValueBindingHelper<int[]> m_DemographicsCensusCrossTabBinding;
 
 
         private ValueBinding<int> m_SelectedResource;
@@ -251,6 +248,7 @@ namespace InfoLoomTwo.Systems.UI
             _effectsVisibleBinding = new ValueBinding<bool>(ModID, EffectsOpen, false);
             AddBinding(_effectsVisibleBinding);
             AddBinding(new TriggerBinding<bool>(ModID, EffectsOpen, SetEffectsVisibility));
+            CreateBinding("showButton", () => Mod.setting.showEffectsButton);
 
             positionXBinding = CreateBinding("LoadPositionX", 0f);
             positionYBinding = CreateBinding("LoadPositionY", 0f);
@@ -277,8 +275,6 @@ namespace InfoLoomTwo.Systems.UI
             m_DemoAgeGroupingToggledOnBinding = new ValueBinding<bool>(ModID, "DemoAgeGroupingToggledOn", false);
             AddBinding(m_DemoAgeGroupingToggledOnBinding);
             AddBinding(new TriggerBinding<bool>(ModID, "DemoAgeGroupingToggledOn", SetDemoAgeGroupingVisibility));
-            m_DemoGroupingStrategyBinding = CreateGenericBinding("DemoGroupingStrategy", "SetDemoGroupingStrategy",
-                GroupingStrategy.None);
             AddBinding(m_SelectedDistrict = new ValueBinding<Entity>(ModID, "selectedDistrict", CityWide));
             AddBinding(new TriggerBinding<Entity>(ModID, "selectedDistrictChanged", SelectedDistrictChanged));
             AddBinding(m_DistrictInfos = new RawValueBinding(ModID, "districtInfos", UpdateDistrictInfos));
@@ -287,14 +283,9 @@ namespace InfoLoomTwo.Systems.UI
             _RefreshDataBinding =
                 CreateGenericBinding("demographics", "updateDemographics", false, UpdateDemographicsData);
             m_DemographicsLifecycleTotalsBinding = CreateBinding("DemographicsLifecycleTotals", new int[4]);
-            m_DemographicsLifecycleDetailsBinding =
-                CreateBinding("DemographicsLifecycleDetails", new PopulationLifecycleInfo[0]);
-            m_DemographicsDetailedGroupDetailsBinding =
-                CreateBinding("DemographicsDetailedData", new PopulationDetailedGroupInfo[0]);
-            m_DemographicsFiveYearDetailsBinding =
-                CreateBinding("DemographicsFiveYearDetails", new PopulationFiveYearGroupInfo[0]);
-            m_DemographicsTenYearDetailsBinding =
-                CreateBinding("DemographicsTenYearDetails", new PopulationTenYearGroupInfo[0]);
+            m_DemographicsCensusCrossTabBinding = CreateBinding("DemographicsCensusCrossTab", new int[0]);
+            // UI triggers "TRIGGER:setCensusDimensions"; CreateTrigger adds that prefix so the two match.
+            CreateTrigger<int, int, int>("setCensusDimensions", SetCensusDimensions);
 
 
             //IndustrialDemandDataUI
@@ -348,13 +339,8 @@ namespace InfoLoomTwo.Systems.UI
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
 
-                var currentStrategy = m_DemoGroupingStrategyBinding.Value;
                 m_DemographicsLifecycleTotalsBinding.Value = demographics.m_LifecycleTotals.ToArray();
-                m_DemographicsLifecycleDetailsBinding.Value = demographics.m_LifecycleDetails.ToArray();
-                m_DemographicsDetailedGroupDetailsBinding.Value = demographics.m_Results.ToArray();
-                m_DemographicsFiveYearDetailsBinding.Value = demographics.m_FiveYearDetails.ToArray();
-                m_DemographicsTenYearDetailsBinding.Value = demographics.m_TenYearDetails.ToArray();
-                m_DemoGroupingStrategyBinding.UpdateCallback(currentStrategy);
+                m_DemographicsCensusCrossTabBinding.Value = demographics.m_CensusCrossTabCounts.ToArray();
                 if (m_DemoStatsToggledOnBinding.value)
                 {
                     m_TotalsBinding.Value = demographics.m_Totals.ToArray();
@@ -482,10 +468,7 @@ namespace InfoLoomTwo.Systems.UI
             {
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 m_DemographicsLifecycleTotalsBinding.Value = demographics.m_LifecycleTotals.ToArray();
-                m_DemographicsLifecycleDetailsBinding.Value = demographics.m_LifecycleDetails.ToArray();
-                m_DemographicsDetailedGroupDetailsBinding.Value = demographics.m_Results.ToArray();
-                m_DemographicsFiveYearDetailsBinding.Value = demographics.m_FiveYearDetails.ToArray();
-                m_DemographicsTenYearDetailsBinding.Value = demographics.m_TenYearDetails.ToArray();
+                m_DemographicsCensusCrossTabBinding.Value = demographics.m_CensusCrossTabCounts.ToArray();
                 m_DemoAgeGroupingToggledOnBinding.TriggerUpdate();
                 if (m_DemoStatsToggledOnBinding.value)
                 {
@@ -576,6 +559,11 @@ namespace InfoLoomTwo.Systems.UI
         private void SetEffectsVisibility(bool open)
         {
             _effectsVisibleBinding.Update(open);
+
+            var allEffectsSystem = World.GetOrCreateSystemManaged<AllEffectsSystem>();
+            allEffectsSystem.IsPanelVisible = open;
+            if (open)
+                allEffectsSystem.RefreshData();
         }
 
         private void CheckForDistrictChange()
@@ -640,10 +628,7 @@ namespace InfoLoomTwo.Systems.UI
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 demographics.SetSelectedDistrict(newDistrict);
                 m_DemographicsLifecycleTotalsBinding.Value = demographics.m_LifecycleTotals.ToArray();
-                m_DemographicsLifecycleDetailsBinding.Value = demographics.m_LifecycleDetails.ToArray();
-                m_DemographicsDetailedGroupDetailsBinding.Value = demographics.m_Results.ToArray();
-                m_DemographicsFiveYearDetailsBinding.Value = demographics.m_FiveYearDetails.ToArray();
-                m_DemographicsTenYearDetailsBinding.Value = demographics.m_TenYearDetails.ToArray();
+                m_DemographicsCensusCrossTabBinding.Value = demographics.m_CensusCrossTabCounts.ToArray();
                 if (m_DemoStatsToggledOnBinding.value)
                 {
                     m_TotalsBinding.Value = demographics.m_Totals.ToArray();
@@ -666,6 +651,14 @@ namespace InfoLoomTwo.Systems.UI
             }
         }
 
+        private void SetCensusDimensions(int rowDimension, int colDimension, int ageGranularity)
+        {
+            var demographics = World.GetExistingSystemManaged<Demographics>();
+            demographics.SetCensusDimensions(rowDimension, colDimension, ageGranularity);
+            m_DemographicsCensusCrossTabBinding.Value = demographics.m_CensusCrossTabCounts.ToArray();
+            m_DemographicsCensusCrossTabBinding.Binding.TriggerUpdate();
+        }
+
 
         private void UpdateDemographicsData(bool buttonPressed)
         {
@@ -676,18 +669,12 @@ namespace InfoLoomTwo.Systems.UI
                 m_Demographics.UpdateDemographics();
                 var demographics = World.GetExistingSystemManaged<Demographics>();
                 m_DemographicsLifecycleTotalsBinding.Value = demographics.m_LifecycleTotals.ToArray();
-                m_DemographicsLifecycleDetailsBinding.Value = demographics.m_LifecycleDetails.ToArray();
-                m_DemographicsDetailedGroupDetailsBinding.Value = demographics.m_Results.ToArray();
-                m_DemographicsFiveYearDetailsBinding.Value = demographics.m_FiveYearDetails.ToArray();
-                m_DemographicsTenYearDetailsBinding.Value = demographics.m_TenYearDetails.ToArray();
+                m_DemographicsCensusCrossTabBinding.Value = demographics.m_CensusCrossTabCounts.ToArray();
                 if (m_DemoStatsToggledOnBinding.value) m_TotalsBinding.Value = demographics.m_Totals.ToArray();
 
                 // Immediately push the updated data to UI bindings
                 m_DemographicsLifecycleTotalsBinding.Binding.TriggerUpdate();
-                m_DemographicsLifecycleDetailsBinding.Binding.TriggerUpdate();
-                m_DemographicsDetailedGroupDetailsBinding.Binding.TriggerUpdate();
-                m_DemographicsFiveYearDetailsBinding.Binding.TriggerUpdate();
-                m_DemographicsTenYearDetailsBinding.Binding.TriggerUpdate();
+                m_DemographicsCensusCrossTabBinding.Binding.TriggerUpdate();
                 m_TotalsBinding.Binding.TriggerUpdate();
                 m_OldCitizenBinding.Update();
 

@@ -1,5 +1,4 @@
 import { ChartConfiguration } from 'chart.js';
-import { GroupingStrategy } from '../../domain/GroupingStrategy';
 
 export interface ChartColors {
   work: string;
@@ -15,6 +14,16 @@ export interface ChartColors {
   WellEducated: string;
   HighlyEducated: string;
   ChildOrTeenWithNoSchool: string;
+  Wretched: string;
+  Poor: string;
+  Modest: string;
+  Comfortable: string;
+  Wealthy: string;
+  LowDensity: string;
+  MediumDensity: string;
+  HighDensity: string;
+  MixedUse: string;
+  Unhoused: string;
 }
 
 export const CHART_COLORS: ChartColors = {
@@ -31,12 +40,56 @@ export const CHART_COLORS: ChartColors = {
   WellEducated: '#B981C0',
   HighlyEducated: '#5796D1',
   ChildOrTeenWithNoSchool: '#ff5e00ff',
+  // Wealth tiers: red (poorest) through green (wealthiest)
+  Wretched: '#B33A3A',
+  Poor: '#C97A3C',
+  Modest: '#C9B23C',
+  Comfortable: '#7DBF5E',
+  Wealthy: '#3F9E5C',
+  // Residency density tiers
+  LowDensity: '#7E9EAE',
+  MediumDensity: '#5796D1',
+  HighDensity: '#2462FF',
+  MixedUse: '#B981C0',
+  Unhoused: '#808080',
 };
 
+// Bar/height sizing scales with how many rows the currently selected row dimension has —
+// anywhere from 4 (Wealth/Residency/Lifecycle-Age) to 120 (Detailed-Age). Replaces the old
+// fixed-tier lookup that assumed the row axis was always one of Age's four granularities.
+interface RowSizing {
+  barThickness: number;
+  barPercentage: number;
+  categoryPercentage: number;
+  maxBarThickness: number;
+  height: number;
+}
+
+function getRowSizing(rowCategoryCount: number): RowSizing {
+  if (rowCategoryCount <= 8) {
+    return { barThickness: 32, barPercentage: 0.95, categoryPercentage: 0.95, maxBarThickness: 50, height: 220 };
+  }
+  if (rowCategoryCount <= 12) {
+    return { barThickness: 25, barPercentage: 0.85, categoryPercentage: 0.9, maxBarThickness: 35, height: 400 };
+  }
+  if (rowCategoryCount <= 24) {
+    return { barThickness: 15, barPercentage: 0.9, categoryPercentage: 0.85, maxBarThickness: 25, height: 600 };
+  }
+  return {
+    barThickness: 8,
+    barPercentage: 0.98,
+    categoryPercentage: 0.95,
+    maxBarThickness: 5,
+    height: Math.min(2500, rowCategoryCount * 20),
+  };
+}
+
 export function createChartConfig(
-  groupingStrategy: GroupingStrategy,
+  rowCategoryCount: number,
+  rowLabel: string,
   initialData: { labels: string[]; datasets: any[] }
 ): ChartConfiguration<'bar'> {
+  const sizing = getRowSizing(rowCategoryCount);
   return {
     type: 'bar',
     data: initialData,
@@ -47,9 +100,9 @@ export function createChartConfig(
       plugins: {
         title: {
           display: true,
-          text: 'Population Demographics by Age',
+          text: `Population Demographics by ${rowLabel}`,
           color: '#ffffff',
-          font: { size: 16 },
+          font: { size: 16, family: 'Overpass' },
         },
         tooltip: {
           mode: 'index',
@@ -64,7 +117,7 @@ export function createChartConfig(
           callbacks: {
             title: tooltipItems => {
               const item = tooltipItems[0];
-              return `Age: ${item.label}`;
+              return `${rowLabel}: ${item.label}`;
             },
             label: context => {
               const formattedNumber = context.raw ? (context.raw as number).toLocaleString() : '0';
@@ -106,6 +159,7 @@ export function createChartConfig(
             display: true,
             text: 'Number of People',
             color: '#ffffff',
+            font: { family: 'Overpass' },
           },
         },
         y: {
@@ -113,67 +167,28 @@ export function createChartConfig(
           grid: { color: 'rgba(255, 255, 255, 0.1)' },
           ticks: {
             color: '#ffffff',
-            autoSkip: groupingStrategy === GroupingStrategy.None,
-            maxTicksLimit: groupingStrategy === GroupingStrategy.None ? 30 : 20,
-            padding: groupingStrategy === GroupingStrategy.None ? 8 : 2,
+            autoSkip: rowCategoryCount > 30,
+            maxTicksLimit: rowCategoryCount > 30 ? 30 : 20,
+            padding: rowCategoryCount > 30 ? 8 : 2,
             font: { size: 12, family: 'Overpass' },
           },
           afterFit: function (scaleInstance) {
-            // Set different heights based on grouping
-            if (groupingStrategy === GroupingStrategy.None) {
-              scaleInstance.height = Math.min(2500, scaleInstance.height);
-            } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
-              // Compact height for 4 categories
-              scaleInstance.height = 200;
-            } else if (groupingStrategy === GroupingStrategy.TenYear) {
-              // Compact height for 12 categories
-              scaleInstance.height = 400;
-            } else {
-              // Compact height for 24 categories (5-year)
-              scaleInstance.height = 600;
-            }
+            scaleInstance.height = sizing.height;
           },
           title: {
             display: true,
-            text: 'Age',
+            text: rowLabel,
             color: '#ffffff',
+            font: { family: 'Overpass' },
           },
         },
       },
       datasets: {
         bar: {
-          barThickness:
-            groupingStrategy === GroupingStrategy.None
-              ? 8
-              : groupingStrategy === GroupingStrategy.FiveYear
-                ? 15
-                : groupingStrategy === GroupingStrategy.TenYear
-                  ? 25
-                  : 35,
-          barPercentage:
-            groupingStrategy === GroupingStrategy.None
-              ? 0.98
-              : groupingStrategy === GroupingStrategy.FiveYear
-                ? 0.9
-                : groupingStrategy === GroupingStrategy.TenYear
-                  ? 0.85
-                  : 0.95,
-          categoryPercentage:
-            groupingStrategy === GroupingStrategy.None
-              ? 0.95
-              : groupingStrategy === GroupingStrategy.FiveYear
-                ? 0.85
-                : groupingStrategy === GroupingStrategy.TenYear
-                  ? 0.9
-                  : 0.95,
-          maxBarThickness:
-            groupingStrategy === GroupingStrategy.None
-              ? 5
-              : groupingStrategy === GroupingStrategy.FiveYear
-                ? 25
-                : groupingStrategy === GroupingStrategy.TenYear
-                  ? 35
-                  : 50,
+          barThickness: sizing.barThickness,
+          barPercentage: sizing.barPercentage,
+          categoryPercentage: sizing.categoryPercentage,
+          maxBarThickness: sizing.maxBarThickness,
         },
       },
       animation: { duration: 0 },
@@ -181,73 +196,47 @@ export function createChartConfig(
   };
 }
 
-export function updateChartOptionsForGrouping(chart: any, groupingStrategy: GroupingStrategy): void {
+export function updateChartOptionsForGrouping(chart: any, rowCategoryCount: number, rowLabel: string): void {
   if (!chart.options) return;
+
+  const sizing = getRowSizing(rowCategoryCount);
 
   // Update bar sizing
   chart.options.datasets = {
     bar: {
-      barThickness:
-        groupingStrategy === GroupingStrategy.None
-          ? 8
-          : groupingStrategy === GroupingStrategy.FiveYear
-            ? 15
-            : groupingStrategy === GroupingStrategy.TenYear
-              ? 25
-              : 35,
-      barPercentage:
-        groupingStrategy === GroupingStrategy.None
-          ? 0.98
-          : groupingStrategy === GroupingStrategy.FiveYear
-            ? 0.9
-            : groupingStrategy === GroupingStrategy.TenYear
-              ? 0.85
-              : 0.95,
-      categoryPercentage:
-        groupingStrategy === GroupingStrategy.None
-          ? 0.95
-          : groupingStrategy === GroupingStrategy.FiveYear
-            ? 0.85
-            : groupingStrategy === GroupingStrategy.TenYear
-              ? 0.9
-              : 0.95,
-      maxBarThickness:
-        groupingStrategy === GroupingStrategy.None
-          ? 5
-          : groupingStrategy === GroupingStrategy.FiveYear
-            ? 25
-            : groupingStrategy === GroupingStrategy.TenYear
-              ? 35
-              : 50,
+      barThickness: sizing.barThickness,
+      barPercentage: sizing.barPercentage,
+      categoryPercentage: sizing.categoryPercentage,
+      maxBarThickness: sizing.maxBarThickness,
     },
   };
+
+  // Update title/tooltip/axis text
+  if (chart.options.plugins?.title) {
+    chart.options.plugins.title.text = `Population Demographics by ${rowLabel}`;
+  }
+  if (chart.options.plugins?.tooltip?.callbacks) {
+    chart.options.plugins.tooltip.callbacks.title = (tooltipItems: any) => `${rowLabel}: ${tooltipItems[0].label}`;
+  }
 
   // Update scale configurations
   if (chart.options.scales?.y) {
     const yScale = chart.options.scales.y;
 
     yScale.afterFit = function (scaleInstance: any) {
-      // Set different heights based on grouping
-      if (groupingStrategy === GroupingStrategy.None) {
-        scaleInstance.height = Math.min(2500, scaleInstance.height);
-      } else if (groupingStrategy === GroupingStrategy.LifeCycle) {
-        // Compact height for 4 categories
-        scaleInstance.height = 200;
-      } else if (groupingStrategy === GroupingStrategy.TenYear) {
-        // Compact height for 12 categories
-        scaleInstance.height = 400;
-      } else {
-        // Compact height for 24 categories (5-year)
-        scaleInstance.height = 600;
-      }
+      scaleInstance.height = sizing.height;
     };
 
     if (yScale.ticks) {
       const ticks = yScale.ticks as any;
-      ticks.autoSkip = groupingStrategy === GroupingStrategy.None;
-      ticks.maxTicksLimit = groupingStrategy === GroupingStrategy.None ? 30 : 20;
-      ticks.padding = groupingStrategy === GroupingStrategy.None ? 15 : 8;
-      ticks.lineHeight = groupingStrategy === GroupingStrategy.None ? 5 : 1;
+      ticks.autoSkip = rowCategoryCount > 30;
+      ticks.maxTicksLimit = rowCategoryCount > 30 ? 30 : 20;
+      ticks.padding = rowCategoryCount > 30 ? 15 : 8;
+      ticks.lineHeight = rowCategoryCount > 30 ? 5 : 1;
+    }
+
+    if (yScale.title) {
+      yScale.title.text = rowLabel;
     }
   }
 }

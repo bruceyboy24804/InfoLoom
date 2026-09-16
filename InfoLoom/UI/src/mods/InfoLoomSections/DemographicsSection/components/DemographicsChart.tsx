@@ -1,52 +1,33 @@
 import React, { memo, useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
-import { useValue } from 'cs2/api';
-import { PopulationDetailedGroupInfo } from 'mods/domain/populationDetailedGroupInfo';
-import { PopulationFiveYearGroupInfo } from 'mods/domain/populationFiveYearGroupInfo';
-import { PopulationTenYearGroupInfo } from 'mods/domain/populationTenYearGroupInfo';
-import { PopulationLifecycleInfo } from 'mods/domain/populationLifecycleInfo';
-import { GroupingStrategy } from '../../../domain/GroupingStrategy';
 import { createChartConfig, updateChartOptionsForGrouping } from '../chartConfig';
 import { useChartData } from '../hooks';
-import { LegendLabels, DemographicsType } from '../types';
+import { AgeGranularity, CensusDimension, CensusLabels, getCensusCategoryCount } from '../census';
 import styles from '../Demographics.module.scss';
 
 interface DemographicsChartProps {
-  StructureDetails: PopulationDetailedGroupInfo[];
-  fiveYearDetails: PopulationFiveYearGroupInfo[];
-  tenYearDetails: PopulationTenYearGroupInfo[];
-  lifecycleDetails: PopulationLifecycleInfo[];
-  groupingStrategy: GroupingStrategy;
-  legendLabels: LegendLabels;
-  lifecycleLabels?: string[];
-  chartSwitch: DemographicsType;
+  censusCounts: number[];
+  censusRowDim: CensusDimension;
+  censusColDim: CensusDimension;
+  censusAgeGranularity: AgeGranularity;
+  censusLabels: CensusLabels;
 }
 
 const DemographicsChartComponent = ({
-  StructureDetails,
-  fiveYearDetails,
-  tenYearDetails,
-  lifecycleDetails,
-  groupingStrategy,
-  legendLabels,
-  lifecycleLabels,
-  chartSwitch,
+  censusCounts,
+  censusRowDim,
+  censusColDim,
+  censusAgeGranularity,
+  censusLabels,
 }: DemographicsChartProps): JSX.Element => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Use custom hook for chart data transformation
-  const chartData = useChartData(
-    StructureDetails,
-    fiveYearDetails,
-    tenYearDetails,
-    lifecycleDetails,
-    groupingStrategy,
-    chartSwitch,
-    legendLabels,
-    lifecycleLabels
-  );
+  const chartData = useChartData(censusCounts, censusRowDim, censusColDim, censusAgeGranularity, censusLabels);
+  const rowCategoryCount = getCensusCategoryCount(censusRowDim, censusAgeGranularity);
+  const rowLabel = censusLabels.dimensionNames[censusRowDim];
 
   // Initialize chart ONLY ONCE
   useEffect(() => {
@@ -56,7 +37,7 @@ const DemographicsChartComponent = ({
     ctx.canvas.width = 200;
     ctx.canvas.height = 200;
 
-    const config = createChartConfig(groupingStrategy, chartData);
+    const config = createChartConfig(rowCategoryCount, rowLabel, chartData);
     chartRef.current = new Chart(ctx, config);
 
     // Clean up on unmount
@@ -113,13 +94,13 @@ const DemographicsChartComponent = ({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Update chart options when grouping strategy changes
+  // Update chart options when the row dimension (or its category count) changes
   useEffect(() => {
     if (!chartRef.current) return;
 
-    updateChartOptionsForGrouping(chartRef.current, groupingStrategy);
+    updateChartOptionsForGrouping(chartRef.current, rowCategoryCount, rowLabel);
     chartRef.current.update('none');
-  }, [groupingStrategy]);
+  }, [rowCategoryCount, rowLabel]);
 
   const INITIAL_CANVAS_STYLE = { height: `0`, width: '0', display: 'block' };
 

@@ -138,6 +138,29 @@ export class Localekeys {
   public static Unknown: string = 'SelectedInfoPanel.CITIZEN_OCCUPATION[Unknown]';
   public static Worker: string = 'SelectedInfoPanel.CITIZEN_OCCUPATION[Worker]';
 
+  public static WealthTab: string = 'InfoLoomTwo.DemographicsPanel[WealthTab]';
+  public static ResidencyTab: string = 'InfoLoomTwo.DemographicsPanel[ResidencyTab]';
+  public static LegendItemWretched: string = 'InfoLoomTwo.DemographicsPanel[LegendItemWretched]';
+  public static LegendItemPoor: string = 'InfoLoomTwo.DemographicsPanel[LegendItemPoor]';
+  public static LegendItemModest: string = 'InfoLoomTwo.DemographicsPanel[LegendItemModest]';
+  public static LegendItemComfortable: string = 'InfoLoomTwo.DemographicsPanel[LegendItemComfortable]';
+  public static LegendItemWealthy: string = 'InfoLoomTwo.DemographicsPanel[LegendItemWealthy]';
+  public static LegendItemLowDensity: string = 'InfoLoomTwo.DemographicsPanel[LegendItemLowDensity]';
+  public static LegendItemMediumDensity: string = 'InfoLoomTwo.DemographicsPanel[LegendItemMediumDensity]';
+  public static LegendItemHighDensity: string = 'InfoLoomTwo.DemographicsPanel[LegendItemHighDensity]';
+  public static LegendItemMixedUse: string = 'InfoLoomTwo.DemographicsPanel[LegendItemMixedUse]';
+  public static LegendItemUnhoused: string = 'InfoLoomTwo.DemographicsPanel[LegendItemUnhoused]';
+  public static CensusTab: string = 'InfoLoomTwo.DemographicsPanel[CensusTab]';
+  public static CensusRowLabel: string = 'InfoLoomTwo.DemographicsPanel[CensusRowLabel]';
+  public static CensusColumnLabel: string = 'InfoLoomTwo.DemographicsPanel[CensusColumnLabel]';
+  public static AgeGroupLabel: string = 'InfoLoomTwo.DemographicsPanel[AgeGroupLabel]';
+  public static CensusDimensionAge: string = 'InfoLoomTwo.DemographicsPanel[CensusDimensionAge]';
+  public static CensusDimensionEducation: string = 'InfoLoomTwo.DemographicsPanel[CensusDimensionEducation]';
+  public static CensusDimensionWealth: string = 'InfoLoomTwo.DemographicsPanel[CensusDimensionWealth]';
+  public static CensusDimensionResidency: string = 'InfoLoomTwo.DemographicsPanel[CensusDimensionResidency]';
+  public static CensusDimensionActivity: string = 'InfoLoomTwo.DemographicsPanel[CensusDimensionActivity]';
+  public static CensusTotalLabel: string = 'InfoLoomTwo.DemographicsPanel[CensusTotalLabel]';
+
   public static Commercial: string = 'LevelInfoPanel.COMMERCIAL';
   public static Industrial: string = 'LevelInfoPanel.INDUSTRIAL';
   public static Office: string = 'LevelInfoPanel.OFFICE';

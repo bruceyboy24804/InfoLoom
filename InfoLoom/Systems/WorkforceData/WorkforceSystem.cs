@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Colossal.Collections;
 using Game;
 using Game.Agents;
 using Game.Areas;
@@ -44,6 +45,10 @@ namespace InfoLoomTwo.Systems.WorkforceData
         public NativeArray<WorkforcesInfo> m_Results;
         private ValueBindingHelper<WorkforcesInfo[]> m_WorkforceInfoBinding;
 
+        // Per-thread accumulator the job writes into (safe under ScheduleParallel); its
+        // per-education-level totals get copied into m_Results after each run completes.
+        private NativeAccumulator<WorkforcesInfo> m_ResultsAccumulator;
+
         public bool IsPanelVisible { get; set; }
         public bool ForceUpdate { get; private set; }
 
@@ -76,12 +81,15 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
             m_Results = new NativeArray<WorkforcesInfo>(RESULTS_SIZE, Allocator.Persistent);
             m_WorkforceInfoBinding = CreateBinding("WorkforceData", new WorkforcesInfo[0]);
+            m_ResultsAccumulator = new NativeAccumulator<WorkforcesInfo>(EDUCATION_LEVELS, Allocator.Persistent);
         }
 
         protected override void OnDestroy()
         {
             if (m_Results.IsCreated)
                 m_Results.Dispose();
+            if (m_ResultsAccumulator.IsCreated)
+                m_ResultsAccumulator.Dispose();
 
             base.OnDestroy();
         }
@@ -96,6 +104,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
         {
             ForceUpdate = false;
             ResetResults();
+            m_ResultsAccumulator.Clear();
             var jobData = new CountEmploymentJob
             {
                 m_EntityType = SystemAPI.GetEntityTypeHandle(),
@@ -112,9 +121,12 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 m_Citizens = SystemAPI.GetComponentLookup<Citizen>(true),
                 m_HealthProblems = SystemAPI.GetComponentLookup<HealthProblem>(true),
                 m_SelectedDistrict = SelectedDistrict,
-                m_Results = m_Results
+                m_ResultsWriter = m_ResultsAccumulator.AsParallelWriter()
             };
+            // Safe under ScheduleParallel: ProcessCitizen accumulates per-thread via
+            // NativeAccumulator instead of read-modify-writing a shared array directly.
             jobData.ScheduleParallel(m_AllAdultGroup, Dependency).Complete();
+            CopyAccumulatorResults();
             CalculateTotals();
         }
 
@@ -125,6 +137,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 
 
             ResetResults();
+            m_ResultsAccumulator.Clear();
 
             var jobData = new CountEmploymentJob
             {
@@ -142,18 +155,31 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 m_Citizens = SystemAPI.GetComponentLookup<Citizen>(true),
                 m_HealthProblems = SystemAPI.GetComponentLookup<HealthProblem>(true),
                 m_SelectedDistrict = SelectedDistrict,
-                m_Results = m_Results
+                m_ResultsWriter = m_ResultsAccumulator.AsParallelWriter()
             };
 
+            // Safe under ScheduleParallel: ProcessCitizen accumulates per-thread via
+            // NativeAccumulator instead of read-modify-writing a shared array directly.
             jobData.ScheduleParallel(m_AllAdultGroup, Dependency).Complete();
 
+            CopyAccumulatorResults();
             CalculateTotals();
         }
 
-        
+
         private void ResetResults()
         {
             for (var i = 0; i < RESULTS_SIZE; i++) m_Results[i] = new WorkforcesInfo(i);
+        }
+
+        private void CopyAccumulatorResults()
+        {
+            for (var i = 0; i < EDUCATION_LEVELS; i++)
+            {
+                var result = m_ResultsAccumulator.GetResult(i);
+                result.Level = i;
+                m_Results[i] = result;
+            }
         }
 
         private void CalculateTotals()
@@ -198,8 +224,10 @@ namespace InfoLoomTwo.Systems.WorkforceData
                 totals.Unemployed = unemployedCount;
             }
 
-            m_Results[(int)EducationLevel.Totals] = totals;
+            m_Results[(int)EducationLevel.Totals] = totals; 
         }
+
+        
 
         public void SetSelectedDistrict(Entity district)
         {

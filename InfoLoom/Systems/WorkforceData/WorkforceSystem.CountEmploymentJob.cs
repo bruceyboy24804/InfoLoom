@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Colossal.Collections;
 using ModsCommon.Extensions;
 using Game.Agents;
 using Game.Areas;
@@ -15,7 +16,7 @@ namespace InfoLoomTwo.Systems.WorkforceData
 {
     public partial class WorkforceSystem
     {
-        
+
         private enum EducationLevel
         {
             Uneducated = 0,
@@ -41,7 +42,12 @@ namespace InfoLoomTwo.Systems.WorkforceData
             [ReadOnly] public ComponentLookup<Student> m_Students;
             [ReadOnly] public ComponentLookup<Citizen> m_Citizens;
             [ReadOnly] public ComponentLookup<HealthProblem> m_HealthProblems;
-            public NativeArray<WorkforcesInfo> m_Results;
+
+            // Per-thread accumulator (5 slots, one per education level) — safe under
+            // ScheduleParallel because each thread accumulates into its own scratch buffer;
+            // GetResult() sums across threads afterwards. Replaces a shared NativeArray that
+            // was being read-modify-written from many chunks concurrently (lost-update race).
+            public NativeAccumulator<WorkforcesInfo>.ParallelWriter m_ResultsWriter;
             public Entity m_SelectedDistrict;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -57,63 +63,49 @@ namespace InfoLoomTwo.Systems.WorkforceData
                     if (m_SelectedDistrict != Entity.Null && !IsInSelectedDistrict(household))
                         continue;
                     var citizen = citizenArray[i];
-                    if (!IsWorkableCitizen(citizenEntity, ref m_Citizens, ref m_Students, ref m_HealthProblems))
+
+                    if (CitizenUtils.IsDead(citizenEntity, ref m_HealthProblems))
                         continue;
-                    if (ShouldSkipCitizen(citizenEntity, citizen, household))
+                    if (m_Students.HasComponent(citizenEntity))
                         continue;
+                    if ((citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != CitizenFlags.None)
+                        continue;
+                    var age = citizen.GetAge();
+                    if (age != CitizenAge.Teen && age != CitizenAge.Adult)
+                        continue;
+                    if (!m_Households.HasComponent(household))
+                        continue;
+                    if ((m_Households[household].m_Flags & HouseholdFlags.MovedIn) == 0)
+                        continue;
+                    if (m_MovingAways.HasComponent(household))
+                        continue;
+
                     var hasWorker = m_Workers.HasComponent(citizenEntity);
                     var worker = hasWorker ? m_Workers[citizenEntity] : default;
                     ProcessCitizen(citizen, household, worker, hasWorker);
                 }
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private static bool IsWorkableCitizen(Entity citizenEntity, ref ComponentLookup<Citizen> citizens,
-                ref ComponentLookup<Student> students, ref ComponentLookup<HealthProblem> healthProblems)
-            {
-                return (!healthProblems.HasComponent(citizenEntity) ||
-                        !CitizenUtils.IsDead(healthProblems[citizenEntity])) &&
-                       !students.HasComponent(citizenEntity) &&
-                       (citizens[citizenEntity].m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) ==
-                       CitizenFlags.None &&
-                       (citizens[citizenEntity].GetAge() == CitizenAge.Teen ||
-                        citizens[citizenEntity].GetAge() == CitizenAge.Adult);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private bool ShouldSkipCitizen(Entity citizenEntity, Citizen citizen, Entity household)
-            {
-                // Check if dead using ComponentLookup (per-citizen check)
-                if (CitizenUtils.IsDead(citizenEntity, ref m_HealthProblems))
-                    return true;
-
-                return (citizen.m_State & (CitizenFlags.Tourist | CitizenFlags.Commuter)) != 0 ||
-                       !m_Households.HasComponent(household) ||
-                       (m_Households[household].m_Flags & HouseholdFlags.MovedIn) == 0 ||
-                       m_MovingAways.HasComponent(household);
-            }
-
             private void ProcessCitizen(Citizen citizen, Entity household, Worker worker, bool isWorker)
             {
                 var educationLevel = citizen.GetEducationLevel();
-                var info = m_Results[educationLevel];
-                info.Total++;
+                var delta = new WorkforcesInfo(educationLevel) { Total = 1 };
                 var hasWorker = isWorker;
                 if (hasWorker)
                 {
-                    info.Worker++;
+                    delta.Worker = 1;
                     var isWorkingOutside = m_OutsideConnections.HasComponent(worker.m_Workplace);
                     var isUnderemployed = worker.m_Level < educationLevel;
-                    if (isWorkingOutside) info.Outside++;
-                    if (isUnderemployed) info.Under++;
-                    if (isWorkingOutside || isUnderemployed) info.Employable++;
+                    if (isWorkingOutside) delta.Outside = 1;
+                    if (isUnderemployed) delta.Under = 1;
+                    if (isWorkingOutside || isUnderemployed) delta.Employable = 1;
                 }
                 else
                 {
-                    info.Employable++;
+                    delta.Employable = 1;
                 }
-                if (m_HomelessHouseholds.HasComponent(household) || !m_PropertyRenters.HasComponent(household)) info.Homeless++;
-                m_Results[educationLevel] = info;
+                if (m_HomelessHouseholds.HasComponent(household) || !m_PropertyRenters.HasComponent(household)) delta.Homeless = 1;
+                m_ResultsWriter.Accumulate(educationLevel, delta);
             }
 
             private bool IsInSelectedDistrict(Entity household)

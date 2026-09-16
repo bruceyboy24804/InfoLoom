@@ -5,10 +5,6 @@ import { workplacesInfo } from './domain/WorkplacesInfo';
 import { GroupingStrategy } from './domain/GroupingStrategy';
 import { CommercialCompanyDebug } from './domain/CommercialCompanyDebugData';
 import { IndustrialCompanyDebug } from './domain/IndustrialCompanyDebugData';
-import { PopulationDetailedGroupInfo } from './domain/populationDetailedGroupInfo';
-import { PopulationFiveYearGroupInfo } from './domain/populationFiveYearGroupInfo';
-import { PopulationTenYearGroupInfo } from './domain/populationTenYearGroupInfo';
-import { PopulationLifecycleInfo } from './domain/populationLifecycleInfo';
 import { ResourceTradeCost } from 'mods/domain/tradeCostData';
 import { StorageCompanyInfo } from './domain/StorageCompanyInfo';
 import { EntityModifierData } from './domain/EffectsData';
@@ -140,28 +136,12 @@ export const TC = {
   ProfitMargin: new TwoWayBinding<TCSortingEnum>('ProfitMargin', TCSortingEnum.Off),
 };
 
-export const DemographicsDetailedData = new OneWayBinding<PopulationDetailedGroupInfo[]>(
-  'DemographicsDetailedData',
-  []
-);
-export const DemographicsLifecycleDetails = new OneWayBinding<PopulationLifecycleInfo[]>(
-  'DemographicsLifecycleDetails',
-  []
-);
-export const DemographicsFiveYearDetails = new OneWayBinding<PopulationFiveYearGroupInfo[]>(
-  'DemographicsFiveYearDetails',
-  []
-);
-export const DemographicsTenYearDetails = new OneWayBinding<PopulationTenYearGroupInfo[]>(
-  'DemographicsTenYearDetails',
-  []
-);
+export const DemographicsCensusCrossTab = new OneWayBinding<number[]>('DemographicsCensusCrossTab', []);
 
 export const StorageCompaniesBinding = new OneWayBinding<StorageCompanyInfo[]>('StorageCompanies', []);
 export const storagePanelVisibleBinding = new OneWayBinding<boolean>('StoragePanelVisible', false);
 export const SetStoragePanelVisible = TriggerBuilder.create<[boolean]>('SetStoragePanelVisible');
 
-export const EffectCountBinding = new OneWayBinding<number[]>('EffectCount', [0, 0, 0]);
 export const EffectsBinding = new OneWayBinding<EntityModifierData[]>('Effects', []);
 export const ShowEffectsButton = bindValue<boolean>(mod.id, 'showButton', true);
 export const EffectsOpen = bindValue<boolean>(mod.id, 'EffectsOpen', false);

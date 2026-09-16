@@ -8,6 +8,7 @@ import Demographics from 'mods/InfoLoomSections/DemographicsSection/Demographics
 import Workforce from 'mods/InfoLoomSections/WorkforceSection/Workforce';
 import Workplaces from 'mods/InfoLoomSections/WorkplacesSection/Workplaces';
 import Demand from 'mods/InfoLoomSections/DemandSection/Demand';
+import AllEffects from 'mods/InfoLoomSections/EffectsSection/AllEffects';
 import TradeCost from 'mods/InfoLoomSections/TradeCostSection/TradeCost';
 import * as bindings from 'mods/bindings';
 import { CommercialMenuButton } from 'mods/InfoLoomMenu/CommercialMenu/CommercialMenu';
@@ -108,6 +109,16 @@ function InfoLoomButton(): JSX.Element {
         toggle: bindings.SetTradeCostsOpen,
         displayName: null, // Will be set at render time
       },
+      ...(showButton
+        ? {
+            Effects: {
+              component: <AllEffects />,
+              isOpen: effectsOpen,
+              toggle: bindings.SetEffectsOpen,
+              displayName: null, // Will be set at render time
+            },
+          }
+        : {}),
     }),
     [
       demographicsOpen,

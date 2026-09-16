@@ -95,8 +95,14 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                 }
 
                 // Phase 2: gather display metrics
-                int numStandard = 0, numLeisure = 0;
-                float shopStockingStd = 0f, shopStockingLei = 0f;
+                // Weighted by actual shelf capacity (sum of stock / sum of capacity), not a
+                // plain average of each category's fill %. A flat per-category average lets a
+                // handful of small/newly-founded shops (near-empty, tiny capacity) drag the
+                // number down just as much as the many large, well-stocked shops a player
+                // actually sees when walking around — weighting by capacity matches what you'd
+                // observe checking shops in person.
+                int currentStd = 0, capacityStd = 0;
+                int currentLei = 0, capacityLei = 0;
                 float totalTaxRate = 0f, totalEmpCapacity = 0f;
                 var resourceCount = 0;
                 var sorted = new NativeList<(Resource resource, int demand)>(Allocator.Temp);
@@ -116,32 +122,37 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                     ResourceDemands[idx] = GameDemands[idx];
                     Results[1] += ServicePropertyless[idx];
 
-                    var storageRatio = CurrentAvailables[idx] / (1f + TotalAvailables[idx]);
+                    // Only resources actually sold by at least one shop have a meaningful stock
+                    // ratio — a category with zero capacity isn't "understocked", it's just
+                    // not built yet, and letting it count as 0% drags the average down hard.
+                    var hasShops = TotalAvailables[idx] > 0;
 
                     var empCapacity = MaxServiceWorkers[idx] == 0
                         ? 0f
                         : (float)CurrentServiceWorkers[idx] / MaxServiceWorkers[idx];
 
                     // Hotel occupancy — only computed for Lodging resource, stored directly
+                    // m_Lodging.x = occupied rooms, m_Lodging.y = total room capacity (TourismSystem)
                     if (iterator.resource == Resource.Lodging && Tourisms.HasComponent(City))
                     {
                         var tourism = Tourisms[City];
-                        var requiredRooms =
-                            (int)(tourism.m_CurrentTourists * DemandParameters.m_HotelRoomPercentRequirement);
-                        Results[5] = requiredRooms > 0
-                            ? (int)math.round(100f * tourism.m_Lodging.y / requiredRooms)
+                        Results[5] = tourism.m_Lodging.y > 0
+                            ? (int)math.round(100f * tourism.m_Lodging.x / tourism.m_Lodging.y)
                             : 0;
                     }
 
-                    if (resourceData.m_IsLeisure)
+                    if (hasShops && iterator.resource != Resource.Lodging)
                     {
-                        numLeisure++;
-                        shopStockingLei += storageRatio;
-                    }
-                    else
-                    {
-                        numStandard++;
-                        shopStockingStd += storageRatio;
+                        if (resourceData.m_IsLeisure)
+                        {
+                            currentLei += CurrentAvailables[idx];
+                            capacityLei += TotalAvailables[idx];
+                        }
+                        else
+                        {
+                            currentStd += CurrentAvailables[idx];
+                            capacityStd += TotalAvailables[idx];
+                        }
                     }
 
                     totalTaxRate += TaxSystem.GetCommercialTaxRate(iterator.resource, TaxRates);
@@ -169,8 +180,8 @@ namespace InfoLoomTwo.Systems.CommercialSystems.CommercialDemandData
                 }
 
                 Results[2] = resourceCount > 0 ? (int)math.round(10f * totalTaxRate / resourceCount) : 0;
-                Results[3] = numStandard > 0 ? (int)math.round(100f * shopStockingStd / numStandard) : 0;
-                Results[4] = numLeisure > 0 ? (int)math.round(100f * shopStockingLei / numLeisure) : 0;
+                Results[3] = capacityStd > 0 ? (int)math.round(100f * currentStd / capacityStd) : 0;
+                Results[4] = capacityLei > 0 ? (int)math.round(100f * currentLei / capacityLei) : 0;
                 // Results[5] = hotel occupancy % (set directly in loop above)
                 Results[7] = resourceCount > 0 ? (int)math.round(1000f * totalEmpCapacity / resourceCount) : 0;
             }

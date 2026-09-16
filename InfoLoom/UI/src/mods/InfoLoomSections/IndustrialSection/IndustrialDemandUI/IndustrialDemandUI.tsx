@@ -99,7 +99,7 @@ const IndustrialDemandUI = ({ onClose }: DraggablePanelProps): JSX.Element => {
   const demandForLabel = t(Localekeys.DemandFor, 'Demand For');
   const demandForTooltip = t(
     Localekeys.IncludedResourcesTooltip,
-    'Resources that currently have no demand in your city. This may be due to oversupply, lack of customers, or economic factors.'
+    'Resources that currently have demand in your city (at or above the threshold set in mod options). These are good candidates for new industrial businesses.'
   );
 
   const header = (
@@ -159,19 +159,18 @@ const IndustrialDemandUI = ({ onClose }: DraggablePanelProps): JSX.Element => {
           </div>
         </DataRow>
       </div>
-        <PanelFoldout header={foldoutHeader("Demand & Utilization")}  initialExpanded={true}>
-            <DataRow label={localDemandLabel} tooltip={localDemandTooltip} sub>
-                <div className={styles.cellWide}>
-                    <Pct value={`${data[3]} %`} negative={data[3] > 100} />
-                </div>
-            </DataRow>
-            <DataRow label={inputUtilizationLabel} tooltip={inputUtilizationTooltip} sub>
-                <div className={styles.cellWide}>
-                    <Pct value={`${data[7]} %`} negative={data[7] > 100} />
-                </div>
-            </DataRow>
-        </PanelFoldout>
-
+      
+      <Divider noMargin={1} />
+      <DataRow label={localDemandLabel} tooltip={localDemandTooltip}>
+          <div className={styles.cellWide}>
+            <Pct value={`${data[3]} %`} negative={data[3] > 100} />
+          </div>
+        </DataRow>
+        <DataRow label={inputUtilizationLabel} tooltip={inputUtilizationTooltip}>
+          <div className={styles.cellWide}>
+            <Pct value={`${data[7]} %`} negative={data[7] > 100} />
+          </div>
+        </DataRow>
       {/* Secondary sections — collapsible */}
       <PanelFoldout header={foldoutHeader(availableWorkforceLabel)} tooltip={availableWorkforceTooltip} initialExpanded={true}>
         <DataRow label={educatedLabel} tooltip={educatedTooltip} sub>

@@ -128,10 +128,12 @@ namespace InfoLoomTwo.Systems.ResidentialData
             m_Results[(int)ResultIndex.HouseholdDemand] = RTI(m_ResidentialDemandSystem.householdDemand);
             m_Results[(int)ResultIndex.StudentRatio] = CalculateStudentRatio();
             
-            // Free property requirements
-            m_Results[(int)ResultIndex.FreeRequirementLow] = RTI(10 * demandParams.m_FreeResidentialRequirement.x);
-            m_Results[(int)ResultIndex.FreeRequirementMedium] = RTI(10 * demandParams.m_FreeResidentialRequirement.y);
-            m_Results[(int)ResultIndex.FreeRequirementHigh] = RTI(10 * demandParams.m_FreeResidentialRequirement.z);
+            // Free property requirements. Since game 1.6.2 this is a proportion of total properties
+            // (vanilla: requirement = m_FreeResidentialProportion * m_TotalProperties), not a fixed count.
+            // The UI reads these as percent * 10 (data[18] / 10 = %), so 0.1 -> 100 -> 10%.
+            m_Results[(int)ResultIndex.FreeRequirementLow] = RTI(1000f * demandParams.m_FreeResidentialProportion.x);
+            m_Results[(int)ResultIndex.FreeRequirementMedium] = RTI(1000f * demandParams.m_FreeResidentialProportion.y);
+            m_Results[(int)ResultIndex.FreeRequirementHigh] = RTI(1000f * demandParams.m_FreeResidentialProportion.z);
         }
 
         private int CalculateWeightedTaxRate()

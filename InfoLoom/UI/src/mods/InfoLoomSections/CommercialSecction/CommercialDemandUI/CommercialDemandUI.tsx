@@ -31,12 +31,12 @@ const CommercialDemandUI = ({ onClose, initialPosition }: DraggablePanelProps): 
   const shopStockingLabel = translate(Localekeys.ShopStocking, 'Shop Stocking');
   const shopStockingTooltip = translate(
     Localekeys.ShopStockingTooltip,
-    'How well-stocked shops are on average. Low stocking means shelves are empty and demand for new commercial businesses is high. Below 30% is considered understocked.'
+    'How well-stocked shops are on average, among resource types your city currently sells. Low stocking means shelves are empty and demand for new commercial businesses is high. Below 30% is considered understocked.'
   );
   const hotelOccupancyLabel = translate(Localekeys.HotelOccupancy, 'Hotel Occupancy');
   const hotelOccupancyTooltip = translate(
     Localekeys.HotelOccupancyTooltip,
-    'Current hotel room occupancy relative to tourist demand. Above 100% means tourists cannot find rooms, increasing demand for more lodging.'
+    'Percentage of hotel rooms currently occupied by tourists. Above roughly 90% means hotels are nearly full, increasing demand for more lodging.'
   );
   const employeeCapacityLabel = translate(Localekeys.EmployeeCapacity, 'Employee Capacity Ratio');
   const employeeCapacityTooltip = translate(
@@ -61,7 +61,7 @@ const CommercialDemandUI = ({ onClose, initialPosition }: DraggablePanelProps): 
   const DemandForLabel = translate(Localekeys.DemandFor, 'Demand For');
   const excludedResourcesTooltip = translate(
     Localekeys.IncludedResourcesTooltip,
-    'Resources that currently have no demand in your city. This may be due to oversupply, lack of customers, or economic factors.'
+    'Resources that currently have demand in your city (at or above the threshold set in mod options). These are good candidates for new commercial businesses.'
   );
 
   return (
@@ -108,7 +108,7 @@ const CommercialDemandUI = ({ onClose, initialPosition }: DraggablePanelProps): 
       <Divider noMargin={1} />
       <PanelSectionRow
         left={hotelOccupancyLabel}
-        right={<div className={data[5] > 100 ? styles.negative : styles.positive}>{`${data[5]} %`}</div>}
+        right={<div className={data[5] > 90 ? styles.negative : styles.positive}>{`${data[5]} %`}</div>}
         tooltip={hotelOccupancyTooltip}
       />
       <Divider noMargin={1} />

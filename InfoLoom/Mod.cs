@@ -54,8 +54,10 @@ namespace InfoLoomTwo
             updateSystem.UpdateAt<IndustrialSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TradeCostsSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomChirpSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<EffectTrackerSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<ILEffectsSection>(SystemUpdatePhase.Rendering);
+            updateSystem.UpdateAt<EffectOverlaySystem>(SystemUpdatePhase.Rendering);
+            updateSystem.UpdateAt<AllEffectsSystem>(SystemUpdatePhase.UIUpdate);
+
             updateSystem.UpdateAt<CommercialCompanyDataSystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<InfoLoomUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<IndustrialCompanySystem>(SystemUpdatePhase.UIUpdate);

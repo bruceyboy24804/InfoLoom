@@ -1,0 +1,297 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 620rem;
+  width: 480rem;
+  max-width: 480rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  height: 20rem;
+  text-transform: none;
+}
+
+.headerText {
+  margin-left: 5rem;
+  font-size: 115%;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 10rem;
+  box-sizing: border-box;
+}
+
+/* ---- summary tiles ---- */
+
+.statRow {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 8rem;
+
+  > * {
+    margin-right: 6rem;
+  }
+
+  > *:last-child {
+    margin-right: 0;
+  }
+}
+
+.statTile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6rem 4rem;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 4rem;
+  border: 1rem solid transparent;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.statTileActive {
+  background-color: rgba(140, 192, 219, 0.28);
+  border-color: rgba(140, 192, 219, 0.8);
+
+  &:hover {
+    background-color: rgba(140, 192, 219, 0.36);
+  }
+}
+
+.statValue {
+  font-size: 20rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.statLabel {
+  font-size: 10rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3rem;
+  white-space: nowrap;
+  opacity: 0.6;
+}
+
+/* ---- controls ---- */
+
+.controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 6rem;
+
+  > * {
+    margin-right: 6rem;
+  }
+
+  > *:last-child {
+    margin-right: 0;
+  }
+}
+
+.dropdownToggle {
+  min-width: 150rem;
+}
+
+.clearButton {
+  margin-left: auto;
+  font-size: 12rem;
+  padding: 4rem 10rem;
+  border-radius: 4rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* ---- color legend ---- */
+
+.foldoutHeader {
+  font-size: 13rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  padding: 4rem 8rem 8rem 8rem;
+}
+
+.legendRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 28rem;
+
+  > * {
+    margin-right: 8rem;
+  }
+
+  > *:last-child {
+    margin-right: 0;
+  }
+}
+
+.legendLabel {
+  flex: 1;
+  font-size: 13rem;
+}
+
+/* ---- list ---- */
+
+.resultCount {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 11rem;
+  opacity: 0.5;
+  padding: 4rem 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+}
+
+.scrollable {
+  flex: 1;
+  min-height: 0;
+}
+
+.entityRow {
+  padding: 6rem 4rem;
+  border-bottom: 1rem solid rgba(255, 255, 255, 0.08);
+}
+
+.entityHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4rem;
+}
+
+.entityName {
+  font-size: 14rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.entityCount {
+  font-size: 11rem;
+  opacity: 0.5;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 8rem;
+  padding: 1rem 7rem;
+}
+
+.modifierRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 26rem;
+  padding: 0 6rem;
+  border-radius: 3rem;
+  font-size: 12rem;
+
+  > * {
+    margin-right: 8rem;
+  }
+
+  > *:last-child {
+    margin-right: 0;
+  }
+}
+
+.modifierRowActive {
+  background-color: rgba(140, 192, 219, 0.14);
+}
+
+.dot {
+  width: 9rem;
+  height: 9rem;
+  min-width: 9rem;
+  border-radius: 50%;
+  border: 1rem solid rgba(0, 0, 0, 0.4);
+}
+
+.modifierType {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+.modifierValue {
+  width: 84rem;
+  min-width: 84rem;
+  text-align: right;
+  font-weight: 500;
+}
+
+.modifierRadius {
+  width: 74rem;
+  min-width: 74rem;
+  text-align: right;
+  opacity: 0.65;
+}
+
+.modifierAction {
+  width: 64rem;
+  min-width: 64rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.overlayButton {
+  font-size: 11rem;
+  padding: 2rem 8rem;
+  border-radius: 3rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.overlayButtonActive {
+  background-color: rgba(140, 192, 219, 0.5);
+  color: #ffffff;
+
+  &:hover {
+    background-color: rgba(140, 192, 219, 0.6);
+  }
+}
+
+.cityTag {
+  font-size: 10rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  opacity: 0.45;
+}
+
+.muted {
+  opacity: 0.35;
+}
+
+.emptyState {
+  padding: 20rem 8rem;
+  text-align: center;
+  font-size: 13rem;
+  opacity: 0.6;
+}
